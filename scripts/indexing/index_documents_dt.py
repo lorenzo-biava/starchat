@@ -53,7 +53,7 @@ def index_items(item_listfile, skiplines=1):
             while attempts > 0:
                 try:
                     res = service.index_document_dt(state, queries, bubble, action, action_input, success_value, failure_value)
-                except service.ApiCallException as exc:
+                except interface.ApiCallException as exc:
                     print("Last line: ", lcounter)
                     sys.exit(1)
 
