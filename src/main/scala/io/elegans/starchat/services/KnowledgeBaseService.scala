@@ -50,6 +50,9 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     if(documentSearch.answer.isDefined)
       bool_query_builder.must(QueryBuilders.matchQuery("answer.stem_lmd", documentSearch.answer.get))
 
+    if(documentSearch.conversation.isDefined)
+      bool_query_builder.must(QueryBuilders.matchQuery("conversation", documentSearch.conversation.get))
+
     search_builder.setQuery(bool_query_builder)
 
     val search_response : SearchResponse = search_builder
