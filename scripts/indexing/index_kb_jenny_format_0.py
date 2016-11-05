@@ -70,8 +70,7 @@ for item in joined_data:
             res = service.index_document_kb(the_id=the_id, conversation=item["conversation"], index_in_conversation=item["position"],
                     question=item["question"], answer=item["answer"], verified=False, topics="", doctype="normal", state="", status=0)
         except interface.ApiCallException as exc:
-            print("Last line: ", lcounter)
-            sys.exit(1)
+            print("Error, res: ", res)
         if res[0] > 299 or res[0] < 200:
             print("error, retrying: ", item)
             attempts -= 1
