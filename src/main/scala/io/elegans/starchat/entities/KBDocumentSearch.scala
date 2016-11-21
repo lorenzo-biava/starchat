@@ -11,5 +11,6 @@ case class KBDocumentSearch(from: Option[Int],
                             index_in_conversation: Option[Int],
                             answer: Option[String],
                             verified: Option[Boolean],
-                            doctype: Option[String]
-                   )
+                            doctype: Option[String],
+                            conversation: Option[String]
+                           )
