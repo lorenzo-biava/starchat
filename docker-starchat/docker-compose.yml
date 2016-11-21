@@ -14,7 +14,7 @@ elasticsearch:
     - ES_JAVA_OPTS=-Xms1g -Xmx1g
 
 starchat:
-  image: java:9
+  image: java:8
   command: /starchat-0.1/bin/starchat
   volumes:
     - ./starchat-0.1:/starchat-0.1
