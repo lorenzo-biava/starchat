@@ -1,4 +1,4 @@
-package io.elegans.starchat.entities
+package com.getjenny.starchat.entities
 
 /**
   * Created by Angelo Leto <angelo.leto@elegans.io> on 02/07/16.

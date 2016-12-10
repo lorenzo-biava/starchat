@@ -1,4 +1,4 @@
-package io.elegans.starchat
+package com.getjenny.starchat
 
 /**
   * Created by Angelo Leto <angelo.leto@elegans.io> on 27/06/16.
@@ -8,8 +8,8 @@ import scala.concurrent.ExecutionContext
 
 import akka.http.scaladsl.server.Route
 
-import io.elegans.starchat.resources._
-import io.elegans.starchat.services._
+import com.getjenny.starchat.resources._
+import com.getjenny.starchat.services._
 
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext

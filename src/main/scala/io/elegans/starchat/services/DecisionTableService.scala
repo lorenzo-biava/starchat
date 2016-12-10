@@ -1,10 +1,10 @@
-package io.elegans.starchat.services
+package com.getjenny.starchat.services
 
 /**
   * Created by Angelo Leto <angelo.leto@elegans.io> on 01/07/16.
   */
 
-import io.elegans.starchat.entities._
+import com.getjenny.starchat.entities._
 import scala.concurrent.{ExecutionContext, Future, Promise, Await}
 import scala.util.{Success, Failure}
 import scala.collection.immutable.{List, Map}

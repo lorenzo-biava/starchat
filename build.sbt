@@ -4,7 +4,7 @@ name := "StarChat"
 
 version := "0.1"
 
-organization := "io.elegans"
+organization := "com.getjenny"
 
 scalaVersion := "2.11.8"
 
@@ -28,7 +28,7 @@ libraryDependencies ++= {
 enablePlugins(JavaServerAppPackaging)
 
 // Assembly settings
-mainClass in Compile := Some("io.elegans.starchat.Main")
+mainClass in Compile := Some("com.getjenny.starchat.Main")
 
 mappings in Universal ++= {
   // copy configuration files to config directory
