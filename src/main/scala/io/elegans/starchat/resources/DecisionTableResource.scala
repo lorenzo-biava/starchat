@@ -1,13 +1,13 @@
-package io.elegans.starchat.resources
+package com.getjenny.starchat.resources
 
 /**
   * Created by Angelo Leto <angelo.leto@elegans.io> on 27/06/16.
   */
 
 import akka.http.scaladsl.server.Route
-import io.elegans.starchat.entities._
-import io.elegans.starchat.routing.MyResource
-import io.elegans.starchat.services.DecisionTableService
+import com.getjenny.starchat.entities._
+import com.getjenny.starchat.routing.MyResource
+import com.getjenny.starchat.services.DecisionTableService
 import akka.http.scaladsl.model.StatusCodes
 
 import scala.concurrent.duration._

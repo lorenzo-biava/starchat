@@ -1,4 +1,4 @@
-package io.elegans.starchat.routing
+package com.getjenny.starchat.routing
 
 import akka.http.scaladsl.marshalling.{ToResponseMarshaller, ToResponseMarshallable}
 
@@ -6,8 +6,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 import akka.http.scaladsl.server.{Directives, Route}
 
-import io.elegans.starchat.serializers.JsonSupport
-import io.elegans.starchat.entities._
+import com.getjenny.starchat.serializers.JsonSupport
+import com.getjenny.starchat.entities._
 
 
 trait MyResource extends Directives with JsonSupport {

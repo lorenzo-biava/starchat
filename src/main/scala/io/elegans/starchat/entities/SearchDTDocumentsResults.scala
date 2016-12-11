@@ -1,4 +1,4 @@
-package io.elegans.starchat.entities
+package com.getjenny.starchat.entities
 
 import scala.collection.immutable.{List}
 

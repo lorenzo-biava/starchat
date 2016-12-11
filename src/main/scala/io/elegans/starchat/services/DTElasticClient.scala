@@ -1,4 +1,4 @@
-package io.elegans.starchat.services
+package com.getjenny.starchat.services
 
 /**
   * Created by Angelo Leto <angelo.leto@elegans.io> on 01/07/16.

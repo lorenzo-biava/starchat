@@ -1,10 +1,10 @@
-package io.elegans.starchat.serializers
+package com.getjenny.starchat.serializers
 
 /**
   * Created by Angelo Leto <angelo.leto@elegans.io> on 27/06/16.
   */
 
-import io.elegans.starchat.entities._
+import com.getjenny.starchat.entities._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json._
