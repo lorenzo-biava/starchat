@@ -4,7 +4,7 @@
 # the base image is a trusted ubuntu build with java 9 (https://index.docker.io/u/dockerfile/java/)
 FROM java:9
 
-MAINTAINER Angelo Leto, angelo.leto@elegans.io
+MAINTAINER Angelo Leto, angelo@getjenny.com
 
 # we need this because the workdir is modified in dockerfile/java
 WORKDIR /
