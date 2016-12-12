@@ -1,7 +1,7 @@
 package com.getjenny.starchat.serializers
 
 /**
-  * Created by Angelo Leto <angelo.leto@elegans.io> on 27/06/16.
+  * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
 import com.getjenny.starchat.entities._

@@ -1,7 +1,7 @@
 package com.getjenny.starchat
 
 /**
-  * Created by Angelo Leto <angelo.leto@elegans.io> on 27/06/16.
+  * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
 import scala.concurrent.duration._

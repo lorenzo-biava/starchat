@@ -1,7 +1,7 @@
 package com.getjenny.starchat.entities
 
 /**
-  * Created by Angelo Leto <angelo.leto@elegans.io> on 25/07/16.
+  * Created by Angelo Leto <angelo@getjenny.com> on 25/07/16.
   */
 
 case class ResponseRequestOutOperationResult(status: ReturnMessageData,
