@@ -19,6 +19,7 @@ object  KBElasticClient {
   val type_name = config.getString("es.kb_type_name")
   val cluster_name = config.getString("es.cluster_name")
   val ignore_cluster_name = config.getBoolean("es.ignore_cluster_name")
+  val query_min_threshold : Float = config.getDouble("es.kb_query_min_threshold").toFloat
 
   val host_map : Map[String, Int] = config.getAnyRef("es.host_map").asInstanceOf[java.util.HashMap[String,Int]] toMap
 
