@@ -12,13 +12,14 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
                   Resolver.bintrayRepo("hseeberger", "maven"))
 
 libraryDependencies ++= {
-  val AkkaVersion       = "2.4.10"
-  val AkkaHttpVersion   = AkkaVersion
+  val AkkaVersion       = "2.4.14"
+  val AkkaHttpVersion   = "10.0.0"
   val ESClientVersion   = "2.4.0"
   Seq(
-    "com.typesafe.akka" %% "akka-slf4j"      % AkkaVersion,
-    "com.typesafe.akka" %% "akka-http-experimental" % AkkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http-spray-json-experimental" % AkkaHttpVersion,
+    "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
+	"com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
+	"com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
+	"com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
     "ch.qos.logback"    %  "logback-classic" % "1.1.2",
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "log4j" % "log4j" % "1.2.17" // dependency of es libs
