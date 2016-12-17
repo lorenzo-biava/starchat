@@ -43,7 +43,7 @@ trait KnowledgeBaseResource extends MyResource {
         put {
           entity(as[KBDocumentUpdate]) { update =>
             val result: Future[Option[UpdateDocumentResult]] = kbElasticService.update(id, update)
-            val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 30 seconds).value.get
+            val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 30.seconds).value.get
             result_try match {
               case Success(t) =>
                 completeUpdateDocumentResultJson(201, 400, result)

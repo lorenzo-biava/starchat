@@ -10,7 +10,6 @@ import com.typesafe.config.ConfigFactory
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
-import scala.collection.JavaConversions._
 import scala.collection.immutable.{List, Map}
 
 object  DTElasticClient {
@@ -21,7 +20,7 @@ object  DTElasticClient {
   val ignore_cluster_name = config.getBoolean("es.ignore_cluster_name")
   val query_min_threshold : Float = config.getDouble("es.dt_query_min_threshold").toFloat
 
-  val host_map : Map[String, Int] = config.getAnyRef("es.host_map").asInstanceOf[java.util.HashMap[String,Int]] toMap
+  val host_map : Map[String, Int] = config.getAnyRef("es.host_map").asInstanceOf[Map[String,Int]]
 
   val settings: Settings = Settings.builder()
     .put("cluster.name", cluster_name)
@@ -29,7 +28,7 @@ object  DTElasticClient {
     .put("client.transport.sniff", true).build()
 
   val inet_addresses: List[TransportAddress] =
-    host_map.map{ case(k,v) => new InetSocketTransportAddress(InetAddress.getByName(k), v) } toList
+    host_map.map{ case(k,v) => new InetSocketTransportAddress(InetAddress.getByName(k), v) }.toList
 
   var client : TransportClient = open_client()
 
@@ -40,7 +39,7 @@ object  DTElasticClient {
   }
 
   def get_client(): TransportClient = {
-    return this.client
+    this.client
   }
 
   def close_client(client: TransportClient): Unit = {

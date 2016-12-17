@@ -6,7 +6,7 @@ version := "0.1"
 
 organization := "com.getjenny"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.1"
 
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
                   Resolver.bintrayRepo("hseeberger", "maven"))
@@ -20,6 +20,7 @@ libraryDependencies ++= {
 	"com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
 	"com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
 	"com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
+	"com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
     "ch.qos.logback"    %  "logback-classic" % "1.1.2",
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "log4j" % "log4j" % "1.2.17" // dependency of es libs
