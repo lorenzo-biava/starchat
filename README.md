@@ -571,7 +571,7 @@ Sample output
 
 ## Requirements
 
-Starchat need Java JDK 8 (does not use java 9) and [stb](http://www.scala-sbt.org). 
+Starchat need Java JDK 8 (does not use java 9) and [sbt](http://www.scala-sbt.org). 
 He communicate with elasticsearch so you will need an instance of elasticsearch.
 If you want to use docker-compose, install docker first, then docker compose through python pip:
 
