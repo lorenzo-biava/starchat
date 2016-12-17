@@ -367,7 +367,8 @@ return code: 200
 Sample call
 ```bash
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable_search -d '{
-  "queries": "cannot access my account"
+  "queries": "cannot access my account",
+  "min_score": 0.1
 }'
 ```
 
@@ -567,6 +568,16 @@ Sample output
 ```
 
 # Build and run the service 
+
+## Requirements
+
+Starchat need Java JDK 8 (does not use java 9) and [stb](http://www.scala-sbt.org). 
+He communicate with elasticsearch so you will need an instance of elasticsearch.
+If you want to use docker-compose, install docker first, then docker compose through python pip:
+
+```bash
+pip install docker-compose
+```
 
 ## run directly in the build environment
  
