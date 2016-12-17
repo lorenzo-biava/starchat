@@ -23,7 +23,7 @@ object Main extends App with RestInterface {
   implicit val materializer = ActorMaterializer()
 
   implicit val executionContext = system.dispatcher
-  implicit val timeout = Timeout(10 seconds)
+  implicit val timeout = Timeout(10.seconds)
 
   val api = routes
 

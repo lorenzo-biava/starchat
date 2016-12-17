@@ -20,7 +20,7 @@ import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGet
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import java.net.InetAddress
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import com.typesafe.config.ConfigFactory
 import org.elasticsearch.search.SearchHit
@@ -66,11 +66,11 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
       val item: SearchHit = e
 
-      //        val fields : Map[String, GetField] = item.getFields toMap
+      //        val fields : Map[String, GetField] = item.getFields.toMap
       val id : String = item.getId
 
       //        val score : Float = fields.get("_score").asInstanceOf[Float]
-      val source : Map[String, Any] = item.getSource toMap
+      val source : Map[String, Any] = item.getSource.asScala.toMap
 
       val conversation : String = source.get("conversation") match {
         case Some(t) => t.asInstanceOf[String]
@@ -265,7 +265,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
         val id : String = item.getId
 
-        val source : Map[String, Any] = item.getSource toMap
+        val source : Map[String, Any] = item.getSource.asScala.toMap
 
         val conversation : String = source.get("conversation") match {
           case Some(t) => t.asInstanceOf[String]

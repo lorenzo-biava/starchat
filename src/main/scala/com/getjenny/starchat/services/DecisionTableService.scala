@@ -18,7 +18,7 @@ import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
 
@@ -40,9 +40,9 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       return_value != "" match {
         case true => // there is a state in return_value
           val state: Future[Option[SearchDTDocumentsResults]] = read(List[String](return_value))
-          val res : Option[SearchDTDocumentsResults] = Await.result(state, 30 seconds)
+          val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
           if (res.get.total > 0) {
-            val doc : DTDocument = res.get.hits.get(0).document
+            val doc : DTDocument = res.get.hits.head.document
             var bubble : String = doc.bubble
             var action_input : Map[String,String] = doc.action_input
             if (data.nonEmpty) {
@@ -77,9 +77,9 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               state = Option{null}, queries = Option{user_text})
           val state: Future[Option[SearchDTDocumentsResults]] = search(dtDocumentSearch)
           // search the state with the closest query value, then return that state
-          val res : Option[SearchDTDocumentsResults] = Await.result(state, 30 seconds)
+          val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
           if (res.get.total > 0) {
-            val doc : DTDocument = res.get.hits.get(0).document
+            val doc : DTDocument = res.get.hits.head.document
             var bubble : String = doc.bubble
             var action_input : Map[String,String] = doc.action_input
             if (data.nonEmpty) {
@@ -142,10 +142,10 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val state : String = item.getId
 
-      val source : Map[String, Any] = item.getSource toMap
+      val source : Map[String, Any] = item.getSource.asScala.toMap
 
       val queries : List[String] = source.get("queries") match {
-        case Some(t) => t.asInstanceOf[java.util.ArrayList[String]].toList
+        case Some(t) => t.asInstanceOf[java.util.ArrayList[String]].asScala.toList
         case None => List[String]()
       }
 
@@ -160,7 +160,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       }
 
       val action_input : Map[String,String] = source.get("action_input") match {
-        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].toMap
+        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
         case None => Map[String, String]()
       }
 
@@ -301,10 +301,10 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val state : String = item.getId
 
-      val source : Map[String, Any] = item.getSource toMap
+      val source : Map[String, Any] = item.getSource.asScala.toMap
 
       val queries : List[String] = source.get("queries") match {
-        case Some(t) => t.asInstanceOf[java.util.ArrayList[String]].toList
+        case Some(t) => t.asInstanceOf[java.util.ArrayList[String]].asScala.toList
         case None => List[String]()
       }
 
@@ -319,7 +319,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       }
 
       val action_input : Map[String,String] = source.get("action_input") match {
-        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].toMap
+        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
         case None => Map[String,String]()
       }
 
