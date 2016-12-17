@@ -35,8 +35,9 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       .setTypes(elastic_client.type_name)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
-    val default_min_score : Option[Float] = Option{elastic_client.query_min_threshold}
-    search_builder.setMinScore(documentSearch.min_score.getOrElse(default_min_score.getOrElse(0.0f)))
+    search_builder.setMinScore(documentSearch.min_score.getOrElse(
+      Option{elastic_client.query_min_threshold}.getOrElse(0.0f))
+    )
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
     if (documentSearch.doctype.isDefined)
