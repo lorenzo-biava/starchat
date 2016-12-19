@@ -17,9 +17,9 @@ trait RestInterface extends Resources {
   lazy val kbElasticService = new KnowledgeBaseService
   lazy val dtElasticService = new DecisionTableService
 
-  val routes: Route = knowledgeBaseRoutes ~
+  val routes: Route = rootAPIsRoutes ~ knowledgeBaseRoutes ~
     knowledgeBaseSearchRoutes ~ decisionTableRoutes ~ decisionTableSearchRoutes ~
     decisionTableResponseRequestRoutes
 }
 
-trait Resources extends KnowledgeBaseResource with DecisionTableResource
+trait Resources extends KnowledgeBaseResource with DecisionTableResource with RootAPIResource

@@ -17,11 +17,12 @@ libraryDependencies ++= {
   val ESClientVersion   = "2.4.0"
   Seq(
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
-	"com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
-	"com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
-	"com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
-	"com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
     "ch.qos.logback"    %  "logback-classic" % "1.1.2",
+    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "log4j" % "log4j" % "1.2.17" // dependency of es libs
    )
@@ -31,6 +32,9 @@ enablePlugins(JavaServerAppPackaging)
 
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")
+
+// do not buffer test output
+logBuffered in Test := false
 
 mappings in Universal ++= {
   // copy configuration files to config directory

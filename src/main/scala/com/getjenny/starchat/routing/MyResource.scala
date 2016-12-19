@@ -14,12 +14,22 @@ trait MyResource extends Directives with JsonSupport {
 
   implicit def executionContext: ExecutionContext
 
+  def completeRootAPIsDescriptionMessageData(status_code_ok: Int,
+                                             message: Future[Option[RootAPIsDescription]]): Route = {
+    onSuccess(message) {
+      case Some(t) => complete(ToResponseMarshallable(status_code_ok, message))
+      case None =>
+        complete(ToResponseMarshallable(status_code_ok,
+          ReturnMessageData(code = 400, message = "error evaluating response")))
+    }
+  }
+
   def completeResponseMessageData(status_code_ok: Int, message: Future[Option[ReturnMessageData]]): Route = {
     onSuccess(message) {
       case Some(t) => complete(ToResponseMarshallable(status_code_ok, message))
       case None =>
       complete(ToResponseMarshallable(status_code_ok,
-        ReturnMessageData(code = 400, message = "error evaluating evaluating response")))
+        ReturnMessageData(code = 400, message = "error evaluating response")))
     }
   }
 
