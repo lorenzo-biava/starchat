@@ -10,6 +10,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json._
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+  implicit val responseAPIsDescriptionDataFormat = jsonFormat1(RootAPIsDescription)
   implicit val responseMessageDataFormat = jsonFormat2(ReturnMessageData)
   implicit val responseRequestUserInputFormat = jsonFormat2(ResponseRequestInUserInput)
   implicit val responseRequestInputValuesFormat = jsonFormat2(ResponseRequestInValues)
