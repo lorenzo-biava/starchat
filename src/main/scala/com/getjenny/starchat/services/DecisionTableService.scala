@@ -5,10 +5,11 @@ package com.getjenny.starchat.services
   */
 
 import com.getjenny.starchat.entities._
-import scala.concurrent.{ExecutionContext, Future, Promise, Await}
-import scala.util.{Success, Failure}
-import scala.collection.immutable.{List, Map}
+import org.elasticsearch.action.DocWriteResponse.Result
 
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.util.{Failure, Success}
+import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
@@ -18,6 +19,7 @@ import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
+
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
@@ -220,7 +222,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.isCreated
+      created = (response.status == Result.CREATED)
     )
 
     Option {doc_result}
@@ -268,7 +270,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.isCreated
+      created = (response.status == Result.CREATED)
     )
 
     Option {doc_result}
@@ -282,7 +284,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      found = response.isFound
+      found = (response.status != Result.NOT_FOUND)
     )
 
     Option {doc_result}

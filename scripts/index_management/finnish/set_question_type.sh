@@ -24,20 +24,17 @@ echo "Parameters: $@"
 
 curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAME}/_mapping/question" -d '
 {
-	"_timestamp": {
-		"enabled": true
-	},
 	"properties": {
 		"doctype":
 		{
-			"type": "string",
+			"type": "keyword",
 			"store": "yes",
 			"index": "not_analyzed",
 			"null_value": "hidden"
 		},
 		"state":
 		{
-			"type": "string",
+			"type": "keyword",
 			"store": "yes",
 			"index": "not_analyzed",
 			"null_value": ""
@@ -51,7 +48,7 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 		},
 		"conversation":
 		{
-			"type": "string",
+			"type": "keyword",
 			"index": "not_analyzed",
 			"store": "yes"
 		},
@@ -63,101 +60,100 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 		},
 		"topics":
 		{
-			"type": "string",
+			"type": "text",
 			"store": "yes",
-			"null_value": "",
 			"fields": {
 				"base": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_base_analyzer"
 				},
-				"base_lmd": {
-					"type": "string",
+				"base_bm25": {
+					"type": "text",
 					"analyzer": "ele_base_analyzer",
-					"similarity": "LMDirichlet"
+					"similarity": "BM25"
 				}
 			}
 		},
 		"question":
 		{
-			"type": "string",
+			"type": "text",
 			"store": "yes",
 			"fields": {
 				"base": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_base_analyzer"
 				},
-				"base_lmd": {
-					"type": "string",
+				"base_bm25": {
+					"type": "text",
 					"analyzer": "ele_base_analyzer",
-					"similarity": "LMDirichlet"
+					"similarity": "BM25"
 				},
 				"stop": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_stop_analyzer"
 				},
-				"stop_lmd": {
-					"type": "string",
+				"stop_bm25": {
+					"type": "text",
 					"analyzer": "ele_stop_analyzer",
-					"similarity": "LMDirichlet"
+					"similarity": "BM25"
 				},
 				"stem": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_stem_analyzer"
 				},
-				"stem_lmd": {
-					"type": "string",
+				"stem_bm25": {
+					"type": "text",
 					"analyzer": "ele_stem_analyzer",
-					"similarity": "LMDirichlet"
+					"similarity": "BM25"
 				},
 				"shingles_4": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_shingles_4_analyzer"
 				},
 				"stemmed_shingles_4": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_stemmed_shingles_4_analyzer"
 				}
 			}
 		},
 		"answer":
 		{
-			"type": "string",
+			"type": "text",
 			"store": "yes",
 			"fields": {
 				"base": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_base_analyzer"
 				},
-				"base_lmd": {
-					"type": "string",
+				"base_bm25": {
+					"type": "text",
 					"analyzer": "ele_base_analyzer",
-					"similarity": "LMDirichlet"
+					"similarity": "BM25"
 				},
 				"stop": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_stop_analyzer"
 				},
-				"stop_lmd": {
-					"type": "string",
+				"stop_bm25": {
+					"type": "text",
 					"analyzer": "ele_stop_analyzer",
-					"similarity": "LMDirichlet"
+					"similarity": "BM25"
 				},
 				"stem": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_stem_analyzer"
 				},
-				"stem_lmd": {
-					"type": "string",
+				"stem_bm25": {
+					"type": "text",
 					"analyzer": "ele_stem_analyzer",
-					"similarity": "LMDirichlet"
+					"similarity": "BM25"
 				},
 				"shingles_4": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_shingles_4_analyzer"
 				},
 				"stemmed_shingles_4": {
-					"type": "string",
+					"type": "text",
 					"analyzer": "ele_stemmed_shingles_4_analyzer"
 				}
 			}
