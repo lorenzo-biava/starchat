@@ -2,7 +2,7 @@ import NativePackagerHelper._
 
 name := "StarChat"
 
-version := "master"
+version := "0.1"
 
 organization := "com.getjenny"
 
@@ -14,7 +14,7 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
 libraryDependencies ++= {
   val AkkaVersion       = "2.4.14"
   val AkkaHttpVersion   = "10.0.0"
-  val ESClientVersion   = "5.1.1"
+  val ESClientVersion   = "2.4.0"
   Seq(
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
     "com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
@@ -24,10 +24,7 @@ libraryDependencies ++= {
     "ch.qos.logback"    %  "logback-classic" % "1.1.2",
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
-    "org.elasticsearch.client" % "transport" % ESClientVersion,
-    "org.elasticsearch.client" % "rest" % ESClientVersion,
-	"org.apache.logging.log4j" % "log4j-api" % "2.7",
-	"org.apache.logging.log4j" % "log4j-core" % "2.7"
+    "log4j" % "log4j" % "1.2.17" // dependency of es libs
    )
 }
 

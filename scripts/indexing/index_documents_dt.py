@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import sys
 import csv
@@ -27,6 +27,7 @@ def index_items(item_listfile, skiplines=1):
         for row in freader:
             i += 1
             attempts = 10
+
             state = row[0]
             if row[1]:
                 try:
@@ -53,7 +54,6 @@ def index_items(item_listfile, skiplines=1):
                 try:
                     res = service.index_document_dt(state, queries, bubble, action, action_input, success_value, failure_value)
                 except interface.ApiCallException as exc:
-                    print("Error: ", exc)
                     print("Last line: ", lcounter)
                     sys.exit(1)
 

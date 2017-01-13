@@ -1,8 +1,8 @@
 # Docker StarChat
 # VERSION 0.1
 
-# the base image is a trusted ubuntu build with java 8 (https://index.docker.io/u/dockerfile/java/)
-FROM java:8
+# the base image is a trusted ubuntu build with java 9 (https://index.docker.io/u/dockerfile/java/)
+FROM java:9
 
 MAINTAINER Angelo Leto, angelo@getjenny.com
 

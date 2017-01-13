@@ -20,10 +20,9 @@ import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGet
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import java.net.InetAddress
-
 import scala.collection.JavaConverters._
+
 import com.typesafe.config.ConfigFactory
-import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.search.SearchHit
 
 class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
@@ -48,10 +47,10 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       bool_query_builder.must(QueryBuilders.termQuery("verified", documentSearch.verified.get))
 
     if(documentSearch.question.isDefined)
-      bool_query_builder.must(QueryBuilders.matchQuery("question.stem_bm25", documentSearch.question.get))
+      bool_query_builder.must(QueryBuilders.matchQuery("question.stem_lmd", documentSearch.question.get))
 
     if(documentSearch.answer.isDefined)
-      bool_query_builder.must(QueryBuilders.matchQuery("answer.stem_bm25", documentSearch.answer.get))
+      bool_query_builder.must(QueryBuilders.matchQuery("answer.stem_lmd", documentSearch.answer.get))
 
     if(documentSearch.conversation.isDefined)
       bool_query_builder.must(QueryBuilders.matchQuery("conversation", documentSearch.conversation.get))
@@ -176,7 +175,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = (response.status == Result.CREATED)
+      created = response.isCreated
     )
 
     Option {doc_result}
@@ -233,7 +232,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = (response.status == Result.CREATED)
+      created = response.isCreated
     )
 
     Option {doc_result}
@@ -247,7 +246,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      found = (response.status != Result.NOT_FOUND)
+      found = response.isFound
     )
 
     Option {doc_result}

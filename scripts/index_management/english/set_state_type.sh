@@ -18,10 +18,13 @@ echo "Parameters: $@"
 # see script/apit_test
 curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAME}/_mapping/state" -d '
 {
+	"_timestamp": {
+		"enabled": true
+	},
 	"properties": {
 		"state":
 		{
-			"type": "keyword",
+			"type": "string",
 			"store": "yes",
 			"index": "not_analyzed",
 			"null_value": ""
@@ -32,68 +35,69 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 		},
 		"queries":
 		{
-			"type": "text",
+			"type": "string",
 			"store": "yes",
 			"fields": {
 				"base": {
-					"type": "text",
+					"type": "string",
 					"analyzer": "ele_base_analyzer"
 				},
-				"base_bm25": {
-					"type": "text",
+				"base_lmd": {
+					"type": "string",
 					"analyzer": "ele_base_analyzer",
-					"similarity": "BM25"
+					"similarity": "LMDirichlet"
 				},
 				"stop": {
-					"type": "text",
+					"type": "string",
 					"analyzer": "ele_stop_analyzer"
 				},
-				"stop_bm25": {
-					"type": "text",
+				"stop_lmd": {
+					"type": "string",
 					"analyzer": "ele_stop_analyzer",
-					"similarity": "BM25"
+					"similarity": "LMDirichlet"
 				},
 				"stem": {
-					"type": "text",
+					"type": "string",
 					"analyzer": "ele_stem_analyzer"
 				},
-				"stem_bm25": {
-					"type": "text",
+				"stem_lmd": {
+					"type": "string",
 					"analyzer": "ele_stem_analyzer",
-					"similarity": "BM25"
+					"similarity": "LMDirichlet"
 				},
 				"shingles_4": {
-					"type": "text",
+					"type": "string",
 					"analyzer": "ele_shingles_4_analyzer"
 				},
 				"stemmed_shingles_4": {
-					"type": "text",
+					"type": "string",
 					"analyzer": "ele_stemmed_shingles_4_analyzer"
 				}
 			}
 		},
 		"bubble":
 		{
-			"type": "text",
-			"store": "yes"
+			"type": "string",
+			"store": "yes",
+			"null_value": ""
 		},
 		"action":
 		{
-			"type": "keyword",
+			"type": "string",
 			"store": "yes",
 			"index": "not_analyzed",
 			"null_value": ""
 		},
 		"success_value":
 		{
-			"type": "keyword",
+			"type": "string",
 			"store": "yes",
 			"index": "not_analyzed",
 			"null_value": ""
 		},
 		"failure_value":
 		{
-			"type": "keyword",
+			"type": "string",
 			"store": "yes",
 			"index": "not_analyzed",
 			"null_value": ""

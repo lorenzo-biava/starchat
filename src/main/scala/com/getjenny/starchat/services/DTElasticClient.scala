@@ -8,7 +8,6 @@ import java.net.InetAddress
 
 import com.typesafe.config.ConfigFactory
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.transport.client.PreBuiltTransportClient
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import scala.collection.immutable.{List, Map}
@@ -36,7 +35,7 @@ object  DTElasticClient {
   var client : TransportClient = open_client()
 
   def open_client(): TransportClient = {
-    val client: TransportClient = new PreBuiltTransportClient(settings)
+    val client: TransportClient = TransportClient.builder().settings(settings).build()
       .addTransportAddresses(inet_addresses:_*)
     client
   }

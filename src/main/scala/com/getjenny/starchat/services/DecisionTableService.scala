@@ -5,11 +5,10 @@ package com.getjenny.starchat.services
   */
 
 import com.getjenny.starchat.entities._
-import org.elasticsearch.action.DocWriteResponse.Result
-
-import scala.concurrent.{Await, ExecutionContext, Future, Promise}
-import scala.util.{Failure, Success}
+import scala.concurrent.{ExecutionContext, Future, Promise, Await}
+import scala.util.{Success, Failure}
 import scala.collection.immutable.{List, Map}
+
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
@@ -19,7 +18,6 @@ import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
-
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
@@ -74,11 +72,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             full_response
           }
         case false => // No states in the return values
-          val min_score = Option{request.min_score.getOrElse( // min_search score
-            Option{elastic_client.query_min_threshold}.getOrElse(0.0f)
-          )}
           val dtDocumentSearch : DTDocumentSearch =
-            DTDocumentSearch(from = Option{0}, size = Option{1}, min_score = min_score,
+            DTDocumentSearch(from = Option{0}, size = Option{1}, min_score = Option{elastic_client.query_min_threshold},
               state = Option{null}, queries = Option{user_text})
           val state: Future[Option[SearchDTDocumentsResults]] = search(dtDocumentSearch)
           // search the state with the closest query value, then return that state
@@ -123,24 +118,16 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       .setTypes(elastic_client.type_name)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
-    val min_score = documentSearch.min_score.getOrElse(
-      Option{elastic_client.query_min_threshold}.getOrElse(0.0f)
+    search_builder.setMinScore(documentSearch.min_score.getOrElse(
+      Option{elastic_client.query_min_threshold}.getOrElse(0.0f))
     )
-
-    search_builder.setMinScore(min_score)
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
     if (documentSearch.state.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get).boost(0.0f))
+      bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get))
 
-    if(documentSearch.queries.isDefined) {
-      bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
-      bool_query_builder.should(
-        QueryBuilders.matchPhraseQuery("queries.base_bm25", documentSearch.queries.get).boost(
-          min_score
-        )
-      )
-    }
+    if(documentSearch.queries.isDefined)
+      bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_lmd", documentSearch.queries.get))
 
     search_builder.setQuery(bool_query_builder)
 
@@ -233,7 +220,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = (response.status == Result.CREATED)
+      created = response.isCreated
     )
 
     Option {doc_result}
@@ -281,7 +268,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = (response.status == Result.CREATED)
+      created = response.isCreated
     )
 
     Option {doc_result}
@@ -295,7 +282,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      found = (response.status != Result.NOT_FOUND)
+      found = response.isFound
     )
 
     Option {doc_result}
