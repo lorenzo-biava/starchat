@@ -74,8 +74,11 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             full_response
           }
         case false => // No states in the return values
+          val min_score = Option{request.min_score.getOrElse( // min_search score
+            Option{elastic_client.query_min_threshold}.getOrElse(0.0f)
+          )}
           val dtDocumentSearch : DTDocumentSearch =
-            DTDocumentSearch(from = Option{0}, size = Option{1}, min_score = Option{elastic_client.query_min_threshold},
+            DTDocumentSearch(from = Option{0}, size = Option{1}, min_score = min_score,
               state = Option{null}, queries = Option{user_text})
           val state: Future[Option[SearchDTDocumentsResults]] = search(dtDocumentSearch)
           // search the state with the closest query value, then return that state
@@ -120,16 +123,24 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       .setTypes(elastic_client.type_name)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
-    search_builder.setMinScore(documentSearch.min_score.getOrElse(
-      Option{elastic_client.query_min_threshold}.getOrElse(0.0f))
+    val min_score = documentSearch.min_score.getOrElse(
+      Option{elastic_client.query_min_threshold}.getOrElse(0.0f)
     )
+
+    search_builder.setMinScore(min_score)
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
     if (documentSearch.state.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get))
+      bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get).boost(0.0f))
 
-    if(documentSearch.queries.isDefined)
-      bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_lmd", documentSearch.queries.get))
+    if(documentSearch.queries.isDefined) {
+      bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
+      bool_query_builder.should(
+        QueryBuilders.matchPhraseQuery("queries.base_bm25", documentSearch.queries.get).boost(
+          min_score
+        )
+      )
+    }
 
     search_builder.setQuery(bool_query_builder)
 
