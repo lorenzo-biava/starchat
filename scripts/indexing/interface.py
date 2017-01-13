@@ -47,7 +47,7 @@ class Service:
                     print(ret_data[1])
                     structured_res = (ret_data[0], json.loads(ret_data[1].decode("utf-8")))
                 except ValueError as exc:
-                    e_message = "error parsing response from url: " + url
+                    e_message = str(ret_data[0]) + " : error parsing response from url: " + url
                     raise ApiCallException(e_message)
             else:
                 structured_res = None

@@ -572,7 +572,7 @@ Sample output
 ## Requirements
 
 Starchat need Java JDK 8 (does not use java 9) and [sbt](http://www.scala-sbt.org). 
-He communicate with elasticsearch so you will need an instance of elasticsearch.
+He communicate with elasticsearch so you will need an instance of elasticsearch version 5.1.1 or above.
 If you want to use docker-compose, install docker first, then docker compose through python pip:
 
 ```bash
@@ -603,14 +603,14 @@ sbt dist
 ```
 * extract the packet into the docker-starchat folder
 ```bash
-unzip target/universal/starchat-0.1.zip && mv starchat-0.1 docker-starchat
+unzip target/universal/starchat-master.zip && mv starchat-master docker-starchat
 ```
 * enter the directory docker-starchat 
 ```bash
 cd  docker-starchat
 ```
 * review the configuration files
-    * edit the file starchat-0.1/config/application.conf and modify the ip where elasticsearch is bind
+    * edit the file starchat-master/config/application.conf and modify the ip where elasticsearch is bind
 * run the services (both startchat and elasticsearch)
 ```bash
 docker-compose up -d

@@ -8,9 +8,12 @@ import java.net.InetAddress
 
 import com.typesafe.config.ConfigFactory
 import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.transport.client.PreBuiltTransportClient
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import scala.collection.immutable.{List, Map}
+import scala.collection.JavaConversions.mapAsScalaMap
+import scala.collection.JavaConversions._
 
 object  KBElasticClient {
   val config = ConfigFactory.load()
@@ -20,7 +23,7 @@ object  KBElasticClient {
   val ignore_cluster_name = config.getBoolean("es.ignore_cluster_name")
   val query_min_threshold : Float = config.getDouble("es.kb_query_min_threshold").toFloat
 
-  val host_map : Map[String, Int] = config.getAnyRef("es.host_map").asInstanceOf[Map[String,Int]]
+  val host_map : Map[String, Int] = config.getAnyRef("es.host_map").asInstanceOf[java.util.Map[String, Int]].toMap
 
   val settings: Settings = Settings.builder()
     .put("cluster.name", cluster_name)
@@ -33,7 +36,7 @@ object  KBElasticClient {
   var client : TransportClient = open_client()
 
   def open_client(): TransportClient = {
-    val client: TransportClient = TransportClient.builder().settings(settings).build()
+    val client: TransportClient = new PreBuiltTransportClient(settings)
       .addTransportAddresses(inet_addresses:_*)
     client
   }
