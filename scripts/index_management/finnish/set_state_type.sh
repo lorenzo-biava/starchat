@@ -35,6 +35,10 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 			"type": "text",
 			"store": "yes",
 			"fields": {
+				"raw": {
+					"type": "text",
+					"index": "not_analyzed"
+				},
 				"base": {
 					"type": "text",
 					"analyzer": "ele_base_analyzer"
@@ -75,7 +79,8 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 		"bubble":
 		{
 			"type": "text",
-			"store": "yes"
+			"store": "yes",
+			"index": "not_analyzed"
 		},
 		"action":
 		{
