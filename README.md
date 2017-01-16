@@ -635,3 +635,15 @@ After these steps the services will be up and running and you can initialize the
 
 A set of test script is present inside scripts/api_test
 
+##Throubleshooting
+
+###Size of the virtual memory
+
+If elasticsearch complain about the size of the virtual memory:
+	"max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]"
+
+the following command fix it:
+
+```bash
+sysctl -w vm.max_map_count=262144
+```

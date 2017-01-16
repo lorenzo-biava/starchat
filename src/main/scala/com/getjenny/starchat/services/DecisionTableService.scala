@@ -136,9 +136,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     if(documentSearch.queries.isDefined) {
       bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
       bool_query_builder.should(
-        QueryBuilders.matchPhraseQuery("queries.base_bm25", documentSearch.queries.get).boost(
-          min_score
-        )
+        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(min_score)
       )
     }
 
