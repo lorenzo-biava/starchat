@@ -5,6 +5,7 @@ import csv
 import interface
 import hashlib
 import json
+import base64
 
 base_url = "http://0.0.0.0:8888"
 service_url = base_url + ""
@@ -14,6 +15,7 @@ service = interface.Service()
 service.service_url = service_url
 service.post_headers = {'Content-Type': 'application/json', 'apikey': 'xxxxxx'}
 service.get_headers = service.post_headers
+
 
 def load_data(questions_file, answers_file, associations_file):
     with open(questions_file) as qf, open(answers_file) as af, open(associations_file) as aaf:
@@ -40,6 +42,33 @@ def load_data(questions_file, answers_file, associations_file):
         data = { "questions_dict": questions_dict, "answers_dict": answers_dict, "associations_dict": associations_dict }
         return data
 
+
+def load_data_base64(questions_file, answers_file, associations_file):
+    with open(questions_file) as qf, open(answers_file) as af, open(associations_file) as aaf:
+        questions = csv.reader(qf, delimiter=';')
+        answers = csv.reader(af, delimiter=';')
+        associations = csv.reader(aaf, delimiter=';')
+
+        questions_dict = {}
+        #next(questions)
+        for row in questions:
+            questions_dict[row[0]] = base64.b64decode(row[1]).decode("utf-8")
+
+        answers_dict = {}
+        #next(answers)
+        for row in answers:
+            answers_dict[row[0]] = base64.b64decode(row[1]).decode("utf-8")
+
+        associations_dict = {}
+        next(associations)
+        for row in associations:
+            entry = { "conversation": row[1], "question": row[0], "position": int(row[2]), "answer": row[3]}
+            associations_dict[row[0]] = entry
+
+        data = { "questions_dict": questions_dict, "answers_dict": answers_dict, "associations_dict": associations_dict }
+        return data
+
+
 def join_data(questions_dict, answers_dict, associations_dict):
     conversations = {}
     for k, v in associations_dict.items():
@@ -54,11 +83,20 @@ def join_data(questions_dict, answers_dict, associations_dict):
             continue
         yield(entry)
 
+
 questions_path = sys.argv[1]
 answers_path = sys.argv[2]
 associations_path = sys.argv[3]
 
-data = load_data(questions_path, answers_path, associations_path)
+input_in_base64 = False
+if(len(sys.argv) >= 5):
+    input_in_base64 = True
+
+if(input_in_base64):
+    data = load_data_base64(questions_path, answers_path, associations_path)
+else:
+    data = load_data(questions_path, answers_path, associations_path)
+
 joined_data = join_data(data["questions_dict"], data["answers_dict"], data["associations_dict"])
 
 for item in joined_data:
