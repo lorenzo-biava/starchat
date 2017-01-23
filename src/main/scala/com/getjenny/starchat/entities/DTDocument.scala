@@ -11,6 +11,7 @@ case class DTDocument(state: String,
                       bubble: String,
                       action: String,
                       action_input: Map[String, String],
+                      state_data: Map[String, String],
                       success_value: String,
                       failure_value: String
                      )

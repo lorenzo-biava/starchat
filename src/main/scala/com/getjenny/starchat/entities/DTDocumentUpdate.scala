@@ -10,6 +10,7 @@ case class DTDocumentUpdate(queries: Option[List[String]],
                             bubble: Option[String],
                             action: Option[String],
                             action_input: Option[Map[String, String]],
+                            state_data: Option[Map[String, String]],
                             success_value: Option[String],
                             failure_value: Option[String]
                             )

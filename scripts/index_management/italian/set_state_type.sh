@@ -30,6 +30,10 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 		{
 			"type": "object"
 		},
+		"state_data":
+		{
+			"type": "object"
+		},
 		"queries":
 		{
 			"type": "text",
