@@ -49,6 +49,7 @@ and adding new analyzers or new fields.
         * bubble : the text to show to the user on UI
         * action : the name of a function to call (implemented by the client)  
         * action_input : a dictionary (key,value) with the parameters of the function (implemented by the client)
+        * state_data : a dictionary of strings which can contains arbitrary data which will be returned to the API user.
         * success_value : the destination state if the action function fail succeed  
         * failure_value : the destination state if the action function fail
     * question type : to store the conversations in question/answer format, the fields are the following
@@ -80,6 +81,7 @@ The csv contains the following columns:
 * **bubble (R)**: the output to be shown to the user, when empty nothing is to be shown. The bubble is a string which may contains template variables like %email% or %link%. The client is responsible to provide these functions
 * **action (R)**: a function to be called on the client side. The user is responsible of the implementation of these actions, see Client functions
 * **action_input (R)**: this is the input passed to the function in "Action". The text might contains template variables. see get_next_response
+* **state_data (R)**: a dictionary of strings which can contains arbitrary data which will be returned to the API user.
 * **success_value (R)** (instructions for client): output to return in case of success
 * **failure_value (R)** (instructions for client): output to return in case of failure
 * **query (T,I)**: this is a list of queries which should trigger the state
@@ -169,6 +171,7 @@ which contains all the conversations.
     "action": "the action function which is to be called e.g. input_form",
     "action_input": "the json string containing the input for the action function",
     "data":  "the same data field received in input",
+    "state_data": {},
     "success_value": "the value to be returned in case of success",
     "failure_value": "the value to be returned in case of failure"
 }
@@ -182,6 +185,7 @@ which contains all the conversations.
     "action": "input_form",
     "action_input": { "email": "email"},
     "data": { "email": "a@b.com" },
+    "state_data": {},
     "success_value": "send_password_generation_link",
     "failure_value": "dont_understand"
 }
@@ -195,6 +199,7 @@ which contains all the conversations.
     "action": "send_password_generation_link",
     "action_input": { "template": "somebody requested a regenaration of your password, if you requested the password reset follow the link: https://www.restorepassword.com/blabla", "email": "a@b.com" },
     "data": { "email": "a@b.com" },
+    "state_data": {},    
     "success_value": "any_further",
     "failure_value": "call_operator"
 }

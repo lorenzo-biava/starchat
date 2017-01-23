@@ -53,7 +53,8 @@ class Service:
                 structured_res = None
             return structured_res
 
-    def index_document_dt(self, state, queries, bubble, action, action_input, success_value, failure_value):
+    def index_document_dt(self, state, queries, bubble, action, action_input, state_data,
+                          success_value, failure_value):
         url = self.service_url + "/decisiontable"
         headers = self.post_headers
         body = {
@@ -62,6 +63,7 @@ class Service:
             "bubble": bubble,
             "action": action,
             "action_input": action_input,
+            "state_data": state_data,
             "success_value": success_value,
             "failure_value": failure_value
         }

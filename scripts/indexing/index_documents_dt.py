@@ -46,12 +46,21 @@ def index_items(item_listfile, skiplines=1):
                     sys.exit(4)
             else:
                 action_input = {}
-            success_value = row[5]
-            failure_value = row[6]
+            if row[5]:
+                try:
+                    state_data = json.loads(row[5])
+                except:
+                    print("Error: row[5]", i, row[5])
+                    sys.exit(4)
+            else:
+                state_data = {}
+            success_value = row[6]
+            failure_value = row[7]
 
             while attempts > 0:
                 try:
-                    res = service.index_document_dt(state, queries, bubble, action, action_input, success_value, failure_value)
+                    res = service.index_document_dt(state, queries, bubble, action, action_input,
+                                                    state_data, success_value, failure_value)
                 except interface.ApiCallException as exc:
                     print("Error: ", exc)
                     print("Last line: ", lcounter)

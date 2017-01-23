@@ -47,6 +47,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             val doc : DTDocument = res.get.hits.head.document
             var bubble : String = doc.bubble
             var action_input : Map[String,String] = doc.action_input
+            var state_data : Map[String, String] = doc.state_data
             if (data.nonEmpty) {
               for ((key,value) <- data) {
                 bubble = bubble.replaceAll("%" + key + "%", value)
@@ -61,6 +62,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               action = doc.action,
               data = data,
               action_input = action_input,
+              state_data = state_data,
               success_value = doc.success_value,
               failure_value = doc.failure_value)
 
@@ -87,6 +89,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             val doc : DTDocument = res.get.hits.head.document
             var bubble : String = doc.bubble
             var action_input : Map[String,String] = doc.action_input
+            var state_data: Map[String, String] = doc.state_data
             if (data.nonEmpty) {
               for ((key,value) <- data) {
                 bubble = bubble.replaceAll("%" + key + "%", value)
@@ -101,6 +104,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               action = doc.action,
               data = data,
               action_input = action_input,
+              state_data = state_data,
               success_value = doc.success_value,
               failure_value = doc.failure_value)
 
@@ -131,7 +135,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
     if (documentSearch.state.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get).boost(0.0f))
+      bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get))
 
     if(documentSearch.queries.isDefined) {
       bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
@@ -175,6 +179,11 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => Map[String, String]()
       }
 
+      val state_data : Map[String,String] = source.get("state_data") match {
+        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+        case None => Map[String, String]()
+      }
+
       val success_value : String = source.get("success_value") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
@@ -186,7 +195,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       }
 
       val document : DTDocument = DTDocument(state = state, queries = queries, bubble = bubble,
-        action = action, action_input = action_input, success_value = success_value, failure_value = failure_value)
+        action = action, action_input = action_input, state_data = state_data,
+        success_value = success_value, failure_value = failure_value)
 
       val search_document : SearchDTDocument = SearchDTDocument(score = item.score, document = document)
       search_document
@@ -214,6 +224,10 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val action_input_builder : XContentBuilder = builder.startObject("action_input")
     for ((k,v) <- document.action_input) action_input_builder.field(k,v)
     action_input_builder.endObject()
+
+    val state_data_builder : XContentBuilder = builder.startObject("state_data")
+    for ((k,v) <- document.state_data) state_data_builder.field(k,v)
+    state_data_builder.endObject()
 
     builder.field("success_value", document.success_value)
     builder.field("failure_value", document.failure_value)
@@ -258,6 +272,13 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         val action_input_builder : XContentBuilder = builder.startObject("action_input")
         for ((k,v) <- t) action_input_builder.field(k,v)
         action_input_builder.endObject()
+      case None => ;
+    }
+    document.state_data match {
+      case Some(t) =>
+        val state_data_builder : XContentBuilder = builder.startObject("state_data")
+        for ((k,v) <- t) state_data_builder.field(k,v)
+        state_data_builder.endObject()
       case None => ;
     }
     document.success_value match {
@@ -334,6 +355,11 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => Map[String,String]()
       }
 
+      val state_data : Map[String,String] = source.get("state_data") match {
+        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+        case None => Map[String,String]()
+      }
+
       val success_value : String = source.get("success_value") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
@@ -345,7 +371,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       }
 
       val document : DTDocument = DTDocument(state = state, queries = queries, bubble = bubble,
-        action = action, action_input = action_input, success_value = success_value, failure_value = failure_value)
+        action = action, action_input = action_input, state_data = state_data,
+        success_value = success_value, failure_value = failure_value)
 
       val search_document : SearchDTDocument = SearchDTDocument(score = .0f, document = document)
       search_document
