@@ -45,6 +45,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
           val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
           if (res.get.total > 0) {
             val doc : DTDocument = res.get.hits.head.document
+            val state : String = doc.state
             var bubble : String = doc.bubble
             var action_input : Map[String,String] = doc.action_input
             var state_data : Map[String, String] = doc.state_data
@@ -58,7 +59,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               }
             }
 
-            val response_data : ResponseRequestOut = ResponseRequestOut(bubble = bubble,
+            val response_data : ResponseRequestOut = ResponseRequestOut(state = state,
+              bubble = bubble,
               action = doc.action,
               data = data,
               action_input = action_input,
@@ -87,6 +89,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
           val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
           if (res.get.total > 0) {
             val doc : DTDocument = res.get.hits.head.document
+            val state : String = doc.state
             var bubble : String = doc.bubble
             var action_input : Map[String,String] = doc.action_input
             var state_data: Map[String, String] = doc.state_data
@@ -100,7 +103,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               }
             }
 
-            val response_data : ResponseRequestOut = ResponseRequestOut(bubble = bubble,
+            val response_data : ResponseRequestOut = ResponseRequestOut(state = state,
+              bubble = bubble,
               action = doc.action,
               data = data,
               action_input = action_input,
