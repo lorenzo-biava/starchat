@@ -167,6 +167,7 @@ which contains all the conversations.
 
 ```json
 {
+    "state" : "<state name>",
     "bubble": "the text for the bubble",
     "action": "the action function which is to be called e.g. input_form",
     "action_input": "the json string containing the input for the action function",
@@ -181,6 +182,7 @@ which contains all the conversations.
 
 ```json
 {
+    "state" : "<state name>",
     "bubble": "We can reset your password by sending you a message to your registered e-mail address. Please tell me your address so I may send you the new password generation link.",
     "action": "input_form",
     "action_input": { "email": "email"},
@@ -195,6 +197,7 @@ which contains all the conversations.
 
 ```json
 {
+    "state" : "<state name>",
     "bubble": "Thank you. An e-mail will be sent to this address: a@b.com with your account details and the necessary steps for you to reset your password.",
     "action": "send_password_generation_link",
     "action_input": { "template": "somebody requested a regenaration of your password, if you requested the password reset follow the link: https://www.restorepassword.com/blabla", "email": "a@b.com" },

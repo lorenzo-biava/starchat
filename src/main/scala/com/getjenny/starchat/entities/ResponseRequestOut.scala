@@ -6,10 +6,11 @@ package com.getjenny.starchat.entities
 
 import scala.collection.immutable.Map
 
-case class ResponseRequestOut(bubble: String,
-                                action: String,
-                                data: Map[String, String],
-                                action_input: Map[String, String],
-                                state_data: Map[String, String],
-                                success_value: String,
-                                failure_value: String)
+case class ResponseRequestOut(state: String,
+                              bubble: String,
+                              action: String,
+                              data: Map[String, String],
+                              action_input: Map[String, String],
+                              state_data: Map[String, String],
+                              success_value: String,
+                              failure_value: String)
