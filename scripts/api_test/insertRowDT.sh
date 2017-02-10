@@ -3,6 +3,8 @@
 # state is also used as ID (see updateRowDT.sh)
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable -d '{
 	"state": "further_details_access_question",
+        "max_state_count": 0,
+        "regex": "",
 	"queries": ["cannot access account", "problem access account"],
 	"bubble": "What seems to be the problem exactly?",
 	"action": "show_buttons",

@@ -44,7 +44,9 @@ and adding new analyzers or new fields.
 
 * *Chat uses two data types on the same index:
     * state type : for the storage of the state machine, the fields are the following
-        * state : the name of the state 
+        * state : the name of the state
+        * max_state_count: defines how many times the state can be returned per conversation
+        * regex: specify a regular expression which trigger the state         
         * queries : the list of queries which trigger the state e.g. ["cannot access account", "problem access account"],
         * bubble : the text to show to the user on UI
         * action : the name of a function to call (implemented by the client)  
@@ -78,6 +80,8 @@ by a csv called **SYSTEM TEMPLATE SCRIPT** which has the format:
 The csv contains the following columns:
 
 * **state**: a unique name of the state
+* **max_state_count**: defines how many times the state can be returned per conversation
+* **regex**: specify a regular expression which trigger the state
 * **bubble (R)**: the output to be shown to the user, when empty nothing is to be shown. The bubble is a string which may contains template variables like %email% or %link%. The client is responsible to provide these functions
 * **action (R)**: a function to be called on the client side. The user is responsible of the implementation of these actions, see Client functions
 * **action_input (R)**: this is the input passed to the function in "Action". The text might contains template variables. see get_next_response
@@ -251,32 +255,36 @@ Sample output
 
 ```json
 {
-    "hits": [
-        {
-            "document": {
-                "action": "show_buttons",
-                "action_input": {
-                    "Account locked": "account_locked",
-                    "Forgot Password": "forgot_password",
-                    "I want to call an operator": "call_operator",
-                    "None of the above": "start",
-                    "Payment problem": "payment_problem",
-                    "Specify your problem": "specify_problem"
-                },
-                "bubble": "What seems to be the problem exactly?",
-                "failure_value": "dont_understand",
-                "queries": [
-                    "cannot access account",
-                    "problem access account"
-                ],
-                "state": "further_details_access_question",
-                "success_value": "eval(show_buttons)"
-            },
-            "score": 0.0
-        }
-    ],
-    "max_score": 0.0,
-    "total": 1
+  "total": 1,
+  "max_score": 0,
+  "hits": [
+    {
+      "score": 0,
+      "document": {
+        "regex": "((forgot).*(password))",
+        "queries": [
+          "cannot access account",
+          "problem access account"
+        ],
+        "state": "further_details_access_question",
+        "state_data": {
+          "verification": "did you mean you can't access to your account?"
+        },
+        "success_value": "eval(show_buttons)",
+        "failure_value": "\"dont_understand\"",
+        "bubble": "Hello and welcome to our customer service chat. Please note that while I am not a human operator, I will do my very best to assist You today. How may I help you?",
+        "action_input": {
+          "Specify your problem": "specify_problem",
+          "I want to call an operator": "call_operator",
+          "None of the above": "start",
+          "Forgot Password": "forgot_password",
+          "Account locked": "account_locked"
+        },
+        "max_state_count": 0,
+        "action": "show_buttons"
+      }
+    }
+  ]
 }
 ```
 
@@ -318,6 +326,8 @@ Sample call
 ```bash
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable -d '{
   "state": "further_details_access_question",
+  "max_state_count": 0,
+  "regex": "",
   "queries": ["cannot access account", "problem access account"],
   "bubble": "What seems to be the problem exactly?",
   "action": "show_buttons",
@@ -378,6 +388,48 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisi
   "queries": "cannot access my account",
   "min_score": 0.1
 }'
+```
+
+### decisiontable_regex: Method GET
+
+Get and return the map of regular expressions for each state
+
+Output JSON
+
+return code: 200
+
+Sample call
+```bash
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/decisiontable_regex"
+```
+
+Sample response
+
+```json
+{
+  "regex_map": {
+    "further_details_access_question": "((forgot).*(password))"
+  }
+}
+```
+
+### decisiontable_regex: Method POST
+
+Load/reload the map of regular expression from ES
+
+Output JSON
+
+return code: 200
+
+Sample call
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_regex"
+```
+
+Sample response
+
+```json
+{"num_of_entries":1}
 ```
 
 ## Knowledgebase
