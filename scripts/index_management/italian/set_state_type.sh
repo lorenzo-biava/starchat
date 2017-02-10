@@ -26,6 +26,17 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 			"index": "not_analyzed",
 			"null_value": ""
 		},
+		"max_state_count":
+		{
+		    "type": "integer"
+		},
+		"regex":
+		{
+			"type": "keyword",
+			"store": "yes",
+			"index": "not_analyzed",
+			"null_value": ""
+		},
 		"action_input":
 		{
 			"type": "object"

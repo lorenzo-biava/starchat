@@ -60,6 +60,19 @@ trait DecisionTableResource extends MyResource {
       }
   }
 
+  def decisionTableRegexRoutes: Route = pathPrefix("decisiontable_regex") {
+    pathEnd {
+      get {
+        val result: Future[Option[DTRegexMap]] = Future(Option(DTRegexMap(regex_map = dtElasticService.regex_map)))
+        completeDTRegexMapJson(200, 400, result)
+      } ~
+      post {
+        val result: Future[Option[DTRegexLoad]] = dtElasticService.loadRegex
+        completeDTRegexLoadJson(200, 400, result)
+      }
+    }
+  }
+
   def decisionTableSearchRoutes: Route = pathPrefix("decisiontable_search") {
     pathEnd {
       post {
@@ -70,7 +83,6 @@ trait DecisionTableResource extends MyResource {
       }
     }
   }
-
 
   def decisionTableResponseRequestRoutes: Route = pathPrefix("get_next_response") {
     pathEnd {

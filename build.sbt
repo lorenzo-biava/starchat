@@ -12,9 +12,9 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
                   Resolver.bintrayRepo("hseeberger", "maven"))
 
 libraryDependencies ++= {
-  val AkkaVersion       = "2.4.14"
-  val AkkaHttpVersion   = "10.0.0"
-  val ESClientVersion   = "5.1.1"
+  val AkkaVersion       = "2.4.16"
+  val AkkaHttpVersion   = "10.0.3"
+  val ESClientVersion   = "5.2.0"
   Seq(
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
     "com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
@@ -26,8 +26,9 @@ libraryDependencies ++= {
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "org.elasticsearch.client" % "transport" % ESClientVersion,
     "org.elasticsearch.client" % "rest" % ESClientVersion,
-	"org.apache.logging.log4j" % "log4j-api" % "2.7",
-	"org.apache.logging.log4j" % "log4j-core" % "2.7"
+    "org.apache.logging.log4j" % "log4j-api" % "2.7",
+    "org.apache.logging.log4j" % "log4j-core" % "2.7",
+    "org.parboiled" %% "parboiled" % "2.1.4"
    )
 }
 

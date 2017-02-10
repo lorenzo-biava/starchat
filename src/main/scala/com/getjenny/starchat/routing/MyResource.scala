@@ -95,4 +95,20 @@ trait MyResource extends Directives with JsonSupport {
     }
   }
 
+  def completeDTRegexMapJson(status_code_ok: Int, status_code_failed: Int,
+                                data: Future[Option[DTRegexMap]]): Route = {
+    onSuccess(data) {
+      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
+      case None => complete(status_code_failed, None)
+    }
+  }
+
+  def completeDTRegexLoadJson(status_code_ok: Int, status_code_failed: Int,
+                             data: Future[Option[DTRegexLoad]]): Route = {
+    onSuccess(data) {
+      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
+      case None => complete(status_code_failed, None)
+    }
+  }
+
 }
