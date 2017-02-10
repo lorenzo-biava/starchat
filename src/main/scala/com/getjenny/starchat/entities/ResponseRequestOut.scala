@@ -7,6 +7,8 @@ package com.getjenny.starchat.entities
 import scala.collection.immutable.Map
 
 case class ResponseRequestOut(state: String,
+                              max_state_count: Int,
+                              regex: String,
                               bubble: String,
                               action: String,
                               data: Map[String, String],

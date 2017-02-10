@@ -53,12 +53,14 @@ class Service:
                 structured_res = None
             return structured_res
 
-    def index_document_dt(self, state, queries, bubble, action, action_input, state_data,
+    def index_document_dt(self, state, max_state_count, regex, queries, bubble, action, action_input, state_data,
                           success_value, failure_value):
         url = self.service_url + "/decisiontable"
         headers = self.post_headers
         body = {
             "state": state,
+            "max_state_count": max_state_count,
+            "regex": regex,
             "queries": queries,
             "bubble": bubble,
             "action": action,
@@ -84,17 +86,17 @@ class Service:
         url = self.service_url + "/knowledgebase"
         headers = self.post_headers
         body = {
-		"id": the_id,
-		"conversation": conversation,
-		"index_in_conversation": index_in_conversation,
-		"question": question,
-		"answer": answer,
-		"verified": verified,
-		"topics": topics,
-		"doctype": doctype,
-		"state": state,
-		"status": status
-	}
+            "id": the_id,
+            "conversation": conversation,
+            "index_in_conversation": index_in_conversation,
+            "question": question,
+            "answer": answer,
+            "verified": verified,
+            "topics": topics,
+            "doctype": doctype,
+            "state": state,
+            "status": status
+        }
 
         print(body)
         res = self.call_api_function(url=url, method="POST", body=json.dumps(body), headers=headers)
