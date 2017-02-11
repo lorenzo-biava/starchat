@@ -1,114 +1,42 @@
 package com.getjenny.starchat.routing
 
-import akka.http.scaladsl.marshalling.{ToResponseMarshaller, ToResponseMarshallable}
+import akka.http.scaladsl.marshalling.{ToResponseMarshallable, ToEntityMarshaller}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 import akka.http.scaladsl.server.{Directives, Route}
 
 import com.getjenny.starchat.serializers.JsonSupport
-import com.getjenny.starchat.entities._
 
+import akka.http.scaladsl.model.ContentTypes._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.`Content-Type`
+import akka.http.scaladsl.server.{ Route, ValidationRejection }
 
 trait MyResource extends Directives with JsonSupport {
 
   implicit def executionContext: ExecutionContext
 
-  def completeRootAPIsDescriptionMessageData(status_code_ok: Int,
-                                             message: Future[Option[RootAPIsDescription]]): Route = {
-    onSuccess(message) {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, message))
-      case None =>
-        complete(ToResponseMarshallable(status_code_ok,
-          ReturnMessageData(code = 400, message = "error evaluating response")))
-    }
+  def completeResponse(status_code: StatusCode): Route = {
+      complete(status_code)
   }
 
-  def completeResponseMessageData(status_code_ok: Int, message: Future[Option[ReturnMessageData]]): Route = {
-    onSuccess(message) {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, message))
-      case None =>
-      complete(ToResponseMarshallable(status_code_ok,
-        ReturnMessageData(code = 400, message = "error evaluating response")))
-    }
-  }
-
-  def completeResponseRequestOutJson(status_code_ok: Int, status_code_failed: Int,
-                                     data: Option[ResponseRequestOut]): Route = {
-    data match {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
-      case None => complete(ToResponseMarshallable(status_code_failed,
-        ReturnMessageData(code = 400, message = "error evaluating response")))
-    }
-  }
-
-  def completeSearchKBDocumentResultsJson(status_code_ok: Int, status_code_failed: Int,
-                                          data: Future[Option[SearchKBDocumentsResults]]): Route = {
-    onSuccess(data) {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
-      case None => complete(status_code_failed, None)
-    }
-  }
-
-  def completeSearchDTDocumentResultsJson(status_code_ok: Int, status_code_failed: Int,
-                                          data: Future[Option[SearchDTDocumentsResults]]): Route = {
-    onSuccess(data) {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
-      case None => complete(status_code_failed, None)
-    }
-  }
-
-  def completeDTDocumentJson(status_code_ok: Int, status_code_failed: Int,
-                             data: Future[Option[DTDocument]]): Route = {
-    onSuccess(data) {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
-      case None => complete(status_code_failed, None)
-    }
-  }
-
-  def completeUpdateDocumentResultJson(status_code_ok: Int, status_code_failed: Int,
-                                    data: Future[Option[UpdateDocumentResult]]): Route = {
-    onSuccess(data) {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
-      case None => complete(status_code_failed, None)
-    }
-  }
-
-  def completeDeleteDocumentResultJson(status_code_ok: Int, status_code_failed: Int,
-                                       data: Future[Option[DeleteDocumentResult]]): Route = {
+  def completeResponse[A: ToEntityMarshaller](status_code: StatusCode, data: Future[Option[A]]): Route = {
     onSuccess(data) {
       case Some(t) =>
-        if(t.found) {
-          complete(ToResponseMarshallable(status_code_ok, t))
-        } else {
-          complete(ToResponseMarshallable(status_code_failed, t))
-        }
-      case None => complete(status_code_failed, None)
+        complete(status_code, List(`Content-Type`(`application/json`)), t)
+      case None =>
+        complete(status_code)
     }
   }
 
-  def completeIndexDocumentJson(status_code_ok: Int, status_code_failed: Int,
-                                    data: Future[Option[IndexDocumentResult]]): Route = {
+  def completeResponse[A: ToEntityMarshaller](status_code_ok: StatusCode, status_code_failed: StatusCode,
+                                     data: Future[Option[A]]): Route = {
     onSuccess(data) {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
-      case None => complete(status_code_failed, None)
+      case Some(t) =>
+        complete(status_code_ok, List(`Content-Type`(`application/json`)), t)
+      case None =>
+        complete(status_code_failed)
     }
   }
-
-  def completeDTRegexMapJson(status_code_ok: Int, status_code_failed: Int,
-                                data: Future[Option[DTRegexMap]]): Route = {
-    onSuccess(data) {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
-      case None => complete(status_code_failed, None)
-    }
-  }
-
-  def completeDTRegexLoadJson(status_code_ok: Int, status_code_failed: Int,
-                             data: Future[Option[DTRegexLoad]]): Route = {
-    onSuccess(data) {
-      case Some(t) => complete(ToResponseMarshallable(status_code_ok, t))
-      case None => complete(status_code_failed, None)
-    }
-  }
-
 }
