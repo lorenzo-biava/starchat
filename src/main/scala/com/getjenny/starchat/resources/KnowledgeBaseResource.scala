@@ -25,9 +25,9 @@ trait KnowledgeBaseResource extends MyResource {
           val result: Future[Option[IndexDocumentResult]] = kbElasticService.create(document)
           onSuccess(result) {
             case Some(v) =>
-              completeIndexDocumentJson(201, 410, Future{Option{v}})
+              completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{v}})
             case None =>
-              completeResponseMessageData(400,
+              completeResponse( StatusCodes.BadRequest,
                 Future{Option{ReturnMessageData(code = 300, message = "Error indexing new document")}})
           }
         }
@@ -35,7 +35,7 @@ trait KnowledgeBaseResource extends MyResource {
       get {
         parameters("ids".as[String].*) { ids =>
           val result: Future[Option[SearchKBDocumentsResults]] = kbElasticService.read(ids.toList)
-          completeSearchKBDocumentResultsJson(200, 400, result)
+          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
         }
       }
     } ~
@@ -46,16 +46,16 @@ trait KnowledgeBaseResource extends MyResource {
             val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 30.seconds).value.get
             result_try match {
               case Success(t) =>
-                completeUpdateDocumentResultJson(201, 400, result)
+                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
               case Failure(e) =>
-                completeResponseMessageData(400,
+                completeResponse(StatusCodes.BadRequest,
                   Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})
             }
           }
         } ~
           delete {
             val result: Future[Option[DeleteDocumentResult]] = kbElasticService.delete(id)
-            completeDeleteDocumentResultJson(200, 400, result)
+            completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
           }
       }
   }
@@ -65,7 +65,7 @@ trait KnowledgeBaseResource extends MyResource {
       post {
         entity(as[KBDocumentSearch]) { docsearch =>
           val result: Future[Option[SearchKBDocumentsResults]] = kbElasticService.search(docsearch)
-          completeSearchKBDocumentResultsJson(200, 400, result)
+          completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
         }
       }
     }

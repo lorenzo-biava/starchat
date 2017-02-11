@@ -23,19 +23,13 @@ trait DecisionTableResource extends MyResource {
       post {
         entity(as[DTDocument]) { document =>
           val result: Future[Option[IndexDocumentResult]] = dtElasticService.create(document)
-          onSuccess(result) {
-            case Some(v) =>
-              completeIndexDocumentJson(201, 410, Future{Option{v}})
-            case None =>
-              completeResponseMessageData(400,
-                Future{Option{ReturnMessageData(code = 300, message = "Error indexing new document")}})
-          }
+          completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
         }
       } ~
         get {
           parameters("ids".as[String].*) { ids =>
             val result: Future[Option[SearchDTDocumentsResults]] = dtElasticService.read(ids.toList)
-            completeSearchDTDocumentResultsJson(200, 400, result)
+            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
           }
         }
     } ~
@@ -46,16 +40,24 @@ trait DecisionTableResource extends MyResource {
             val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result,  30.seconds).value.get
             result_try match {
               case Success(t) =>
-                completeUpdateDocumentResultJson(201, 400, result)
+                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
               case Failure(e) =>
-                completeResponseMessageData(400,
+                completeResponse(StatusCodes.BadRequest,
                   Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})
             }
           }
         } ~
           delete {
             val result: Future[Option[DeleteDocumentResult]] = dtElasticService.delete(id)
-            completeDeleteDocumentResultJson(200, 400, result)
+            onSuccess(result) {
+              case Some(t) =>
+                if(t.found) {
+                  completeResponse(StatusCodes.OK, result)
+                } else {
+                  completeResponse(StatusCodes.BadRequest, result)
+                }
+              case None => completeResponse(StatusCodes.BadRequest)
+            }
           }
       }
   }
@@ -64,11 +66,11 @@ trait DecisionTableResource extends MyResource {
     pathEnd {
       get {
         val result: Future[Option[DTRegexMap]] = Future(Option(DTRegexMap(regex_map = dtElasticService.regex_map)))
-        completeDTRegexMapJson(200, 400, result)
+        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
       } ~
       post {
         val result: Future[Option[DTRegexLoad]] = dtElasticService.loadRegex
-        completeDTRegexLoadJson(200, 400, result)
+        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
       }
     }
   }
@@ -78,7 +80,7 @@ trait DecisionTableResource extends MyResource {
       post {
         entity(as[DTDocumentSearch]) { docsearch =>
           val result: Future[Option[SearchDTDocumentsResults]] = dtElasticService.search(docsearch)
-          completeSearchDTDocumentResultsJson(200, 400, result)
+          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
         }
       }
     }
@@ -93,11 +95,11 @@ trait DecisionTableResource extends MyResource {
           response match {
             case Some(t) =>
               if (t.status.code == 200) {
-                completeResponseRequestOutJson (t.status.code, 410, t.response_request_out)
+                completeResponse(StatusCodes.OK, StatusCodes.Gone, Future{t.response_request_out})
               }  else {
-                complete(t.status.code, None) // no response found
+                completeResponse(StatusCodes.NoContent) // no response found
               }
-            case None => completeResponseRequestOutJson (200, 410, null)
+            case None => completeResponse(StatusCodes.BadRequest)
           }
         }
       }

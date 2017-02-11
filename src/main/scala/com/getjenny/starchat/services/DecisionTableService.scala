@@ -7,8 +7,7 @@ package com.getjenny.starchat.services
 import com.getjenny.starchat.entities._
 import org.elasticsearch.action.DocWriteResponse.Result
 
-import scala.concurrent.{Await, ExecutionContext, Future, Promise}
-import scala.util.{Failure, Success}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
@@ -24,8 +23,6 @@ import org.elasticsearch.common.unit._
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
-
-import scala.collection.mutable
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
