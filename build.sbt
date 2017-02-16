@@ -32,6 +32,8 @@ libraryDependencies ++= {
    )
 }
 
+scalacOptions += "-deprecation"
+
 enablePlugins(JavaServerAppPackaging)
 
 // Assembly settings
@@ -48,4 +50,5 @@ mappings in Universal ++= {
 
 scriptClasspath := Seq("../config/") ++ scriptClasspath.value
 
-licenses := Seq(("GPLv3", url("https://opensource.org/licenses/MIT")))
+licenses := Seq(("GPLv3", url("https://www.gnu.org/licenses/gpl-3.0.md")))
+

@@ -117,9 +117,12 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
           val min_score = Option{request.min_score.getOrElse( // min_search score
             Option{elastic_client.query_min_threshold}.getOrElse(0.0f)
           )}
+          val boost_exact_match_factor = Option{request.boost_exact_match_factor.getOrElse(
+            Option{elastic_client.boost_exact_match_factor}.getOrElse(1.0f)
+          )}
           val dtDocumentSearch : DTDocumentSearch =
             DTDocumentSearch(from = Option{0}, size = Option{1}, min_score = min_score,
-              state = Option{null}, queries = Option{user_text})
+              boost_exact_match_factor = boost_exact_match_factor, state = Option{null}, queries = Option{user_text})
           val state: Future[Option[SearchDTDocumentsResults]] = search(dtDocumentSearch)
           // search the state with the closest query value, then return that state
           val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
@@ -175,6 +178,10 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       Option{elastic_client.query_min_threshold}.getOrElse(0.0f)
     )
 
+    val boost_exact_match_factor = documentSearch.boost_exact_match_factor.getOrElse(
+      Option{elastic_client.boost_exact_match_factor}.getOrElse(1.0f)
+    )
+
     search_builder.setMinScore(min_score)
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
@@ -184,7 +191,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     if(documentSearch.queries.isDefined) {
       bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
       bool_query_builder.should(
-        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(min_score)
+        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(min_score * boost_exact_match_factor)
       )
     }
 
