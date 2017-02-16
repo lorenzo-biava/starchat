@@ -12,8 +12,7 @@ import org.elasticsearch.transport.client.PreBuiltTransportClient
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import scala.collection.immutable.{List, Map}
-import scala.collection.JavaConversions.mapAsScalaMap
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 object  DTElasticClient {
   val config = ConfigFactory.load()
@@ -22,8 +21,10 @@ object  DTElasticClient {
   val cluster_name = config.getString("es.cluster_name")
   val ignore_cluster_name = config.getBoolean("es.ignore_cluster_name")
   val query_min_threshold : Float = config.getDouble("es.dt_query_min_threshold").toFloat
+  val boost_exact_match_factor : Float = config.getDouble("es.dt_boost_exact_match_factor").toFloat
 
-  val host_map : Map[String, Int] = config.getAnyRef("es.host_map").asInstanceOf[java.util.Map[String, Int]].toMap
+  val host_map : Map[String, Int] = config.getAnyRef("es.host_map")
+    .asInstanceOf[java.util.Map[String, Int]].asScala.toMap
 
   val settings: Settings = Settings.builder()
     .put("cluster.name", cluster_name)

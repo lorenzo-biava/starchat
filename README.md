@@ -1,6 +1,7 @@
 # *Chat
 
 ## *Chat in brief
+
 *Chat ("starchat") is a service for the implementation of workflow based chatbot.
 
 *Chat provide a restful service to implement conversational agents.
@@ -386,11 +387,12 @@ Sample call
 ```bash
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable_search -d '{
   "queries": "cannot access my account",
-  "min_score": 0.1
+  "min_score": 0.1,
+  "boost_exact_match_factor": 2.0
 }'
 ```
 
-### decisiontable_regex: Method GET
+### decisiontable_regex: Method GET (WORK IN PROGRESS, PARTIALLY IMPLEMENTED)
 
 Get and return the map of regular expressions for each state
 

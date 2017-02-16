@@ -32,6 +32,8 @@ libraryDependencies ++= {
    )
 }
 
+scalacOptions += "-deprecation"
+
 enablePlugins(JavaServerAppPackaging)
 
 // Assembly settings
