@@ -39,6 +39,67 @@ When no state matches the input text, optionally, *Chat searches on the knowledg
 Is straightforward to customize the elasticsearch schema for new languages
 and adding new analyzers or new fields.
 
+# Build and run the service 
+
+## Requirements
+
+Starchat requires Java JDK 8 (does not use java 9) and [sbt](http://www.scala-sbt.org). 
+Starchat communicates with elasticsearch so you will need an instance of elasticsearch version 5.1.1 or higher.
+If you want to use docker-compose, [install docker](https://docs.docker.com/engine/installation/) first, then [install docker compose](https://docs.docker.com/compose/install/)
+
+## run directly in the build environment
+ 
+Clone the repository and enter the starchat directory.
+
+Initialize the elasticsearch instance.
+
+Run the service:
+
+```bash
+sbt compile run
+```
+
+The service binds on the port 8888 by default.
+
+# Setup 
+
+## docker
+
+* generate a packet distribution
+```bash
+sbt dist
+```
+* extract the packet into the docker-starchat folder
+```bash
+unzip target/universal/starchat-master.zip && mv starchat-master docker-starchat
+```
+* enter the directory docker-starchat 
+```bash
+cd  docker-starchat
+```
+* review the configuration files
+    * edit the file starchat-master/config/application.conf and modify the ip where elasticsearch is bind
+* run the services (both startchat and elasticsearch)
+```bash
+docker-compose up -d
+```
+
+After these steps the services will be up and running and you can initialize the ES schemas.
+
+##Prepare ES
+
+* enter the directory scripts/index_management/\<lang\> e.g. enter the directory scripts/index_management/english 
+* create the analyzers
+```bash
+./create_analyzer.sh
+```
+* create the data types
+```bash
+./set_question_type.sh
+./set_state_type.sh
+```
+
+
 # System Design
 
 ## The data schema
@@ -627,70 +688,6 @@ Sample output
     "max_score": 3.5618982315063477,
     "total": 1
 }
-```
-
-# Build and run the service 
-
-## Requirements
-
-Starchat need Java JDK 8 (does not use java 9) and [sbt](http://www.scala-sbt.org). 
-He communicate with elasticsearch so you will need an instance of elasticsearch version 5.1.1 or above.
-If you want to use docker-compose, install docker first, then docker compose through python pip:
-
-```bash
-pip install docker-compose
-```
-
-## run directly in the build environment
- 
-Clone the repository and enter the starchat directory.
-
-Initialize the elasticsearch instance.
-
-Run the service:
-
-```bash
-sbt compile run
-```
-
-The service binds on the port 8888 by default.
-
-# Setup 
-
-## docker
-
-* generate a packet distribution
-```bash
-sbt dist
-```
-* extract the packet into the docker-starchat folder
-```bash
-unzip target/universal/starchat-master.zip && mv starchat-master docker-starchat
-```
-* enter the directory docker-starchat 
-```bash
-cd  docker-starchat
-```
-* review the configuration files
-    * edit the file starchat-master/config/application.conf and modify the ip where elasticsearch is bind
-* run the services (both startchat and elasticsearch)
-```bash
-docker-compose up -d
-```
-
-After these steps the services will be up and running and you can initialize the ES schemas.
-
-##Prepare ES
-
-* enter the directory scripts/index_management/\<lang\> e.g. enter the directory scripts/index_management/english 
-* create the analyzers
-```bash
-./create_analyzer.sh
-```
-* create the data types
-```bash
-./set_question_type.sh
-./set_state_type.sh
 ```
 
 ##Test
