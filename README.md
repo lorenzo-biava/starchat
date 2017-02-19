@@ -663,13 +663,13 @@ The service binds on the port 8888 by default.
 ```bash
 sbt dist
 ```
-* extract the packet into the docker-starchat folder
-```bash
-unzip target/universal/starchat-master.zip && mv starchat-master docker-starchat
-```
 * enter the directory docker-starchat 
 ```bash
 cd  docker-starchat
+```
+* extract the packet into the docker-starchat folder
+```bash
+unzip ../target/universal/starchat-master.zip
 ```
 * review the configuration files
     * edit the file starchat-master/config/application.conf and modify the ip where elasticsearch is bind
