@@ -21,7 +21,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
-    "ch.qos.logback"    %  "logback-classic" % "1.1.2",
+    "ch.qos.logback"    %  "logback-classic" % "1.1.3",
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "org.elasticsearch.client" % "transport" % ESClientVersion,
@@ -50,5 +50,5 @@ mappings in Universal ++= {
 
 scriptClasspath := Seq("../config/") ++ scriptClasspath.value
 
-licenses := Seq(("GPLv3", url("https://www.gnu.org/licenses/gpl-3.0.md")))
+licenses := Seq(("GPLv2", url("https://www.gnu.org/licenses/old-licenses/gpl-2.0.md")))
 
