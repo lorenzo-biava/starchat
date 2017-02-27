@@ -5,6 +5,7 @@ package com.getjenny.starchat.services
   */
 
 import com.getjenny.starchat.entities._
+import org.elasticsearch.action.DocWriteResponse.Result
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.collection.immutable.{List, Map}
