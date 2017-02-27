@@ -39,66 +39,107 @@ When no state matches the input text, optionally, *Chat searches on the knowledg
 Is straightforward to customize the elasticsearch schema for new languages
 and adding new analyzers or new fields.
 
-# Build and run the service 
+# Quick Start 
 
 ## Requirements
 
-Starchat requires Java JDK 8 (does not use java 9) and [sbt](http://www.scala-sbt.org). 
-Starchat communicates with elasticsearch so you will need an instance of elasticsearch version 5.1.1 or higher.
-If you want to use docker-compose, [install docker](https://docs.docker.com/engine/installation/) first, then [install docker compose](https://docs.docker.com/compose/install/)
+The easiest way is to install *chat using two docker images. You only need:
 
-## run directly in the build environment
- 
-Clone the repository and enter the starchat directory.
+* [sbt](http://www.scala-sbt.org)
+* [install docker](https://docs.docker.com/engine/installation/)
+* [install docker compose](https://docs.docker.com/compose/install/)
 
-Initialize the elasticsearch instance.
+In this way, you will put all the indices in the Elasticsearch (V 5.2) image, and *chat itself in the Java (8) image.
 
-Run the service:
+_If you do not use docker_ you therefore also need:
 
-```bash
-sbt compile run
-```
+* elasticsearch 5.2
+* java 8
 
-The service binds on the port 8888 by default.
+## Setup with Docker (recommended)
 
-# Setup 
-
-## docker
-
-* generate a packet distribution
+Generate a packet distribution: 
 ```bash
 sbt dist
 ```
-* enter the directory docker-starchat
+
+Enter the directory docker-starchat:
 ```bash
 cd  docker-starchat
 ```
-* extract the packet into the docker-starchat folder
+Extract the packet into the docker-starchat folder: 
 ```bash
 unzip ../target/universal/starchat-master.zip
 ```
-* review the configuration files
-    * edit the file starchat-master/config/application.conf and modify the ip where elasticsearch is bind
-* run the services (both startchat and elasticsearch)
+
+Review the configuration files `starchat-master/config/application.conf`: check that IP and Port for elasticsearch are correct.
+
+Start both startchat and elasticsearch: 
 ```bash
 docker-compose up -d
 ```
 
-After these steps the services will be up and running and you can initialize the ES schemas.
+Now you have an empty installation of `*chat`. You need to initialize Elasticsearch and then configure the bot.
 
-##Prepare ES
+###Prepare ElasticSearch indices
 
 * enter the directory scripts/index_management/\<lang\> e.g. enter the directory scripts/index_management/english 
-* create the analyzers
+* run `./regenindex.sh`
+
+###Configure *chat
+
+Now you have to load the configuration file for the actual chat. We have provided an example csv in English, therefore:
+
+* `cd /scripts/indexing`
+* `./index_documents_dt.py ../../doc/sample_state_machine_specification.csv 1`
+
+##Install without Docker
+ 
+* Clone the repository and enter the starchat directory.
+* Initialize the elasticsearch instance with `regenindex.sh` (see above for Docker)
+* Run the service: `sbt compile run`
+
+The service binds on the port 8888 by default.
+
+#Test the installation
+
+Is the service working?
+
+`curl -X GET localhost:8888 | python -mjson.tool`
+
+
+
 ```bash
-./create_analyzer.sh
-```
-* create the data types
-```bash
-./set_question_type.sh
-./set_state_type.sh
+QUERY="I cannot access my account"
+curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/get_next_response -d "{   \"user_id\": \"1234\",   \"user_input\": { \"text\": \"${QUERY}\" },   \"values\": {       \"return_value\": \"\", \"data\": {}   }} | python -mjson.tool"
 ```
 
+You should get something like:
+
+```json
+{
+    "action": "show_buttons",
+    "action_input": {
+        "Account locked": "account_locked",
+        "Forgot Password": "forgot_password",
+        "I want to call an operator": "call_operator",
+        "None of the above": "start",
+        "Specify your problem": "specify_problem"
+    },
+    "bubble": "Hello and welcome to our customer service chat. Please note that while I am not a human operator, I will do my very best to assist You today. How may I help you?",
+    "data": {},
+    "failure_value": "\"dont_understand\"",
+    "max_state_count": 0,
+    "regex": "((forgot).*(password))",
+    "state": "further_details_access_question",
+    "state_data": {
+        "verification": "did you mean you can't access to your account?"
+    },
+    "success_value": "eval(show_buttons)"
+}
+```
+
+Where *`"verification": "did you mean you can't access to your account?"`* means *chat has understood that you cannot access the account. 
 
 # System Design
 
@@ -169,7 +210,7 @@ The client should implement at least the following set of functions:
 Other application specific functions can be implemented by the client these functions must be called with the prefix
 "priv_" e.g. "priv_retrieve_user_transactions"
 
-See the file doc/sample_state_machine_specification.csv for a sample of the state machine specification.
+See the file [https://github.com/GetJenny/starchat/blob/master/doc/sample_state_machine_specification.csv](sample_state_machine_specification.csv) for a sample of the state machine specification.
 
 # Mechanics
 
