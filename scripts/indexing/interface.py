@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from urllib3 import PoolManager, Timeout
 import json
 import time
