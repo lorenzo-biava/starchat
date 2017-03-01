@@ -60,12 +60,13 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val dt_regex_load = DTRegexLoad(num_of_entries=regex_map.size)
     return Future(Option(dt_regex_load))
   }
-  loadRegex() // load rergex map on startup
+  loadRegex() // load regex map on startup
 
   def getNextResponse(request: ResponseRequestIn): Option[ResponseRequestOutOperationResult] = {
     // calculate and return the ResponseRequestOut
 
     val user_text: String = if(request.user_input.isDefined) request.user_input.get.text.getOrElse("") else ""
+    val conversation_id: String = if(request.conversation_id.isDefined) request.conversation_id.get else "***PLEASE DEFINE CONVERSATION_ID, WILL BE MANDATORY***"
     val data: Map[String, String] = if(request.values.isDefined)
       request.values.get.data.getOrElse(Map[String,String]()) else Map[String,String]()
     val return_value: String =  if(request.values.isDefined) request.values.get.return_value.getOrElse("") else ""
@@ -93,7 +94,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               }
             }
 
-            val response_data : ResponseRequestOut = ResponseRequestOut(state = state,
+            val response_data : ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
+              state = state,
               max_state_count = max_state_count,
               regex = regex,
               bubble = bubble,
@@ -144,7 +146,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               }
             }
 
-            val response_data : ResponseRequestOut = ResponseRequestOut(state = state,
+            val response_data : ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
+              state = state,
               max_state_count = max_state_count,
               regex = regex,
               bubble = bubble,
