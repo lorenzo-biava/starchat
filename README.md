@@ -270,12 +270,12 @@ returns:
 
 ```json
 {
-    "conversation_id": "1234",
     "action": "input_form",
     "action_input": {
         "email": "email"
     },
     "bubble": "We can reset your password by sending you a message to your registered e-mail address. Please tell me your address so I may send you the new password generation link.",
+    "conversation_id": "1234",
     "data": {},
     "failure_value": "\"dont_understand\"",
     "max_state_count": 0,
@@ -290,17 +290,17 @@ returns:
 
 ##### Example 2
 
-User clicked on "I have forgotten my password" when was in the state `further_details_access_question`. 
+User inserts their email after having been in `forgot_password`. 
 The client sends:
 
 ```bash
 curl  -H "Content-Type: application/json" -X POST http://localhost:8888/get_next_response -d '
 {
-    "user_id": "1234", 
+    "conversation_id": "1234",
     "user_input": { "text": "" },
     "values": {
-        "return_value":  "forgot_password",
-        "data": {}
+        "return_value": "send_password_generation_link",
+        "data": { "email": "john@example.com" }
     }
 }'
 ```
@@ -308,46 +308,62 @@ and gets:
 
 ```json
 {
-    "user_id": "1234", 
-    "user_input": { "text": "" },
-    "values": {
-        "return_value": "send_password_generation_link",
-        "data": { "email": "a@b.com" }
-    }
+    "action": "send_password_generation_link",
+    "action_input": {
+        "email": "john@example.com",
+        "template": "somebody requested to reset your password, if you requested the password reset follow the link: %link%"
+    },
+    "bubble": "Thank you. An e-mail will be sent to this address: a@b.com with your account details and the necessary steps for you to reset your password.",
+    "conversation_id": "1234",
+    "data": {
+        "email": "john@example.com"
+    },
+    "failure_value": "call_operator",
+    "max_state_count": 0,
+    "regex": "",
+    "state": "send_password_generation_link",
+    "state_data": {},
+    "success_value": "\"any_further\""
 }
+
 ```
 
 #### 204
 
 No response was found
 
-##### Errors
+#### 500 (error)
 
-The function in case of success will return the following codes and data structures:
+Internal server error
 
-* return code: 500
-    * meaning: internal server error
-* return code: 400: bad request
+#### 400 (error)
+
+Bad request: 
+
     * meaning: the input data structure is not valid
     * output data: no data returned
-* return code: 422
-    *  meaning: bad request data, the input data is formally valid but there is some issue with data interpretation
+
+#### 422 (error)
+
+    * meaning: bad request data, the input data is formally valid but there is some issue with data interpretation
     * output data: the output data structure is a json dictionary with two fields: code and message. The following code are supported:
         * code: 100
         * message: "error evaluating the template strings, bad values"
-* return code: 404
+
+#### 404 (error)
+
     * meaning: not found
     * output data: no data returned
 
-## Decisiontable
-
-### Method GET
+## `GET /decisiontable` 
 
 Get a document by ID
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 
@@ -393,11 +409,13 @@ Sample output
 }
 ```
 
-### Method PUT
-
+## `PUT /decisiontable`
+ 
 Output JSON
 
-return code: 201
+### Return codes
+
+#### 201
 
 Sample call
 
@@ -419,15 +437,18 @@ Sample output
 }
 ```
 
-### Method POST
+## `POST /decisiontable`
 
 Insert a new document.
 
 Output JSON
 
-return code: 201
+### Return codes
+
+#### 201
 
 Sample call
+
 ```bash
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable -d '{
   "state": "further_details_access_question",
@@ -454,13 +475,15 @@ Sample output
 }
 ```
 
-### Method DELETE
+## `DELETE /decisiontable`
 
 Delete a document by ID
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -479,13 +502,15 @@ Sample output
 }
 ```
 
-### decisiontable_search: Method POST
+## `POST /decisiontable_search`
 
 Update a document
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -496,13 +521,17 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisi
 }'
 ```
 
-### decisiontable_regex: Method GET (WORK IN PROGRESS, PARTIALLY IMPLEMENTED)
+## `GET /decisiontable_regex` 
+
+(WORK IN PROGRESS, PARTIALLY IMPLEMENTED)
 
 Get and return the map of regular expressions for each state
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -519,13 +548,15 @@ Sample response
 }
 ```
 
-### decisiontable_regex: Method POST
+## `POST decisiontable_regex`
 
 Load/reload the map of regular expression from ES
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -538,15 +569,15 @@ Sample response
 {"num_of_entries":1}
 ```
 
-## Knowledgebase
-
-knowledgebase: Method GET
+## `GET /knowledgebase`
 
 Return a document by ID
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -580,7 +611,7 @@ Sample response
 }
 ```
 
-### knowledgebase: Method POST
+## `POST knowledgebase`
 
 Insert a new document
 
@@ -588,7 +619,9 @@ Sample call
 
 Output JSON
 
-return code: 201
+### Return codes 
+
+#### 201
 
 ```bash
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/starchat-en/knowledgebase -d '{
@@ -631,13 +664,15 @@ Sample response
 }
 ```
 
-### knowledgebase: Method DELETE
+## `DELETE /knowledgebase`
 
 Delete a document by ID
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 
@@ -655,13 +690,15 @@ Sample output
 }
 ```
 
-### knowledgebase: Method PUT
+## `PUT knowledgebase`
 
 Update an existing document
 
 Output JSON
 
-return code: 201
+### Return codes 
+
+#### 200
 
 Sample call
 
@@ -691,11 +728,13 @@ Sample response
 }
 ```
 
-### knowledgebase_search: Method POST
+## `POST knowledgebase_search`
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 
