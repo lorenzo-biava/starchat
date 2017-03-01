@@ -1,198 +1,242 @@
-# *Chat
+# Welcome!
+This is the official repository for the *Chat, a scalable conversational engine for B2B applications.
 
-## *Chat in brief
+# How to contribute
 
-*Chat ("starchat") is a service for the implementation of workflow based chatbot.
+To contribute to *Chat, please send us a [pull request](https://help.github.com/articles/using-pull-requests/#fork--pull) 
+from your fork of this repository! 
 
-*Chat provide a restful service to implement conversational agents.
+Before contributing (or opening issues), you might want send us an email at starchat@getjenny.com.
 
-*Chat is under development and every contribution is welcome.
-
-## What problem *Chat is solving
-
-*Chat solves the problem of specifying a conversational flow with actionable states and templates, it also solves the pattern matching and retrieval problem with the identification of the closest concept in the workflow in relation with the user input.
-
-*Chat must scale horizontally with the instantiation of new services without any service interruption.
-The deployment must be easy
-
-*Chat offers a means to store and retrieve the conversations in consistent way and suitable to perform data analysis.
-
-*Chat implements a state machine mechanism to guide the user in the conversation and to perform actions in relation of the user inputs.
-* When no answer is found in the workflow of the state machine, the system, optionally, can fall back to the knowledge base provided by the collection of conversation of the customer service operators.
-* Chat is developed using [akka](http://akka.io).
-* Chat it is stateless to work in parallel with as many instances as you need. It is configurable by a simple configuration file and it is containerized with docker: deployment require few minutes!
-
-## How does *Chat work?
-
-*Chat stores the conversations on a search engine with special configuration to handle the language of the bot
-
-A special table of the search engine is reserved for the state machine.
-The state machine allows to specify templated sentences to send personalized messages to the user
-
-When the user enters a phrase, *Chat search the closest match in the state machine and guide the conversation from a state to another.
-
-When no state matches the input text, optionally, *Chat searches on the knowledge base built with the past conversations.
-
-## Customization of *Chat
-
-*Chat rely on [elasticsearch](https://www.elastic.co) for storing data and for the retrieval functionalities.
-Is straightforward to customize the elasticsearch schema for new languages
-and adding new analyzers or new fields.
-
-# Build and run the service 
+# Quick Start
 
 ## Requirements
 
-Starchat requires Java JDK 8 (does not use java 9) and [sbt](http://www.scala-sbt.org). 
-Starchat communicates with elasticsearch so you will need an instance of elasticsearch version 5.1.1 or higher.
-If you want to use docker-compose, [install docker](https://docs.docker.com/engine/installation/) first, then [install docker compose](https://docs.docker.com/compose/install/)
+The easiest way is to install *chat using two docker images. You only need:
 
-## run directly in the build environment
- 
-Clone the repository and enter the starchat directory.
+* [sbt](http://www.scala-sbt.org)
+* [docker](https://docs.docker.com/engine/installation/)
+* [docker compose](https://docs.docker.com/compose/install/)
 
-Initialize the elasticsearch instance.
+In this way, you will put all the indices in the Elasticsearch (V 5.2) image, and *chat itself in the Java (8) image.
 
-Run the service:
+_If you do not use docker_ you therefore need on your machine:
 
-```bash
-sbt compile run
-```
+1. [Scala 12.2](http://scala-lang.org)
+2. [Elasticsearch 5.2](http://elastic.co)
 
-The service binds on the port 8888 by default.
+## Setup with Docker (recommended)
 
-# Setup 
-
-## docker
-
-* generate a packet distribution
+Generate a packet distribution: 
 ```bash
 sbt dist
 ```
-* enter the directory docker-starchat
+
+Enter the directory docker-starchat:
 ```bash
 cd  docker-starchat
 ```
-* extract the packet into the docker-starchat folder
+Extract the packet into the docker-starchat folder: 
 ```bash
 unzip ../target/universal/starchat-master.zip
 ```
-* review the configuration files
-    * edit the file starchat-master/config/application.conf and modify the ip where elasticsearch is bind
-* run the services (both startchat and elasticsearch)
+
+Review the configuration files `starchat-master/config/application.conf`: check that IP and Port for elasticsearch are correct.
+
+Start both startchat and elasticsearch: 
 ```bash
 docker-compose up -d
 ```
 
-After these steps the services will be up and running and you can initialize the ES schemas.
+(Problems like `elastisearch exited with code 78`? have a look at [troubleshooting](#troubleshooting)!)
 
-##Prepare ES
+Now you have an empty installation of `*chat`. You need to initialize Elasticsearch and then configure the bot.
+
+### Prepare ElasticSearch indices
 
 * enter the directory scripts/index_management/\<lang\> e.g. enter the directory scripts/index_management/english 
-* create the analyzers
+* run `./regenindex.sh`
+
+###Configure *chat
+
+Now you have to load the configuration file for the actual chat. We have provided an example csv in English, therefore:
+
+* `cd /scripts/indexing`
+* `./index_documents_dt.py ../../doc/sample_state_machine_specification.csv 1`
+
+##Install without Docker
+ 
+* Clone the repository and enter the starchat directory.
+* Initialize the elasticsearch instance with `regenindex.sh` (see above for Docker)
+* Run the service: `sbt compile run`
+
+The service binds on the port 8888 by default.
+
+##Test the installation
+
+Is the service working?
+
+`curl -X GET localhost:8888 | python -mjson.tool`
+
+Tell *Chat you cannot access your account:
+
 ```bash
-./create_analyzer.sh
+curl  -H "Content-Type: application/json" -X POST http://localhost:8888/get_next_response -d '{   
+ "conversation_id": "1234",   
+ "user_input": { "text": "I forgot my password" },   
+ "values": {
+   "return_value": "", 
+   "data": {}   
+ }
+}'
 ```
-* create the data types
-```bash
-./set_question_type.sh
-./set_state_type.sh
+
+You should get something like:
+
+```json
+{
+    "conversation_id": "1234",   
+    "action": "input_form",
+    "action_input": {
+        "email": "email"
+    },
+    "bubble": "We can reset your password by sending you a message to your registered e-mail address. Please tell me your address so I may send you the new password generation link.",
+    "data": {},
+    "failure_value": "\"dont_understand\"",
+    "max_state_count": 0,
+    "regex": "",
+    "state": "forgot_password",
+    "state_data": {
+        "verification": "did you mean you forgot the password?"
+    },
+    "success_value": "\"send_password_generation_link\""
+}
 ```
 
+Which means *Chat understood your problem and went to the `forgot_password` state. 
 
-# System Design
+## *Chat in brief
 
-## The data schema
+With *Chat you can easily implement workflow-based chatbots. Its strength are:
 
-* *Chat uses two data types on the same index:
-    * state type : for the storage of the state machine, the fields are the following
-        * state : the name of the state
-        * max_state_count: defines how many times the state can be returned per conversation
-        * regex: specify a regular expression which trigger the state         
-        * queries : the list of queries which trigger the state e.g. ["cannot access account", "problem access account"],
-        * bubble : the text to show to the user on UI
-        * action : the name of a function to call (implemented by the client)  
-        * action_input : a dictionary (key,value) with the parameters of the function (implemented by the client)
-        * state_data : a dictionary of strings which can contains arbitrary data which will be returned to the API user.
-        * success_value : the destination state if the action function fail succeed  
-        * failure_value : the destination state if the action function fail
-    * question type : to store the conversations in question/answer format, the fields are the following
-        * doctype: specify a type for the documents
-        * state: eventual link to any of the state machine states, useful to redirect the user
-        to a path of the state machine 
-        * verified: was the conversation verified by an operator?
-        * conversation: ID of the conversation (multiple q&a may be inside a conversation)
-        * topics: eventually done with LDM or similar
-        * question: usually what the user of the chat says
-        * answer: usually what the operator of the chat says
-        * status: tell whether the document is locked for editing or not, useful for a GUI to avoid concurrent modifications
+* Simple yet powerful configuration file
+* Easy installation
+* Easy integration with any client (Slack, Telegram etc)
 
-## The Rest endpoint
+*Chat allows a developer to create a conversation flow through –
 
-The *Chat REST service stands in the middle between the CLIENT which implement the BOT UI
-and the dataset and it provide data intelligence.
+* identification of the best state to start from based on the language analysis of what the user wrote
+* creation of dynamic content using variables inferred from the conversation (e.g. "Please write your email so that I can send you a message")
 
-The behaviour of the state machine is specified
-by a csv called **SYSTEM TEMPLATE SCRIPT** which has the format:
+# Technology
 
-* **(R)**: means return value, this field is returned by the REST function
-* **(T)**: indicates conversational triggers to the state.
-* **(I)**: means internal, this field is not exposed to the API
+*Chat was design with the following goals in mind:
 
-The csv contains the following columns:
+0. easy deployment
+1. horizontally scalability without any service interruption.
+2. modularity
+3. statelessness
 
-* **state**: a unique name of the state
-* **max_state_count**: defines how many times the state can be returned per conversation
-* **regex**: specify a regular expression which trigger the state
-* **bubble (R)**: the output to be shown to the user, when empty nothing is to be shown. The bubble is a string which may contains template variables like %email% or %link%. The client is responsible to provide these functions
-* **action (R)**: a function to be called on the client side. The user is responsible of the implementation of these actions, see Client functions
-* **action_input (R)**: this is the input passed to the function in "Action". The text might contains template variables. see get_next_response
-* **state_data (R)**: a dictionary of strings which can contains arbitrary data which will be returned to the API user.
-* **success_value (R)** (instructions for client): output to return in case of success
-* **failure_value (R)** (instructions for client): output to return in case of failure
-* **query (T,I)**: this is a list of queries which should trigger the state
+## How does *Chat work?
+
+### Workflow
+
+![alt tag](https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUgc2ltcGxpZmllZCBSZXN0QVBJQ2FsbGluZ01lY2hhbmlzbSBpbiAqQ2hhdAoKVXNlciAtPiBTdGFyY2hhdFJlc291cmNlOiByZXN0IGFwaSBjYWxsIChpbiBqc29uKQoAGhAAKBZqc29uIGRlc2VyaWFsaXphdGlvbiBpbnRvIGVudGl0eQAqHVNlcnZpY2U6AHYFaW5nIGZ1bmMAPQUoaW4AOgcAgH8KACcHACwVADAJZXhlY3V0aW9uABscAIFzCgBoCXJlc3VsdCAob3V0AGgRAIFkHgCBbQ5vZgCBcgcAgX8GamVzAIEACwCCPwxVc2VyAIJyC3Jlc3BvbnNlAHwGAIJ8BgoK&s=napkin)
+
+### Components
+
+*Chat uses Elasticsearch as database. In addition, it also leverage on Elasticsearch NLP capabilities, using
+its smart indexing system, sentence cleansing, tokenization etc
+
+### Services
+
+*Chat consists of two different services: the "KnowledBase" and the "DecisionTable"
+
+#### KnowledgeBase
+
+For quick setup based on real Q&A logs. It stores question and answers pairs. Given a text as input
+ it proposes the pair with the closest match on the question field. 
+ At the moment the KnowledBase supports only Analyzers implemented on Elasticsearch.
+
+#### DecisionTable
+
+The conversational engine itself. For the usage, see below.
+
+## Configuration of the DecisionTable
+
+You configure the DecisionTable through CSV file. Please have a look at the one provided in `doc/`:
+
+|state|max_state_count|regex|queries |bubble|action|action_input|state_data|success_value |failure_value|
+|-----|---------------|-----|--------|------|------|------------|----------|--------------|-------------|
+|start|0              |     |      |"How may I help you?"||||||
+|further_details_access_question|0|((forgot).*(password))|"[""cannot access account"", ""problem access account""]"||show_buttons|"{""Forgot Password"": ""forgot_password"", ""Account locked"": ""account_locked"", ""None of the above"": ""start""}"||eval(show_buttons),"""dont_understand"""|
+|forgot_password|0||"[""Forgot password""]"|"I will send you a new password generation link, enter your email."|input_form|"{""email"": ""email""}"||"""send_password_generation_link"""|"""dont_understand"""|
+|send_password_generation_link|0|||"Sending message to %email% with instructions."|send_password_generation_link|"{ ""template"": "If you requested a password reset, follow this link: %link%"", ""email"": ""%email%"" }"||"""any_further"""|call_operator|
+
+
+Fields in the configuration file are of three types:
+
+* **(R)**: Return value: the field is returned by the API
+* **(T)**: Triggers to the state: when should we enter this state? 
+* **(I)**: Internal: a field not exposed to the API
+
+And the fields are:
+
+* **state**: a unique name of the state (e.g. `forgot_password`)
+* **max_state_count**: defines how many times *Chat can repropose the state during a conversation.
+* **regex**: specify a regular expression which triggers the state
+* **query (T,I)**: list of sentences whose meaning identify the state
+* **bubble (R)**: content, if any, to be shown to the user. It may contain variables like %email% or %link%.
+* **action (R)**: a function to be called on the client side. *Chat developer must provide types of input and output (like an abstract method), and the GUI developer is responsible for the actual implementation (e.g. `show_button`)
+* **action_input (R)**: input passed to **action**'s function (e.g., for `show_buttons` can be a list of pairs `("text to be shown on button", state_to_go_when_clicked)` 
+* **state_data (R)**: a dictionary of strings with arbitrary data to pass along
+* **success_value (R)**: output to return in case of success
+* **failure_value (R)**: output to return in case of failure
 
 ## Client functions
 
-The client should implement at least the following set of functions:
+For the CSV in the example above, the client will have to implement the following set of functions:
 
 * show_buttons: tell the client to render a multiple choice button
     * input: a key/value pair with the key indicating the text to be shown in the button, and the value indicating the state to follow e.g.: {"Forgot Password": "forgot_password", "Account locked": "account_locked", "Specify your problem": "specify_problem", "I want to call an operator": "call_operator", "None of the above": "start"}
     * output: the choice related to the button clicked by the user e.g.: "account_locked"
 * input_form: render an input form or collect the input following a specific format
     * input: a dictionary with the list of fields and the type of fields, at least "email" must be supported: e.g.: { "email": "email" } where the key is the name and the value is the type
-    * output: a dictionary with the input values e.g.: { "email": "a@b.com" }
+    * output: a dictionary with the input values e.g.: { "email": "foo@example.com" }
 * send_password_generation_link: send an email with instructions to regenerate the password
-    * input: a valid email address e.g.: "a@b.com"
+    * input: a valid email address e.g.: "foo@example.com"
     * output: a dictionary with the response fields e.g.: { "user_id": "123", "current_state": "forgot_password", "status": "true" }
 
 Other application specific functions can be implemented by the client these functions must be called with the prefix
-"priv_" e.g. "priv_retrieve_user_transactions"
+"priv_" e.g. "priv_retrieve_user_transactions" ( @angleto to clarify)
 
-See the file doc/sample_state_machine_specification.csv for a sample of the state machine specification.
+Ref: [sample_state_machine_specification.csv](https://github.com/GetJenny/starchat/blob/master/doc/sample_state_machine_specification.csv).
 
-# Mechanics
+## Mechanics
 
-* The client implements the functions which appear in the action field of the spreadsheet. We will provide interfaces.
-* The client call the rest API "decisiontable" endpoint communicating a state if any, the user input data and other
-state variables
-* The client receive a response with guidance on what to return to the user and what are the possible next steps
-* The client render the message to the user and eventually collect the input, then call again the system to get
-instructions on what to do next
-* When the "decisiontable" functions does not return any results the user can call the "knowledgebase" endpoint
+* The client implements the functions which appear in the action field of the spreadsheet. 
+We will provide interfaces.
+* The client call the rest API "decisiontable" endpoint communicating a state if any, 
+the user input data and other state variables
+* The client receive a response with guidance on what to return to the user and what 
+are the possible next steps
+* The client render the message to the user and eventually collect the input, then 
+call again the system to get instructions on what to do next
+* When the "decisiontable" functions does not return any result the user can call the "knowledgebase" endpoint
 which contains all the conversations. 
   
-# *Chat Api specification
+# APIs
 
-## get_next_response
+## `POST /get_next_response` 
 
-### Supported method (POST):
+Tell *Chat about the user actions (wrote something, clicked a button etc) and receives instruction 
+about the next state.
 
-#### Body
+Data to post:
 
 ```json
 {
-    "user_id": "the user id",
+    "conversation_id": "1234",
     "user_input": "(Optional)",
     "text" : "the text typed by the user (Optional)",
     "img": "(e.g.) image attached by the user (Optional)",
@@ -201,110 +245,125 @@ which contains all the conversations.
     "data": "all the variables, e.g. for the STRING TEMPLATEs (Optional)"
 }
 ```
+### Return codes
 
-#### example of the input dictionary after the user has clicked "Forgot Password":
+####200
+
+Similar Json, see examples below
+
+##### Example 1
+
+User input is "I forgot my password":
+
+```bash
+curl  -H "Content-Type: application/json" -X POST http://localhost:8888/get_next_response -d '{   
+"conversation_id": "1234",   
+"user_input": { "text": "I forgot my password" },   
+"values": {
+    "return_value": "", 
+    "data": {}   
+    }
+}'
+```
+
+returns:
 
 ```json
 {
-    "user_id": "1234", 
-    "user_input": { "text": "" },
-    "values": {
-        "return_value":  "forgot_password",
-        "data": {}
-    }
+    "action": "input_form",
+    "action_input": {
+        "email": "email"
+    },
+    "bubble": "We can reset your password by sending you a message to your registered e-mail address. Please tell me your address so I may send you the new password generation link.",
+    "conversation_id": "1234",
+    "data": {},
+    "failure_value": "\"dont_understand\"",
+    "max_state_count": 0,
+    "regex": "",
+    "state": "forgot_password",
+    "state_data": {
+        "verification": "did you mean you forgot the password?"
+    },
+    "success_value": "\"send_password_generation_link\""
 }
 ```
 
-#### example of the input dictionary after the user has entered the email in "forgot_password"
+##### Example 2
 
-```json
+User inserts their email after having been in `forgot_password`. 
+The client sends:
+
+```bash
+curl  -H "Content-Type: application/json" -X POST http://localhost:8888/get_next_response -d '
 {
-    "user_id": "1234", 
+    "conversation_id": "1234",
     "user_input": { "text": "" },
     "values": {
         "return_value": "send_password_generation_link",
-        "data": { "email": "a@b.com" }
+        "data": { "email": "john@example.com" }
     }
-}
+}'
 ```
-
-#### Output JSON
-##### return code: 200
+and gets:
 
 ```json
 {
-    "state" : "<state name>",
-    "bubble": "the text for the bubble",
-    "action": "the action function which is to be called e.g. input_form",
-    "action_input": "the json string containing the input for the action function",
-    "data":  "the same data field received in input",
-    "state_data": {},
-    "success_value": "the value to be returned in case of success",
-    "failure_value": "the value to be returned in case of failure"
-}
-```
-
-#### example of the output dictionary after the user said that he has forgot the password (state "forgot_password"):
-
-```json
-{
-    "state" : "<state name>",
-    "bubble": "We can reset your password by sending you a message to your registered e-mail address. Please tell me your address so I may send you the new password generation link.",
-    "action": "input_form",
-    "action_input": { "email": "email"},
-    "data": { "email": "a@b.com" },
-    "state_data": {},
-    "success_value": "send_password_generation_link",
-    "failure_value": "dont_understand"
-}
-```
-
-#### example of output dictionary after the CLIENT has sent to the SYSTEM the email address where to send the reset link (state "send_password_generation_link")
-
-```json
-{
-    "state" : "<state name>",
-    "bubble": "Thank you. An e-mail will be sent to this address: a@b.com with your account details and the necessary steps for you to reset your password.",
     "action": "send_password_generation_link",
-    "action_input": { "template": "somebody requested a regenaration of your password, if you requested the password reset follow the link: https://www.restorepassword.com/blabla", "email": "a@b.com" },
-    "data": { "email": "a@b.com" },
-    "state_data": {},    
-    "success_value": "any_further",
-    "failure_value": "call_operator"
+    "action_input": {
+        "email": "john@example.com",
+        "template": "somebody requested to reset your password, if you requested the password reset follow the link: %link%"
+    },
+    "bubble": "Thank you. An e-mail will be sent to this address: a@b.com with your account details and the necessary steps for you to reset your password.",
+    "conversation_id": "1234",
+    "data": {
+        "email": "john@example.com"
+    },
+    "failure_value": "call_operator",
+    "max_state_count": 0,
+    "regex": "",
+    "state": "send_password_generation_link",
+    "state_data": {},
+    "success_value": "\"any_further\""
 }
+
 ```
 
-##### return code: 204
+#### 204
 
-this code is returned when no response was found by the engine
+No response was found
 
-##### Errors
+#### 500 (error)
 
-The function in case of success will return the following codes and data structures:
+Internal server error
 
-* return code: 500
-    * meaning: internal server error
-* return code: 400: bad request
+#### 400 (error)
+
+Bad request: 
+
     * meaning: the input data structure is not valid
     * output data: no data returned
-* return code: 422
-    *  meaning: bad request data, the input data is formally valid but there is some issue with data interpretation
+
+#### 422 (error)
+
+    * meaning: bad request data, the input data is formally valid but there is some issue with data interpretation
     * output data: the output data structure is a json dictionary with two fields: code and message. The following code are supported:
         * code: 100
         * message: "error evaluating the template strings, bad values"
-* return code: 404
+
+#### 404 (error)
+
     * meaning: not found
     * output data: no data returned
 
-## Decisiontable
-
-### Method GET
+## `GET /decisiontable` 
 
 Get a document by ID
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 
@@ -350,11 +409,13 @@ Sample output
 }
 ```
 
-### Method PUT
-
+## `PUT /decisiontable`
+ 
 Output JSON
 
-return code: 201
+### Return codes
+
+#### 201
 
 Sample call
 
@@ -376,15 +437,18 @@ Sample output
 }
 ```
 
-### Method POST
+## `POST /decisiontable`
 
 Insert a new document.
 
 Output JSON
 
-return code: 201
+### Return codes
+
+#### 201
 
 Sample call
+
 ```bash
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable -d '{
   "state": "further_details_access_question",
@@ -411,13 +475,15 @@ Sample output
 }
 ```
 
-### Method DELETE
+## `DELETE /decisiontable`
 
 Delete a document by ID
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -436,13 +502,15 @@ Sample output
 }
 ```
 
-### decisiontable_search: Method POST
+## `POST /decisiontable_search`
 
 Update a document
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -453,13 +521,17 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisi
 }'
 ```
 
-### decisiontable_regex: Method GET (WORK IN PROGRESS, PARTIALLY IMPLEMENTED)
+## `GET /decisiontable_regex` 
+
+(WORK IN PROGRESS, PARTIALLY IMPLEMENTED)
 
 Get and return the map of regular expressions for each state
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -476,13 +548,15 @@ Sample response
 }
 ```
 
-### decisiontable_regex: Method POST
+## `POST decisiontable_regex`
 
 Load/reload the map of regular expression from ES
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -495,15 +569,15 @@ Sample response
 {"num_of_entries":1}
 ```
 
-## Knowledgebase
-
-knowledgebase: Method GET
+## `GET /knowledgebase`
 
 Return a document by ID
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 ```bash
@@ -537,7 +611,7 @@ Sample response
 }
 ```
 
-### knowledgebase: Method POST
+## `POST knowledgebase`
 
 Insert a new document
 
@@ -545,7 +619,9 @@ Sample call
 
 Output JSON
 
-return code: 201
+### Return codes 
+
+#### 201
 
 ```bash
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/starchat-en/knowledgebase -d '{
@@ -588,13 +664,15 @@ Sample response
 }
 ```
 
-### knowledgebase: Method DELETE
+## `DELETE /knowledgebase`
 
 Delete a document by ID
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 
@@ -612,13 +690,15 @@ Sample output
 }
 ```
 
-### knowledgebase: Method PUT
+## `PUT knowledgebase`
 
 Update an existing document
 
 Output JSON
 
-return code: 201
+### Return codes 
+
+#### 200
 
 Sample call
 
@@ -648,11 +728,13 @@ Sample response
 }
 ```
 
-### knowledgebase_search: Method POST
+## `POST knowledgebase_search`
 
 Output JSON
 
-return code: 200
+### Return codes 
+
+#### 200
 
 Sample call
 
@@ -694,14 +776,17 @@ Sample output
 
 A set of test script is present inside scripts/api_test
 
-##Throubleshooting
+##Troubleshooting
 
 ###Size of the virtual memory
 
 If elasticsearch complain about the size of the virtual memory:
-	"max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]"
+```
+max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+elastisearch exited with code 78
+```
 
-the following command fix it:
+run:
 
 ```bash
 sysctl -w vm.max_map_count=262144
