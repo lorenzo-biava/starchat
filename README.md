@@ -774,7 +774,8 @@ Sample output
 
 ##Test
 
-A set of test script is present inside scripts/api_test
+* Unit tests are available with `sbt test` command
+* A set of test script is present inside scripts/api_test
 
 ##Troubleshooting
 
