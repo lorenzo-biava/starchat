@@ -13,7 +13,7 @@ object AtomicFactory {
     case "similar" => new AtomicW2VCosineSentence(argument)
     case "synonym" => new AtomicW2VCosineWord(argument)
     case "regex" => new AtomicRegularExpression(argument)
-    case _ => throw new Exception("Atom \'" + name + "\' not found")
+    case _ => throw new AtomicException("Atom \'" + name + "\' not found")
 
   }
 
