@@ -8,6 +8,23 @@ from your fork of this repository!
 
 Before contributing (or opening issues), you might want send us an email at starchat@getjenny.com.
 
+   * [Quick Start](#quick-start)
+      * [Requirements](#requirements)
+      * [Setup with Docker (recommended)](#setup-with-docker-recommended)
+      * [Install without Docker](#install-without-docker)
+      * [Test the installation](#test-the-installation)
+      * [*Chat in brief](#chat-in-brief)
+   * [Technology](#technology)
+      * [How does *Chat work?](#how-does-chat-work)
+      * [Configuration of the DecisionTable](#configuration-of-the-decisiontable)
+      * [Client functions](#client-functions)
+      * [Mechanics](#mechanics)
+   * [APIs](#apis)
+   * [Test](#test)
+   * [Troubleshooting](#troubleshooting)
+      * [Size of the virtual memory](#size-of-the-virtual-memory)
+
+
 # Quick Start
 
 ## Requirements
@@ -772,14 +789,14 @@ Sample output
 }
 ```
 
-##Test
+# Test
 
 * Unit tests are available with `sbt test` command
 * A set of test script is present inside scripts/api_test
 
-##Troubleshooting
+# Troubleshooting
 
-###Size of the virtual memory
+## Size of the virtual memory
 
 If elasticsearch complain about the size of the virtual memory:
 ```
