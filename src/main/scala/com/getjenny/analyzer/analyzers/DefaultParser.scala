@@ -20,7 +20,7 @@ import com.getjenny.analyzer.interfaces.Factory
   *
   * In the latter case "or" is treated as disjunction of probabilities
   */
-abstract class DefaultParser(command_string: String) extends AbstractAnalyzer(command_string: String) {
+abstract class DefaultParser(command_string: String) extends AbstractParser(command_string: String) {
 
   val atomicFactory: Factory[String, AbstractAtomic]
   val operatorFactory: Factory[List[Expression], AbstractOperator]
