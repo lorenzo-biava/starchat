@@ -10,6 +10,6 @@ import com.getjenny.analyzer.atoms._
 
 class StarchatAnalyzer(command_string: String)
   extends {
-    override val atomicFactory = new DefaultFactoryAtomic
-    override val operatorFactory = new DefaultFactoryOperator
+    override val atomicFactory = new StarchatFactoryAtomic
+    override val operatorFactory = new StarchatFactoryOperator
   } with DefaultParser(command_string: String)
