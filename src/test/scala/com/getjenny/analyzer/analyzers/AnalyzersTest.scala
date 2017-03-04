@@ -3,7 +3,6 @@
   */
 
 import com.getjenny.analyzer.analyzers._
-import com.getjenny.analyzer.atoms._
 import org.scalatest._
 
 class AnalyzersTest extends FlatSpec with Matchers {
