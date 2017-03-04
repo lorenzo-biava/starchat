@@ -10,6 +10,6 @@ case class ResponseRequestInUserInput(text: Option[String], img: Option[String])
 
 case class ResponseRequestInValues(return_value: Option[String], data: Option[Map[String, String]])
 
-case class ResponseRequestIn(user_id: String, user_input: Option[ResponseRequestInUserInput],
+case class ResponseRequestIn(conversation_id: Option[String], user_input: Option[ResponseRequestInUserInput],
                                 values: Option[ResponseRequestInValues], min_score: Option[Float],
                                 boost_exact_match_factor: Option[Float])
