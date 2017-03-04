@@ -1,4 +1,6 @@
-package com.getjenny.analyzer.atoms
+package com.getjenny.starchat.analyzer.atoms
+
+import com.getjenny.analyzer.atoms.AbstractAtomic
 
 /**
   * Created by mal on 20/02/2017.
