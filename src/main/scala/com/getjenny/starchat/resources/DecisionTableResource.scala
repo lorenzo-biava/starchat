@@ -62,14 +62,14 @@ trait DecisionTableResource extends MyResource {
       }
   }
 
-  def decisionTableRegexRoutes: Route = pathPrefix("decisiontable_regex") {
+  def decisionTableAnalyzerRoutes: Route = pathPrefix("decisiontable_analyzer") {
     pathEnd {
       get {
-        val result: Future[Option[DTRegexMap]] = Future(Option(DTRegexMap(regex_map = dtElasticService.regex_map)))
+        val result: Future[Option[DTAnalyzerMap]] = Future(Option(DTAnalyzerMap(analyzer_map = dtElasticService.analyzer_map)))
         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
       } ~
       post {
-        val result: Future[Option[DTRegexLoad]] = dtElasticService.loadRegex
+        val result: Future[Option[DTAnalyzerLoad]] = dtElasticService.loadAnalyzer
         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
       }
     }

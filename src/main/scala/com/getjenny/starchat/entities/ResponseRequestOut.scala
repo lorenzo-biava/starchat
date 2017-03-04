@@ -9,7 +9,7 @@ import scala.collection.immutable.Map
 case class ResponseRequestOut(conversation_id: String,
                               state: String,
                               max_state_count: Int,
-                              regex: String,
+                              analyzer: String,
                               bubble: String,
                               action: String,
                               data: Map[String, String],

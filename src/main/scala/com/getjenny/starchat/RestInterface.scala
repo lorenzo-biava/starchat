@@ -19,7 +19,7 @@ trait RestInterface extends Resources {
 
   val routes: Route = rootAPIsRoutes ~ knowledgeBaseRoutes ~
     knowledgeBaseSearchRoutes ~ decisionTableRoutes ~ decisionTableSearchRoutes ~
-    decisionTableResponseRequestRoutes ~ decisionTableRegexRoutes
+    decisionTableResponseRequestRoutes ~ decisionTableAnalyzerRoutes
 }
 
 trait Resources extends KnowledgeBaseResource with DecisionTableResource with RootAPIResource

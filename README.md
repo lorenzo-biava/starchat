@@ -121,7 +121,7 @@ You should get something like:
     "data": {},
     "failure_value": "\"dont_understand\"",
     "max_state_count": 0,
-    "regex": "",
+    "analyzer": "",
     "state": "forgot_password",
     "state_data": {
         "verification": "did you mean you forgot the password?"
@@ -183,7 +183,7 @@ The conversational engine itself. For the usage, see below.
 
 You configure the DecisionTable through CSV file. Please have a look at the one provided in `doc/`:
 
-|state|max_state_count|regex|queries |bubble|action|action_input|state_data|success_value |failure_value|
+|state|max_state_count|analyzer|queries |bubble|action|action_input|state_data|success_value |failure_value|
 |-----|---------------|-----|--------|------|------|------------|----------|--------------|-------------|
 |start|0              |     |      |"How may I help you?"||||||
 |further_details_access_question|0|((forgot).*(password))|"[""cannot access account"", ""problem access account""]"||show_buttons|"{""Forgot Password"": ""forgot_password"", ""Account locked"": ""account_locked"", ""None of the above"": ""start""}"||eval(show_buttons),"""dont_understand"""|
@@ -201,7 +201,7 @@ And the fields are:
 
 * **state**: a unique name of the state (e.g. `forgot_password`)
 * **max_state_count**: defines how many times *Chat can repropose the state during a conversation.
-* **regex**: specify a regular expression which triggers the state
+* **analyzer**: specify an analyzer expression which triggers the state
 * **query (T,I)**: list of sentences whose meaning identify the state
 * **bubble (R)**: content, if any, to be shown to the user. It may contain variables like %email% or %link%.
 * **action (R)**: a function to be called on the client side. *Chat developer must provide types of input and output (like an abstract method), and the GUI developer is responsible for the actual implementation (e.g. `show_button`)
@@ -296,7 +296,7 @@ returns:
     "data": {},
     "failure_value": "\"dont_understand\"",
     "max_state_count": 0,
-    "regex": "",
+    "analyzer": "",
     "state": "forgot_password",
     "state_data": {
         "verification": "did you mean you forgot the password?"
@@ -337,7 +337,7 @@ and gets:
     },
     "failure_value": "call_operator",
     "max_state_count": 0,
-    "regex": "",
+    "analyzer": "",
     "state": "send_password_generation_link",
     "state_data": {},
     "success_value": "\"any_further\""
@@ -399,7 +399,7 @@ Sample output
     {
       "score": 0,
       "document": {
-        "regex": "((forgot).*(password))",
+        "analyzer": "((forgot).*(password))",
         "queries": [
           "cannot access account",
           "problem access account"
@@ -470,7 +470,7 @@ Sample call
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable -d '{
   "state": "further_details_access_question",
   "max_state_count": 0,
-  "regex": "",
+  "analyzer": "",
   "queries": ["cannot access account", "problem access account"],
   "bubble": "What seems to be the problem exactly?",
   "action": "show_buttons",
@@ -538,11 +538,11 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisi
 }'
 ```
 
-## `GET /decisiontable_regex` 
+## `GET /decisiontable_analyzer` 
 
 (WORK IN PROGRESS, PARTIALLY IMPLEMENTED)
 
-Get and return the map of regular expressions for each state
+Get and return the map of analyzer for each state
 
 Output JSON
 
@@ -552,22 +552,22 @@ Output JSON
 
 Sample call
 ```bash
-curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/decisiontable_regex"
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/decisiontable_analyzer"
 ```
 
 Sample response
 
 ```json
 {
-  "regex_map": {
+  "analyzer_map": {
     "further_details_access_question": "((forgot).*(password))"
   }
 }
 ```
 
-## `POST decisiontable_regex`
+## `POST decisiontable_analyzer`
 
-Load/reload the map of regular expression from ES
+Load/reload the map of analyzer from ES
 
 Output JSON
 
@@ -577,7 +577,7 @@ Output JSON
 
 Sample call
 ```bash
-curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_regex"
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_analyzer"
 ```
 
 Sample response

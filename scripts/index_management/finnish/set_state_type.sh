@@ -30,7 +30,7 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 		{
 		    "type": "integer"
 		},
-		"regex":
+		"analyzer":
 		{
 			"type": "keyword",
 			"store": "yes",

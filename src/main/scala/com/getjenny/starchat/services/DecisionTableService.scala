@@ -30,15 +30,15 @@ import org.elasticsearch.search.SearchHit
 class DecisionTableService(implicit val executionContext: ExecutionContext) {
   val elastic_client = DTElasticClient
 
-  var regex_map : Map[String, String] =  Map.empty[String, String]
+  var analyzer_map : Map[String, String] =  Map.empty[String, String]
 
-  def getRegex(): Map[String, String] = {
+  def getAnalyzer(): Map[String, String] = {
     val client: TransportClient = elastic_client.get_client()
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
     var scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
-      .setFetchSource(Array("state", "regex"), Array.empty[String])
+      .setFetchSource(Array("state", "analyzer"), Array.empty[String])
       .setScroll(new TimeValue(60000))
       .setSize(1000).get()
 
@@ -46,21 +46,21 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       val item: SearchHit = e
       val state : String = item.getId
       val source : Map[String, Any] = item.getSource.asScala.toMap
-      val regex : String = source.get("regex") match {
+      val analyzer : String = source.get("analyzer") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
-      (state, regex)
+      (state, analyzer)
     }).filter(_._2 != "").toMap
     return results
   }
 
-  def loadRegex() : Future[Option[DTRegexLoad]] = {
-    regex_map = getRegex()
-    val dt_regex_load = DTRegexLoad(num_of_entries=regex_map.size)
-    return Future(Option(dt_regex_load))
+  def loadAnalyzer() : Future[Option[DTAnalyzerLoad]] = {
+    analyzer_map = getAnalyzer()
+    val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=analyzer_map.size)
+    return Future(Option(dt_analyzer_load))
   }
-  loadRegex() // load regex map on startup
+  loadAnalyzer() // load analyzer map on startup
 
   def getNextResponse(request: ResponseRequestIn): Option[ResponseRequestOutOperationResult] = {
     // calculate and return the ResponseRequestOut
@@ -80,7 +80,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             val doc : DTDocument = res.get.hits.head.document
             val state : String = doc.state
             val max_state_count: Int = doc.max_state_count
-            val regex : String = doc.regex
+            val analyzer : String = doc.analyzer
             var bubble : String = doc.bubble
             var action_input : Map[String,String] = doc.action_input
             val state_data : Map[String, String] = doc.state_data
@@ -97,7 +97,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             val response_data : ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
               state = state,
               max_state_count = max_state_count,
-              regex = regex,
+              analyzer = analyzer,
               bubble = bubble,
               action = doc.action,
               data = data,
@@ -132,7 +132,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             val doc : DTDocument = res.get.hits.head.document
             val state : String = doc.state
             val max_state_count : Int = doc.max_state_count
-            val regex : String = doc.regex
+            val analyzer : String = doc.analyzer
             var bubble : String = doc.bubble
             var action_input : Map[String,String] = doc.action_input
             val state_data: Map[String, String] = doc.state_data
@@ -149,7 +149,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             val response_data : ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
               state = state,
               max_state_count = max_state_count,
-              regex = regex,
+              analyzer = analyzer,
               bubble = bubble,
               action = doc.action,
               data = data,
@@ -218,7 +218,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => 0
       }
 
-      val regex : String = source.get("regex") match {
+      val analyzer : String = source.get("analyzer") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
@@ -259,7 +259,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       }
 
       val document : DTDocument = DTDocument(state = state, max_state_count = max_state_count,
-        regex = regex, queries = queries, bubble = bubble,
+        analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)
 
@@ -283,7 +283,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
     builder.field("state", document.state)
     builder.field("max_state_count", document.max_state_count)
-    builder.field("regex", document.regex)
+    builder.field("analyzer", document.analyzer)
     builder.array("queries", document.queries:_*)
     builder.field("bubble", document.bubble)
     builder.field("action", document.action)
@@ -321,8 +321,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
   def update(id: String, document: DTDocumentUpdate): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    document.regex match {
-      case Some(t) => builder.field("regex", t)
+    document.analyzer match {
+      case Some(t) => builder.field("analyzer", t)
       case None => ;
     }
     document.max_state_count match {
@@ -415,7 +415,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => 0
       }
 
-      val regex : String = source.get("regex") match {
+      val analyzer : String = source.get("analyzer") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
@@ -456,7 +456,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       }
 
       val document : DTDocument = DTDocument(state = state, max_state_count = max_state_count,
-        regex = regex, queries = queries, bubble = bubble,
+        analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)
 

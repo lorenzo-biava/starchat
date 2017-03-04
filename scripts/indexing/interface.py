@@ -55,14 +55,14 @@ class Service:
                 structured_res = None
             return structured_res
 
-    def index_document_dt(self, state, max_state_count, regex, queries, bubble, action, action_input, state_data,
+    def index_document_dt(self, state, max_state_count, analyzer, queries, bubble, action, action_input, state_data,
                           success_value, failure_value):
         url = self.service_url + "/decisiontable"
         headers = self.post_headers
         body = {
             "state": state,
             "max_state_count": max_state_count,
-            "regex": regex,
+            "analyzer": analyzer,
             "queries": queries,
             "bubble": bubble,
             "action": action,
