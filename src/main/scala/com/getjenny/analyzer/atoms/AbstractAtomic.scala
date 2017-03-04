@@ -1,6 +1,5 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.utils.Vectors._
 import com.getjenny.analyzer.expressions._
 
 /**

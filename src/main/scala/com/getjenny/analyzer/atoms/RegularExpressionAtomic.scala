@@ -1,7 +1,5 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.utils.Vectors._
-
 /**
   * Created by mal on 20/02/2017.
   */

@@ -1,10 +1,11 @@
-package com.getjenny.analyzer.atoms
+package com.getjenny.starchat.analyzer.atoms
 
 /**
   * Created by mal on 20/02/2017.
   */
 
 import com.getjenny.analyzer.interfaces._
+import com.getjenny.analyzer.atoms._
 
 class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
 

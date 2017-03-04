@@ -6,7 +6,7 @@ package com.getjenny.starchat.analyzer.analyzers
 
 import com.getjenny.analyzer.analyzers._
 import com.getjenny.analyzer.operators._
-import com.getjenny.analyzer.atoms._
+import com.getjenny.starchat.analyzer.atoms._
 
 class StarchatAnalyzer(command_string: String)
   extends {
