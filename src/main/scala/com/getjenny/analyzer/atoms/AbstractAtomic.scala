@@ -1,7 +1,7 @@
-package com.getjenny.starchat.analyzer.atoms
+package com.getjenny.analyzer.atoms
 
-import com.getjenny.starchat.util.Vectors._
-import com.getjenny.starchat.analyzer.expressions._
+import com.getjenny.analyzer.utils.Vectors._
+import com.getjenny.analyzer.expressions._
 
 /**
   * Created by mal on 20/02/2017.

@@ -1,12 +1,12 @@
-package com.getjenny.starchat.analyzer.atoms
+package com.getjenny.analyzer.atoms
 
-import com.getjenny.starchat.util.Vectors._
+import com.getjenny.analyzer.utils.Vectors._
 
 /**
   * Created by mal on 20/02/2017.
   */
 
-class AtomicW2VCosineSentence(val sentence: String) extends AbstractAtomic  {
+class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *

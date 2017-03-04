@@ -1,12 +1,12 @@
-package com.getjenny.starchat.analyzer.atoms
+package com.getjenny.analyzer.atoms
 
-import com.getjenny.starchat.util.Vectors._
+import com.getjenny.analyzer.utils.Vectors._
 
 /**
   * Created by mal on 20/02/2017.
   */
 
-class AtomicW2VCosineWord(word: String) extends AbstractAtomic {
+class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
   /**
     * Return the normalized w2vcosine similarity of the nearest word
     *

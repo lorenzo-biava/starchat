@@ -1,6 +1,6 @@
-package com.getjenny.starchat.analyzer.operators
+package com.getjenny.analyzer.operators
 
-import com.getjenny.starchat.analyzer.expressions._
+import com.getjenny.analyzer.expressions._
 
 /**
   * Created by mal on 21/02/2017.
@@ -12,7 +12,7 @@ class AndOperator(children: List[Expression]) extends AbstractOperator(children:
     if (level == 0) new AndOperator(e :: children)
     else children.head match {
       case c: AbstractOperator => new AndOperator(c.add(e, level - 1) :: children.tail)
-      case _ => throw new Exception("AND: trying to add to smt else than an operator")
+      case _ => throw new OperatorException("AND: trying to add to smt else than an operator")
     }
   }
   def evaluate(query: String): Double = {

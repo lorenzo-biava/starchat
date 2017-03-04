@@ -1,4 +1,4 @@
-package com.getjenny.starchat.analyzer.expressions
+package com.getjenny.analyzer.expressions
 
 /**
   * Created by mal on 20/02/2017.

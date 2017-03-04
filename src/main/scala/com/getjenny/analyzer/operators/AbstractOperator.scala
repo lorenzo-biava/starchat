@@ -1,6 +1,6 @@
-package com.getjenny.starchat.analyzer.operators
+package com.getjenny.analyzer.operators
 
-import com.getjenny.starchat.analyzer.expressions._
+import com.getjenny.analyzer.expressions._
 
 /**
   * Created by mal on 21/02/2017.

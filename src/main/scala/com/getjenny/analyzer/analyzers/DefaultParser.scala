@@ -1,11 +1,13 @@
-package com.getjenny.starchat.analyzer.analyzers
+package com.getjenny.analyzer.analyzers
 
 /**
   * Created by mal on 20/02/2017.
   */
 
-import com.getjenny.starchat.analyzer.operators._
-import com.getjenny.starchat.analyzer.atoms._
+import com.getjenny.analyzer.operators._
+import com.getjenny.analyzer.atoms._
+import com.getjenny.analyzer.expressions.Expression
+import com.getjenny.analyzer.interfaces.Factory
 
 /**
   * All sentences with more than 22 characters and with keywords "password" and either "lost" or "forgot"
@@ -18,9 +20,11 @@ import com.getjenny.starchat.analyzer.atoms._
   *
   * In the latter case "or" is treated as disjunction of probabilities
   */
-class DefaultAnalyzer(command_string: String) extends AbstractAnalyzer(command_string: String) {
+abstract class DefaultParser(command_string: String) extends AbstractAnalyzer(command_string: String) {
 
-  private val logical_operators =  List("and", "or", "disjunction", "conjunction")
+  val atomicFactory: Factory[String, AbstractAtomic]
+  val operatorFactory: Factory[List[Expression], AbstractOperator]
+
   private val operator = this.gobble_commands(command_string)
 
   override def toString: String = operator.toString
@@ -72,7 +76,7 @@ class DefaultAnalyzer(command_string: String) extends AbstractAnalyzer(command_s
       }
 
       if (new_parenthesis_balance.sum < 0 || new_quote_balance < 0)
-        throw new AnalyzerParsingException("Parsing error: quotes do not match")
+        throw AnalyzerParsingException("Parsing error: quotes do not match")
 
       // Start reading the command
       // If not in quotation and have letter, add to command string accumulator
@@ -87,33 +91,19 @@ class DefaultAnalyzer(command_string: String) extends AbstractAnalyzer(command_s
       val argument_acc = if (new_parenthesis_balance.head == 1 && new_quote_balance == 1  && !just_opened_quote)
         argument_buffer + chars(indice) else ""
 
-      if (just_opened_parenthesis && logical_operators.toSet(command_buffer)) {
+      if (just_opened_parenthesis && operatorFactory.operations(command_buffer)) {
         //println("DEBUG Adding the operator " + command_buffer)
-        //TODO: better whenever possible
-        command_buffer match {
-          case "or" =>
-            loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
-              command_tree.add(new OrOperator(List()), new_parenthesis_balance.sum - 1))
-          case "and" =>
-            loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
-              command_tree.add(new AndOperator(List()), new_parenthesis_balance.sum - 1))
-          case "conjunction" =>
-            loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
-              command_tree.add(new ConjunctionOperator(List()), new_parenthesis_balance.sum - 1))
-          case "disjunction" =>
-            loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
-              command_tree.add(new DisjunctionOperator(List()), new_parenthesis_balance.sum - 1))
-          case _ =>  //TODO: fixme, this exception is never raised because of logical_operators.toSet(command_buffer)
-            throw new AnalyzerCommandException("Operator '" + command_buffer + "' not yet implemented....")
-        }
-      } else if (AtomicFactory.atoms(command_buffer) && new_parenthesis_balance.head == 1 && !just_closed_quote) {
+        val operator = operatorFactory.get(command_buffer, List())
+        loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
+          command_tree.add(operator, new_parenthesis_balance.sum - 1))
+      } else if (atomicFactory.operations(command_buffer) && new_parenthesis_balance.head == 1 && !just_closed_quote) {
         //println("DEBUG calling loop, without adding an atom, with this command buffer: " + command_buffer)
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
           argument_acc, command_tree)
-      } else if (AtomicFactory.atoms(command_buffer) && just_closed_quote) {
-        //println("DEBUG Calling loop, adding the atom " + AtomicFactory.returnAtoms(command_buffer, argument_buffer))
+      } else if (atomicFactory.operations(command_buffer) && just_closed_quote) {
+        //println("DEBUG Calling loop, adding the atom " + AtomicFactory.get(command_buffer, argument_buffer))
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer, argument_acc,
-          command_tree.add(AtomicFactory.returnAtoms(command_buffer, argument_buffer),
+          command_tree.add(atomicFactory.get(command_buffer, argument_buffer),
             new_parenthesis_balance.sum - 1))
       } else {
         //println("DEBUG going to return naked command tree... " + chars.length)
@@ -121,7 +111,7 @@ class DefaultAnalyzer(command_string: String) extends AbstractAnalyzer(command_s
           new_command_buffer, argument_acc, command_tree)
         else {
           if (new_parenthesis_balance.sum == 0 && new_quote_balance == 0) command_tree
-          else throw new AnalyzerParsingException("gobble_commands: Parenthesis or quotes do not match")
+          else throw AnalyzerParsingException("gobble_commands: Parenthesis or quotes do not match")
         }
       }
     }
@@ -130,5 +120,3 @@ class DefaultAnalyzer(command_string: String) extends AbstractAnalyzer(command_s
   }
 
 } //end class
-
-

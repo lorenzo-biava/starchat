@@ -1,14 +1,12 @@
-import com.getjenny.starchat.analyzer.analyzers._
-import com.getjenny.starchat.analyzer.atoms._
+/**
+  * Created by Angelo Leto <angelo@getjenny.com> on 03/03/17.
+  */
+
+import com.getjenny.analyzer.analyzers._
+import com.getjenny.analyzer.atoms._
 import org.scalatest._
 
 class AnalyzersTest extends FlatSpec with Matchers {
-
-  "An AtomicKeyword" should "support a floating point or a boolean value" in {
-    val k = new AtomicKeyword("ciao")
-    k.evaluate("ciao, stupid moron") should be (1.0/3)
-    k.matches("ciao stupid moron") should be (true)
-  }
 
   "A DefaultAnalyzer" should "parse a rule and evaluate the operations on a provided input text" in {
     val analBayes = new DefaultAnalyzer("""disjunction( keyword("stupid"), keyword("idiot") )""")

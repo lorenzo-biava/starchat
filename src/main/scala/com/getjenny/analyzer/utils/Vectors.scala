@@ -1,4 +1,4 @@
-package com.getjenny.starchat.util
+package com.getjenny.analyzer.utils
 
 /**
   * Created by mal on 20/02/2017.
@@ -24,6 +24,4 @@ object Vectors {
   def cosineDistance(v: Array[Double], u: Array[Double]): Double =
     if (u.length != v.length) throw new IllegalArgumentException("Vectors have different length")
     else scalarProductOfArrays(v, u) / (norm(v) * norm(u))
-
-
 }

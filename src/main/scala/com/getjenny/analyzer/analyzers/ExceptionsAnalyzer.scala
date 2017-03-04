@@ -1,4 +1,4 @@
-package com.getjenny.starchat.analyzer.analyzers
+package com.getjenny.analyzer.analyzers
 
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 03/03/17.
