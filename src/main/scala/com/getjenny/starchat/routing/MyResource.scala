@@ -10,7 +10,7 @@ import com.getjenny.starchat.serializers.JsonSupport
 
 import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.`Content-Type`
+import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.{ Route, ValidationRejection }
 
 trait MyResource extends Directives with JsonSupport {
@@ -24,7 +24,11 @@ trait MyResource extends Directives with JsonSupport {
   def completeResponse[A: ToEntityMarshaller](status_code: StatusCode, data: Future[Option[A]]): Route = {
     onSuccess(data) {
       case Some(t) =>
-        complete(status_code, List(`Content-Type`(`application/json`)), t)
+        val blippy = RawHeader("application", "json")
+        respondWithDefaultHeader(blippy) {
+          complete(status_code, t)
+        }
+      //  complete(status_code, List(`Content-Type`(`application/json`)), t)
       case None =>
         complete(status_code)
     }
@@ -34,7 +38,11 @@ trait MyResource extends Directives with JsonSupport {
                                      data: Future[Option[A]]): Route = {
     onSuccess(data) {
       case Some(t) =>
-        complete(status_code_ok, List(`Content-Type`(`application/json`)), t)
+        val blippy = RawHeader("application", "json")
+        respondWithDefaultHeader(blippy) {
+          complete(status_code_ok, t)
+        }
+//        complete(status_code_ok, List(`Content-Type`(`application/json`)), t)
       case None =>
         complete(status_code_failed)
     }
