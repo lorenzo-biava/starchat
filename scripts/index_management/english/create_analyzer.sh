@@ -77,7 +77,13 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 					"tokenizer":    "standard",
 					"char_filter":  [ "html_strip", "&_to_and" ],
 					"filter":       [ "lowercase", "english_stemmer", "ele_en_shingle_4"]
-				}
+				},
+               "pipe_delimited_double": {
+               	  "tokenizer": "standard",
+                  "delimiter": "pipe",
+                  "encoding": "double",
+                  "filter": "delimited_payload_filter"
+                }				
 			} 
 		}
 	}

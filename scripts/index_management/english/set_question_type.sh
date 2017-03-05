@@ -120,6 +120,12 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 				}
 			}
 		},
+		"question_vector":
+		{
+			"type": "text",
+			"store": "yes",
+			"analyzer": "pipe_delimited_double"	
+		},
 		"answer":
 		{
 			"type": "text",
@@ -161,6 +167,12 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 					"analyzer": "ele_stemmed_shingles_4_analyzer"
 				}
 			}
+		},
+		"answer_vector":
+		{
+			"type": "text",
+			"store": "yes",
+			"analyzer": "pipe_delimited_double"	
 		},
 		"status": {
 			"type": "integer",

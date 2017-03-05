@@ -88,6 +88,12 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 				"stemmed_shingles_4": {
 					"type": "text",
 					"analyzer": "ele_stemmed_shingles_4_analyzer"
+				},
+				"query_vector":
+				{
+					"type": "text",
+					"store": "yes",
+					"analyzer": "pipe_delimited_double"	
 				}
 			}
 		},

@@ -12,3 +12,7 @@
 
 # Define schema for the state machine (the spreadsheet)
 ./set_state_type.sh localhost 9200 jenny-en-0
+
+# Define schema for the state machine (the spreadsheet)
+./set_term_type.sh localhost 9200 jenny-en-0
+
