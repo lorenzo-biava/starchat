@@ -4,7 +4,10 @@ This is the official repository for the *Chat, a scalable conversational engine 
 # How to contribute
 
 To contribute to *Chat, please send us a [pull request](https://help.github.com/articles/using-pull-requests/#fork--pull) 
-from your fork of this repository! 
+from your fork of this repository!
+
+Our concise [contribution guideline](https://github.com/GetJenny/starchat/blob/master/CONTRIBUTING.md) contains the bare
+minumum requirements of the code contributions.
 
 Before contributing (or opening issues), you might want send us an email at starchat@getjenny.com.
 

@@ -6,7 +6,8 @@ This is a small and simple contribution guide, every contribution is welcome if 
 
 * naming convension: see http://docs.scala-lang.org/style/naming-conventions.html
 * indentation is done with 2 spaces
-* comments are made moreover when the code  
+* comments are welcome not only when the code itself need furher explanations
+* each function should have a test written using scala-test syntax, see samples in src/test 
 
 ## Code Review Criteria
 
