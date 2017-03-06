@@ -51,8 +51,7 @@ curl --header "apikey: xxxxxx" -XPUT "${HOSTNAME}:${PORT}${BASEPATH}/${INDEX_NAM
 			"store": "yes",
 			"fields": {
 				"raw": {
-					"type": "text",
-					"index": "not_analyzed"
+					"type": "keyword"
 				},
 				"base": {
 					"type": "text",
