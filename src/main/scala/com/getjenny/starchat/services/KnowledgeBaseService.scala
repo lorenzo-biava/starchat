@@ -28,7 +28,7 @@ import org.elasticsearch.search.SearchHit
 
 class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
-  val elastic_client = KBElasticClient
+  val elastic_client = KnowledgeBaseElasticClient
 
   def search(documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()

@@ -14,17 +14,16 @@ import org.elasticsearch.common.transport.{InetSocketTransportAddress, Transport
 import scala.collection.immutable.{List, Map}
 import scala.collection.JavaConverters._
 
-object  KBElasticClient {
+trait  ElasticClient {
   val config = ConfigFactory.load()
   val index_name = config.getString("es.index_name")
-  val type_name = config.getString("es.kb_type_name")
+  val type_name : String
   val cluster_name = config.getString("es.cluster_name")
   val ignore_cluster_name = config.getBoolean("es.ignore_cluster_name")
-  val query_min_threshold : Float = config.getDouble("es.kb_query_min_threshold").toFloat
+  val query_min_threshold : Float
 
   val host_map : Map[String, Int] = config.getAnyRef("es.host_map")
     .asInstanceOf[java.util.Map[String, Int]].asScala.toMap
-
 
   val settings: Settings = Settings.builder()
     .put("cluster.name", cluster_name)

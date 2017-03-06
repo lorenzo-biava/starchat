@@ -4,12 +4,8 @@ package com.getjenny.starchat.analyzer.utils
   * Created by mal on 20/02/2017.
   */
 
-import com.getjenny.starchat.services.DTElasticClient
-
 object Vectors {
   
-  val elastic_client = DTElasticClient
-
   def word2Vec(word: String): Array[Double] = Array.fill(3){math.random }
 
   def sumArrayOfArrays(a: Array[Array[Double]]): Array[Double] =

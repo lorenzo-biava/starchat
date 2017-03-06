@@ -5,17 +5,46 @@ package com.getjenny.starchat.analyzer.atoms
   */
 
 import com.getjenny.analyzer.atoms.AbstractAtomic
-import com.getjenny.starchat.services.DTElasticClient
+import com.getjenny.starchat.entities._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import com.getjenny.starchat.services._
+
+import scala.concurrent.duration._
+import scala.concurrent._
+import ExecutionContext.Implicits.global
 
 /**
   * Query ElasticSearch
   */
-class SearchAtomic(queries: List[String]) extends AbstractAtomic {
-  override def toString: String = "search(\"" + queries + "\")"
+class SearchAtomic(query: String) extends AbstractAtomic {
+  override def toString: String = "search(\"" + query + "\")"
   val isEvaluateNormalized: Boolean = false
-  val elastic_client = DTElasticClient
+
+  val dtElasticService = new DecisionTableService
+
+  //TODO: this function is incomplete, we need the state name here to set the correct score
   def evaluate(query: String): Double = {
-    3.14
+    val min_score = Option{dtElasticService.elastic_client.query_min_threshold}
+    val boost_exact_match_factor = Option{dtElasticService.elastic_client.boost_exact_match_factor}
+
+    val dtDocumentSearch : DTDocumentSearch =
+      DTDocumentSearch(from = Option{0}, size = Option{10}, min_score = min_score,
+        boost_exact_match_factor = boost_exact_match_factor, state = Option{null}, queries = Option{query})
+
+    val state: Future[Option[SearchDTDocumentsResults]] = dtElasticService.search(dtDocumentSearch)
+    //search the state with the closest query value, then return that state
+    val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
+    val score : Float = res.get.total match {
+      case 0 => 0.0f
+      case _ =>
+        val doc : DTDocument = res.get.hits.head.document
+        val state : String = doc.state
+        val max_score : Float = res.get.max_score
+        val sum_of_scores : Float = res.get.hits.map(x => x.score).sum
+        max_score / sum_of_scores
+    }
+    score
   } // returns elasticsearch score of the highest query in queries
+
 }
   

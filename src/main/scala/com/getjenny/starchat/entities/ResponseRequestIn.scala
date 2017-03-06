@@ -11,5 +11,4 @@ case class ResponseRequestInUserInput(text: Option[String], img: Option[String])
 case class ResponseRequestInValues(return_value: Option[String], data: Option[Map[String, String]])
 
 case class ResponseRequestIn(conversation_id: String, user_input: Option[ResponseRequestInUserInput],
-                                values: Option[ResponseRequestInValues], min_score: Option[Float],
-                                boost_exact_match_factor: Option[Float])
+                                values: Option[ResponseRequestInValues])

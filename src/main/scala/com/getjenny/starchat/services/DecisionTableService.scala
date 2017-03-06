@@ -30,7 +30,7 @@ import com.getjenny.starchat.analyzer.analyzers._
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
 class DecisionTableService(implicit val executionContext: ExecutionContext) {
-  val elastic_client = DTElasticClient
+  val elastic_client = DecisionTableElasticClient
 
   case class AnalyzerItem(declaration: String, build: Boolean, analyzer: StarchatAnalyzer)
 
@@ -92,17 +92,27 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
   def getNextResponse(request: ResponseRequestIn): Option[ResponseRequestOutOperationResult] = {
     // calculate and return the ResponseRequestOut
 
-    val user_text: String = request.user_input.get.text.getOrElse("")    
+    val user_text: String = if(request.user_input.isDefined) {
+      request.user_input.get.text.getOrElse("")      
+    } else {
+      ""      
+    }
 
     val conversation_id: String = request.conversation_id
 
     val data: Map[String, String] = if(request.values.isDefined)
-      request.values.get.data.getOrElse(Map[String,String]()) else Map[String,String]()
-    val return_value: String =  if(request.values.isDefined) request.values.get.return_value.getOrElse("") else ""
+      request.values.get.data.getOrElse(Map[String,String]())
+    else
+      Map[String,String]()
+
+    val return_value: String =  if(request.values.isDefined)
+      request.values.get.return_value.getOrElse("")
+    else
+      ""
 
     val return_state : Option[ResponseRequestOutOperationResult] = Option {
       return_value != "" match {
-        case true => // there is a state in return_value
+        case true => // there is a state in return_value, no analyzers evaluation
           val state: Future[Option[SearchDTDocumentsResults]] = read(List[String](return_value))
           val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
           if (res.get.total > 0) {
@@ -145,19 +155,17 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             full_response
           }
         case false => // No states in the return values
-          val min_score = Option{request.min_score.getOrElse( // min_search score
-            Option{elastic_client.query_min_threshold}.getOrElse(0.0f)
-          )}
-          val boost_exact_match_factor = Option{request.boost_exact_match_factor.getOrElse(
-            Option{elastic_client.boost_exact_match_factor}.getOrElse(1.0f)
-          )}
-          val dtDocumentSearch : DTDocumentSearch =
-            DTDocumentSearch(from = Option{0}, size = Option{1}, min_score = min_score,
-              boost_exact_match_factor = boost_exact_match_factor, state = Option{null}, queries = Option{user_text})
-          val state: Future[Option[SearchDTDocumentsResults]] = search(dtDocumentSearch)
-          // search the state with the closest query value, then return that state
-          val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
-          if (res.get.total > 0) {
+          val analyzer_values : List[(String, Double)] = analyzer_map.filter(_._2.build == true).map(item => {
+            val evaluation_score = item._2.analyzer.evaluate(user_text)
+            val state_id = item._1
+            (state_id, evaluation_score)
+          }).toList.sortWith(_._2 > _._2)
+
+          if(analyzer_values.length > 0) {
+            val best_state_id = analyzer_values(0)
+            val best_state = read(List(best_state_id._1))
+            val res : Option[SearchDTDocumentsResults] = Await.result(best_state, 30.seconds)
+
             val doc : DTDocument = res.get.hits.head.document
             val state : String = doc.state
             val max_state_count : Int = doc.max_state_count
@@ -223,7 +231,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     if(documentSearch.queries.isDefined) {
       bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
       bool_query_builder.should(
-        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(min_score * boost_exact_match_factor)
+        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(1 + (min_score * boost_exact_match_factor))
       )
     }
 
