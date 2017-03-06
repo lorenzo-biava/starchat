@@ -6,6 +6,6 @@ package com.getjenny.starchat.entities
 
 case class DTAnalyzerLoad(num_of_entries: Int)
 
-case class DTAnalyzer(analyzer: String, build: Boolean)
+case class DTAnalyzerItem(analyzer: String, build: Boolean)
 
-case class DTAnalyzerMap(analyzer_map: Map[String, DTAnalyzer])
+case class DTAnalyzerMap(analyzer_map: Map[String, DTAnalyzerItem])

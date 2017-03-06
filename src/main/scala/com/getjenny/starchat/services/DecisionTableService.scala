@@ -81,7 +81,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
   def getDTAnalyzerMap() : Future[Option[DTAnalyzerMap]] = {
     val analyzers = Future(Option(DTAnalyzerMap(analyzer_map.map(x => {
-      val dt_analyzer = new DTAnalyzer(x._2.declaration, x._2.build)
+      val dt_analyzer = new DTAnalyzerItem(x._2.declaration, x._2.build)
       (x._1, dt_analyzer)
       }).toMap)))
     analyzers
