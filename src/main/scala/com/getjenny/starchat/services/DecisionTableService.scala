@@ -92,12 +92,9 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
   def getNextResponse(request: ResponseRequestIn): Option[ResponseRequestOutOperationResult] = {
     // calculate and return the ResponseRequestOut
 
-    val user_text: String = if(request.user_input.isDefined) request.user_input.get.text.getOrElse("") else ""
-    val conversation_id: String = if(request.conversation_id.isDefined) {
-      request.conversation_id.get
-    } else {
-      "***PLEASE DEFINE CONVERSATION_ID, WILL BE MANDATORY***"
-    }
+    val user_text: String = request.user_input.get.text.getOrElse("")    
+
+    val conversation_id: String = request.conversation_id
 
     val data: Map[String, String] = if(request.values.isDefined)
       request.values.get.data.getOrElse(Map[String,String]()) else Map[String,String]()
