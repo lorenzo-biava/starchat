@@ -65,7 +65,7 @@ trait DecisionTableResource extends MyResource {
   def decisionTableAnalyzerRoutes: Route = pathPrefix("decisiontable_analyzer") {
     pathEnd {
       get {
-        val result: Future[Option[DTAnalyzerMap]] = Future(Option(DTAnalyzerMap(analyzer_map = dtElasticService.analyzer_map)))
+        val result: Future[Option[DTAnalyzerMap]] = dtElasticService.getDTAnalyzerMap()
         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
       } ~
       post {

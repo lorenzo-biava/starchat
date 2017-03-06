@@ -24,15 +24,19 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
 
+import com.getjenny.starchat.analyzer.analyzers._
+
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
 class DecisionTableService(implicit val executionContext: ExecutionContext) {
   val elastic_client = DTElasticClient
 
-  var analyzer_map : Map[String, String] =  Map.empty[String, String]
+  case class AnalyzerItem(declaration: String, build: Boolean, analyzer: StarchatAnalyzer)
 
-  def getAnalyzer(): Map[String, String] = {
+  var analyzer_map : Map[String, AnalyzerItem] =  Map.empty[String, AnalyzerItem]
+
+  def getAnalyzers(): Map[String, AnalyzerItem] = {
     val client: TransportClient = elastic_client.get_client()
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
     var scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
@@ -42,31 +46,59 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       .setScroll(new TimeValue(60000))
       .setSize(1000).get()
 
-    val results : Map[String, String] = scroll_resp.getHits.getHits.toList.map({ case (e) =>
+    val results : Map[String, AnalyzerItem] = scroll_resp.getHits.getHits.toList.map({ case (e) =>
       val item: SearchHit = e
       val state : String = item.getId
       val source : Map[String, Any] = item.getSource.asScala.toMap
-      val analyzer : String = source.get("analyzer") match {
+      val declaration : String = source.get("analyzer") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
-      (state, analyzer)
-    }).filter(_._2 != "").toMap
-    return results
+
+      val analyzer : StarchatAnalyzer = if (declaration != "") {
+        try {
+          new StarchatAnalyzer(declaration)
+        } catch {
+          case e: Exception => null
+        }
+        } else {
+          null
+        }
+
+      val build = analyzer != null
+
+      val analyzerItem = new AnalyzerItem(declaration, build, analyzer)
+      (state, analyzerItem)
+    }).filter(_._2.declaration != "").toMap
+    results
   }
 
   def loadAnalyzer() : Future[Option[DTAnalyzerLoad]] = {
-    analyzer_map = getAnalyzer()
+    analyzer_map = getAnalyzers()
     val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=analyzer_map.size)
-    return Future(Option(dt_analyzer_load))
+    Future(Option(dt_analyzer_load))
   }
+
+  def getDTAnalyzerMap() : Future[Option[DTAnalyzerMap]] = {
+    val analyzers = Future(Option(DTAnalyzerMap(analyzer_map.map(x => {
+      val dt_analyzer = new DTAnalyzer(x._2.declaration, x._2.build)
+      (x._1, dt_analyzer)
+      }).toMap)))
+    analyzers
+  }
+
   loadAnalyzer() // load analyzer map on startup
 
   def getNextResponse(request: ResponseRequestIn): Option[ResponseRequestOutOperationResult] = {
     // calculate and return the ResponseRequestOut
 
     val user_text: String = if(request.user_input.isDefined) request.user_input.get.text.getOrElse("") else ""
-    val conversation_id: String = if(request.conversation_id.isDefined) request.conversation_id.get else "***PLEASE DEFINE CONVERSATION_ID, WILL BE MANDATORY***"
+    val conversation_id: String = if(request.conversation_id.isDefined) {
+      request.conversation_id.get
+    } else {
+      "***PLEASE DEFINE CONVERSATION_ID, WILL BE MANDATORY***"
+    }
+
     val data: Map[String, String] = if(request.values.isDefined)
       request.values.get.data.getOrElse(Map[String,String]()) else Map[String,String]()
     val return_value: String =  if(request.values.isDefined) request.values.get.return_value.getOrElse("") else ""
@@ -303,10 +335,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
     val json: String = builder.string()
     val client: TransportClient = elastic_client.get_client()
-    val response: IndexResponse = client.prepareIndex(elastic_client.index_name, elastic_client.type_name,
-                                                          document.state)
-      .setSource(json)
-      .get()
+    val response: IndexResponse = client.prepareIndex(elastic_client.index_name,
+        elastic_client.type_name, document.state).setSource(json).get()
 
     val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
       dtype = response.getType,
