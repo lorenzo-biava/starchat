@@ -27,28 +27,37 @@ def index_items(item_listfile, skiplines=1):
         for row in freader:
             i += 1
             attempts = 10
-
             state = row[0]
-            if row[1]:
+            max_state_count = int(row[1])
+            regex = row[2]
+            if row[3]:
                 try:
-                    queries = json.loads(row[1])
+                    queries = json.loads(row[3])
                 except:
-                    print("Error: row[1]", i, row[1])
+                    print("Error: row[1]", i, row[3])
                     sys.exit(1)
             else:
                 queries = []
-            bubble = row[2]
-            action = row[3]
-            if row[4]:
+            bubble = row[4]
+            action = row[5]
+            if row[6]:
                 try:
-                    action_input = json.loads(row[4])
+                    action_input = json.loads(row[6])
                 except:
-                    print("Error: row[4]", i, row[4])
+                    print("Error: row[4]", i, row[6])
                     sys.exit(4)
             else:
                 action_input = {}
-            success_value = row[5]
-            failure_value = row[6]
+            if row[7]:
+                try:
+                    state_data = json.loads(row[7])
+                except:
+                    print("Error: row[7]", i, row[7])
+                    sys.exit(4)
+            else:
+                state_data = {}
+            success_value = row[8]
+            failure_value = row[9]
 
             while attempts > 0:
                 try:

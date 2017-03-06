@@ -192,10 +192,10 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get))
 
     if(documentSearch.queries.isDefined) {
-      bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
       bool_query_builder.should(
-        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(min_score * boost_exact_match_factor)
+        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(1 + (min_score * boost_exact_match_factor))
       )
+      bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
     }
 
     search_builder.setQuery(bool_query_builder)
