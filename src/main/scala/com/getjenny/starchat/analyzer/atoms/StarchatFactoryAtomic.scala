@@ -16,7 +16,7 @@ class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
     case "similar" => new W2VCosineSentenceAtomic(argument)
     case "synonym" => new W2VCosineWordAtomic(argument)
     case "regex" => new RegularExpressionAtomic(argument)
-    case _ => throw new ExceptionAtomic("Atom \'" + name + "\' not found")
+    case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 
 }
