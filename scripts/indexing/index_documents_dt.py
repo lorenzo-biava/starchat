@@ -68,7 +68,10 @@ def index_items(item_listfile, skiplines=1):
                 except interface.ApiCallException as exc:
                     print("Error: ", exc)
                     print("Last line: ", lcounter)
-                    print("Res: ", res)
+                    try:
+                        print("Res: ", res)
+                    except:
+                        pass
                     sys.exit(1)
 
                 if res[0] > 299 or res[0] < 200:
