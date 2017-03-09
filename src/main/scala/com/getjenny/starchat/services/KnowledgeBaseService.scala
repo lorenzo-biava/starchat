@@ -25,6 +25,7 @@ import scala.collection.JavaConverters._
 import com.typesafe.config.ConfigFactory
 import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.search.SearchHit
+import org.elasticsearch.rest.RestStatus
 
 class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
@@ -176,7 +177,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = (response.status == Result.CREATED)
+      created = response.status == RestStatus.CREATED
     )
 
     Option {doc_result}
@@ -233,7 +234,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = (response.status == Result.CREATED)
+      created = response.status == RestStatus.CREATED
     )
 
     Option {doc_result}
@@ -247,7 +248,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      found = (response.status != Result.NOT_FOUND)
+      found = response.status != RestStatus.NOT_FOUND
     )
 
     Option {doc_result}

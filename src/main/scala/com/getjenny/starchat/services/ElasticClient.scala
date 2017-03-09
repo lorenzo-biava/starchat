@@ -6,6 +6,7 @@ package com.getjenny.starchat.services
 
 import java.net.InetAddress
 
+import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.transport.client.PreBuiltTransportClient
@@ -14,12 +15,12 @@ import org.elasticsearch.common.transport.{InetSocketTransportAddress, Transport
 import scala.collection.immutable.{List, Map}
 import scala.collection.JavaConverters._
 
-trait  ElasticClient {
-  val config = ConfigFactory.load()
-  val index_name = config.getString("es.index_name")
+trait ElasticClient {
+  val config: Config = ConfigFactory.load()
+  val index_name: String = config.getString("es.index_name")
   val type_name : String
-  val cluster_name = config.getString("es.cluster_name")
-  val ignore_cluster_name = config.getBoolean("es.ignore_cluster_name")
+  val cluster_name: String = config.getString("es.cluster_name")
+  val ignore_cluster_name: Boolean = config.getBoolean("es.ignore_cluster_name")
   val query_min_threshold : Float
 
   val host_map : Map[String, Int] = config.getAnyRef("es.host_map")
@@ -49,4 +50,3 @@ trait  ElasticClient {
     client.close()
   }
 }
-

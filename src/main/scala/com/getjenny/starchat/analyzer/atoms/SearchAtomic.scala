@@ -19,10 +19,10 @@ import ExecutionContext.Implicits.global
 class SearchAtomic(state: String) extends AbstractAtomic {
   override def toString: String = "search(\"" + state + "\")"
   val isEvaluateNormalized: Boolean = false
-  val dtElasticService = new DecisionTableService
   val ref_state: String = state
 
   def evaluate(query: String): Double = {
+    val dtElasticService = new DecisionTableService
     val min_score = Option{dtElasticService.elastic_client.query_min_threshold}
     val boost_exact_match_factor = Option{dtElasticService.elastic_client.boost_exact_match_factor}
 
