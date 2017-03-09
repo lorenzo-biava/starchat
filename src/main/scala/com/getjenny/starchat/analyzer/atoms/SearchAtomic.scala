@@ -43,10 +43,10 @@ class SearchAtomic(state: String) extends AbstractAtomic {
         val state : String = doc.state
         val max_score : Float = res.get.max_score
         val sum_of_scores : Float = res.get.hits.map(x => x.score).sum
-        max_score / sum_of_scores
+        val norm_score = max_score / (sum_of_scores + 1)
+        norm_score
     }
     score
   } // returns elasticsearch score of the highest query in queries
 
 }
-  

@@ -149,12 +149,11 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             action_input = action_input,
             state_data = state_data,
             success_value = doc.success_value,
-            failure_value = doc.failure_value)
+            failure_value = doc.failure_value,
+            1.0d)
 
           val full_response: ResponseRequestOutOperationResult =
-            ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option {
-              response_data
-            }) // success
+            ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option {response_data}) // success
           full_response
         } else {
           val full_response: ResponseRequestOutOperationResult =
@@ -191,24 +190,30 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             }
           }
 
-          val response_data : ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
-            state = state,
-            max_state_count = max_state_count,
-            analyzer = analyzer,
-            bubble = bubble,
-            action = doc.action,
-            data = data,
-            action_input = action_input,
-            state_data = state_data,
-            success_value = doc.success_value,
-            failure_value = doc.failure_value)
+          val full_response: ResponseRequestOutOperationResult = if (best_state_id._2 > 0) {
+            val response_data : ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
+              state = state,
+              max_state_count = max_state_count,
+              analyzer = analyzer,
+              bubble = bubble,
+              action = doc.action,
+              data = data,
+              action_input = action_input,
+              state_data = state_data,
+              success_value = doc.success_value,
+              failure_value = doc.failure_value,
+              best_state_id._2)
 
-          val full_response : ResponseRequestOutOperationResult =
             ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{response_data}) // success
+
+          } else {
+            ResponseRequestOutOperationResult(ReturnMessageData(204, ""), Option{null}) // success
+          }
+
           full_response
         } else {
           val full_response : ResponseRequestOutOperationResult =
-            ResponseRequestOutOperationResult(ReturnMessageData(204, ""), null)  // no data
+            ResponseRequestOutOperationResult(ReturnMessageData(204, ""), Option{null})  // no data
           full_response
         }
       }
