@@ -1,0 +1,158 @@
+{
+	"properties": {
+		"doctype":
+		{
+			"type": "keyword",
+			"store": "yes",
+			"index": "not_analyzed",
+			"null_value": "hidden"
+		},
+		"state":
+		{
+			"type": "keyword",
+			"store": "yes",
+			"index": "not_analyzed",
+			"null_value": ""
+		},
+		"verified":
+		{
+			"type": "boolean",
+			"store": true,
+			"null_value": false,
+			"index": "not_analyzed"
+		},
+		"conversation":
+		{
+			"type": "keyword",
+			"index": "not_analyzed",
+			"store": "yes"
+		},
+		"index_in_conversation":
+		{
+			"type": "integer",
+			"store": "yes",
+			"null_value": -1
+		},
+		"topics":
+		{
+			"type": "text",
+			"store": "yes",
+			"fields": {
+				"base": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer"
+				},
+				"base_bm25": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer",
+					"similarity": "BM25"
+				}
+			}
+		},
+		"question":
+		{
+			"type": "text",
+			"store": "yes",
+			"fields": {
+				"raw": {
+					"type": "keyword"
+				},
+				"base": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer"
+				},
+				"base_bm25": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer",
+					"similarity": "BM25"
+				},
+				"stop": {
+					"type": "text",
+					"analyzer": "jenny_stop_analyzer"
+				},
+				"stop_bm25": {
+					"type": "text",
+					"analyzer": "jenny_stop_analyzer",
+					"similarity": "BM25"
+				},
+				"stem": {
+					"type": "text",
+					"analyzer": "jenny_stem_analyzer"
+				},
+				"stem_bm25": {
+					"type": "text",
+					"analyzer": "jenny_stem_analyzer",
+					"similarity": "BM25"
+				},
+				"shingles_4": {
+					"type": "text",
+					"analyzer": "jenny_shingles_4_analyzer"
+				},
+				"stemmed_shingles_4": {
+					"type": "text",
+					"analyzer": "jenny_stemmed_shingles_4_analyzer"
+				}
+			}
+		},
+		"question_vector":
+		{
+			"type": "text",
+			"store": "yes",
+			"analyzer": "pipe_delimited_double"	
+		},
+		"answer":
+		{
+			"type": "text",
+			"store": "yes",
+			"fields": {
+				"base": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer"
+				},
+				"base_bm25": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer",
+					"similarity": "BM25"
+				},
+				"stop": {
+					"type": "text",
+					"analyzer": "jenny_stop_analyzer"
+				},
+				"stop_bm25": {
+					"type": "text",
+					"analyzer": "jenny_stop_analyzer",
+					"similarity": "BM25"
+				},
+				"stem": {
+					"type": "text",
+					"analyzer": "jenny_stem_analyzer"
+				},
+				"stem_bm25": {
+					"type": "text",
+					"analyzer": "jenny_stem_analyzer",
+					"similarity": "BM25"
+				},
+				"shingles_4": {
+					"type": "text",
+					"analyzer": "jenny_shingles_4_analyzer"
+				},
+				"stemmed_shingles_4": {
+					"type": "text",
+					"analyzer": "jenny_stemmed_shingles_4_analyzer"
+				}
+			}
+		},
+		"answer_vector":
+		{
+			"type": "text",
+			"store": "yes",
+			"analyzer": "pipe_delimited_double"	
+		},
+		"status": {
+			"type": "integer",
+			"store": "yes",
+			"null_value": 0
+		}
+	}
+}
+

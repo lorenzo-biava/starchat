@@ -23,6 +23,7 @@ import org.elasticsearch.common.unit._
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
+import org.elasticsearch.rest.RestStatus
 
 import com.getjenny.starchat.analyzer.analyzers._
 
@@ -84,7 +85,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val analyzers = Future(Option(DTAnalyzerMap(analyzer_map.map(x => {
       val dt_analyzer = DTAnalyzerItem(x._2.declaration, x._2.build)
       (x._1, dt_analyzer)
-    }).toMap)))
+    }))))
     analyzers
   }
 
@@ -350,7 +351,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == Result.CREATED
+      created = response.status == RestStatus.CREATED
     )
 
     Option {doc_result}
@@ -413,7 +414,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == Result.CREATED
+      created = response.status == RestStatus.CREATED
     )
 
     Option {doc_result}
@@ -427,7 +428,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      found = response.status != Result.NOT_FOUND
+      found = response.status != RestStatus.NOT_FOUND
     )
 
     Option {doc_result}

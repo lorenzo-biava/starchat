@@ -16,25 +16,27 @@ import ExecutionContext.Implicits.global
 /**
   * Query ElasticSearch
   */
-class SearchAtomic(query: String) extends AbstractAtomic {
-  override def toString: String = "search(\"" + query + "\")"
+class SearchAtomic(state: String) extends AbstractAtomic {
+  override def toString: String = "search(\"" + state + "\")"
   val isEvaluateNormalized: Boolean = false
-
   val dtElasticService = new DecisionTableService
+  val ref_state: String = state
 
-  //TODO: this function is incomplete, we need the state name here to set the correct score
   def evaluate(query: String): Double = {
     val min_score = Option{dtElasticService.elastic_client.query_min_threshold}
     val boost_exact_match_factor = Option{dtElasticService.elastic_client.boost_exact_match_factor}
 
     val dtDocumentSearch : DTDocumentSearch =
       DTDocumentSearch(from = Option{0}, size = Option{10}, min_score = min_score,
-        boost_exact_match_factor = boost_exact_match_factor, state = Option{null}, queries = Option{query})
+        boost_exact_match_factor = boost_exact_match_factor, state = Option{ref_state}, queries = Option{query})
 
     val state: Future[Option[SearchDTDocumentsResults]] = dtElasticService.search(dtDocumentSearch)
     //search the state with the closest query value, then return that state
     val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
-    val score : Float = res.get.total match {
+
+    val res_count = if (res.isEmpty) 0 else res.get.total
+
+    val score : Float = res_count match {
       case 0 => 0.0f
       case _ =>
         val doc : DTDocument = res.get.hits.head.document
