@@ -40,7 +40,7 @@ trait DecisionTableResource extends MyResource {
             val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result,  30.seconds).value.get
             result_try match {
               case Success(t) =>
-                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
+                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})
               case Failure(e) =>
                 completeResponse(StatusCodes.BadRequest,
                   Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})
