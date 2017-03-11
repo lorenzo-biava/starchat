@@ -3,4 +3,4 @@ package com.getjenny.starchat.entities
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/2017.
   */
-case class IndexManagementResponse(message: String)
+case class LanguageGuesserRequestIn(input_text: String)

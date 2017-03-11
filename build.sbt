@@ -28,6 +28,9 @@ libraryDependencies ++= {
     "org.elasticsearch.client" % "rest" % ESClientVersion,
     "org.apache.logging.log4j" % "log4j-api" % "2.7",
     "org.apache.logging.log4j" % "log4j-core" % "2.7",
+    "org.apache.tika" % "tika-core" % "1.14",
+    "org.apache.tika" % "tika-parsers" % "1.14",
+    "org.apache.tika" % "tika-app" % "1.14",
     "org.parboiled" %% "parboiled" % "2.1.4"
    )
 }

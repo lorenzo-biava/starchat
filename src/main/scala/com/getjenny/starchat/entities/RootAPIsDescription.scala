@@ -13,5 +13,6 @@ case class RootAPIsDescription(api : Map[String, String] = Map(
   "/decisiontable_analyzer" -> "supported methods: GET, POST",
   "/knowledgebase" -> "supported methods: GET, PUT, POST, DELETE",
   "/knowledgebase_search" -> "supported methods: POST",
-  "/index_management" -> "supported methods: GET, PUT, POST, DELETE"
+  "/index_management" -> "supported methods: GET, PUT, POST, DELETE",
+  "/language_guesser" -> "supported methods: GET, POST"
 ))

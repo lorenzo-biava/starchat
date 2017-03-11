@@ -16,7 +16,7 @@ import java.io._
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 
 /**
-  * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
+  * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
 class IndexManagementService(implicit val executionContext: ExecutionContext) {
   val elastic_client = IndexClient
