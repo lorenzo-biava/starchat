@@ -22,43 +22,40 @@ trait IndexManagementResource extends MyResource {
   def indexManagementRoutes: Route = pathPrefix("index_management") {
     pathEnd {
       post {
-        val result: Future[Option[IndexManagementResponse]] = indexManagementService.create_index()
-        val result_try: Try[Option[IndexManagementResponse]] = Await.ready(result,  30.seconds).value.get
-        result_try match {
+        val result: Try[Option[IndexManagementResponse]] =
+          Await.ready(Future{indexManagementService.create_index()},30.seconds).value.get
+        result match {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Future{Option{IndexManagementResponse(message = e.getMessage)}})
         }
       } ~
       get {
-        val result: Future[Option[IndexManagementResponse]] = indexManagementService.check_index()
-        val result_try: Try[Option[IndexManagementResponse]] = Await.ready(result,  30.seconds).value.get
-        result_try match {
+        val result: Try[Option[IndexManagementResponse]] =
+          Await.ready(Future{indexManagementService.check_index()},30.seconds).value.get
+        result match {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Future{Option{IndexManagementResponse(message = e.getMessage)}})
         }
-        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
       } ~
       delete {
-        val result: Future[Option[IndexManagementResponse]] = indexManagementService.remove_index()
-        val result_try: Try[Option[IndexManagementResponse]] = Await.ready(result,  30.seconds).value.get
-        result_try match {
+        val result: Try[Option[IndexManagementResponse]] =
+          Await.ready(Future{indexManagementService.remove_index()},30.seconds).value.get
+        result match {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Future{Option{IndexManagementResponse(message = e.getMessage)}})
         }
-        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
       } ~
       put {
-        val result: Future[Option[IndexManagementResponse]] = indexManagementService.update_index()
-        val result_try: Try[Option[IndexManagementResponse]] = Await.ready(result,  30.seconds).value.get
-        result_try match {
+        val result: Try[Option[IndexManagementResponse]] =
+          Await.ready(Future{indexManagementService.update_index()},30.seconds).value.get
+        result match {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Future{Option{IndexManagementResponse(message = e.getMessage)}})
         }
-        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
       }
     }
   }
