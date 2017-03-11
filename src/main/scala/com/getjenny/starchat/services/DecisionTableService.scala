@@ -82,14 +82,14 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
   }
 
   def getDTAnalyzerMap : Future[Option[DTAnalyzerMap]] = {
-    try { //TODO: remove this try catch after index initialization endpoint is ready
+    try {
       val analyzers = Future(Option(DTAnalyzerMap(analyzer_map.map(x => {
         val dt_analyzer = DTAnalyzerItem(x._2.declaration, x._2.build)
         (x._1, dt_analyzer)
       }))))
       analyzers
     } catch {
-      case e: Exception => Future(Option(null))
+      case e: Exception => Future.failed(e)
     }
   }
 
