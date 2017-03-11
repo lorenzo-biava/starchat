@@ -98,7 +98,7 @@
 		{
 			"type": "text",
 			"store": "yes",
-			"analyzer": "pipe_delimited_double"	
+			"analyzer": "jenny_delimited_double"
 		},
 		"answer":
 		{
@@ -146,7 +146,7 @@
 		{
 			"type": "text",
 			"store": "yes",
-			"analyzer": "pipe_delimited_double"	
+			"analyzer": "jenny_delimited_double"
 		},
 		"status": {
 			"type": "integer",

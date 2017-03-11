@@ -1,0 +1,78 @@
+{
+	"properties": {
+		"term":
+		{
+			"type": "text",
+			"store": "yes",
+			"fields": {
+				"raw": {
+					"type": "keyword"
+				},
+				"base": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer"
+				},
+				"stop": {
+					"type": "text",
+					"analyzer": "jenny_stop_analyzer"
+				},
+				"stem": {
+					"type": "text",
+					"analyzer": "jenny_stem_analyzer"
+				}
+			}
+		},
+		"synonyms":
+		{
+			"type": "text",
+			"store": "yes",
+			"fields": {
+				"raw": {
+					"type": "text",
+					"index": "not_analyzed"
+				},
+				"base": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer"
+				},
+				"stop": {
+					"type": "text",
+					"analyzer": "jenny_stop_analyzer"
+				},
+				"stem": {
+					"type": "text",
+					"analyzer": "jenny_stem_analyzer"
+				}
+			}
+		},
+		"antonyms":
+		{
+			"type": "text",
+			"store": "yes",
+			"fields": {
+				"raw": {
+					"type": "text",
+					"index": "not_analyzed"
+				},
+				"base": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer"
+				},
+				"stop": {
+					"type": "text",
+					"analyzer": "jenny_stop_analyzer"
+				},
+				"stem": {
+					"type": "text",
+					"analyzer": "jenny_stem_analyzer"
+				}
+			}
+		},
+		"vector":
+		{
+			"type": "text",
+			"store": "yes",
+			"analyzer": "jenny_delimited_double"
+		}
+	}
+}'

@@ -5,9 +5,7 @@ package com.getjenny.starchat.services
   */
 
 object KnowledgeBaseElasticClient extends ElasticClient {
-
-  override val type_name: String = config.getString("es.kb_type_name")
-  override val query_min_threshold : Float = config.getDouble("es.kb_query_min_threshold").toFloat
-
+  val type_name: String = config.getString("es.kb_type_name")
+  val query_min_threshold : Float = config.getDouble("es.kb_query_min_threshold").toFloat
 }
 

@@ -33,4 +33,5 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val dtAnalyzerItem = jsonFormat2(DTAnalyzerItem)
   implicit val dtAnalyzerMapFormat = jsonFormat1(DTAnalyzerMap)
   implicit val dtAnalyzerLoadFormat = jsonFormat1(DTAnalyzerLoad)
+  implicit val indexManagementResponseFormat = jsonFormat1(IndexManagementResponse)
 }

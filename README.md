@@ -61,7 +61,9 @@ Extract the packet into the docker-starchat folder:
 unzip ../target/universal/starchat-master.zip
 ```
 
-Review the configuration files `starchat-master/config/application.conf`: check that IP and Port for elasticsearch are correct.
+Review the configuration files `starchat-master/config/application.conf`:
+- check that IP and Port for elasticsearch are correct.
+- configure the language
 
 Start both startchat and elasticsearch: 
 ```bash
@@ -74,8 +76,8 @@ Now you have an empty installation of `*chat`. You need to initialize Elasticsea
 
 ### Prepare ElasticSearch indices
 
-* enter the directory scripts/index_management/\<lang\> e.g. enter the directory scripts/index_management/english 
-* run `./regenindex.sh`
+* enter the directory scripts/api_test
+* run `./postIndexManagement.sh`
 
 ###Configure *chat
 
