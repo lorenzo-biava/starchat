@@ -68,7 +68,7 @@
 				}
 			}
 		},
-		"vector":
+		"term_vector":
 		{
 			"type": "text",
 			"store": "yes",

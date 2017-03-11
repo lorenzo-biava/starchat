@@ -124,6 +124,11 @@ class IndexManagementService(implicit val executionContext: ExecutionContext) {
     val question_json_is: InputStream = getClass.getResourceAsStream(question_json_path)
     val term_json_is: InputStream = getClass.getResourceAsStream(term_json_path)
 
+    if (! elastic_client.enable_delete_index) {
+      val message: String = "operation is not allowed, contact system administrator"
+      Future.failed(throw new FileNotFoundException(message))
+    }
+
     val indexManagementResponse = if(analyzer_json_is != null &&
       state_json_is != null && question_json_is != null && term_json_is != null) {
       val state_json: String = Source.fromInputStream(state_json_is, "utf-8").mkString
