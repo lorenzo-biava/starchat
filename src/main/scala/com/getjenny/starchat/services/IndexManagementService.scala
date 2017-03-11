@@ -76,6 +76,12 @@ class IndexManagementService(implicit val executionContext: ExecutionContext) {
   
   def remove_index() : Future[Option[IndexManagementResponse]] = {
     val client: TransportClient = elastic_client.get_client()
+
+    if (! elastic_client.enable_delete_index) {
+      val message: String = "operation is not allowed, contact system administrator"
+      Future.failed(throw new Exception(message))
+    }
+    
     try {
       val delete_index_req = client.admin().indices().prepareDelete(elastic_client.index_name).get()
       Future {
@@ -123,11 +129,6 @@ class IndexManagementService(implicit val executionContext: ExecutionContext) {
     val state_json_is: InputStream = getClass.getResourceAsStream(state_json_path)
     val question_json_is: InputStream = getClass.getResourceAsStream(question_json_path)
     val term_json_is: InputStream = getClass.getResourceAsStream(term_json_path)
-
-    if (! elastic_client.enable_delete_index) {
-      val message: String = "operation is not allowed, contact system administrator"
-      Future.failed(throw new FileNotFoundException(message))
-    }
 
     val indexManagementResponse = if(analyzer_json_is != null &&
       state_json_is != null && question_json_is != null && term_json_is != null) {
