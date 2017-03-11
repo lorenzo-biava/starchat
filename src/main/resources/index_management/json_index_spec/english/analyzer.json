@@ -60,11 +60,10 @@
 				"char_filter":  [ "html_strip", "&_to_and" ],
 				"filter":       [ "lowercase", "english_stemmer", "jenny_en_shingle_4"]
 			},
-		   "jenny_delimited_double": {
-			  "tokenizer": "standard",
-			  "delimiter": "space",
-			  "encoding": "double",
-			  "filter": "delimited_payload_filter"
+			"jenny_delimited_double": {
+				"tokenizer":"whitespace",
+				"encoding": "double",
+				"filter": "delimited_payload_filter"
 			}
 		}
 	}

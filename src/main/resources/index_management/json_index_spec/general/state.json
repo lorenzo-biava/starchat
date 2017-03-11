@@ -68,14 +68,14 @@
 				"stemmed_shingles_4": {
 					"type": "text",
 					"analyzer": "jenny_stemmed_shingles_4_analyzer"
-				},
-				"query_vector":
-				{
-					"type": "text",
-					"store": "yes",
-					"analyzer": "jenny_delimited_double"
 				}
 			}
+		},
+		"query_vectors":
+		{
+			"type": "text",
+			"store": "yes",
+			"analyzer": "jenny_delimited_double"
 		},
 		"bubble":
 		{

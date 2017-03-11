@@ -61,8 +61,7 @@
 				"filter":       [ "lowercase", "finnish_stemmer", "jenny_fi_shingle_4"]
 			},
 			"jenny_delimited_double": {
-				"tokenizer": "standard",
-				"delimiter": "space",
+				"tokenizer":"whitespace",
 				"encoding": "double",
 				"filter": "delimited_payload_filter"
 			}
