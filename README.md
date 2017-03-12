@@ -840,13 +840,88 @@ curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/langua
 Sample output
 
 ```json
-{
-   "supported_languages" : {
-      " languages: " : {
-         "en" : true
-      }
-   }
-}
+{"message":"updated index: jenny-en-0 dt_type_ack(true) kb_type_ack(true) kb_type_ack(true)"}
+
+```
+
+## `POST index_management`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/index_management"
+```
+
+Sample output
+
+```json
+{"message":"create index: jenny-en-0 create_index_ack(true)"}
+```
+
+## `GET index_management`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/index_management"
+```
+
+Sample output
+
+```json
+{"message":"settings index: jenny-en-0 dt_type_check(state:true) kb_type_check(question:true) term_type_name(term:true)"}
+```
+
+## `PUT index_management`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X PUT "http://localhost:8888/index_management"
+```
+
+Sample output
+
+```json
+{"message":"updated index: jenny-en-0 dt_type_ack(true) kb_type_ack(true) kb_type_ack(true)"}
+```
+
+## `DELETE index_management`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X DELETE "http://localhost:8888/language_guesser/en"
+```
+
+Sample output
+
+```json
+{"message":"removed index: jenny-en-0 index_ack(true)"}
 ```
 
 # Test
