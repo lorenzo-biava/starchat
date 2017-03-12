@@ -794,6 +794,61 @@ Sample output
 }
 ```
 
+## `POST language_guesser`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/language_guesser" -d "
+{
+	\"input_text\": \"good morning, may I ask you a question?\"
+}
+"
+```
+
+Sample output
+
+```json
+{
+   "enhough_text" : false,
+   "language" : "en",
+   "confidence" : "MEDIUM",
+   "score" : 0.571426689624786
+}
+```
+
+## `GET language_guesser`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/language_guesser/en"
+```
+
+Sample output
+
+```json
+{
+   "supported_languages" : {
+      " languages: " : {
+         "en" : true
+      }
+   }
+}
+```
+
 # Test
 
 * Unit tests are available with `sbt test` command
