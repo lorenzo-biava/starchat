@@ -72,7 +72,7 @@ trait TermResource extends MyResource {
         }
       } ~
       get {
-        entity(as[Terms]) { request_data =>
+        entity(as[Term]) { request_data =>
           val result: Try[Option[TermsResults]] =
             Await.ready(Future{termService.search_term(request_data)}, 30.seconds).value.get
           result match {
