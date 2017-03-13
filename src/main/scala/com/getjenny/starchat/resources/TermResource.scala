@@ -26,7 +26,7 @@ trait TermResource extends MyResource {
           operation match {
             case "index" =>
               entity(as[Terms]) { request_data =>
-                val result: Try[Option[IndexDocumentResult]] =
+                val result: Try[Option[List[IndexDocumentResult]]] =
                   Await.ready(Future{termService.index_term(request_data)}, 30.seconds).value.get
                 result match {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
@@ -51,7 +51,7 @@ trait TermResource extends MyResource {
       } ~
       delete {
         entity(as[TermIdsRequest]) { request_data =>
-          val result: Try[Option[DeleteDocumentResult]] =
+          val result: Try[Option[List[DeleteDocumentResult]]] =
             Await.ready(Future{termService.remove_term(request_data)}, 30.seconds).value.get
           result match {
             case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
@@ -62,7 +62,7 @@ trait TermResource extends MyResource {
       } ~
       put {
         entity(as[Terms]) { request_data =>
-          val result: Try[Option[UpdateDocumentResult]] =
+          val result: Try[Option[List[UpdateDocumentResult]]] =
             Await.ready(Future{termService.update_term(request_data)}, 30.seconds).value.get
           result match {
             case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
