@@ -6,14 +6,15 @@ package com.getjenny.starchat.entities
 
 import scala.collection.immutable.{Map}
 
-case class Term(id:String,
-                term: String,
+case class Term(term: String,
                 synonyms: Map[String, Double],
                 antonyms: Map[String, Double],
                 vector: Array[Double],
                 score: Option[Double]
                )
 
-case class TermGetRequest(ids: Seq[String], terms: Seq[String])
+case class Terms(terms: Seq[Term])
 
-case class TermsResults(total: Int, max_score: Float, hits: Seq[Term])
+case class TermIdsRequest(ids: Seq[String])
+
+case class TermsResults(total: Int, max_score: Float, hits: Terms)

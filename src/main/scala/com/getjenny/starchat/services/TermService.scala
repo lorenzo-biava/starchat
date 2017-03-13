@@ -4,7 +4,7 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/17.
   */
 
-import com.getjenny.starchat.entities.{IndexManagementResponse, TermGetRequest, _}
+import com.getjenny.starchat.entities.{IndexManagementResponse, TermIdsRequest, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.transport.TransportClient
@@ -21,7 +21,7 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 class TermService(implicit val executionContext: ExecutionContext) {
   val elastic_client = IndexManagementClient
 
-  def index_term() : Option[IndexDocumentResult] = {
+  def index_term(terms: Terms) : Option[IndexDocumentResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     Option {
@@ -29,7 +29,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def get_term(terms_request: TermGetRequest) : Option[TermsResults] = {
+  def get_term(terms_request: TermIdsRequest) : Option[TermsResults] = {
     val client: TransportClient = elastic_client.get_client()
 
     Option {
@@ -37,7 +37,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def update_term() : Option[UpdateDocumentResult] = {
+  def update_term(terms: Terms) : Option[UpdateDocumentResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     Option {
@@ -45,7 +45,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def remove_term() : Option[DeleteDocumentResult] = {
+  def remove_term(termGetRequest: TermIdsRequest) : Option[DeleteDocumentResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     Option {
@@ -53,7 +53,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def search_term() : Option[TermsResults] = {
+  def search_term(term: Term) : Option[TermsResults] = {
     val client: TransportClient = elastic_client.get_client()
 
     Option {

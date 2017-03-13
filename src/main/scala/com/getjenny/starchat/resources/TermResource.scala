@@ -25,17 +25,19 @@ trait TermResource extends MyResource {
         post {
           operation match {
             case "index" =>
-              val result: Try[Option[IndexDocumentResult]] =
-                Await.ready(Future{termService.index_term()},30.seconds).value.get
-              result match {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Future{Option{IndexManagementResponse(message = e.getMessage)}})
+              entity(as[Terms]) { request_data =>
+                val result: Try[Option[IndexDocumentResult]] =
+                  Await.ready(Future{termService.index_term(request_data)}, 30.seconds).value.get
+                result match {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Future{Option{IndexManagementResponse(message = e.getMessage)}})
+                }
               }
             case "get" =>
-              entity(as[TermGetRequest]) { request_data =>
+              entity(as[TermIdsRequest]) { request_data =>
                 val result: Try[Option[TermsResults]] =
-                  Await.ready(Future{termService.get_term(request_data)},30.seconds).value.get
+                  Await.ready(Future{termService.get_term(request_data)}, 30.seconds).value.get
                 result match {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
                   case Failure(e) => completeResponse(StatusCodes.BadRequest,
@@ -48,30 +50,36 @@ trait TermResource extends MyResource {
         }
       } ~
       delete {
-        val result: Try[Option[DeleteDocumentResult]] =
-          Await.ready(Future{termService.remove_term()},30.seconds).value.get
-        result match {
-          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-          case Failure(e) => completeResponse(StatusCodes.BadRequest,
-            Future{Option{IndexManagementResponse(message = e.getMessage)}})
+        entity(as[TermIdsRequest]) { request_data =>
+          val result: Try[Option[DeleteDocumentResult]] =
+            Await.ready(Future{termService.remove_term(request_data)}, 30.seconds).value.get
+          result match {
+            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+            case Failure(e) => completeResponse(StatusCodes.BadRequest,
+              Future{Option{IndexManagementResponse(message = e.getMessage)}})
+          }
         }
       } ~
       put {
-        val result: Try[Option[UpdateDocumentResult]] =
-          Await.ready(Future{termService.update_term()},30.seconds).value.get
-        result match {
-          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-          case Failure(e) => completeResponse(StatusCodes.BadRequest,
-            Future{Option{IndexManagementResponse(message = e.getMessage)}})
+        entity(as[Terms]) { request_data =>
+          val result: Try[Option[UpdateDocumentResult]] =
+            Await.ready(Future{termService.update_term(request_data)}, 30.seconds).value.get
+          result match {
+            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+            case Failure(e) => completeResponse(StatusCodes.BadRequest,
+              Future{Option{IndexManagementResponse(message = e.getMessage)}})
+          }
         }
       } ~
       get {
-        val result: Try[Option[TermsResults]] =
-          Await.ready(Future{termService.search_term()},30.seconds).value.get
-        result match {
-          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-          case Failure(e) => completeResponse(StatusCodes.BadRequest,
-            Future{Option{IndexManagementResponse(message = e.getMessage)}})
+        entity(as[Terms]) { request_data =>
+          val result: Try[Option[TermsResults]] =
+            Await.ready(Future{termService.search_term(request_data)}, 30.seconds).value.get
+          result match {
+            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+            case Failure(e) => completeResponse(StatusCodes.BadRequest,
+              Future{Option{IndexManagementResponse(message = e.getMessage)}})
+          }
         }
       }
     }
