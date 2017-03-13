@@ -36,7 +36,7 @@ class LanguageGuesserService(implicit val executionContext: ExecutionContext) {
     Option {
       LanguageGuesserInformations(
         Map[String,Map[String,Boolean]](
-        " languages: " -> Map[String, Boolean](language_code -> has_model))
+        "languages" -> Map[String, Boolean](language_code -> has_model))
       )
     }
   }
