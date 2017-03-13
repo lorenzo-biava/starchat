@@ -14,9 +14,14 @@ import scala.io.Source
 import java.io._
 
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
+import org.elasticsearch.action.search.{SearchRequestBuilder, SearchType}
+import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
+
+import scala.collection.immutable.Map
 
 /**
-  * Implements functions, eventually used by IndexManagementResource, for ES index management
+  * Implements functions, eventually used by TermResource
   */
 class TermService(implicit val executionContext: ExecutionContext) {
   val elastic_client = IndexManagementClient

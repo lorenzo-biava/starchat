@@ -7,8 +7,8 @@ package com.getjenny.starchat.entities
 import scala.collection.immutable.{Map}
 
 case class Term(term: String,
-                synonyms: Map[String, Double],
-                antonyms: Map[String, Double],
+                synonyms: Option[Map[String, Double]],
+                antonyms: Option[Map[String, Double]],
                 vector: Array[Double],
                 score: Option[Double]
                )
