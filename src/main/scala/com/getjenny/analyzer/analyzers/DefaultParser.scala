@@ -9,6 +9,7 @@ import com.getjenny.analyzer.atoms._
 import com.getjenny.analyzer.expressions.Expression
 import com.getjenny.analyzer.interfaces.Factory
 
+
 /**
   * All sentences with more than 22 characters and with keywords "password" and either "lost" or "forgot"
   *
@@ -31,20 +32,20 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
   /** Read a sentence and produce a score (the higher, the more confident)
     */
   def evaluate(sentence: String): Double = {
-    operator.evaluate(sentence)
+    val res = operator.evaluate(sentence)
+    if (res > 0) println("DEBUG: DefaultParser: '" + this + "' evaluated to " + res)
+    res
   }
 
-  /**Produces a List for building the tree.
-    * make_command_tree("""and(regex(".{22,}"), and(or(keyword("forgot"), keyword("lost")), keyword("password")))""")
-
-  List(
-        ("keyword", "password", 3),
-        ("keyword", "forgot", 4),
-        ("or", "", 3),
-        ("and", "", 2),
-        ("regex", ".{22,}", 2),
-        ("and", "", 1)
-      )
+  /**Produces nested operators
+    *
+    * e.g.
+    *
+    * gobble_commands("""boolean-and(regex(".{22,}"), boolean-and(boolean-or(keyword("forgot"), keyword("lost")), keyword("password")))""")
+    *
+    * will produce a boolean OR operator with inside a regex Expression (which can be evaluated),
+    * a boolean AND etc
+    *
 
     */
   def gobble_commands(commands_string: String): AbstractOperator = {

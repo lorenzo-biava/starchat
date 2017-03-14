@@ -172,7 +172,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
           (state_id, evaluation_score)
         }).toList.filter(_._2 > threshold).sortWith(_._2 > _._2).take(max_results).toMap
 
-        if(analyzer_values.size > 0) {
+        if(analyzer_values.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] = read(analyzer_values.keys.toList)
           val res : Option[SearchDTDocumentsResults] = Await.result(items, 30.seconds)
           val docs = res.get.hits.map(item => {
