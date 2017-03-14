@@ -36,7 +36,7 @@ trait TermResource extends MyResource {
               }
             case "get" =>
               entity(as[TermIdsRequest]) { request_data =>
-                val result: Try[Option[TermsResults]] =
+                val result: Try[Option[Terms]] =
                   Await.ready(Future{termService.get_term(request_data)}, 30.seconds).value.get
                 result match {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
@@ -52,7 +52,7 @@ trait TermResource extends MyResource {
       delete {
         entity(as[TermIdsRequest]) { request_data =>
           val result: Try[Option[DeleteDocumentListResult]] =
-            Await.ready(Future{termService.remove_term(request_data)}, 30.seconds).value.get
+            Await.ready(Future{termService.delete(request_data)}, 30.seconds).value.get
           result match {
             case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
             case Failure(e) => completeResponse(StatusCodes.BadRequest,

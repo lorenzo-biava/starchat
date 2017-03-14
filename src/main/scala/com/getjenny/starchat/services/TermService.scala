@@ -4,23 +4,19 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/17.
   */
 
-import com.getjenny.starchat.entities.{IndexManagementResponse, TermIdsRequest, _}
-
-import scala.concurrent.{ExecutionContext, Future}
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings._
-
-import scala.io.Source
-import java.io._
-
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchType}
-import org.elasticsearch.common.xcontent.XContentBuilder
-import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.action.bulk._
-import org.elasticsearch.rest.RestStatus
+import com.getjenny.starchat.entities._
+import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
+import org.elasticsearch.common.xcontent.XContentBuilder
 
-import scala.collection.immutable.Map
+import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.collection.immutable.{List, Map}
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.xcontent.XContentFactory._
+import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
+
+import scala.collection.JavaConverters._
+import org.elasticsearch.rest.RestStatus
 
 /**
   * Implements functions, eventually used by TermResource
@@ -52,11 +48,16 @@ class TermService(implicit val executionContext: ExecutionContext) {
         case Some(t) => builder.field("frequency", t)
         case None => ;
       }
-      val indexable_vector: String = vector2string(term.vector)
-      builder.field("vector", indexable_vector)
+      term.vector match {
+        case Some(t) => {
+          val indexable_vector: String = vector2string(t)
+          builder.field("vector", indexable_vector)
+        }
+        case None => ;
+      }
       builder.endObject()
 
-      bulkRequest.add(client.prepareIndex(elastic_client.index_name, elastic_client.term_type_name)
+      bulkRequest.add(client.prepareIndex(elastic_client.index_name, elastic_client.term_type_name, term.term)
         .setSource(builder))
     })
 
@@ -74,12 +75,47 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def get_term(terms_request: TermIdsRequest) : Option[TermsResults] = {
+  def get_term(terms_request: TermIdsRequest) : Option[Terms] = {
     val client: TransportClient = elastic_client.get_client()
+    val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
+    multiget_builder.add(elastic_client.index_name, elastic_client.term_type_name, terms_request.ids:_*)
+    val response: MultiGetResponse = multiget_builder.get()
+    val documents : List[Term] = response.getResponses.toList
+        .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case(e) =>
+      val item: GetResponse = e.getResponse
+      val source : Map[String, Any] = item.getSource.asScala.toMap
 
-    Option {
-      null
-    }
+      val term : String = source.get("term").asInstanceOf[String]
+
+      val synonyms: Option[String] = source.get("synonyms") match {
+          case Some(t) => Option{t.asInstanceOf[String]}
+          case None => None: Option[String]
+      }
+
+      val antonyms : Option[String] = source.get("antonyms") match {
+          case Some(t) => Option {t.asInstanceOf[String]}
+          case None => None: Option[String]
+      }
+
+      val frequency : Option[Double] = source.get("antonyms") match {
+        case Some(t) => Option {t.asInstanceOf[Double]}
+        case None => None: Option[Double]
+      }
+
+      val vector : Option[String] = source.get("antonyms") match {
+          case Some(t) => Option {t.asInstanceOf[String]}
+          case None => None: Option[String]
+      }
+
+      Term(term = term,
+        synonyms = Option{Map.empty[String, Double]},
+        antonyms = Option{Map.empty[String, Double]},
+        frequency = frequency,
+        vector = None: Option[Vector[Double]],
+        score = None: Option[Double])
+    })
+
+    Option {Terms(terms=documents)}
   }
 
   def update_term(terms: Terms) : Option[UpdateDocumentListResult] = {
@@ -102,13 +138,17 @@ class TermService(implicit val executionContext: ExecutionContext) {
         case Some(t) => builder.field("frequency", t)
         case None => ;
       }
-      val indexable_vector: String = vector2string(term.vector)
-      builder.field("vector", indexable_vector)
+      term.vector match {
+        case Some(t) => {
+          val indexable_vector: String = vector2string(t)
+          builder.field("vector", indexable_vector)
+        }
+        case None => ;
+      }
       builder.endObject()
 
-      bulkRequest.add(client.prepareIndex(elastic_client.index_name, elastic_client.term_type_name)
-        .setSource(builder)
-      )
+      bulkRequest.add(client.prepareUpdate(elastic_client.index_name, elastic_client.term_type_name, term.term)
+        .setUpsert(builder))
     })
 
     val bulkResponse: BulkResponse = bulkRequest.get()
@@ -125,11 +165,26 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def remove_term(termGetRequest: TermIdsRequest) : Option[DeleteDocumentListResult] = {
+  def delete(termGetRequest: TermIdsRequest) : Option[DeleteDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
+    val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
+    termGetRequest.ids.foreach( id => {
+      val delete_request: DeleteRequestBuilder = client.prepareDelete(elastic_client.index_name,
+        elastic_client.term_type_name, id)
+      bulkRequest.add(delete_request)
+    })
+    val bulkResponse: BulkResponse = bulkRequest.get()
+
+    val list_of_doc_res: List[DeleteDocumentResult] = bulkResponse.getItems.map(x => {
+      DeleteDocumentResult(x.getIndex, x.getType, x.getId,
+        x.getVersion,
+        x.status == RestStatus.CREATED)
+    }).toList
+
+    val result: DeleteDocumentListResult = DeleteDocumentListResult(list_of_doc_res)
     Option {
-      null
+      result
     }
   }
 

@@ -169,9 +169,10 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
     val json: String = builder.string()
     val client: TransportClient = elastic_client.get_client()
-    val response: IndexResponse = client.prepareIndex(elastic_client.index_name, elastic_client.type_name, document.id)
-      .setSource(json)
-      .get()
+    val response: IndexResponse =
+      client.prepareIndex(elastic_client.index_name, elastic_client.type_name, document.id)
+        .setSource(json)
+        .get()
 
     val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
       dtype = response.getType,
