@@ -47,6 +47,8 @@ _If you do not use docker_ you therefore need on your machine:
 
 ## Setup with Docker (recommended)
 
+### 1. Launch docker-compose
+
 Generate a packet distribution: 
 ```bash
 sbt dist
@@ -61,9 +63,8 @@ Extract the packet into the docker-starchat folder:
 unzip ../target/universal/starchat-master.zip
 ```
 
-Review the configuration files `starchat-master/config/application.conf`:
-- check that IP and Port for elasticsearch are correct.
-- configure the language
+Review the configuration files `starchat-master/config/application.conf` and configure 
+the language if needed (by default you have `index_language = "english"`)
 
 Start both startchat and elasticsearch: 
 ```bash
@@ -72,40 +73,52 @@ docker-compose up -d
 
 (Problems like `elastisearch exited with code 78`? have a look at [troubleshooting](#troubleshooting)!)
 
-Now you have an empty installation of `*chat`. You need to initialize Elasticsearch and then configure the bot.
+### 2. Create Elasticsearch indices
 
-### Prepare ElasticSearch indices
+Run from a terminal:
 
-* enter the directory scripts/api_test
-* run `./postIndexManagement.sh`
+```bash
+# create the indices in Elasticsearch
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/index_management"
+```
 
-###Configure *chat
+
+### 3. Load the configuration file
 
 Now you have to load the configuration file for the actual chat. We have provided an example csv in English, therefore:
 
-* `cd /scripts/indexing`
-* `./index_documents_dt.py ../../doc/sample_state_machine_specification.csv 1`
+```bash
+cd scripts/indexing/
+./index_documents_dt.py ../../doc/sample_state_machine_specification.csv 1
+```
 
-##Install without Docker
+Every time you load the configuration file you need to index the analyzer:
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_analyzer" 
+```
+
+## Install without Docker
  
+Note: we do not support this installation.
 * Clone the repository and enter the starchat directory.
-* Initialize the elasticsearch instance with `regenindex.sh` (see above for Docker)
+* Initialize the Elasticsearch instance (see above for Docker)
 * Run the service: `sbt compile run`
 
 The service binds on the port 8888 by default.
 
-##Test the installation
+## Test the installation
 
 Is the service working?
 
 `curl -X GET localhost:8888 | python -mjson.tool`
 
-Tell *Chat you cannot access your account:
+Get the `test_state`
 
 ```bash
 curl  -H "Content-Type: application/json" -X POST http://localhost:8888/get_next_response -d '{   
  "conversation_id": "1234",   
- "user_input": { "text": "I forgot my password" },   
+ "user_input": { "text": "Please send me the test state" },   
  "values": {
    "return_value": "", 
    "data": {}   
@@ -113,29 +126,27 @@ curl  -H "Content-Type: application/json" -X POST http://localhost:8888/get_next
 }'
 ```
 
-You should get something like:
+You should get:
 
 ```json
 {
-    "conversation_id": "1234",   
-    "action": "input_form",
-    "action_input": {
-        "email": "email"
-    },
-    "bubble": "We can reset your password by sending you a message to your registered e-mail address. Please tell me your address so I may send you the new password generation link.",
+    "action": "",
+    "action_input": {},
+    "analyzer": "and(keyword(\"test\"), or(keyword(\"send\"), keyword(\"get\")))",
+    "bubble": "This is the test state",
+    "conversation_id": "1234",
     "data": {},
-    "failure_value": "\"dont_understand\"",
+    "failure_value": "",
     "max_state_count": 0,
-    "analyzer": "",
-    "state": "forgot_password",
-    "state_data": {
-        "verification": "did you mean you forgot the password?"
-    },
-    "success_value": "\"send_password_generation_link\""
+    "score": 1.0,
+    "state": "test_state",
+    "state_data": {},
+    "success_value": ""
 }
 ```
 
-Which means *Chat understood your problem and went to the `forgot_password` state. 
+If you look at the `"analyzer"` field, you'll see that this state is triggered when 
+the user types the *test* and either *get* or *send*. 
 
 ## *Chat in brief
 
