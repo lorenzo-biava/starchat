@@ -13,7 +13,6 @@ class DefaultFactoryAtomic extends Factory[String, AbstractAtomic] {
   override def get(name: String, argument: String): AbstractAtomic = name.filter(c => !c.isWhitespace ) match {
     case "keyword" => new KeywordAtomic(argument)
     case "regex" => new RegularExpressionAtomic(argument)
-    case _ => throw new ExceptionAtomic("Atom \'" + name + "\' not found")
+    case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
-
 }
