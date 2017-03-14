@@ -7,5 +7,7 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/get_ne
 	\"values\": {
 		\"return_value\": \"\",
 		\"data\": {}
-	}
+	},
+	\"threshold\": 0.0,
+	\"max_results\": 4
 }"

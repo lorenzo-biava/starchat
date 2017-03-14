@@ -68,6 +68,10 @@
 				}
 			}
 		},
+                "frequency": {
+			"store": "yes",
+			"type": "double"
+		},
 		"term_vector":
 		{
 			"type": "text",
@@ -76,3 +80,4 @@
 		}
 	}
 }
+

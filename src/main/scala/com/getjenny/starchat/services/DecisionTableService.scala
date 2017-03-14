@@ -97,7 +97,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
   def getNextResponse(request: ResponseRequestIn): Option[ResponseRequestOutOperationResult] = {
     // calculate and return the ResponseRequestOut
 
-    val user_text: String = if(request.user_input.isDefined) {
+    val user_text: String = if (request.user_input.isDefined) {
       request.user_input.get.text.getOrElse("")
     } else {
       ""
@@ -105,17 +105,17 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
     val conversation_id: String = request.conversation_id
 
-    val data: Map[String, String] = if(request.values.isDefined)
-      request.values.get.data.getOrElse(Map[String,String]())
+    val data: Map[String, String] = if (request.values.isDefined)
+      request.values.get.data.getOrElse(Map[String, String]())
     else
-      Map[String,String]()
+      Map[String, String]()
 
-    val return_value: String =  if(request.values.isDefined)
+    val return_value: String = if (request.values.isDefined)
       request.values.get.return_value.getOrElse("")
     else
       ""
 
-    val return_state : Option[ResponseRequestOutOperationResult] = Option {
+    val return_state: Option[ResponseRequestOutOperationResult] = Option {
       if (!return_value.isEmpty) {
         // there is a state in return_value (eg the client asked for a state), no analyzers evaluation
         val state: Future[Option[SearchDTDocumentsResults]] = read(List[String](return_value))
@@ -149,10 +149,12 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             state_data = state_data,
             success_value = doc.success_value,
             failure_value = doc.failure_value,
-            1.0d)
+            score = 1.0d)
 
           val full_response: ResponseRequestOutOperationResult =
-            ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option {response_data}) // success
+            ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option {
+              List(response_data)
+            }) // success
           full_response
         } else {
           val full_response: ResponseRequestOutOperationResult =
@@ -160,37 +162,40 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               "Error during state retrieval"), null) // internal error
           full_response
         }
-      } else {  // No states in the return values
-      val analyzer_values : List[(String, Double)] = analyzer_map.filter(_._2.build == true).map(item => {
-        val evaluation_score = item._2.analyzer.evaluate(user_text)
-        val state_id = item._1
-        (state_id, evaluation_score)
-      }).toList.sortWith(_._2 > _._2)
+      } else {
+        // No states in the return values
+        val max_results: Int = request.max_results.getOrElse(2)
+        val threshold: Double = request.threshold.getOrElse(0.0d)
+        val analyzer_values: Map[String, Double] = analyzer_map.filter(_._2.build == true).map(item => {
+          val evaluation_score = item._2.analyzer.evaluate(user_text)
+          val state_id = item._1
+          (state_id, evaluation_score)
+        }).toList.filter(_._2 > threshold).sortWith(_._2 > _._2).take(max_results).toMap
 
-        if(analyzer_values.nonEmpty) {
-          val best_state_id = analyzer_values.head
-          val best_state = read(List(best_state_id._1))
-          val res : Option[SearchDTDocumentsResults] = Await.result(best_state, 30.seconds)
+        if(analyzer_values.size > 0) {
+          val items: Future[Option[SearchDTDocumentsResults]] = read(analyzer_values.keys.toList)
+          val res : Option[SearchDTDocumentsResults] = Await.result(items, 30.seconds)
+          val docs = res.get.hits.map(item => {
+            val doc: DTDocument = item.document
+            val state = doc.state
+            val score: Double = analyzer_values(state)
+            val max_state_count: Int = doc.max_state_count
+            val analyzer: String = doc.analyzer
+            var bubble: String = doc.bubble
+            var action_input: Map[String, String] = doc.action_input
+            val state_data: Map[String, String] = doc.state_data
 
-          val doc : DTDocument = res.get.hits.head.document
-          val state : String = doc.state
-          val max_state_count : Int = doc.max_state_count
-          val analyzer : String = doc.analyzer
-          var bubble : String = doc.bubble
-          var action_input : Map[String,String] = doc.action_input
-          val state_data: Map[String, String] = doc.state_data
-          if (data.nonEmpty) {
-            for ((key,value) <- data) {
-              bubble = bubble.replaceAll("%" + key + "%", value)
-              action_input = doc.action_input map {case (ki, vi) =>
-                val new_value : String = vi.replaceAll("%" + key + "%", value)
-                (ki, new_value)
+            if (data.nonEmpty) {
+              for ((key, value) <- data) {
+                bubble = bubble.replaceAll("%" + key + "%", value)
+                action_input = doc.action_input map { case (ki, vi) =>
+                  val new_value: String = vi.replaceAll("%" + key + "%", value)
+                  (ki, new_value)
+                }
               }
             }
-          }
 
-          val full_response: ResponseRequestOutOperationResult = if (best_state_id._2 > 0) {
-            val response_data : ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
+            val response_item: ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
               state = state,
               max_state_count = max_state_count,
               analyzer = analyzer,
@@ -201,19 +206,12 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               state_data = state_data,
               success_value = doc.success_value,
               failure_value = doc.failure_value,
-              best_state_id._2)
-
-            ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{response_data}) // success
-
-          } else {
-            ResponseRequestOutOperationResult(ReturnMessageData(204, ""), Option{null}) // success
-          }
-
-          full_response
+              score = score)
+            response_item
+          }).sortWith(_.score > _.score)
+          ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{docs}) // success
         } else {
-          val full_response : ResponseRequestOutOperationResult =
-            ResponseRequestOutOperationResult(ReturnMessageData(204, ""), Option{null})  // no data
-          full_response
+          ResponseRequestOutOperationResult(ReturnMessageData(204, ""), null)  // no data
         }
       }
     }
@@ -521,5 +519,4 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val search_results_option : Future[Option[SearchDTDocumentsResults]] = Future { Option { search_results } }
     search_results_option
   }
-
 }
