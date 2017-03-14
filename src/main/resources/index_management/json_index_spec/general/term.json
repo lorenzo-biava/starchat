@@ -58,13 +58,17 @@
 					"type": "text",
 					"analyzer": "jenny_base_analyzer"
 				},
+				"base_stem": {
+					"type": "text",
+					"analyzer": "jenny_base_stem_analyzer"
+				},
 				"stop": {
 					"type": "text",
 					"analyzer": "jenny_stop_analyzer"
 				},
 				"stem": {
 					"type": "text",
-					"analyzer": "jenny_stem_analyzer"
+					"analyzer": "jenny_base_stem_analyzer"
 				}
 			}
 		},
