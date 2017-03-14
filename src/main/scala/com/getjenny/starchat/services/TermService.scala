@@ -48,13 +48,16 @@ class TermService(implicit val executionContext: ExecutionContext) {
         case Some(t) => builder.field("antonyms", t)
         case None => ;
       }
+      term.frequency match {
+        case Some(t) => builder.field("frequency", t)
+        case None => ;
+      }
       val indexable_vector: String = vector2string(term.vector)
       builder.field("vector", indexable_vector)
       builder.endObject()
 
       bulkRequest.add(client.prepareIndex(elastic_client.index_name, elastic_client.term_type_name)
-        .setSource(builder)
-      )
+        .setSource(builder))
     })
 
     val bulkResponse: BulkResponse = bulkRequest.get()
@@ -92,6 +95,10 @@ class TermService(implicit val executionContext: ExecutionContext) {
       }
       term.antonyms match {
         case Some(t) => builder.field("antonyms", t)
+        case None => ;
+      }
+      term.frequency match {
+        case Some(t) => builder.field("frequency", t)
         case None => ;
       }
       val indexable_vector: String = vector2string(term.vector)

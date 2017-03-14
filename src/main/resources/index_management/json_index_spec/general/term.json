@@ -68,7 +68,7 @@
 				}
 			}
 		},
-                "frequency": {
+		"frequency": {
 			"store": "yes",
 			"type": "double"
 		},

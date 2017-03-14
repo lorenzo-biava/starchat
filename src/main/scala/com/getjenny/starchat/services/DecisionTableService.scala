@@ -241,7 +241,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     if(documentSearch.queries.isDefined) {
       bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
       bool_query_builder.should(
-        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(1 + (min_score * boost_exact_match_factor))
+        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get)
+          .boost(1 + (min_score * boost_exact_match_factor))
       )
     }
 
@@ -252,7 +253,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       .execute()
       .actionGet()
 
-    val documents : Option[List[SearchDTDocument]] = Option { search_response.getHits.getHits.toList.map( { case(e) =>
+    val documents : Option[List[SearchDTDocument]] =
+      Option { search_response.getHits.getHits.toList.map( { case(e) =>
 
       val item: SearchHit = e
 

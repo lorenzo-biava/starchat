@@ -9,6 +9,7 @@ import scala.collection.immutable.{Map}
 case class Term(term: String,
                 synonyms: Option[Map[String, Double]],
                 antonyms: Option[Map[String, Double]],
+                frequency: Option[Double],
                 vector: Vector[Double],
                 score: Option[Double]
                )
@@ -16,6 +17,7 @@ case class Term(term: String,
 case class UpdateTerm(term: Option[String],
                 synonyms: Option[Map[String, Double]],
                 antonyms: Option[Map[String, Double]],
+                frequency: Option[Double],
                 vector: Option[Vector[Double]],
                 score: Option[Double]
                )
