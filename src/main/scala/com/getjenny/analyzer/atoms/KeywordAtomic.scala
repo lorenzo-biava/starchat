@@ -12,6 +12,11 @@ class KeywordAtomic(val keyword: String) extends AbstractAtomic {
   override def toString: String = "keyword(\"" + keyword + "\")"
   val isEvaluateNormalized: Boolean = true
   private val rx = {"""\b""" + keyword + """\b"""}.r
-  def evaluate(query: String): Double =
-    rx.findAllIn(query).toList.length.toDouble / """\S+""".r.findAllIn(query).toList.length
+  def evaluate(query: String): Double = {
+    val freq = rx.findAllIn(query).toList.length
+    val query_length = """\S+""".r.findAllIn(query).toList.length
+    if (freq > 0) println("DEBUG: KeywordAtomic: '" + keyword + "' found " + freq + " times in " + query + " (length=" + query_length + ").")
+    freq.toDouble / query_length.toDouble
+  }
+
 }

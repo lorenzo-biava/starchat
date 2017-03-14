@@ -9,14 +9,14 @@ import com.getjenny.analyzer.interfaces._
 
 class DefaultFactoryOperator extends Factory[List[Expression], AbstractOperator] {
 
-  override val operations = Set("or" , "and", "conjunction", "disjunction")
+  override val operations = Set("or" , "and", "conjunction", "disjunction", "bor", "band", "boolean-or", "boolean-and")
 
   override def get(name: String, argument: List[Expression]): AbstractOperator = name.filter(c => !c.isWhitespace ) match {
-    case "or" => new OrOperator(argument)
-    case "and" => new AndOperator(argument)
-    case "conjunction" => new ConjunctionOperator(argument)
-    case "disjunction" => new DisjunctionOperator(argument)
-    case _ => throw new OperatorNotFoundException("Operator \'" + name + "\' not found")
+    case ("boolean-or" | "bor") => new OrOperator(argument)
+    case ("boolean-and"| "band") => new AndOperator(argument)
+    case ("conjunction" | "and") => new ConjunctionOperator(argument)
+    case ("disjunction" | "or") => new DisjunctionOperator(argument)
+    case _ => throw OperatorNotFoundException("Operator \'" + name + "\' not found")
   }
 
 }

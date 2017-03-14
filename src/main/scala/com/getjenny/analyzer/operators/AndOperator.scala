@@ -7,12 +7,12 @@ import com.getjenny.analyzer.expressions._
   */
 
 class AndOperator(children: List[Expression]) extends AbstractOperator(children: List[Expression]) {
-  override def toString: String = "and(" + children.mkString(", ") + ")"
+  override def toString: String = "boolean-and(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
     if (level == 0) new AndOperator(e :: children)
     else children.head match {
       case c: AbstractOperator => new AndOperator(c.add(e, level - 1) :: children.tail)
-      case _ => throw new OperatorException("AND: trying to add to smt else than an operator")
+      case _ => throw OperatorException("boolean-and: trying to add to smt else than an operator")
     }
   }
   def evaluate(query: String): Double = {
