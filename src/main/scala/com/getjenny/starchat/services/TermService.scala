@@ -32,7 +32,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     vector.zipWithIndex.map(x => (x._2.toString + "|" + x._1.toString)).mkString(" ")
   }
 
-  def index_term(terms: Terms) : Option[List[IndexDocumentResult]] = {
+  def index_term(terms: Terms) : Option[IndexDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
@@ -62,14 +62,15 @@ class TermService(implicit val executionContext: ExecutionContext) {
 
     val bulkResponse: BulkResponse = bulkRequest.get()
 
-    val results: List[IndexDocumentResult] = bulkResponse.getItems.map(x => {
+    val list_of_doc_res: List[IndexDocumentResult] = bulkResponse.getItems.map(x => {
       IndexDocumentResult(x.getIndex, x.getType, x.getId,
       x.getVersion,
       x.status == RestStatus.CREATED)
     }).toList
-    
+
+    val result: IndexDocumentListResult = IndexDocumentListResult(list_of_doc_res)
     Option {
-      results
+      result
     }
   }
 
@@ -81,7 +82,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def update_term(terms: Terms) : Option[List[UpdateDocumentResult]] = {
+  def update_term(terms: Terms) : Option[UpdateDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
@@ -112,18 +113,19 @@ class TermService(implicit val executionContext: ExecutionContext) {
 
     val bulkResponse: BulkResponse = bulkRequest.get()
 
-    val results: List[UpdateDocumentResult] = bulkResponse.getItems.map(x => {
+    val list_of_doc_res: List[UpdateDocumentResult] = bulkResponse.getItems.map(x => {
       UpdateDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
         x.status == RestStatus.CREATED)
     }).toList
 
+    val result: UpdateDocumentListResult = UpdateDocumentListResult(list_of_doc_res)
     Option {
-      results
+      result
     }
   }
 
-  def remove_term(termGetRequest: TermIdsRequest) : Option[List[DeleteDocumentResult]] = {
+  def remove_term(termGetRequest: TermIdsRequest) : Option[DeleteDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     Option {

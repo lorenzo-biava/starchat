@@ -22,8 +22,8 @@ case class UpdateTerm(term: Option[String],
                 score: Option[Double]
                )
 
-case class Terms(terms: Seq[Term])
+case class Terms(terms: List[Term])
 
-case class TermIdsRequest(ids: Seq[String])
+case class TermIdsRequest(ids: List[String])
 
 case class TermsResults(total: Int, max_score: Float, hits: Terms)
