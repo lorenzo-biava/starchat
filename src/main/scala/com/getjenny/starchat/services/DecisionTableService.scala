@@ -16,15 +16,15 @@ import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.unit._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.rest.RestStatus
-
 import com.getjenny.starchat.analyzer.analyzers._
+import scala.util.{Failure, Success, Try}
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
@@ -56,15 +56,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
-      val analyzer : StarchatAnalyzer = if (declaration != "") {
-        try {
-          new StarchatAnalyzer(declaration)
-        } catch {
-          case e: Exception => null
-        }
-      } else {
-        null
-      }
+      val analyzer : StarchatAnalyzer = new StarchatAnalyzer(declaration)
 
       val build = analyzer != null
 
@@ -74,25 +66,30 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     results
   }
 
-  def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = {
+  def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = Future {
     analyzer_map = getAnalyzers
     val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=analyzer_map.size)
-    Future(Option(dt_analyzer_load))
+    Option {dt_analyzer_load}
   }
 
   def getDTAnalyzerMap : Future[Option[DTAnalyzerMap]] = {
-    try {
-      val analyzers = Future(Option(DTAnalyzerMap(analyzer_map.map(x => {
-        val dt_analyzer = DTAnalyzerItem(x._2.declaration, x._2.build)
-        (x._1, dt_analyzer)
-      }))))
-      analyzers
-    } catch {
-      case e: Exception => Future.failed(e)
+    val analyzers = Future(Option(DTAnalyzerMap(analyzer_map.map(x => {
+      val dt_analyzer = DTAnalyzerItem(x._2.declaration, x._2.build)
+      (x._1, dt_analyzer)
+    }))))
+    analyzers
+  }
+
+  def initializeAnalyzers(): Unit = {
+    val result: Try[Option[DTAnalyzerLoad]] =
+      Await.ready(loadAnalyzer, 30.seconds).value.get
+    result match {
+      case Success(t) => println("INFO: analyzers loaded")
+      case Failure(e) => println("ERROR: loading analyzers : " + e.getMessage)
     }
   }
 
-  loadAnalyzer // load analyzer map on startup
+  initializeAnalyzers() // load analyzer map on startup
 
   def getNextResponse(request: ResponseRequestIn): Option[ResponseRequestOutOperationResult] = {
     // calculate and return the ResponseRequestOut
@@ -241,7 +238,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     if(documentSearch.queries.isDefined) {
       bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
       bool_query_builder.should(
-        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(1 + (min_score * boost_exact_match_factor))
+        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get)
+          .boost(1 + (min_score * boost_exact_match_factor))
       )
     }
 
@@ -252,7 +250,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       .execute()
       .actionGet()
 
-    val documents : Option[List[SearchDTDocument]] = Option { search_response.getHits.getHits.toList.map( { case(e) =>
+    val documents : Option[List[SearchDTDocument]] =
+      Option { search_response.getHits.getHits.toList.map( { case(e) =>
 
       val item: SearchHit = e
 
