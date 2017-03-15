@@ -65,7 +65,11 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
-      val analyzer : StarchatAnalyzer = new StarchatAnalyzer(declaration)
+      val analyzer : StarchatAnalyzer = if (declaration != "") {
+        new StarchatAnalyzer(declaration)
+      } else {
+        null
+      }
 
       val build = analyzer != null
 
