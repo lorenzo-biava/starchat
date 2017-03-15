@@ -14,11 +14,13 @@ import com.typesafe.config.ConfigFactory
 
 object Main extends App with RestInterface {
   val config = ConfigFactory.load()
+
   val host = config.getString("http.host")
   val port = config.getInt("http.port")
 
   /* creation of the akka actor system which handle concurrent requests */
   implicit val system = ActorSystem("starchat-service")
+
   /* "The Materializer is a factory for stream execution engines, it is the thing that makes streams run" */
   implicit val materializer = ActorMaterializer()
 
@@ -28,7 +30,8 @@ object Main extends App with RestInterface {
   val api = routes
 
   Http().bindAndHandle(handler = api, interface = host, port = port) map { binding =>
-    println(s"REST interface bound to ${binding.localAddress}") } recover { case ex =>
-    println(s"REST interface could not bind to $host:$port", ex.getMessage)
+    system.log.info(s"REST interface bound to ${binding.localAddress}")
+    } recover { case ex =>
+    system.log.error(s"REST interface could not bind to $host:$port", ex.getMessage)
   }
 }

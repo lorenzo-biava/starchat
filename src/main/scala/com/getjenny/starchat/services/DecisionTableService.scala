@@ -4,6 +4,7 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
+import akka.actor.ActorSystem
 import com.getjenny.starchat.entities._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -24,13 +25,20 @@ import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.rest.RestStatus
 import com.getjenny.starchat.analyzer.analyzers._
+
 import scala.util.{Failure, Success, Try}
+import akka.actor.ActorSystem
+import akka.event.{Logging, LoggingAdapter}
+import akka.event.Logging._
+import akka.http.scaladsl.server.directives.DebuggingDirectives
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
 class DecisionTableService(implicit val executionContext: ExecutionContext) {
   val elastic_client = DecisionTableElasticClient
+  val system = ActorSystem("starchat-service")
+  val log: LoggingAdapter = Logging(system, this.getClass.getCanonicalName)
 
   case class AnalyzerItem(declaration: String, build: Boolean, analyzer: StarchatAnalyzer)
 
@@ -84,8 +92,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val result: Try[Option[DTAnalyzerLoad]] =
       Await.ready(loadAnalyzer, 30.seconds).value.get
     result match {
-      case Success(t) => println("INFO: analyzers loaded")
-      case Failure(e) => println("ERROR: loading analyzers : " + e.getMessage)
+      case Success(t) => log.info("analyzers loaded")
+      case Failure(e) => log.error("can't load analyzers")
     }
   }
 
