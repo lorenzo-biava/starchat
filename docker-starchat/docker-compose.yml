@@ -15,9 +15,9 @@ elasticsearch:
 
 starchat:
   image: java:8
-  command: /starchat-master/bin/starchat
+  command: /starchat/bin/starchat
   volumes:
-    - ./starchat-master:/starchat-master
+    - ./starchat-master:/starchat
   ports:
     - "0.0.0.0:8888:8888"
   links:
