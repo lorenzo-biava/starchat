@@ -66,10 +66,10 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     results
   }
 
-  def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = {
+  def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = Future {
     analyzer_map = getAnalyzers
     val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=analyzer_map.size)
-    Future(Option(dt_analyzer_load))
+    Option {dt_analyzer_load}
   }
 
   def getDTAnalyzerMap : Future[Option[DTAnalyzerMap]] = {
