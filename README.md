@@ -25,7 +25,8 @@ Before contributing (or opening issues), you might want send us an email at star
    * [APIs](#apis)
    * [Test](#test)
    * [Troubleshooting](#troubleshooting)
-      * [Size of the virtual memory](#size-of-the-virtual-memory)
+      * [Docker: start from scratch](#docker-start-from-scratch)
+      * [Docker: size of virtual memory](#docker-size-of-virtual-memory)
 
 
 # Quick Start
@@ -65,6 +66,8 @@ unzip ../target/universal/starchat-master.zip
 
 Review the configuration files `starchat-master/config/application.conf` and configure 
 the language if needed (by default you have `index_language = "english"`)
+
+(If you are re-installing *Chat, and want to start from scratch see [start from scratch](#docker-start-from-scratch).)
 
 Start both startchat and elasticsearch: 
 ```bash
@@ -942,9 +945,22 @@ Sample output
 
 # Troubleshooting
 
-## Size of the virtual memory
+## Docker: start from scratch
+
+You might want to start from scratch, and delete all docker images. 
+
+If you do so (`docker images` and then `docker rmi -f <java/elasticsearch ids>`) remember that all data for the 
+Elasticsearch docker are local, and mounted only when the container is up. Therefore you need to:
+
+```bash
+cd docker-starchat
+rm -rf elasticsearch/data/nodes/
+```
+
+## Docker: Size of virtual memory
 
 If elasticsearch complain about the size of the virtual memory:
+
 ```
 max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
 elastisearch exited with code 78
