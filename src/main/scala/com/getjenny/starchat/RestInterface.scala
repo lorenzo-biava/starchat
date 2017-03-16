@@ -5,7 +5,7 @@ package com.getjenny.starchat
   */
 
 import scala.concurrent.ExecutionContext
-
+import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Route
 
 import com.getjenny.starchat.resources._

@@ -20,12 +20,16 @@ import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import scala.collection.JavaConverters._
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
+import akka.event.{Logging, LoggingAdapter}
+import akka.event.Logging._
+import com.getjenny.starchat.SCActorSystem
 
 /**
   * Implements functions, eventually used by TermResource
   */
 class TermService(implicit val executionContext: ExecutionContext) {
   val elastic_client = IndexManagementClient
+  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def vector2string(vector: Vector[Double]): String = {
     vector.zipWithIndex.map(x => x._2.toString + "|" + x._1.toString).mkString(" ")

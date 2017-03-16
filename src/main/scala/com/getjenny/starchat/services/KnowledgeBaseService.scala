@@ -26,10 +26,13 @@ import com.typesafe.config.ConfigFactory
 import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.rest.RestStatus
+import akka.event.{Logging, LoggingAdapter}
+import akka.event.Logging._
+import com.getjenny.starchat.SCActorSystem
 
 class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
-
   val elastic_client = KnowledgeBaseElasticClient
+  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def search(documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
