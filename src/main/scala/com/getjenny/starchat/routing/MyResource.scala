@@ -1,6 +1,7 @@
 package com.getjenny.starchat.routing
 
 import akka.actor.ActorSystem
+import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.marshalling.{ToEntityMarshaller, ToResponseMarshallable}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -10,10 +11,12 @@ import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.{Route, ValidationRejection}
+import com.getjenny.starchat.SCActorSystem
 
 trait MyResource extends Directives with JsonSupport {
 
   implicit def executionContext: ExecutionContext
+  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def completeResponse(status_code: StatusCode): Route = {
       complete(status_code)

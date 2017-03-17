@@ -19,7 +19,6 @@ import scala.util.{Failure, Success, Try}
 trait KnowledgeBaseResource extends MyResource {
 
   val kbElasticService: KnowledgeBaseService
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def knowledgeBaseRoutes: Route = pathPrefix("knowledgebase") {
     pathEnd {

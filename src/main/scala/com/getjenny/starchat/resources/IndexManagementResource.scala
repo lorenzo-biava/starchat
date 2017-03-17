@@ -20,7 +20,6 @@ import scala.util.{Failure, Success, Try}
 trait IndexManagementResource extends MyResource {
 
   val indexManagementService: IndexManagementService
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def indexManagementRoutes: Route = pathPrefix("index_management") {
     pathEnd {

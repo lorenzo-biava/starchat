@@ -11,6 +11,10 @@ import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.resources._
 import com.getjenny.starchat.services._
 
+trait Resources extends KnowledgeBaseResource with DecisionTableResource
+  with RootAPIResource with IndexManagementResource with LanguageGuesserResource
+  with TermResource
+
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
 
@@ -25,7 +29,3 @@ trait RestInterface extends Resources {
     decisionTableResponseRequestRoutes ~ decisionTableAnalyzerRoutes ~ indexManagementRoutes ~
     languageGuesserRoutes ~ termRoutes
 }
-
-trait Resources extends KnowledgeBaseResource with DecisionTableResource
-  with RootAPIResource with IndexManagementResource with LanguageGuesserResource
-  with TermResource

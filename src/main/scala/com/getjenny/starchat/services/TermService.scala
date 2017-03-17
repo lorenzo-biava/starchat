@@ -24,6 +24,9 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 
+import java.lang.String
+
+
 /**
   * Implements functions, eventually used by TermResource
   */
@@ -31,8 +34,44 @@ class TermService(implicit val executionContext: ExecutionContext) {
   val elastic_client = IndexManagementClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def vector2string(vector: Vector[Double]): String = {
+  def payloadVectorToString[T](vector: Vector[T]): String = {
     vector.zipWithIndex.map(x => x._2.toString + "|" + x._1.toString).mkString(" ")
+  }
+
+  def payloadMapToString[T, U](payload: Map[T, U]): String = {
+    payload.map(x => x._1.toString + "\\|" + x._2.toString).mkString(" ")
+  }
+
+  def payloadStringToDoubleVector(payload: String): Vector[Double] = {
+    val vector: Vector[Double] = payload.split(" ").map(x => {
+      val term_tuple = x.split("\\|") match { case Array(t, r) => r.toDouble }
+      term_tuple
+    }).toVector
+    vector
+  }
+
+  def payloadStringToMapStringDouble(payload: String): Map[String, Double] = {
+    val m: Map[String, Double] = payload.split(" ").map(x => {
+      val term_tuple = x.split("\\|") match { case Array(t, r) => (t, r.toDouble) }
+      term_tuple
+    }).toMap
+    m
+  }
+
+  def payloadStringToMapIntDouble(payload: String): Map[Int, Double] = {
+    val m: Map[Int, Double] = payload.split(" ").map(x => {
+      val term_tuple = x.split("\\|") match { case Array(t, r) => (t.toInt, r.toDouble) }
+      term_tuple
+    }).toMap
+    m
+  }
+
+  def payloadStringToMapStringString(payload: String): Map[String, String] = {
+    val m: Map[String, String] = payload.split(" ").map(x => {
+      val term_tuple = x.split("\\|") match { case Array(t, r) => (t, r) }
+      term_tuple
+    }).toMap
+    m
   }
 
   def index_term(terms: Terms) : Option[IndexDocumentListResult] = {
@@ -44,11 +83,25 @@ class TermService(implicit val executionContext: ExecutionContext) {
       val builder : XContentBuilder = jsonBuilder().startObject()
       builder.field("term", term.term)
       term.synonyms match {
-        case Some(t) => builder.field("synonyms", t)
+        case Some(t) =>
+          val indexable: String = payloadMapToString[String, Double](t)
+          builder.field("synonyms", indexable)
         case None => ;
       }
       term.antonyms match {
-        case Some(t) => builder.field("antonyms", t)
+        case Some(t) =>
+          val indexable: String = payloadMapToString[String, Double](t)
+          builder.field("antonyms", indexable)
+        case None => ;
+      }
+      term.tags match {
+        case Some(t) => builder.field("tags", t)
+        case None => ;
+      }
+      term.features match {
+        case Some(t) =>
+          val indexable: String = payloadMapToString[String, String](t)
+          builder.field("features", indexable)
         case None => ;
       }
       term.frequency match {
@@ -57,7 +110,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
       }
       term.vector match {
         case Some(t) =>
-          val indexable_vector: String = vector2string(t)
+          val indexable_vector: String = payloadVectorToString[Double](t)
           builder.field("vector", indexable_vector)
         case None => ;
       }
@@ -91,33 +144,56 @@ class TermService(implicit val executionContext: ExecutionContext) {
       val item: GetResponse = e.getResponse
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
-      val term : String = source.get("term").asInstanceOf[String]
-
-      val synonyms: Option[String] = source.get("synonyms") match {
-          case Some(t) => Option{t.asInstanceOf[String]}
-          case None => None: Option[String]
+      val term : String = source.get("term") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
       }
 
-      val antonyms : Option[String] = source.get("antonyms") match {
-          case Some(t) => Option {t.asInstanceOf[String]}
-          case None => None: Option[String]
+      val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringDouble(value)}
+        case None => None: Option[Map[String, Double]]
       }
 
-      val frequency : Option[Double] = source.get("antonyms") match {
+      val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringDouble(value)}
+        case None => None: Option[Map[String, Double]]
+      }
+
+      val tags : Option[String] = source.get("tags") match {
+        case Some(t) => Option {t.asInstanceOf[String]}
+        case None => None: Option[String]
+      }
+
+      val features : Option[Map[String, String]] = source.get("features") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringString(value)}
+        case None => None: Option[Map[String, String]]
+      }
+
+      val frequency : Option[Double] = source.get("frequency") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
 
-      val vector : Option[String] = source.get("antonyms") match {
-          case Some(t) => Option {t.asInstanceOf[String]}
-          case None => None: Option[String]
+      val vector : Option[Vector[Double]] = source.get("vector") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToDoubleVector(value)}
+          case None => None: Option[Vector[Double]]
       }
 
-      Term(term = term, //TODO: to complete
-        synonyms = Option{Map.empty[String, Double]},
-        antonyms = Option{Map.empty[String, Double]},
+      Term(term = term,
+        synonyms = synonyms,
+        antonyms = antonyms,
+        tags = tags,
+        features = features,
         frequency = frequency,
-        vector = None: Option[Vector[Double]],
+        vector = vector,
         score = None: Option[Double])
     })
 
@@ -133,11 +209,25 @@ class TermService(implicit val executionContext: ExecutionContext) {
       val builder : XContentBuilder = jsonBuilder().startObject()
       builder.field("term", term.term)
       term.synonyms match {
-        case Some(t) => builder.field("synonyms", t)
+        case Some(t) =>
+          val indexable: String = payloadMapToString[String, Double](t)
+          builder.field("synonyms", indexable)
         case None => ;
       }
       term.antonyms match {
-        case Some(t) => builder.field("antonyms", t)
+        case Some(t) =>
+          val indexable: String = payloadMapToString[String, Double](t)
+          builder.field("antonyms", indexable)
+        case None => ;
+      }
+      term.tags match {
+        case Some(t) => builder.field("tags", t)
+        case None => ;
+      }
+      term.features match {
+        case Some(t) =>
+          val indexable: String = payloadMapToString[String, String](t)
+          builder.field("features", indexable)
         case None => ;
       }
       term.frequency match {
@@ -146,14 +236,14 @@ class TermService(implicit val executionContext: ExecutionContext) {
       }
       term.vector match {
         case Some(t) =>
-          val indexable_vector: String = vector2string(t)
+          val indexable_vector: String = payloadVectorToString[Double](t)
           builder.field("vector", indexable_vector)
         case None => ;
       }
       builder.endObject()
 
       bulkRequest.add(client.prepareUpdate(elastic_client.index_name, elastic_client.term_type_name, term.term)
-        .setUpsert(builder))
+          .setDoc(builder))
     })
 
     val bulkResponse: BulkResponse = bulkRequest.get()
@@ -206,16 +296,17 @@ class TermService(implicit val executionContext: ExecutionContext) {
     if (term.frequency.isDefined)
       bool_query_builder.must(QueryBuilders.termQuery("frequency", term.frequency.get))
 
-    if (term.vector.isDefined) {
-      //TODO: to complete
-      //bool_query_builder.must(QueryBuilders.termQuery("verified", documentSearch.verified.get))
-    }
-
     if (term.synonyms.isDefined)
       bool_query_builder.must(QueryBuilders.termQuery("synonyms", term.synonyms.get))
 
     if (term.antonyms.isDefined)
       bool_query_builder.must(QueryBuilders.termQuery("antonyms", term.antonyms.get))
+
+    if (term.tags.isDefined)
+      bool_query_builder.must(QueryBuilders.termQuery("tags", term.tags.get))
+
+    if (term.features.isDefined)
+      bool_query_builder.must(QueryBuilders.termQuery("features", term.features.get))
 
     search_builder.setQuery(bool_query_builder)
 
@@ -228,33 +319,56 @@ class TermService(implicit val executionContext: ExecutionContext) {
 
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
-      val term : String = source.get("term").asInstanceOf[String]
-
-      val synonyms: Option[String] = source.get("synonyms") match {
-        case Some(t) => Option{t.asInstanceOf[String]}
-        case None => None: Option[String]
+      val term : String = source.get("term") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
       }
 
-      val antonyms : Option[String] = source.get("antonyms") match {
+      val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringDouble(value)}
+        case None => None: Option[Map[String, Double]]
+      }
+
+      val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringDouble(value)}
+        case None => None: Option[Map[String, Double]]
+      }
+
+      val tags : Option[String] = source.get("tags") match {
         case Some(t) => Option {t.asInstanceOf[String]}
         case None => None: Option[String]
       }
 
-      val frequency : Option[Double] = source.get("antonyms") match {
+      val features : Option[Map[String, String]] = source.get("features") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringString(value)}
+        case None => None: Option[Map[String, String]]
+      }
+
+      val frequency : Option[Double] = source.get("frequency") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
 
-      val vector : Option[String] = source.get("antonyms") match {
-        case Some(t) => Option {t.asInstanceOf[String]}
-        case None => None: Option[String]
+      val vector : Option[Vector[Double]] = source.get("vector") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToDoubleVector(value)}
+        case None => None: Option[Vector[Double]]
       }
 
-      Term(term = term, //TODO: to complete
-        synonyms = Option{Map.empty[String, Double]},
-        antonyms = Option{Map.empty[String, Double]},
+      Term(term = term,
+        synonyms = synonyms,
+        antonyms = antonyms,
+        tags = tags,
+        features = features,
         frequency = frequency,
-        vector = None: Option[Vector[Double]],
+        vector = vector,
         score = Option{item.getScore.toDouble})
     })
 
@@ -279,7 +393,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
-    bool_query_builder.must(QueryBuilders.termQuery("term.base", text))
+    bool_query_builder.should(QueryBuilders.matchQuery("term.base", text))
     search_builder.setQuery(bool_query_builder)
 
     val search_response : SearchResponse = search_builder
@@ -291,33 +405,56 @@ class TermService(implicit val executionContext: ExecutionContext) {
 
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
-      val term : String = source.get("term").asInstanceOf[String]
-
-      val synonyms: Option[String] = source.get("synonyms") match {
-        case Some(t) => Option{t.asInstanceOf[String]}
-        case None => None: Option[String]
+      val term : String = source.get("term") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
       }
 
-      val antonyms : Option[String] = source.get("antonyms") match {
+      val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringDouble(value)}
+        case None => None: Option[Map[String, Double]]
+      }
+
+      val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringDouble(value)}
+        case None => None: Option[Map[String, Double]]
+      }
+
+      val tags : Option[String] = source.get("tags") match {
         case Some(t) => Option {t.asInstanceOf[String]}
         case None => None: Option[String]
       }
 
-      val frequency : Option[Double] = source.get("antonyms") match {
+      val features : Option[Map[String, String]] = source.get("features") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringString(value)}
+        case None => None: Option[Map[String, String]]
+      }
+
+      val frequency : Option[Double] = source.get("frequency") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
 
-      val vector : Option[String] = source.get("antonyms") match {
-        case Some(t) => Option {t.asInstanceOf[String]}
-        case None => None: Option[String]
+      val vector : Option[Vector[Double]] = source.get("vector") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToDoubleVector(value)}
+        case None => None: Option[Vector[Double]]
       }
 
-      Term(term = term, //TODO: to complete
-        synonyms = Option{Map.empty[String, Double]},
-        antonyms = Option{Map.empty[String, Double]},
+      Term(term = term,
+        synonyms = synonyms,
+        antonyms = antonyms,
+        tags = tags,
+        features = features,
         frequency = frequency,
-        vector = None: Option[Vector[Double]],
+        vector = vector,
         score = Option{item.getScore.toDouble})
     })
 
@@ -334,7 +471,3 @@ class TermService(implicit val executionContext: ExecutionContext) {
   }
 
 }
-
-
-
-

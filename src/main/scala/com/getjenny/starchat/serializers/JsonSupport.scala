@@ -40,7 +40,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val languageGuesserRequestInFormat = jsonFormat1(LanguageGuesserRequestIn)
   implicit val languageGuesserRequestOuFormatt = jsonFormat4(LanguageGuesserRequestOut)
   implicit val languageGuesserInformationsFormat = jsonFormat1(LanguageGuesserInformations)
-  implicit val termFormat = jsonFormat6(Term)
+  implicit val termFormat = jsonFormat8(Term)
   implicit val termIdsRequestFormat = jsonFormat1(TermIdsRequest)
   implicit val termsFormat = jsonFormat1(Terms)
   implicit val termsResultsFormat = jsonFormat3(TermsResults)

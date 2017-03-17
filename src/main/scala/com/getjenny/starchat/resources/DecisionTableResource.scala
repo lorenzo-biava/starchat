@@ -19,7 +19,6 @@ import scala.util.{Failure, Success, Try}
 trait DecisionTableResource extends MyResource {
 
   val dtElasticService: DecisionTableService
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def decisionTableRoutes: Route = pathPrefix("decisiontable") {
     pathEnd {

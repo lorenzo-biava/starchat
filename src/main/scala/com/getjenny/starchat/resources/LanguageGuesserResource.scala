@@ -20,7 +20,6 @@ import scala.util.{Failure, Success, Try}
 trait LanguageGuesserResource extends MyResource {
 
   val languageGuesserService: LanguageGuesserService
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def languageGuesserRoutes: Route = pathPrefix("language_guesser") {
     pathEnd {
