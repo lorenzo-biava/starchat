@@ -935,6 +935,410 @@ Sample output
 {"message":"removed index: jenny-en-0 index_ack(true)"}
 ```
 
+## `POST term/index`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/term/index -d '{
+	"terms": [
+	    {
+            "term": "मराठी",
+            "frequency": 1.0,
+            "vector": [1.0, 2.0, 3.0],
+            "synonyms":
+            {
+                "bla1": 0.1,
+                "bla2": 0.2
+            },
+            "antonyms":
+            {
+                "bla3": 0.1,
+                "bla4": 0.2
+            },
+            "tags": "tag1 tag2",
+            "features":
+            {
+                "NUM": "S",
+                "GEN": "M"
+            }
+	    },
+	    {
+            "term": "term2",
+            "frequency": 1.0,
+            "vector": [1.0, 2.0, 3.0],
+            "synonyms":
+            {
+                "bla1": 0.1,
+                "bla2": 0.2
+            },
+            "antonyms":
+            {
+                "bla3": 0.1,
+                "bla4": 0.2
+            },
+            "tags": "tag1 tag2",
+            "features":
+            {
+                "NUM": "P",
+                "GEN": "F"
+            }
+	    }
+   ]
+}'
+
+```
+
+Sample output
+
+```json
+{
+   "data" : [
+      {
+         "version" : 1,
+         "created" : true,
+         "dtype" : "term",
+         "index" : "jenny-en-0",
+         "id" : "मराठी"
+      },
+      {
+         "dtype" : "term",
+         "created" : true,
+         "version" : 1,
+         "id" : "term2",
+         "index" : "jenny-en-0"
+      }
+   ]
+}
+```
+
+## `POST term/get`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/term/get -d '{
+	"ids": ["मराठी", "term2"]
+}'
+```
+
+Sample output
+
+```json
+{
+   "terms" : [
+      {
+         "vector" : [
+            1,
+            2,
+            3
+         ],
+         "frequency" : 1,
+         "term" : "मराठी",
+         "antonyms" : {
+            "bla4" : 0.2,
+            "bla3" : 0.1
+         },
+         "features" : {
+            "NUM" : "S",
+            "GEN" : "M"
+         },
+         "synonyms" : {
+            "bla2" : 0.2,
+            "bla1" : 0.1
+         },
+         "tags" : "tag1 tag2"
+      },
+      {
+         "antonyms" : {
+            "bla3" : 0.1,
+            "bla4" : 0.2
+         },
+         "features" : {
+            "NUM" : "P",
+            "GEN" : "F"
+         },
+         "term" : "term2",
+         "frequency" : 1,
+         "vector" : [
+            1,
+            2,
+            3
+         ],
+         "synonyms" : {
+            "bla1" : 0.1,
+            "bla2" : 0.2
+         },
+         "tags" : "tag1 tag2"
+      }
+   ]
+}
+
+```
+
+## `DELETE term`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X DELETE http://localhost:8888/term -d '{
+	"ids": ["मराठी", "term2"]
+}'
+```
+
+Sample output
+
+```json
+{
+   "data" : [
+      {
+         "dtype" : "term",
+         "version" : 2,
+         "id" : "मराठी",
+         "index" : "jenny-en-0",
+         "found" : true
+      },
+      {
+         "dtype" : "term",
+         "id" : "term2",
+         "version" : 2,
+         "found" : true,
+         "index" : "jenny-en-0"
+      }
+   ]
+}
+
+```
+
+## `PUT term`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X PUT http://localhost:8888/term -d '{
+	"terms": [
+	    {
+            "term": "मराठी",
+            "frequency": 1.0,
+            "vector": [1.0, 2.0, 3.0, 4.0],
+            "synonyms":
+            {
+                "bla1": 0.1,
+                "bla2": 0.2
+            },
+            "antonyms":
+            {
+                "term2": 0.1,
+                "bla4": 0.2
+            },
+            "tags": "tag1 tag2",
+            "features":
+            {
+                "FEATURE_NEW1": "V",
+                "GEN": "M"
+            }
+	    },
+	    {
+            "term": "term2",
+            "frequency": 1.0,
+            "vector": [1.0, 2.0, 3.0, 5.0],
+            "synonyms":
+            {
+                "bla1": 0.1,
+                "bla2": 0.2
+            },
+            "antonyms":
+            {
+                "bla3": 0.1,
+                "bla4": 0.2
+            },
+            "tags": "tag1 tag2",
+            "features":
+            {
+                "FEATURE_NEW1": "N",
+                "GEN": "F"
+            }
+	    }
+   ]
+}'
+```
+
+Sample output
+
+```json
+{
+   "data" : [
+      {
+         "version" : 2,
+         "id" : "मराठी",
+         "index" : "jenny-en-0",
+         "created" : false,
+         "dtype" : "term"
+      },
+      {
+         "index" : "jenny-en-0",
+         "id" : "term2",
+         "version" : 2,
+         "dtype" : "term",
+         "created" : false
+      }
+   ]
+}
+
+```
+
+## `GET term/term`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET http://localhost:8888/term/term -d '{
+    "term": "मराठी"
+}'
+```
+
+Sample output
+
+```json
+{
+   "hits" : {
+      "terms" : [
+         {
+            "vector" : [
+               1.2,
+               2.3,
+               3.4,
+               4.5
+            ],
+            "antonyms" : {
+               "bla4" : 0.2,
+               "term2" : 0.1
+            },
+            "frequency" : 1,
+            "features" : {
+               "FEATURE_NEW1" : "V",
+               "GEN" : "M"
+            },
+            "score" : 0.6931471824646,
+            "tags" : "tag1 tag2",
+            "term" : "मराठी",
+            "synonyms" : {
+               "bla2" : 0.2,
+               "bla1" : 0.1
+            }
+         }
+      ]
+   },
+   "total" : 1,
+   "max_score" : 0.6931471824646
+}
+```
+
+## `GET term/term`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET http://localhost:8888/term/text -d 'term2 मराठी'
+```
+
+Sample output
+
+```json
+{
+   "max_score" : 0.6931471824646,
+   "hits" : {
+      "terms" : [
+         {
+            "term" : "मराठी",
+            "score" : 0.6931471824646,
+            "tags" : "tag1 tag2",
+            "vector" : [
+               1.2,
+               2.3,
+               3.4,
+               4.5
+            ],
+            "features" : {
+               "GEN" : "M",
+               "FEATURE_NEW1" : "V"
+            },
+            "antonyms" : {
+               "bla4" : 0.2,
+               "term2" : 0.1
+            },
+            "synonyms" : {
+               "bla2" : 0.2,
+               "bla1" : 0.1
+            },
+            "frequency" : 1
+         },
+         {
+            "tags" : "tag1 tag2",
+            "score" : 0.6931471824646,
+            "term" : "term2",
+            "features" : {
+               "FEATURE_NEW1" : "N",
+               "GEN" : "F"
+            },
+            "vector" : [
+               1.6,
+               2.7,
+               3.8,
+               5.9
+            ],
+            "antonyms" : {
+               "bla3" : 0.1,
+               "bla4" : 0.2
+            },
+            "frequency" : 1,
+            "synonyms" : {
+               "bla1" : 0.1,
+               "bla2" : 0.2
+            }
+         }
+      ]
+   },
+   "total" : 2
+}
+```
+
 # Test
 
 * Unit tests are available with `sbt test` command

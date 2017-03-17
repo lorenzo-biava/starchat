@@ -5,7 +5,7 @@ curl -v -H "Content-Type: application/json" -X PUT http://localhost:8888/term -d
 	    {
             "term": "मराठी",
             "frequency": 1.0,
-            "vector": [1.0, 2.0, 3.0, 4.0],
+            "vector": [1.2, 2.3, 3.4, 4.5],
             "synonyms":
             {
                 "bla1": 0.1,
@@ -19,14 +19,14 @@ curl -v -H "Content-Type: application/json" -X PUT http://localhost:8888/term -d
             "tags": "tag1 tag2",
             "features":
             {
-                "POS": "V",
+                "FEATURE_NEW1": "V",
                 "GEN": "M"
             }
 	    },
 	    {
             "term": "term2",
             "frequency": 1.0,
-            "vector": [1.0, 2.0, 3.0, 5.0],
+            "vector": [1.6, 2.7, 3.8, 5.9],
             "synonyms":
             {
                 "bla1": 0.1,
@@ -40,7 +40,7 @@ curl -v -H "Content-Type: application/json" -X PUT http://localhost:8888/term -d
             "tags": "tag1 tag2",
             "features":
             {
-                "POS": "N",
+                "FEATURE_NEW1": "N",
                 "GEN": "F"
             }
 	    }

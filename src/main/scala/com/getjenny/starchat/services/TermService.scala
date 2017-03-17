@@ -39,7 +39,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
   }
 
   def payloadMapToString[T, U](payload: Map[T, U]): String = {
-    payload.map(x => x._1.toString + "\\|" + x._2.toString).mkString(" ")
+    payload.map(x => x._1.toString + "|" + x._2.toString).mkString(" ")
   }
 
   def payloadStringToDoubleVector(payload: String): Vector[Double] = {
@@ -274,7 +274,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     val list_of_doc_res: List[DeleteDocumentResult] = bulkResponse.getItems.map(x => {
       DeleteDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
-        x.status == RestStatus.CREATED)
+        x.status != RestStatus.NOT_FOUND)
     }).toList
 
     val result: DeleteDocumentListResult = DeleteDocumentListResult(list_of_doc_res)

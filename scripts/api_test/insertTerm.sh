@@ -19,7 +19,7 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/term/i
             "tags": "tag1 tag2",
             "features":
             {
-                "POS": "V",
+                "NUM": "S",
                 "GEN": "M"
             }
 	    },
@@ -40,7 +40,7 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/term/i
             "tags": "tag1 tag2",
             "features":
             {
-                "POS": "N",
+                "NUM": "P",
                 "GEN": "F"
             }
 	    }
