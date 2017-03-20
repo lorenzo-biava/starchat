@@ -1,0 +1,76 @@
+{
+	"index.queries.cache.enabled": true,
+	"analysis":
+	{
+		"char_filter":
+		{
+			"&_to_and": {
+				"type":       "mapping",
+				"mappings": [ "&=> and "]
+			}
+		},
+		"filter":
+		{
+			"jenny_it_stopwords":
+			{
+				"type":       "stop",
+				"stopwords": "_italian_"
+			},
+			"italian_stemmer": {
+				"type":       "stemmer",
+				"language":   "italian"
+			},
+			"jenny_it_shingle_4":
+			{
+				"type":	"shingle",
+				"min_shingle_size": 4,
+				"max_shingle_size": 4,
+				"output_unigrams": true
+			}
+		},
+		"analyzer":
+		{
+			"jenny_base_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "&_to_and" ],
+				"filter":       [ "lowercase"]
+			},
+			"jenny_stop_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "&_to_and" ],
+				"filter":       [ "lowercase", "jenny_it_stopwords"]
+			},
+			"jenny_base_stem_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "&_to_and" ],
+				"filter":       [ "lowercase", "italian_stemmer"]
+			},
+			"jenny_stem_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "&_to_and" ],
+				"filter":       [ "lowercase", "jenny_it_stopwords", "italian_stemmer"]
+			},
+			"jenny_shingles_4_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "html_strip", "&_to_and" ],
+				"filter":       [ "lowercase", "jenny_it_shingle_4"]
+			},
+			"jenny_stemmed_shingles_4_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "html_strip", "&_to_and" ],
+				"filter":       [ "lowercase", "italian_stemmer", "jenny_it_shingle_4"]
+			},
+			"jenny_delimited_double": {
+				"tokenizer":"whitespace",
+				"encoding": "double",
+				"filter": "delimited_payload_filter"
+			}
+		}
+	}
+}

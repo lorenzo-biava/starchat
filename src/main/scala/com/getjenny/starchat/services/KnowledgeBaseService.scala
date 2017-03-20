@@ -25,10 +25,14 @@ import scala.collection.JavaConverters._
 import com.typesafe.config.ConfigFactory
 import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.search.SearchHit
+import org.elasticsearch.rest.RestStatus
+import akka.event.{Logging, LoggingAdapter}
+import akka.event.Logging._
+import com.getjenny.starchat.SCActorSystem
 
 class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
-
-  val elastic_client = KBElasticClient
+  val elastic_client = KnowledgeBaseElasticClient
+  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def search(documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
@@ -168,15 +172,16 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
     val json: String = builder.string()
     val client: TransportClient = elastic_client.get_client()
-    val response: IndexResponse = client.prepareIndex(elastic_client.index_name, elastic_client.type_name, document.id)
-      .setSource(json)
-      .get()
+    val response: IndexResponse =
+      client.prepareIndex(elastic_client.index_name, elastic_client.type_name, document.id)
+        .setSource(json)
+        .get()
 
     val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = (response.status == Result.CREATED)
+      created = response.status == RestStatus.CREATED
     )
 
     Option {doc_result}
@@ -233,7 +238,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = (response.status == Result.CREATED)
+      created = response.status == RestStatus.CREATED
     )
 
     Option {doc_result}
@@ -247,7 +252,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      found = (response.status != Result.NOT_FOUND)
+      found = response.status != RestStatus.NOT_FOUND
     )
 
     Option {doc_result}

@@ -29,7 +29,7 @@ def index_items(item_listfile, skiplines=1):
             attempts = 10
             state = row[0]
             max_state_count = int(row[1])
-            regex = row[2]
+            analyzer = row[2]
             if row[3]:
                 try:
                     queries = json.loads(row[3])
@@ -61,14 +61,17 @@ def index_items(item_listfile, skiplines=1):
 
             while attempts > 0:
                 try:
-                    res = service.index_document_dt(state=state, regex=regex, max_state_count=max_state_count,
+                    res = service.index_document_dt(state=state, analyzer=analyzer, max_state_count=max_state_count,
                                                     queries=queries, bubble=bubble, action=action,
                                                     action_input=action_input, state_data=state_data,
                                                     success_value=success_value, failure_value=failure_value)
                 except interface.ApiCallException as exc:
                     print("Error: ", exc)
                     print("Last line: ", lcounter)
-                    print("Res: ", res)
+                    try:
+                        print("Res: ", res)
+                    except:
+                        pass
                     sys.exit(1)
 
                 if res[0] > 299 or res[0] < 200:

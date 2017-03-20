@@ -4,11 +4,13 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
+import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing.MyResource
 import com.getjenny.starchat.services.KnowledgeBaseService
 import akka.http.scaladsl.model.StatusCodes
+import com.getjenny.starchat.SCActorSystem
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -46,7 +48,7 @@ trait KnowledgeBaseResource extends MyResource {
             val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 30.seconds).value.get
             result_try match {
               case Success(t) =>
-                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
+                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})
               case Failure(e) =>
                 completeResponse(StatusCodes.BadRequest,
                   Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})

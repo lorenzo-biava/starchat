@@ -5,4 +5,5 @@ package com.getjenny.starchat.entities
   */
 
 case class ResponseRequestOutOperationResult(status: ReturnMessageData,
-                                             response_request_out: Option[ResponseRequestOut])
+                                            response_request_out: Option[List[ResponseRequestOut]]
+                                            )

@@ -4,9 +4,31 @@ This is the official repository for the *Chat, a scalable conversational engine 
 # How to contribute
 
 To contribute to *Chat, please send us a [pull request](https://help.github.com/articles/using-pull-requests/#fork--pull) 
-from your fork of this repository! 
+from your fork of this repository!
+
+Our concise [contribution guideline](https://github.com/GetJenny/starchat/blob/master/CONTRIBUTING.md) contains the bare
+minumum requirements of the code contributions.
 
 Before contributing (or opening issues), you might want send us an email at starchat@getjenny.com.
+
+   * [Quick Start](#quick-start)
+      * [Requirements](#requirements)
+      * [Setup with Docker (recommended)](#setup-with-docker-recommended)
+      * [Install without Docker](#install-without-docker)
+      * [Test the installation](#test-the-installation)
+      * [*Chat in brief](#chat-in-brief)
+   * [Technology](#technology)
+      * [How does *Chat work?](#how-does-chat-work)
+      * [Configuration of the DecisionTable](#configuration-of-the-decisiontable)
+      * [Client functions](#client-functions)
+      * [Mechanics](#mechanics)
+      * [Scalability](#scalability)
+   * [APIs](#apis)
+   * [Test](#test)
+   * [Troubleshooting](#troubleshooting)
+      * [Docker: start from scratch](#docker-start-from-scratch)
+      * [Docker: size of virtual memory](#docker-size-of-virtual-memory)
+
 
 # Quick Start
 
@@ -27,6 +49,8 @@ _If you do not use docker_ you therefore need on your machine:
 
 ## Setup with Docker (recommended)
 
+### 1. Launch docker-compose
+
 Generate a packet distribution: 
 ```bash
 sbt dist
@@ -41,7 +65,10 @@ Extract the packet into the docker-starchat folder:
 unzip ../target/universal/starchat-master.zip
 ```
 
-Review the configuration files `starchat-master/config/application.conf`: check that IP and Port for elasticsearch are correct.
+Review the configuration files `starchat-master/config/application.conf` and configure 
+the language if needed (by default you have `index_language = "english"`)
+
+(If you are re-installing *Chat, and want to start from scratch see [start from scratch](#docker-start-from-scratch).)
 
 Start both startchat and elasticsearch: 
 ```bash
@@ -50,40 +77,52 @@ docker-compose up -d
 
 (Problems like `elastisearch exited with code 78`? have a look at [troubleshooting](#troubleshooting)!)
 
-Now you have an empty installation of `*chat`. You need to initialize Elasticsearch and then configure the bot.
+### 2. Create Elasticsearch indices
 
-### Prepare ElasticSearch indices
+Run from a terminal:
 
-* enter the directory scripts/index_management/\<lang\> e.g. enter the directory scripts/index_management/english 
-* run `./regenindex.sh`
+```bash
+# create the indices in Elasticsearch
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/index_management"
+```
 
-###Configure *chat
+
+### 3. Load the configuration file
 
 Now you have to load the configuration file for the actual chat. We have provided an example csv in English, therefore:
 
-* `cd /scripts/indexing`
-* `./index_documents_dt.py ../../doc/sample_state_machine_specification.csv 1`
+```bash
+cd scripts/indexing/
+./index_documents_dt.py ../../doc/sample_state_machine_specification.csv 1
+```
 
-##Install without Docker
+Every time you load the configuration file you need to index the analyzer:
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_analyzer" 
+```
+
+## Install without Docker
  
+Note: we do not support this installation.
 * Clone the repository and enter the starchat directory.
-* Initialize the elasticsearch instance with `regenindex.sh` (see above for Docker)
+* Initialize the Elasticsearch instance (see above for Docker)
 * Run the service: `sbt compile run`
 
 The service binds on the port 8888 by default.
 
-##Test the installation
+## Test the installation
 
 Is the service working?
 
 `curl -X GET localhost:8888 | python -mjson.tool`
 
-Tell *Chat you cannot access your account:
+Get the `test_state`
 
 ```bash
 curl  -H "Content-Type: application/json" -X POST http://localhost:8888/get_next_response -d '{   
  "conversation_id": "1234",   
- "user_input": { "text": "I forgot my password" },   
+ "user_input": { "text": "Please send me the test state" },   
  "values": {
    "return_value": "", 
    "data": {}   
@@ -91,51 +130,54 @@ curl  -H "Content-Type: application/json" -X POST http://localhost:8888/get_next
 }'
 ```
 
-You should get something like:
+You should get:
 
 ```json
 {
-    "conversation_id": "1234",   
-    "action": "input_form",
-    "action_input": {
-        "email": "email"
-    },
-    "bubble": "We can reset your password by sending you a message to your registered e-mail address. Please tell me your address so I may send you the new password generation link.",
+    "action": "",
+    "action_input": {},
+    "analyzer": "and(keyword(\"test\"), or(keyword(\"send\"), keyword(\"get\")))",
+    "bubble": "This is the test state",
+    "conversation_id": "1234",
     "data": {},
-    "failure_value": "\"dont_understand\"",
+    "failure_value": "",
     "max_state_count": 0,
-    "regex": "",
-    "state": "forgot_password",
-    "state_data": {
-        "verification": "did you mean you forgot the password?"
-    },
-    "success_value": "\"send_password_generation_link\""
+    "score": 1.0,
+    "state": "test_state",
+    "state_data": {},
+    "success_value": ""
 }
 ```
 
-Which means *Chat understood your problem and went to the `forgot_password` state. 
+If you look at the `"analyzer"` field, you'll see that this state is triggered when 
+the user types the *test* and either *get* or *send*. Try with `"text": "Please dont send me the test state"`
+ and *Chat will send an empty message.
 
-## *Chat in brief
+## *Chat configuration
 
-With *Chat you can easily implement workflow-based chatbots. Its strength are:
+With *Chat you can easily implement workflow-based chatbots. After the installation (see above)
+you only have to configure a conversation flow and eventually a front-end client.
 
-* Simple yet powerful configuration file
-* Easy installation
-* Easy integration with any client (Slack, Telegram etc)
+In practice, *Chat:
 
-*Chat allows a developer to create a conversation flow through –
-
-* identification of the best state to start from based on the language analysis of what the user wrote
+* analyze user's query and identifies a test where such user should be sent to
 * creation of dynamic content using variables inferred from the conversation (e.g. "Please write your email so that I can send you a message")
+
+### Simple NLP processing
+
+*Work in progress*
+
+* Elasticsearch and the "queries" field
+* The analyzer: atomic expressions and operators
 
 # Technology
 
 *Chat was design with the following goals in mind:
 
-0. easy deployment
-1. horizontally scalability without any service interruption.
-2. modularity
-3. statelessness
+1. easy deployment
+2. horizontally scalability without any service interruption.
+3. modularity
+4. statelessness
 
 ## How does *Chat work?
 
@@ -145,8 +187,8 @@ With *Chat you can easily implement workflow-based chatbots. Its strength are:
 
 ### Components
 
-*Chat uses Elasticsearch as database. In addition, it also leverage on Elasticsearch NLP capabilities, using
-its smart indexing system, sentence cleansing, tokenization etc
+*Chat uses Elasticsearch as NoSQL database and, as said above, NLP preprocessor, for
+indexing, sentence cleansing, and tokenization.
 
 ### Services
 
@@ -166,7 +208,7 @@ The conversational engine itself. For the usage, see below.
 
 You configure the DecisionTable through CSV file. Please have a look at the one provided in `doc/`:
 
-|state|max_state_count|regex|queries |bubble|action|action_input|state_data|success_value |failure_value|
+|state|max_state_count|analyzer|queries |bubble|action|action_input|state_data|success_value |failure_value|
 |-----|---------------|-----|--------|------|------|------------|----------|--------------|-------------|
 |start|0              |     |      |"How may I help you?"||||||
 |further_details_access_question|0|((forgot).*(password))|"[""cannot access account"", ""problem access account""]"||show_buttons|"{""Forgot Password"": ""forgot_password"", ""Account locked"": ""account_locked"", ""None of the above"": ""start""}"||eval(show_buttons),"""dont_understand"""|
@@ -184,7 +226,7 @@ And the fields are:
 
 * **state**: a unique name of the state (e.g. `forgot_password`)
 * **max_state_count**: defines how many times *Chat can repropose the state during a conversation.
-* **regex**: specify a regular expression which triggers the state
+* **analyzer**: specify an analyzer expression which triggers the state
 * **query (T,I)**: list of sentences whose meaning identify the state
 * **bubble (R)**: content, if any, to be shown to the user. It may contain variables like %email% or %link%.
 * **action (R)**: a function to be called on the client side. *Chat developer must provide types of input and output (like an abstract method), and the GUI developer is responsible for the actual implementation (e.g. `show_button`)
@@ -224,7 +266,28 @@ are the possible next steps
 call again the system to get instructions on what to do next
 * When the "decisiontable" functions does not return any result the user can call the "knowledgebase" endpoint
 which contains all the conversations. 
-  
+
+## Scalability
+
+*Chat consists of two different services: *Chat itself and an Elasticsearch cluster. 
+     
+### Scaling *Chat instances
+     
+*Chat can scale horizontally by simple replication. Because *Chat is stateless, instances looking 
+at the same Elasticsearch index will behave identically. New instances can then be added together
+with a load balancing service.
+
+In the diagram below, a load balancer forward requests coming from the front-end to *Chat instances 
+1, 2 or 3. These instances, as said, behave identically because they all refer to `Index 0` in the 
+Elasticsearch cluster.
+
+![Image](doc/readme_images/scalability_diagram_starchat.png?raw=true)
+
+### Scaling Elasticsearch
+
+Similarly, Elasticsearch can easily scale horizontally adding new nodes to the cluster, as explained
+ in [Elasticsearch Documentation](https://www.elastic.co/guide/en/elasticsearch/guide/master/_scale_horizontally.html).
+
 # APIs
 
 ## `POST /get_next_response` 
@@ -279,7 +342,7 @@ returns:
     "data": {},
     "failure_value": "\"dont_understand\"",
     "max_state_count": 0,
-    "regex": "",
+    "analyzer": "",
     "state": "forgot_password",
     "state_data": {
         "verification": "did you mean you forgot the password?"
@@ -320,7 +383,7 @@ and gets:
     },
     "failure_value": "call_operator",
     "max_state_count": 0,
-    "regex": "",
+    "analyzer": "",
     "state": "send_password_generation_link",
     "state_data": {},
     "success_value": "\"any_further\""
@@ -382,7 +445,7 @@ Sample output
     {
       "score": 0,
       "document": {
-        "regex": "((forgot).*(password))",
+        "analyzer": "((forgot).*(password))",
         "queries": [
           "cannot access account",
           "problem access account"
@@ -453,7 +516,7 @@ Sample call
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable -d '{
   "state": "further_details_access_question",
   "max_state_count": 0,
-  "regex": "",
+  "analyzer": "",
   "queries": ["cannot access account", "problem access account"],
   "bubble": "What seems to be the problem exactly?",
   "action": "show_buttons",
@@ -521,11 +584,11 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisi
 }'
 ```
 
-## `GET /decisiontable_regex` 
+## `GET /decisiontable_analyzer` 
 
 (WORK IN PROGRESS, PARTIALLY IMPLEMENTED)
 
-Get and return the map of regular expressions for each state
+Get and return the map of analyzer for each state
 
 Output JSON
 
@@ -535,22 +598,22 @@ Output JSON
 
 Sample call
 ```bash
-curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/decisiontable_regex"
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/decisiontable_analyzer"
 ```
 
 Sample response
 
 ```json
 {
-  "regex_map": {
+  "analyzer_map": {
     "further_details_access_question": "((forgot).*(password))"
   }
 }
 ```
 
-## `POST decisiontable_regex`
+## `POST /decisiontable_analyzer`
 
-Load/reload the map of regular expression from ES
+Load/reload the map of analyzer from ES
 
 Output JSON
 
@@ -560,7 +623,7 @@ Output JSON
 
 Sample call
 ```bash
-curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_regex"
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_analyzer"
 ```
 
 Sample response
@@ -611,7 +674,7 @@ Sample response
 }
 ```
 
-## `POST knowledgebase`
+## `POST /knowledgebase`
 
 Insert a new document
 
@@ -690,7 +753,7 @@ Sample output
 }
 ```
 
-## `PUT knowledgebase`
+## `PUT /knowledgebase`
 
 Update an existing document
 
@@ -728,7 +791,7 @@ Sample response
 }
 ```
 
-## `POST knowledgebase_search`
+## `POST /knowledgebase_search`
 
 Output JSON
 
@@ -772,15 +835,564 @@ Sample output
 }
 ```
 
-##Test
+## `POST /language_guesser`
 
-A set of test script is present inside scripts/api_test
+Output JSON
 
-##Troubleshooting
+### Return codes 
 
-###Size of the virtual memory
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/language_guesser" -d "
+{
+	\"input_text\": \"good morning, may I ask you a question?\"
+}
+"
+```
+
+Sample output
+
+```json
+{
+   "enhough_text" : false,
+   "language" : "en",
+   "confidence" : "MEDIUM",
+   "score" : 0.571426689624786
+}
+```
+
+## `GET /language_guesser`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/language_guesser/en"
+```
+
+Sample output
+
+```json
+{"message":"updated index: jenny-en-0 dt_type_ack(true) kb_type_ack(true) kb_type_ack(true)"}
+
+```
+
+## `POST /index_management`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/index_management"
+```
+
+Sample output
+
+```json
+{"message":"create index: jenny-en-0 create_index_ack(true)"}
+```
+
+## `GET /index_management`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/index_management"
+```
+
+Sample output
+
+```json
+{"message":"settings index: jenny-en-0 dt_type_check(state:true) kb_type_check(question:true) term_type_name(term:true)"}
+```
+
+## `PUT /index_management`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X PUT "http://localhost:8888/index_management"
+```
+
+Sample output
+
+```json
+{"message":"updated index: jenny-en-0 dt_type_ack(true) kb_type_ack(true) kb_type_ack(true)"}
+```
+
+## `DELETE /index_management`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X DELETE "http://localhost:8888/language_guesser/en"
+```
+
+Sample output
+
+```json
+{"message":"removed index: jenny-en-0 index_ack(true)"}
+```
+
+## `POST /term/index`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/term/index -d '{
+	"terms": [
+	    {
+            "term": "मराठी",
+            "frequency": 1.0,
+            "vector": [1.0, 2.0, 3.0],
+            "synonyms":
+            {
+                "bla1": 0.1,
+                "bla2": 0.2
+            },
+            "antonyms":
+            {
+                "bla3": 0.1,
+                "bla4": 0.2
+            },
+            "tags": "tag1 tag2",
+            "features":
+            {
+                "NUM": "S",
+                "GEN": "M"
+            }
+	    },
+	    {
+            "term": "term2",
+            "frequency": 1.0,
+            "vector": [1.0, 2.0, 3.0],
+            "synonyms":
+            {
+                "bla1": 0.1,
+                "bla2": 0.2
+            },
+            "antonyms":
+            {
+                "bla3": 0.1,
+                "bla4": 0.2
+            },
+            "tags": "tag1 tag2",
+            "features":
+            {
+                "NUM": "P",
+                "GEN": "F"
+            }
+	    }
+   ]
+}'
+
+```
+
+Sample output
+
+```json
+{
+   "data" : [
+      {
+         "version" : 1,
+         "created" : true,
+         "dtype" : "term",
+         "index" : "jenny-en-0",
+         "id" : "मराठी"
+      },
+      {
+         "dtype" : "term",
+         "created" : true,
+         "version" : 1,
+         "id" : "term2",
+         "index" : "jenny-en-0"
+      }
+   ]
+}
+```
+
+## `POST /term/get`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/term/get -d '{
+	"ids": ["मराठी", "term2"]
+}'
+```
+
+Sample output
+
+```json
+{
+   "terms" : [
+      {
+         "vector" : [
+            1,
+            2,
+            3
+         ],
+         "frequency" : 1,
+         "term" : "मराठी",
+         "antonyms" : {
+            "bla4" : 0.2,
+            "bla3" : 0.1
+         },
+         "features" : {
+            "NUM" : "S",
+            "GEN" : "M"
+         },
+         "synonyms" : {
+            "bla2" : 0.2,
+            "bla1" : 0.1
+         },
+         "tags" : "tag1 tag2"
+      },
+      {
+         "antonyms" : {
+            "bla3" : 0.1,
+            "bla4" : 0.2
+         },
+         "features" : {
+            "NUM" : "P",
+            "GEN" : "F"
+         },
+         "term" : "term2",
+         "frequency" : 1,
+         "vector" : [
+            1,
+            2,
+            3
+         ],
+         "synonyms" : {
+            "bla1" : 0.1,
+            "bla2" : 0.2
+         },
+         "tags" : "tag1 tag2"
+      }
+   ]
+}
+
+```
+
+## `DELETE /term`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X DELETE http://localhost:8888/term -d '{
+	"ids": ["मराठी", "term2"]
+}'
+```
+
+Sample output
+
+```json
+{
+   "data" : [
+      {
+         "dtype" : "term",
+         "version" : 2,
+         "id" : "मराठी",
+         "index" : "jenny-en-0",
+         "found" : true
+      },
+      {
+         "dtype" : "term",
+         "id" : "term2",
+         "version" : 2,
+         "found" : true,
+         "index" : "jenny-en-0"
+      }
+   ]
+}
+
+```
+
+## `PUT /term`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X PUT http://localhost:8888/term -d '{
+	"terms": [
+	    {
+            "term": "मराठी",
+            "frequency": 1.0,
+            "vector": [1.0, 2.0, 3.0, 4.0],
+            "synonyms":
+            {
+                "bla1": 0.1,
+                "bla2": 0.2
+            },
+            "antonyms":
+            {
+                "term2": 0.1,
+                "bla4": 0.2
+            },
+            "tags": "tag1 tag2",
+            "features":
+            {
+                "FEATURE_NEW1": "V",
+                "GEN": "M"
+            }
+	    },
+	    {
+            "term": "term2",
+            "frequency": 1.0,
+            "vector": [1.0, 2.0, 3.0, 5.0],
+            "synonyms":
+            {
+                "bla1": 0.1,
+                "bla2": 0.2
+            },
+            "antonyms":
+            {
+                "bla3": 0.1,
+                "bla4": 0.2
+            },
+            "tags": "tag1 tag2",
+            "features":
+            {
+                "FEATURE_NEW1": "N",
+                "GEN": "F"
+            }
+	    }
+   ]
+}'
+```
+
+Sample output
+
+```json
+{
+   "data" : [
+      {
+         "version" : 2,
+         "id" : "मराठी",
+         "index" : "jenny-en-0",
+         "created" : false,
+         "dtype" : "term"
+      },
+      {
+         "index" : "jenny-en-0",
+         "id" : "term2",
+         "version" : 2,
+         "dtype" : "term",
+         "created" : false
+      }
+   ]
+}
+
+```
+
+## `GET /term/term`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET http://localhost:8888/term/term -d '{
+    "term": "मराठी"
+}'
+```
+
+Sample output
+
+```json
+{
+   "hits" : {
+      "terms" : [
+         {
+            "vector" : [
+               1.2,
+               2.3,
+               3.4,
+               4.5
+            ],
+            "antonyms" : {
+               "bla4" : 0.2,
+               "term2" : 0.1
+            },
+            "frequency" : 1,
+            "features" : {
+               "FEATURE_NEW1" : "V",
+               "GEN" : "M"
+            },
+            "score" : 0.6931471824646,
+            "tags" : "tag1 tag2",
+            "term" : "मराठी",
+            "synonyms" : {
+               "bla2" : 0.2,
+               "bla1" : 0.1
+            }
+         }
+      ]
+   },
+   "total" : 1,
+   "max_score" : 0.6931471824646
+}
+```
+
+## `GET /term/term`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET http://localhost:8888/term/text -d 'term2 मराठी'
+```
+
+Sample output
+
+```json
+{
+   "max_score" : 0.6931471824646,
+   "hits" : {
+      "terms" : [
+         {
+            "term" : "मराठी",
+            "score" : 0.6931471824646,
+            "tags" : "tag1 tag2",
+            "vector" : [
+               1.2,
+               2.3,
+               3.4,
+               4.5
+            ],
+            "features" : {
+               "GEN" : "M",
+               "FEATURE_NEW1" : "V"
+            },
+            "antonyms" : {
+               "bla4" : 0.2,
+               "term2" : 0.1
+            },
+            "synonyms" : {
+               "bla2" : 0.2,
+               "bla1" : 0.1
+            },
+            "frequency" : 1
+         },
+         {
+            "tags" : "tag1 tag2",
+            "score" : 0.6931471824646,
+            "term" : "term2",
+            "features" : {
+               "FEATURE_NEW1" : "N",
+               "GEN" : "F"
+            },
+            "vector" : [
+               1.6,
+               2.7,
+               3.8,
+               5.9
+            ],
+            "antonyms" : {
+               "bla3" : 0.1,
+               "bla4" : 0.2
+            },
+            "frequency" : 1,
+            "synonyms" : {
+               "bla1" : 0.1,
+               "bla2" : 0.2
+            }
+         }
+      ]
+   },
+   "total" : 2
+}
+```
+
+# Test
+
+* Unit tests are available with `sbt test` command
+* A set of test script is present inside scripts/api_test
+
+
+# Troubleshooting
+
+## Docker: start from scratch
+
+You might want to start from scratch, and delete all docker images. 
+
+If you do so (`docker images` and then `docker rmi -f <java/elasticsearch ids>`) remember that all data for the 
+Elasticsearch docker are local, and mounted only when the container is up. Therefore you need to:
+
+```bash
+cd docker-starchat
+rm -rf elasticsearch/data/nodes/
+```
+
+## Docker: Size of virtual memory
 
 If elasticsearch complain about the size of the virtual memory:
+
 ```
 max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
 elastisearch exited with code 78

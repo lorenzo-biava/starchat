@@ -8,7 +8,7 @@ import scala.collection.immutable.{List, Map}
 
 case class DTDocument(state: String,
                       max_state_count: Int,
-                      regex: String,
+                      analyzer: String,
                       queries: List[String],
                       bubble: String,
                       action: String,

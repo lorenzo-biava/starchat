@@ -29,7 +29,7 @@ def index_items(item_listfile, skiplines=1):
             attempts = 10
             state = row[0]
             max_state_count = int(row[1])
-            regex = row[2]
+            analyzer = row[2]
             if row[3]:
                 try:
                     queries = json.loads(row[3])

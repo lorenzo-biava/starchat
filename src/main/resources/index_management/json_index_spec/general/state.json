@@ -1,0 +1,109 @@
+{
+	"properties": {
+		"state":
+		{
+			"type": "keyword",
+			"store": "yes",
+			"index": "not_analyzed",
+			"null_value": ""
+		},
+		"max_state_count":
+		{
+		    "type": "integer"
+		},
+		"analyzer":
+		{
+			"type": "keyword",
+			"store": "yes",
+			"index": "not_analyzed",
+			"null_value": ""
+		},
+		"action_input":
+		{
+			"type": "object"
+		},
+		"state_data":
+		{
+			"type": "object"
+		},
+		"queries":
+		{
+			"type": "text",
+			"store": "yes",
+			"fields": {
+				"raw": {
+					"type": "keyword"
+				},
+				"base": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer"
+				},
+				"base_bm25": {
+					"type": "text",
+					"analyzer": "jenny_base_analyzer",
+					"similarity": "BM25"
+				},
+				"stop": {
+					"type": "text",
+					"analyzer": "jenny_stop_analyzer"
+				},
+				"stop_bm25": {
+					"type": "text",
+					"analyzer": "jenny_stop_analyzer",
+					"similarity": "BM25"
+				},
+				"stem": {
+					"type": "text",
+					"analyzer": "jenny_stem_analyzer"
+				},
+				"stem_bm25": {
+					"type": "text",
+					"analyzer": "jenny_stem_analyzer",
+					"similarity": "BM25"
+				},
+				"shingles_4": {
+					"type": "text",
+					"analyzer": "jenny_shingles_4_analyzer"
+				},
+				"stemmed_shingles_4": {
+					"type": "text",
+					"analyzer": "jenny_stemmed_shingles_4_analyzer"
+				}
+			}
+		},
+		"query_vectors":
+		{
+			"type": "text",
+			"term_vector": "with_positions_offsets_payloads",
+			"analyzer": "jenny_delimited_double"
+		},
+		"bubble":
+		{
+			"type": "text",
+			"store": "yes",
+			"index": "not_analyzed"
+		},
+		"action":
+		{
+			"type": "keyword",
+			"store": "yes",
+			"index": "not_analyzed",
+			"null_value": ""
+		},
+		"success_value":
+		{
+			"type": "keyword",
+			"store": "yes",
+			"index": "not_analyzed",
+			"null_value": ""
+		},
+		"failure_value":
+		{
+			"type": "keyword",
+			"store": "yes",
+			"index": "not_analyzed",
+			"null_value": ""
+		}
+	}
+}
+

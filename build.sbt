@@ -13,8 +13,8 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
 
 libraryDependencies ++= {
   val AkkaVersion       = "2.4.17"
-  val AkkaHttpVersion   = "10.0.3"
-  val ESClientVersion   = "5.2.0"
+  val AkkaHttpVersion   = "10.0.4"
+  val ESClientVersion   = "5.2.2"
   Seq(
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
     "com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
@@ -28,6 +28,10 @@ libraryDependencies ++= {
     "org.elasticsearch.client" % "rest" % ESClientVersion,
     "org.apache.logging.log4j" % "log4j-api" % "2.7",
     "org.apache.logging.log4j" % "log4j-core" % "2.7",
+    "org.apache.tika" % "tika-core" % "1.14",
+    "org.apache.tika" % "tika-parsers" % "1.14",
+    "org.apache.tika" % "tika-app" % "1.14",
+    "com.roundeights" %% "hasher" % "1.2.0",
     "org.parboiled" %% "parboiled" % "2.1.4"
    )
 }
