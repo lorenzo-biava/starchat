@@ -1347,6 +1347,15 @@ Sample output
 * Unit tests are available with `sbt test` command
 * A set of test script is present inside scripts/api_test
 
+# Notes about scability
+
+Starchat was designed to be stateless in order to allow to scale horizontally by replication: as the load increase,
+new instances of stachart could be added together with a load balancer service.
+Two starchat instances if configured on the same index will respond in the same way same elasticsearch index
+will share the load.
+
+![Image](doc/readme_images/scalability_diagram_starchat.png?raw=true)
+
 # Troubleshooting
 
 ## Docker: start from scratch
