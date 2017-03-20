@@ -27,18 +27,16 @@ import org.elasticsearch.rest.RestStatus
 import com.getjenny.starchat.analyzer.analyzers._
 
 import scala.util.{Failure, Success, Try}
-import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
-import akka.http.scaladsl.server.directives.DebuggingDirectives
+import com.getjenny.starchat.SCActorSystem
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
 class DecisionTableService(implicit val executionContext: ExecutionContext) {
   val elastic_client = DecisionTableElasticClient
-  val system = ActorSystem("starchat-service")
-  val log: LoggingAdapter = Logging(system, this.getClass.getCanonicalName)
+  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   case class AnalyzerItem(declaration: String, build: Boolean, analyzer: StarchatAnalyzer)
 

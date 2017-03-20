@@ -42,6 +42,12 @@
 				"char_filter":  [ "&_to_and" ],
 				"filter":       [ "lowercase", "jenny_it_stopwords"]
 			},
+			"jenny_base_stem_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "&_to_and" ],
+				"filter":       [ "lowercase", "italian_stemmer"]
+			},
 			"jenny_stem_analyzer":
 			{
 				"tokenizer":    "standard",

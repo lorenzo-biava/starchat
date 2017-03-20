@@ -19,7 +19,7 @@ object Main extends App with RestInterface {
   val port = config.getInt("http.port")
 
   /* creation of the akka actor system which handle concurrent requests */
-  implicit val system = ActorSystem("starchat-service")
+  implicit val system = SCActorSystem.system
 
   /* "The Materializer is a factory for stream execution engines, it is the thing that makes streams run" */
   implicit val materializer = ActorMaterializer()

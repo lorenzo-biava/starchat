@@ -10,3 +10,5 @@ case class DeleteDocumentResult(index: String,
                                 version: Long,
                                 found: Boolean
                                )
+
+case class DeleteDocumentListResult(data: List[DeleteDocumentResult])
