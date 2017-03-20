@@ -581,7 +581,7 @@ Sample response
 }
 ```
 
-## `POST decisiontable_analyzer`
+## `POST /decisiontable_analyzer`
 
 Load/reload the map of analyzer from ES
 
@@ -644,7 +644,7 @@ Sample response
 }
 ```
 
-## `POST knowledgebase`
+## `POST /knowledgebase`
 
 Insert a new document
 
@@ -723,7 +723,7 @@ Sample output
 }
 ```
 
-## `PUT knowledgebase`
+## `PUT /knowledgebase`
 
 Update an existing document
 
@@ -761,7 +761,7 @@ Sample response
 }
 ```
 
-## `POST knowledgebase_search`
+## `POST /knowledgebase_search`
 
 Output JSON
 
@@ -805,7 +805,7 @@ Sample output
 }
 ```
 
-## `POST language_guesser`
+## `POST /language_guesser`
 
 Output JSON
 
@@ -834,7 +834,7 @@ Sample output
 }
 ```
 
-## `GET language_guesser`
+## `GET /language_guesser`
 
 Output JSON
 
@@ -855,7 +855,7 @@ Sample output
 
 ```
 
-## `POST index_management`
+## `POST /index_management`
 
 Output JSON
 
@@ -875,7 +875,7 @@ Sample output
 {"message":"create index: jenny-en-0 create_index_ack(true)"}
 ```
 
-## `GET index_management`
+## `GET /index_management`
 
 Output JSON
 
@@ -895,7 +895,7 @@ Sample output
 {"message":"settings index: jenny-en-0 dt_type_check(state:true) kb_type_check(question:true) term_type_name(term:true)"}
 ```
 
-## `PUT index_management`
+## `PUT /index_management`
 
 Output JSON
 
@@ -915,7 +915,7 @@ Sample output
 {"message":"updated index: jenny-en-0 dt_type_ack(true) kb_type_ack(true) kb_type_ack(true)"}
 ```
 
-## `DELETE index_management`
+## `DELETE /index_management`
 
 Output JSON
 
@@ -935,7 +935,7 @@ Sample output
 {"message":"removed index: jenny-en-0 index_ack(true)"}
 ```
 
-## `POST term/index`
+## `POST /term/index`
 
 Output JSON
 
@@ -1018,7 +1018,7 @@ Sample output
 }
 ```
 
-## `POST term/get`
+## `POST /term/get`
 
 Output JSON
 
@@ -1088,7 +1088,7 @@ Sample output
 
 ```
 
-## `DELETE term`
+## `DELETE /term`
 
 Output JSON
 
@@ -1128,7 +1128,7 @@ Sample output
 
 ```
 
-## `PUT term`
+## `PUT /term`
 
 Output JSON
 
@@ -1211,7 +1211,7 @@ Sample output
 
 ```
 
-## `GET term/term`
+## `GET /term/term`
 
 Output JSON
 
@@ -1264,7 +1264,7 @@ Sample output
 }
 ```
 
-## `GET term/term`
+## `GET /term/term`
 
 Output JSON
 
