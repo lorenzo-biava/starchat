@@ -13,6 +13,8 @@ import org.elasticsearch.common.settings._
 import scala.io.Source
 import java.io._
 
+import akka.event.{Logging, LoggingAdapter}
+import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 
 /**
@@ -20,6 +22,7 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
   */
 class IndexManagementService(implicit val executionContext: ExecutionContext) {
   val elastic_client = IndexManagementClient
+  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   val lang: String = elastic_client.index_language
   val analyzer_json_path: String = "/index_management/json_index_spec/" + lang + "/analyzer.json"

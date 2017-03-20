@@ -20,66 +20,109 @@ trait TermResource extends MyResource {
   val termService: TermService
 
   def termRoutes: Route = pathPrefix("term") {
-    pathEnd {
-      path(Segment) { operation: String =>
-        post {
-          operation match {
-            case "index" =>
-              entity(as[Terms]) { request_data =>
-                val result: Try[Option[IndexDocumentResult]] =
-                  Await.ready(Future{termService.index_term(request_data)}, 30.seconds).value.get
-                result match {
-                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+    path(Segment) { operation: String =>
+      post {
+        operation match {
+          case "index" =>
+            entity(as[Terms]) { request_data =>
+              val result: Try[Option[IndexDocumentListResult]] =
+                Await.ready(Future{termService.index_term(request_data)}, 30.seconds).value.get
+              result match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+                case Failure(e) =>
+                  log.error("route=termRoutes method=POST function=index : " + e.getMessage)
+                  completeResponse(StatusCodes.BadRequest,
                     Future{Option{IndexManagementResponse(message = e.getMessage)}})
-                }
               }
-            case "get" =>
-              entity(as[TermIdsRequest]) { request_data =>
-                val result: Try[Option[TermsResults]] =
-                  Await.ready(Future{termService.get_term(request_data)}, 30.seconds).value.get
-                result match {
-                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+            }
+          case "get" =>
+            entity(as[TermIdsRequest]) { request_data =>
+              val result: Try[Option[Terms]] =
+                Await.ready(Future{termService.get_term(request_data)}, 30.seconds).value.get
+              result match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+                case Failure(e) =>
+                  log.error("route=termRoutes method=POST function=get : " + e.getMessage)
+                  completeResponse(StatusCodes.BadRequest,
                     Future{Option{IndexManagementResponse(message = e.getMessage)}})
-                }
               }
-            case _ => completeResponse(StatusCodes.BadRequest,
-              Future{Option{IndexManagementResponse(message = "Operation not supported: " + operation)}})
-          }
+            }
+          case _ => completeResponse(StatusCodes.BadRequest,
+            Future{Option{IndexManagementResponse(message = "Operation not supported: " + operation)}})
         }
-      } ~
+      }
+    } ~
+    pathEnd {
       delete {
         entity(as[TermIdsRequest]) { request_data =>
-          val result: Try[Option[DeleteDocumentResult]] =
-            Await.ready(Future{termService.remove_term(request_data)}, 30.seconds).value.get
+          val result: Try[Option[DeleteDocumentListResult]] =
+            Await.ready(Future{termService.delete(request_data)}, 30.seconds).value.get
           result match {
-            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-            case Failure(e) => completeResponse(StatusCodes.BadRequest,
-              Future{Option{IndexManagementResponse(message = e.getMessage)}})
+            case Success(t) =>
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+            case Failure(e) =>
+              log.error("route=termRoutes method=DELETE : " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Future{Option{IndexManagementResponse(message = e.getMessage)}})
           }
         }
       } ~
       put {
         entity(as[Terms]) { request_data =>
-          val result: Try[Option[UpdateDocumentResult]] =
-            Await.ready(Future{termService.update_term(request_data)}, 30.seconds).value.get
+          val result: Try[Option[UpdateDocumentListResult]] =
+            Await.ready(Future {
+              termService.update_term(request_data)
+            }, 30.seconds).value.get
           result match {
-            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-            case Failure(e) => completeResponse(StatusCodes.BadRequest,
-              Future{Option{IndexManagementResponse(message = e.getMessage)}})
+            case Success(t) =>
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {
+                Option {
+                  t
+                }
+              })
+            case Failure(e) =>
+              log.error("route=termRoutes method=PUT : " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Future {
+                  Option {
+                    IndexManagementResponse(message = e.getMessage)
+                  }
+                })
           }
         }
-      } ~
+      }
+    } ~
+    path(Segment) { operation: String =>
       get {
-        entity(as[Term]) { request_data =>
-          val result: Try[Option[TermsResults]] =
-            Await.ready(Future{termService.search_term(request_data)}, 30.seconds).value.get
-          result match {
-            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-            case Failure(e) => completeResponse(StatusCodes.BadRequest,
-              Future{Option{IndexManagementResponse(message = e.getMessage)}})
-          }
+        operation match {
+          case "term" =>
+            entity(as[Term]) { request_data =>
+              val result: Try[Option[TermsResults]] =
+                Await.ready(Future{termService.search_term(request_data)}, 30.seconds).value.get
+              result match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+                case Failure(e) =>
+                  log.error("route=termRoutes method=GET function=term : " + e.getMessage)
+                  completeResponse(StatusCodes.BadRequest,
+                    Future{Option{IndexManagementResponse(message = e.getMessage)}})
+              }
+            }
+          case "text" =>
+            entity(as[String]) { request_data =>
+              val result: Try[Option[TermsResults]] =
+                Await.ready(Future{termService.search(request_data)}, 30.seconds).value.get
+              result match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+                case Failure(e) =>
+                  log.error("route=termRoutes method=GET function=text : " + e.getMessage)
+                  completeResponse(StatusCodes.BadRequest,
+                    Future{Option{IndexManagementResponse(message = e.getMessage)}})
+              }
+            }
         }
       }
     }

@@ -74,7 +74,7 @@
 		"query_vectors":
 		{
 			"type": "text",
-			"store": "yes",
+			"term_vector": "with_positions_offsets_payloads",
 			"analyzer": "jenny_delimited_double"
 		},
 		"bubble":

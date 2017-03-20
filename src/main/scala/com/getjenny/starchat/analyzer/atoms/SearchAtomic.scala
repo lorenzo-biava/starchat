@@ -6,6 +6,7 @@ package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.entities._
+
 import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
 

@@ -10,6 +10,7 @@ elasticsearch:
   volumes:
     - ./elasticsearch/data:/usr/share/elasticsearch/data
     - ./elasticsearch/config:/usr/share/elasticsearch/config
+    - ./elasticsearch/logs:/usr/share/elasticsearch/logs
   environment:
     - ES_JAVA_OPTS=-Xms1g -Xmx1g
 
