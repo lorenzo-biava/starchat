@@ -22,6 +22,7 @@ Before contributing (or opening issues), you might want send us an email at star
       * [Configuration of the DecisionTable](#configuration-of-the-decisiontable)
       * [Client functions](#client-functions)
       * [Mechanics](#mechanics)
+      * [Scalability](#scalability)
    * [APIs](#apis)
    * [Test](#test)
    * [Troubleshooting](#troubleshooting)
@@ -265,7 +266,28 @@ are the possible next steps
 call again the system to get instructions on what to do next
 * When the "decisiontable" functions does not return any result the user can call the "knowledgebase" endpoint
 which contains all the conversations. 
-  
+
+## Scalability
+
+*Chat consists of two different services: *Chat itself and an Elasticsearch cluster. 
+     
+### Scaling *Chat instances
+     
+*Chat can scale horizontally by simple replication. Because *Chat is stateless, instances looking 
+at the same Elasticsearch index will behave identically. New instances can then be added together
+with a load balancing service.
+
+In the diagram below, a load balancer forward requests coming from the front-end to *Chat instances 
+1, 2 or 3. These instances, as said, behave identically because they all refer to `Index 0` in the 
+Elasticsearch cluster.
+
+![Image](doc/readme_images/scalability_diagram_starchat.png?raw=true)
+
+### Scaling Elasticsearch
+
+Similarly, Elasticsearch can easily scale horizontally adding new nodes to the cluster, as explained
+ in [Elasticsearch Documentation](https://www.elastic.co/guide/en/elasticsearch/guide/master/_scale_horizontally.html).
+
 # APIs
 
 ## `POST /get_next_response` 
@@ -1352,21 +1374,6 @@ Sample output
 * Unit tests are available with `sbt test` command
 * A set of test script is present inside scripts/api_test
 
-# Notes about scability
-
-Starchat was designed to be stateless in order to allow to scale horizontally by replication: as the load increase,
-new instances of stachart could be added together with a load balancer service.
-Two starchat instances if configured on the same index will respond in the same way same elasticsearch index
-will share the load.
-
-The following diagram shows an deployment with an elasticsearch cluster and 5 starchat instances.
-The first tree starchat instances have the same configuration on "index 0", the load balancer forward REST calls to
-on any of the instances.
-
-![Image](doc/readme_images/scalability_diagram_starchat.png?raw=true)
-
-[Elasticsearch scales horizontally](https://www.elastic.co/guide/en/elasticsearch/guide/master/_scale_horizontally.html)
-by adding new nodes to the clusters.
 
 # Troubleshooting
 
