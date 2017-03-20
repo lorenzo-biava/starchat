@@ -1360,6 +1360,9 @@ on any of the instances.
 
 ![Image](doc/readme_images/scalability_diagram_starchat.png?raw=true)
 
+[Elasticsearch scales horizontally](https://www.elastic.co/guide/en/elasticsearch/guide/master/_scale_horizontally.html)
+by adding new nodes to the clusters.
+
 # Troubleshooting
 
 ## Docker: start from scratch
