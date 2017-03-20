@@ -149,29 +149,34 @@ You should get:
 ```
 
 If you look at the `"analyzer"` field, you'll see that this state is triggered when 
-the user types the *test* and either *get* or *send*. 
+the user types the *test* and either *get* or *send*. Try with `"text": "Please dont send me the test state"`
+ and *Chat will send an empty message.
 
-## *Chat in brief
+## *Chat configuration
 
-With *Chat you can easily implement workflow-based chatbots. Its strength are:
+With *Chat you can easily implement workflow-based chatbots. After the installation (see above)
+you only have to configure a conversation flow and eventually a front-end client.
 
-* Simple yet powerful configuration file
-* Easy installation
-* Easy integration with any client (Slack, Telegram etc)
+In practice, *Chat:
 
-*Chat allows a developer to create a conversation flow through –
-
-* identification of the best state to start from based on the language analysis of what the user wrote
+* analyze user's query and identifies a test where such user should be sent to
 * creation of dynamic content using variables inferred from the conversation (e.g. "Please write your email so that I can send you a message")
+
+### Simple NLP processing
+
+*Work in progress*
+
+* Elasticsearch and the "queries" field
+* The analyzer: atomic expressions and operators
 
 # Technology
 
 *Chat was design with the following goals in mind:
 
-0. easy deployment
-1. horizontally scalability without any service interruption.
-2. modularity
-3. statelessness
+1. easy deployment
+2. horizontally scalability without any service interruption.
+3. modularity
+4. statelessness
 
 ## How does *Chat work?
 
@@ -181,8 +186,8 @@ With *Chat you can easily implement workflow-based chatbots. Its strength are:
 
 ### Components
 
-*Chat uses Elasticsearch as database. In addition, it also leverage on Elasticsearch NLP capabilities, using
-its smart indexing system, sentence cleansing, tokenization etc
+*Chat uses Elasticsearch as NoSQL database and, as said above, NLP preprocessor, for
+indexing, sentence cleansing, and tokenization.
 
 ### Services
 
