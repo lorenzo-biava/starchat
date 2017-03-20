@@ -1354,6 +1354,10 @@ new instances of stachart could be added together with a load balancer service.
 Two starchat instances if configured on the same index will respond in the same way same elasticsearch index
 will share the load.
 
+The following diagram shows an deployment with an elasticsearch cluster and 5 starchat instances.
+The first tree starchat instances have the same configuration on "index 0", the load balancer forward REST calls to
+on any of the instances.
+
 ![Image](doc/readme_images/scalability_diagram_starchat.png?raw=true)
 
 # Troubleshooting
