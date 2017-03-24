@@ -23,9 +23,11 @@ trait DecisionTableResource extends MyResource {
   def decisionTableRoutes: Route = pathPrefix("decisiontable") {
     pathEnd {
       post {
-        entity(as[DTDocument]) { document =>
-          val result: Future[Option[IndexDocumentResult]] = dtElasticService.create(document)
-          completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
+        parameters("refresh".as[Int] ? 0) { refresh =>
+          entity(as[DTDocument]) { document =>
+            val result: Future[Option[IndexDocumentResult]] = dtElasticService.create(document, refresh)
+            completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
+          }
         }
       } ~
         get {
@@ -38,27 +40,31 @@ trait DecisionTableResource extends MyResource {
       path(Segment) { id =>
         put {
           entity(as[DTDocumentUpdate]) { update =>
-            val result: Future[Option[UpdateDocumentResult]] = dtElasticService.update(id, update)
-            val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result,  30.seconds).value.get
-            result_try match {
-              case Success(t) =>
-                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})
-              case Failure(e) =>
-                completeResponse(StatusCodes.BadRequest,
-                  Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})
+            parameters("refresh".as[Int] ? 0) { refresh =>
+              val result: Future[Option[UpdateDocumentResult]] = dtElasticService.update(id, update, refresh)
+              val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result,  30.seconds).value.get
+              result_try match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})
+                case Failure(e) =>
+                  completeResponse(StatusCodes.BadRequest,
+                    Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})
+              }
             }
           }
         } ~
           delete {
-            val result: Future[Option[DeleteDocumentResult]] = dtElasticService.delete(id)
-            onSuccess(result) {
-              case Some(t) =>
-                if(t.found) {
-                  completeResponse(StatusCodes.OK, result)
-                } else {
-                  completeResponse(StatusCodes.BadRequest, result)
-                }
-              case None => completeResponse(StatusCodes.BadRequest)
+            parameters("refresh".as[Int] ? 0) { refresh =>
+              val result: Future[Option[DeleteDocumentResult]] = dtElasticService.delete(id, refresh)
+              onSuccess(result) {
+                case Some(t) =>
+                  if(t.found) {
+                    completeResponse(StatusCodes.OK, result)
+                  } else {
+                    completeResponse(StatusCodes.BadRequest, result)
+                  }
+                case None => completeResponse(StatusCodes.BadRequest)
+              }
             }
           }
       }
@@ -78,18 +84,18 @@ trait DecisionTableResource extends MyResource {
               Future{Option{IndexManagementResponse(message = e.getMessage)}})
         }
       } ~
-        post {
-          val result: Try[Option[DTAnalyzerLoad]] =
-            Await.ready(dtElasticService.loadAnalyzer, 30.seconds).value.get
-          result match {
-            case Success(t) =>
-              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-            case Failure(e) =>
-              log.error("route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
-              completeResponse(StatusCodes.BadRequest,
-                Future{Option{IndexManagementResponse(message = e.getMessage)}})
-          }
+      post {
+        val result: Try[Option[DTAnalyzerLoad]] =
+          Await.ready(dtElasticService.loadAnalyzer, 30.seconds).value.get
+        result match {
+          case Success(t) =>
+            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+          case Failure(e) =>
+            log.error("route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
+            completeResponse(StatusCodes.BadRequest,
+              Future{Option{IndexManagementResponse(message = e.getMessage)}})
         }
+      }
     }
   }
 

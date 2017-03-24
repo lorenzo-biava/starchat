@@ -23,8 +23,9 @@ import org.elasticsearch.search.SearchHit
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
-
 import java.lang.String
+
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
 
 /**
@@ -74,7 +75,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     m
   }
 
-  def index_term(terms: Terms) : Option[IndexDocumentListResult] = {
+  def index_term(terms: Terms, refresh: Int) : Option[IndexDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
@@ -200,7 +201,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     Option {Terms(terms=documents)}
   }
 
-  def update_term(terms: Terms) : Option[UpdateDocumentListResult] = {
+  def update_term(terms: Terms, refresh: Int) : Option[UpdateDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
@@ -248,6 +249,15 @@ class TermService(implicit val executionContext: ExecutionContext) {
 
     val bulkResponse: BulkResponse = bulkRequest.get()
 
+    if (refresh != 0) {
+      val refresh_res: RefreshResponse =
+        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
+      val failed_shards = refresh_res.getFailedShards
+      if(failed_shards > 0) {
+        throw new Exception("Term : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
+
     val list_of_doc_res: List[UpdateDocumentResult] = bulkResponse.getItems.map(x => {
       UpdateDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
@@ -260,7 +270,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def delete(termGetRequest: TermIdsRequest) : Option[DeleteDocumentListResult] = {
+  def delete(termGetRequest: TermIdsRequest, refresh: Int) : Option[DeleteDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
@@ -270,6 +280,15 @@ class TermService(implicit val executionContext: ExecutionContext) {
       bulkRequest.add(delete_request)
     })
     val bulkResponse: BulkResponse = bulkRequest.get()
+
+    if (refresh != 0) {
+      val refresh_res: RefreshResponse =
+        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
+      val failed_shards = refresh_res.getFailedShards
+      if(failed_shards > 0) {
+        throw new Exception("KnowledgeBase : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
 
     val list_of_doc_res: List[DeleteDocumentResult] = bulkResponse.getItems.map(x => {
       DeleteDocumentResult(x.getIndex, x.getType, x.getId,

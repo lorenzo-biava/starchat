@@ -30,6 +30,7 @@ import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
@@ -45,6 +46,14 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
   def getAnalyzers: Map[String, AnalyzerItem] = {
     val client: TransportClient = elastic_client.get_client()
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
+
+    val refresh_res: RefreshResponse =
+      client.admin().indices().prepareRefresh(elastic_client.index_name).get()
+    val failed_shards = refresh_res.getFailedShards
+    if(failed_shards > 0) {
+      throw new Exception("DecisionTable : getAnalyzers : index refresh failed: (" + elastic_client.index_name + ")")
+    }
+
     val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
@@ -334,7 +343,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     search_results_option
   }
 
-  def create(document: DTDocument): Future[Option[IndexDocumentResult]] = Future {
+  def create(document: DTDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     builder.field("state", document.state)
@@ -359,8 +368,17 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
     val json: String = builder.string()
     val client: TransportClient = elastic_client.get_client()
-    val response: IndexResponse = client.prepareIndex(elastic_client.index_name,
+    val response = client.prepareIndex(elastic_client.index_name,
       elastic_client.type_name, document.state).setSource(json).get()
+
+    if (refresh != 0) {
+      val refresh_res: RefreshResponse =
+        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
+      val failed_shards = refresh_res.getFailedShards
+      if(failed_shards > 0) {
+        throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
 
     val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
       dtype = response.getType,
@@ -372,7 +390,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     Option {doc_result}
   }
 
-  def update(id: String, document: DTDocumentUpdate): Future[Option[UpdateDocumentResult]] = Future {
+  def update(id: String, document: DTDocumentUpdate, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.analyzer match {
@@ -425,6 +443,15 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       .setDoc(builder)
       .get()
 
+    if (refresh != 0) {
+      val refresh_res: RefreshResponse =
+        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
+      val failed_shards = refresh_res.getFailedShards
+      if(failed_shards > 0) {
+        throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
+
     val doc_result: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
@@ -435,9 +462,18 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     Option {doc_result}
   }
 
-  def delete(id: String): Future[Option[DeleteDocumentResult]] = Future {
+  def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val response: DeleteResponse = client.prepareDelete(elastic_client.index_name, elastic_client.type_name, id).get()
+
+    if (refresh != 0) {
+      val refresh_res: RefreshResponse =
+        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
+      val failed_shards = refresh_res.getFailedShards
+      if(failed_shards > 0) {
+        throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
 
     val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
       dtype = response.getType,
