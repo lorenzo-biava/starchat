@@ -250,11 +250,9 @@ class TermService(implicit val executionContext: ExecutionContext) {
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh != 0) {
-      val refresh_res: RefreshResponse =
-        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
-      val failed_shards = refresh_res.getFailedShards
-      if(failed_shards > 0) {
-        throw new Exception("Term : index refresh failed: (" + elastic_client.index_name + ")")
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
+        throw new Exception("KnowledgeBase : index refresh failed: (" + elastic_client.index_name + ")")
       }
     }
 
@@ -282,10 +280,8 @@ class TermService(implicit val executionContext: ExecutionContext) {
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh != 0) {
-      val refresh_res: RefreshResponse =
-        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
-      val failed_shards = refresh_res.getFailedShards
-      if(failed_shards > 0) {
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + elastic_client.index_name + ")")
       }
     }

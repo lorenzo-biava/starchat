@@ -885,7 +885,7 @@ Sample output
 
 ```
 
-## `POST /index_management`
+## `POST /index_management/create`
 
 Output JSON
 
@@ -903,6 +903,31 @@ Sample output
 
 ```json
 {"message":"create index: jenny-en-0 create_index_ack(true)"}
+```
+
+## `POST /index_management/refresh`
+
+Output JSON
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/index_management/refresh"
+```
+
+Sample output
+
+```json
+{
+   "failed_shards_n" : 0,
+   "total_shards_n" : 10,
+   "failed_shards" : [],
+   "successful_shards_n" : 5
+}
 ```
 
 ## `GET /index_management`

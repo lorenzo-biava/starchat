@@ -47,11 +47,9 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val client: TransportClient = elastic_client.get_client()
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
 
-    val refresh_res: RefreshResponse =
-      client.admin().indices().prepareRefresh(elastic_client.index_name).get()
-    val failed_shards = refresh_res.getFailedShards
-    if(failed_shards > 0) {
-      throw new Exception("DecisionTable : getAnalyzers : index refresh failed: (" + elastic_client.index_name + ")")
+    val refresh_index = elastic_client.refresh_index()
+    if(refresh_index.failed_shards_n > 0) {
+      throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
     }
 
     val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
@@ -372,10 +370,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       elastic_client.type_name, document.state).setSource(json).get()
 
     if (refresh != 0) {
-      val refresh_res: RefreshResponse =
-        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
-      val failed_shards = refresh_res.getFailedShards
-      if(failed_shards > 0) {
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
       }
     }
@@ -444,10 +440,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       .get()
 
     if (refresh != 0) {
-      val refresh_res: RefreshResponse =
-        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
-      val failed_shards = refresh_res.getFailedShards
-      if(failed_shards > 0) {
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
       }
     }
@@ -467,10 +461,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val response: DeleteResponse = client.prepareDelete(elastic_client.index_name, elastic_client.type_name, id).get()
 
     if (refresh != 0) {
-      val refresh_res: RefreshResponse =
-        client.admin().indices().prepareRefresh(elastic_client.index_name).get()
-      val failed_shards = refresh_res.getFailedShards
-      if(failed_shards > 0) {
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
       }
     }
