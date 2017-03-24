@@ -30,6 +30,7 @@ import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
@@ -45,6 +46,14 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
   def getAnalyzers: Map[String, AnalyzerItem] = {
     val client: TransportClient = elastic_client.get_client()
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
+
+    val refresh_res: RefreshResponse =
+      client.admin().indices().prepareRefresh(elastic_client.index_name).get()
+    val failed_shards = refresh_res.getFailedShards
+    if(failed_shards > 0) {
+      throw new Exception("DecisionTable : getAnalyzers : index refresh failed: (" + elastic_client.index_name + ")")
+    }
+    
     val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
