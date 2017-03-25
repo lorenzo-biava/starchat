@@ -104,7 +104,7 @@ curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decis
 
 ### 4. Load external corpus (optional)
 
-To have a good words' statistics, and consequent improved matching, you might want to index a corpus which is hidden from results. For instance, you can index various sentences as hidden using the [POST /knowledgebase](#POST-knowledgebase) endpoint with `doctype: "hidden"`.
+To have a good words' statistics, and consequent improved matching, you might want to index a corpus which is hidden from results. For instance, you can index various sentences as hidden using the [POST /knowledgebase](#post-knowledgebase) endpoint with `doctype: "hidden"`.
 
 ### 5. Index the FAQs (optional)
 
