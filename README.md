@@ -89,7 +89,7 @@ curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/index
 
 ### 3. Load the configuration file
 
-Now you have to load the configuration file for the actual chat. We have provided an example csv in English, therefore:
+Now you have to load the configuration file for the actual chat, aka [decision table](#services). We have provided an example csv in English, therefore:
 
 ```bash
 cd scripts/indexing/
@@ -101,6 +101,14 @@ Every time you load the configuration file you need to index the analyzer:
 ```bash
 curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_analyzer" 
 ```
+
+### 4. Load external corpus (optional)
+
+To have a good words' statistics, and consequent improved matching, you might want to index a corpus which is hidden from results. For instance, you can index various sentences as hidden using the [POST /knowledgebase](#POST-knowledgebase) endpoint with `doctype: "hidden"`.
+
+### 5. Index the FAQs (optional)
+
+You might want to activate the [knowledge base](#services) for simple Question and Anwer. 
 
 ## Install without Docker
  
@@ -677,10 +685,6 @@ Sample response
 ## `POST /knowledgebase`
 
 Insert a new document
-
-Sample call
-
-Output JSON
 
 ### Return codes 
 
