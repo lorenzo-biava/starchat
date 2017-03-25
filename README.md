@@ -967,7 +967,7 @@ Sample output
 
 ## `POST /term/index`
 
-Output JSON
+Index the term as indicated in the JSON. 
 
 ### Return codes 
 
@@ -1050,7 +1050,7 @@ Sample output
 
 ## `POST /term/get`
 
-Output JSON
+Get one or more terms entry.
 
 ### Return codes 
 
@@ -1120,7 +1120,7 @@ Sample output
 
 ## `DELETE /term`
 
-Output JSON
+Delete the term.
 
 ### Return codes 
 
@@ -1160,7 +1160,7 @@ Sample output
 
 ## `PUT /term`
 
-Output JSON
+Update the entry.
 
 ### Return codes 
 
@@ -1243,7 +1243,7 @@ Sample output
 
 ## `GET /term/term`
 
-Output JSON
+Search for term (using Elasticsearch).
 
 ### Return codes 
 
@@ -1294,9 +1294,9 @@ Sample output
 }
 ```
 
-## `GET /term/term`
+## `GET /term/text`
 
-Output JSON
+Search for all the terms in the text and return the entries.
 
 ### Return codes 
 
@@ -1340,9 +1340,9 @@ Sample output
             "frequency" : 1
          },
          {
+            "term" : "term2",
             "tags" : "tag1 tag2",
             "score" : 0.6931471824646,
-            "term" : "term2",
             "features" : {
                "FEATURE_NEW1" : "N",
                "GEN" : "F"
