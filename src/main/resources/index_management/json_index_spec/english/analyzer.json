@@ -20,11 +20,32 @@
 				"type":       "stemmer",
 				"language":   "english"
 			},
+			"jenny_en_shingle_2":
+			{
+				"type":	"shingle",
+				"min_shingle_size": 2,
+				"max_shingle_size": 2,
+				"output_unigrams": true
+			},
+			"jenny_en_shingle_3":
+			{
+				"type":	"shingle",
+				"min_shingle_size": 3,
+				"max_shingle_size": 3,
+				"output_unigrams": true
+			},
 			"jenny_en_shingle_4":
 			{
 				"type":	"shingle",
 				"min_shingle_size": 4,
 				"max_shingle_size": 4,
+				"output_unigrams": true
+			},
+			"jenny_en_shingle_2_10":
+			{
+				"type":	"shingle",
+				"min_shingle_size": 2,
+				"max_shingle_size": 10,
 				"output_unigrams": true
 			}
 		},
@@ -54,6 +75,30 @@
 				"char_filter":  [ "&_to_and" ],
 				"filter":       [ "lowercase", "jenny_en_stopwords", "english_stemmer"]
 			},
+			"jenny_shingles_2_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "html_strip", "&_to_and" ],
+				"filter":       [ "lowercase", "jenny_en_shingle_2"]
+			},
+			"jenny_stemmed_shingles_2_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "html_strip", "&_to_and" ],
+				"filter":       [ "lowercase", "english_stemmer", "jenny_en_shingle_2"]
+			},
+			"jenny_shingles_3_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "html_strip", "&_to_and" ],
+				"filter":       [ "lowercase", "jenny_en_shingle_3"]
+			},
+			"jenny_stemmed_shingles_3_analyzer":
+			{
+				"tokenizer":    "standard",
+				"char_filter":  [ "html_strip", "&_to_and" ],
+				"filter":       [ "lowercase", "english_stemmer", "jenny_en_shingle_3"]
+			},
 			"jenny_shingles_4_analyzer":
 			{
 				"tokenizer":    "standard",
@@ -66,6 +111,18 @@
 				"char_filter":  [ "html_strip", "&_to_and" ],
 				"filter":       [ "lowercase", "english_stemmer", "jenny_en_shingle_4"]
 			},
+            "jenny_shingles_2_10_analyzer":
+            {
+              "tokenizer":    "standard",
+              "char_filter":  [ "html_strip", "&_to_and" ],
+              "filter":       [ "lowercase", "jenny_en_shingle_2_10"]
+            },
+            "jenny_stemmed_shingles_2_10_analyzer":
+            {
+              "tokenizer":    "standard",
+              "char_filter":  [ "html_strip", "&_to_and" ],
+              "filter":       [ "lowercase", "english_stemmer", "jenny_en_shingle_2_10"]
+            },
 			"jenny_delimited_double": {
 				"tokenizer":"whitespace",
 				"encoding": "double",

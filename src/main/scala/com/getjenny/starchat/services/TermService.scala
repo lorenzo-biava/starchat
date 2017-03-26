@@ -105,8 +105,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
           builder.field("features", indexable)
         case None => ;
       }
-      term.frequency match {
-        case Some(t) => builder.field("frequency", t)
+      term.frequency_base match {
+        case Some(t) => builder.field("frequency_base", t)
+        case None => ;
+      }
+      term.frequency_stem match {
+        case Some(t) => builder.field("frequency_stem", t)
         case None => ;
       }
       term.vector match {
@@ -176,7 +180,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
         case None => None: Option[Map[String, String]]
       }
 
-      val frequency : Option[Double] = source.get("frequency") match {
+      val frequency_base : Option[Double] = source.get("frequency_base") match {
+        case Some(t) => Option {t.asInstanceOf[Double]}
+        case None => None: Option[Double]
+      }
+
+      val frequency_stem : Option[Double] = source.get("frequency_stem") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
@@ -193,7 +202,8 @@ class TermService(implicit val executionContext: ExecutionContext) {
         antonyms = antonyms,
         tags = tags,
         features = features,
-        frequency = frequency,
+        frequency_base = frequency_base,
+        frequency_stem = frequency_stem,
         vector = vector,
         score = None: Option[Double])
     })
@@ -231,8 +241,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
           builder.field("features", indexable)
         case None => ;
       }
-      term.frequency match {
-        case Some(t) => builder.field("frequency", t)
+      term.frequency_base match {
+        case Some(t) => builder.field("frequency_base", t)
+        case None => ;
+      }
+      term.frequency_stem match {
+        case Some(t) => builder.field("frequency_stem", t)
         case None => ;
       }
       term.vector match {
@@ -308,8 +322,11 @@ class TermService(implicit val executionContext: ExecutionContext) {
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
     bool_query_builder.must(QueryBuilders.termQuery("term.base", term.term))
 
-    if (term.frequency.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("frequency", term.frequency.get))
+    if (term.frequency_base.isDefined)
+      bool_query_builder.must(QueryBuilders.termQuery("frequency_base", term.frequency_base.get))
+
+    if (term.frequency_stem.isDefined)
+      bool_query_builder.must(QueryBuilders.termQuery("frequency_stem", term.frequency_stem.get))
 
     if (term.synonyms.isDefined)
       bool_query_builder.must(QueryBuilders.termQuery("synonyms", term.synonyms.get))
@@ -365,7 +382,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
         case None => None: Option[Map[String, String]]
       }
 
-      val frequency : Option[Double] = source.get("frequency") match {
+      val frequency_base : Option[Double] = source.get("frequency_base") match {
+        case Some(t) => Option {t.asInstanceOf[Double]}
+        case None => None: Option[Double]
+      }
+
+      val frequency_stem : Option[Double] = source.get("frequency_stem") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
@@ -382,7 +404,8 @@ class TermService(implicit val executionContext: ExecutionContext) {
         antonyms = antonyms,
         tags = tags,
         features = features,
-        frequency = frequency,
+        frequency_base = frequency_base,
+        frequency_stem = frequency_stem,
         vector = vector,
         score = Option{item.getScore.toDouble})
     })
@@ -451,7 +474,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
         case None => None: Option[Map[String, String]]
       }
 
-      val frequency : Option[Double] = source.get("frequency") match {
+      val frequency_base : Option[Double] = source.get("frequency_base") match {
+        case Some(t) => Option {t.asInstanceOf[Double]}
+        case None => None: Option[Double]
+      }
+
+      val frequency_stem : Option[Double] = source.get("frequency_stem") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
@@ -468,7 +496,8 @@ class TermService(implicit val executionContext: ExecutionContext) {
         antonyms = antonyms,
         tags = tags,
         features = features,
-        frequency = frequency,
+        frequency_base = frequency_base,
+        frequency_stem = frequency_stem,
         vector = vector,
         score = Option{item.getScore.toDouble})
     })

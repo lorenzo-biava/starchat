@@ -1005,7 +1005,8 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/term/i
 	"terms": [
 	    {
             "term": "मराठी",
-            "frequency": 1.0,
+            "frequency_base": 1.0,
+            "frequency_stem": 1.0,
             "vector": [1.0, 2.0, 3.0],
             "synonyms":
             {
@@ -1026,7 +1027,8 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/term/i
 	    },
 	    {
             "term": "term2",
-            "frequency": 1.0,
+            "frequency_base": 1.0,
+            "frequency_stem": 1.0,
             "vector": [1.0, 2.0, 3.0],
             "synonyms":
             {
@@ -1100,7 +1102,8 @@ Sample output
             2,
             3
          ],
-         "frequency" : 1,
+        "frequency_base": 1.0,
+        "frequency_stem": 1.0,
          "term" : "मराठी",
          "antonyms" : {
             "bla4" : 0.2,
@@ -1126,7 +1129,8 @@ Sample output
             "GEN" : "F"
          },
          "term" : "term2",
-         "frequency" : 1,
+         "frequency_base": 1.0,
+         "frequency_stem": 1.0,
          "vector" : [
             1,
             2,
@@ -1198,7 +1202,8 @@ curl -v -H "Content-Type: application/json" -X PUT http://localhost:8888/term -d
 	"terms": [
 	    {
             "term": "मराठी",
-            "frequency": 1.0,
+            "frequency_base": 1.0,
+            "frequency_stem": 1.0,
             "vector": [1.0, 2.0, 3.0, 4.0],
             "synonyms":
             {
@@ -1219,7 +1224,8 @@ curl -v -H "Content-Type: application/json" -X PUT http://localhost:8888/term -d
 	    },
 	    {
             "term": "term2",
-            "frequency": 1.0,
+            "frequency_base": 1.0,
+            "frequency_stem": 1.0,
             "vector": [1.0, 2.0, 3.0, 5.0],
             "synonyms":
             {
@@ -1299,7 +1305,8 @@ Sample output
                "bla4" : 0.2,
                "term2" : 0.1
             },
-            "frequency" : 1,
+            "frequency_base": 1.0,
+            "frequency_stem": 1.0,
             "features" : {
                "FEATURE_NEW1" : "V",
                "GEN" : "M"
@@ -1362,7 +1369,8 @@ Sample output
                "bla2" : 0.2,
                "bla1" : 0.1
             },
-            "frequency" : 1
+            "frequency_base": 1.0,
+            "frequency_stem": 1.0
          },
          {
             "tags" : "tag1 tag2",
@@ -1382,7 +1390,8 @@ Sample output
                "bla3" : 0.1,
                "bla4" : 0.2
             },
-            "frequency" : 1,
+            "frequency_base": 1.0,
+            "frequency_stem": 1.0,
             "synonyms" : {
                "bla1" : 0.1,
                "bla2" : 0.2

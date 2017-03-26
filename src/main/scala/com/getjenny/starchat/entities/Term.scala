@@ -11,7 +11,8 @@ case class Term(term: String,
                 antonyms: Option[Map[String, Double]],
                 tags: Option[String],
                 features: Option[Map[String, String]],
-                frequency: Option[Double],
+                frequency_base: Option[Double],
+                frequency_stem: Option[Double],
                 vector: Option[Vector[Double]],
                 score: Option[Double]
                )
