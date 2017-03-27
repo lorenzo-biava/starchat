@@ -4,11 +4,13 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
+import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing.MyResource
 import com.getjenny.starchat.services.DecisionTableService
 import akka.http.scaladsl.model.StatusCodes
+import com.getjenny.starchat.SCActorSystem
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -65,13 +67,29 @@ trait DecisionTableResource extends MyResource {
   def decisionTableAnalyzerRoutes: Route = pathPrefix("decisiontable_analyzer") {
     pathEnd {
       get {
-        val result: Future[Option[DTAnalyzerMap]] = dtElasticService.getDTAnalyzerMap
-        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+        val result: Try[Option[DTAnalyzerMap]] =
+          Await.ready(dtElasticService.getDTAnalyzerMap, 30.seconds).value.get
+        result match {
+          case Success(t) =>
+            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+          case Failure(e) =>
+            log.error("route=decisionTableAnalyzerRoutes method=GET: " + e.getMessage)
+            completeResponse(StatusCodes.BadRequest,
+              Future{Option{IndexManagementResponse(message = e.getMessage)}})
+        }
       } ~
-      post {
-        val result: Future[Option[DTAnalyzerLoad]] = dtElasticService.loadAnalyzer
-        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
-      }
+        post {
+          val result: Try[Option[DTAnalyzerLoad]] =
+            Await.ready(dtElasticService.loadAnalyzer, 30.seconds).value.get
+          result match {
+            case Success(t) =>
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+            case Failure(e) =>
+              log.error("route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Future{Option{IndexManagementResponse(message = e.getMessage)}})
+          }
+        }
     }
   }
 

@@ -1,8 +1,0 @@
-starchat:
-  image: java:8
-  command: /starchat-master/bin/starchat
-  volumes:
-    - ./starchat-master:/starchat-master
-  ports:
-    - "0.0.0.0:8888:8888"
-

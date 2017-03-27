@@ -10,14 +10,15 @@ elasticsearch:
   volumes:
     - ./elasticsearch/data:/usr/share/elasticsearch/data
     - ./elasticsearch/config:/usr/share/elasticsearch/config
+    - ./elasticsearch/logs:/usr/share/elasticsearch/logs
   environment:
     - ES_JAVA_OPTS=-Xms1g -Xmx1g
 
 starchat:
   image: java:8
-  command: /starchat-master/bin/starchat
+  command: /starchat/bin/starchat
   volumes:
-    - ./starchat-master:/starchat-master
+    - ./starchat-master:/starchat
   ports:
     - "0.0.0.0:8888:8888"
   links:

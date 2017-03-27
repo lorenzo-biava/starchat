@@ -9,6 +9,7 @@ import com.getjenny.analyzer.atoms._
 import com.getjenny.analyzer.expressions.Expression
 import com.getjenny.analyzer.interfaces.Factory
 
+
 /**
   * All sentences with more than 22 characters and with keywords "password" and either "lost" or "forgot"
   *
@@ -31,20 +32,20 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
   /** Read a sentence and produce a score (the higher, the more confident)
     */
   def evaluate(sentence: String): Double = {
-    operator.evaluate(sentence)
+    val res = operator.evaluate(sentence)
+    if (res > 0) println("DEBUG: DefaultParser: '" + this + "' evaluated to " + res)
+    res
   }
 
-  /**Produces a List for building the tree.
-    * make_command_tree("""and(regex(".{22,}"), and(or(keyword("forgot"), keyword("lost")), keyword("password")))""")
-
-  List(
-        ("keyword", "password", 3),
-        ("keyword", "forgot", 4),
-        ("or", "", 3),
-        ("and", "", 2),
-        ("regex", ".{22,}", 2),
-        ("and", "", 1)
-      )
+  /**Produces nested operators
+    *
+    * e.g.
+    *
+    * gobble_commands("""boolean-and(regex(".{22,}"), boolean-and(boolean-or(keyword("forgot"), keyword("lost")), keyword("password")))""")
+    *
+    * will produce a boolean OR operator with inside a regex Expression (which can be evaluated),
+    * a boolean AND etc
+    *
 
     */
   def gobble_commands(commands_string: String): AbstractOperator = {
@@ -92,21 +93,24 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
         argument_buffer + chars(indice) else ""
 
       if (just_opened_parenthesis && operatorFactory.operations(command_buffer)) {
-        //println("DEBUG Adding the operator " + command_buffer)
+        // We have just read an operator.
+        // println("DEBUG Adding the operator " + command_buffer)
         val operator = operatorFactory.get(command_buffer, List())
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
           command_tree.add(operator, new_parenthesis_balance.sum - 1))
       } else if (atomicFactory.operations(command_buffer) && new_parenthesis_balance.head == 1 && !just_closed_quote) {
-        //println("DEBUG calling loop, without adding an atom, with this command buffer: " + command_buffer)
+        // We are reading an atomic's argument...
+        // println("DEBUG calling loop, without adding an atom, with this command buffer: " + command_buffer)
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
           argument_acc, command_tree)
       } else if (atomicFactory.operations(command_buffer) && just_closed_quote) {
-        //println("DEBUG Calling loop, adding the atom " + AtomicFactory.get(command_buffer, argument_buffer))
+        // We have read atomic's argument, add the atomic to the tree
+        // println("DEBUG Calling loop, adding the atom " + AtomicFactory.get(command_buffer, argument_buffer))
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer, argument_acc,
           command_tree.add(atomicFactory.get(command_buffer, argument_buffer),
             new_parenthesis_balance.sum - 1))
       } else {
-        //println("DEBUG going to return naked command tree... " + chars.length)
+        // println("DEBUG going to return naked command tree... " + chars.length)
         if (indice < chars.length - 1) loop(chars, indice+1, new_parenthesis_balance, new_quote_balance,
           new_command_buffer, argument_acc, command_tree)
         else {
