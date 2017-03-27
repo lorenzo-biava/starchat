@@ -217,6 +217,31 @@ And the fields are:
 
 ## Client functions
 
+In *Chat configuration, the developer can specify which function the front-end should
+execute when a certain state is triggered, together with input parameters.
+**Any function implemented on the front-end can be called.**
+
+### Example show button
+
+- Action: ```show_buttons```
+- Action input: ```{"buttons": [("Forgot Password", "forgot_password"), ("Account locked", "account_locked")]}```
+- The frontend will call function: ```show_buttons(buttons={"Forgot Password": "forgot_password","Account locked": "account_locked")```
+
+Example "buttons": the front-end implements the function show_buttons and uses "action input" to call it. It will show two buttons, where the first returns forgot_password and the second account_locked.
+
+### Example send email
+
+- Action: ```send_password_link```
+- Action input: ```{ "template": "Reset your password here: example.com","email": "%email%","subject": "New password" }```
+- The frontend will call function: ```send_password_link(template="Reset your password here: example.com.",email= "john@foo.com", subject="New password")```
+
+Example "send email": the front-end implements the function send_password_link and uses "action input" to call it.
+The variable %email% is automatically substituted by the variable email if available in the JSON passed to the
+StarchatResource.
+
+
+### functions for the sample csv
+
 For the CSV in the example above, the client will have to implement the following set of functions:
 
 * show_buttons: tell the client to render a multiple choice button
@@ -228,9 +253,6 @@ For the CSV in the example above, the client will have to implement the followin
 * send_password_generation_link: send an email with instructions to regenerate the password
     * input: a valid email address e.g.: "foo@example.com"
     * output: a dictionary with the response fields e.g.: { "user_id": "123", "current_state": "forgot_password", "status": "true" }
-
-Other application specific functions can be implemented by the client these functions must be called with the prefix
-"priv_" e.g. "priv_retrieve_user_transactions" ( @angleto to clarify)
 
 Ref: [sample_state_machine_specification.csv](https://github.com/GetJenny/starchat/blob/master/doc/sample_state_machine_specification.csv).
 
