@@ -1433,7 +1433,9 @@ Sample output
 
 The following program index term vectors on the vector table:
 
+```bash
 sbt "run-main com.getjenny.command.IndexTerms --inputfile terms.txt --vecsize 300"
+```
 
 The format for each row of an input file with 5 dimension vectors is:
 ```hello 1.0 2.0 3.0 4.0 0.0```
