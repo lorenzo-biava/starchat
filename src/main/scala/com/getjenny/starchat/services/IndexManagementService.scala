@@ -144,4 +144,12 @@ class IndexManagementService(implicit val executionContext: ExecutionContext) {
     indexManagementResponse
   }
 
+  def refresh_index() : Option[RefreshIndexResult] = {
+    val refresh_index: RefreshIndexResult = elastic_client.refresh_index()
+    if (refresh_index.failed_shards_n > 0) {
+      throw new Exception("IndexManagement : index refresh failed: (" + elastic_client.index_name + ")")
+    }
+    Option { refresh_index }
+  }
+
 }

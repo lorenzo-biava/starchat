@@ -23,14 +23,16 @@ trait KnowledgeBaseResource extends MyResource {
   def knowledgeBaseRoutes: Route = pathPrefix("knowledgebase") {
     pathEnd {
       post {
-        entity(as[KBDocument]) { document =>
-          val result: Future[Option[IndexDocumentResult]] = kbElasticService.create(document)
-          onSuccess(result) {
-            case Some(v) =>
-              completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{v}})
-            case None =>
-              completeResponse( StatusCodes.BadRequest,
-                Future{Option{ReturnMessageData(code = 300, message = "Error indexing new document")}})
+        parameters("refresh".as[Int] ? 0) { refresh =>
+          entity(as[KBDocument]) { document =>
+            val result: Future[Option[IndexDocumentResult]] = kbElasticService.create(document, refresh)
+            onSuccess(result) {
+              case Some(v) =>
+                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{v}})
+              case None =>
+                completeResponse( StatusCodes.BadRequest,
+                  Future{Option{ReturnMessageData(code = 300, message = "Error indexing new document")}})
+            }
           }
         }
       } ~
@@ -43,22 +45,26 @@ trait KnowledgeBaseResource extends MyResource {
     } ~
       path(Segment) { id =>
         put {
-          entity(as[KBDocumentUpdate]) { update =>
-            val result: Future[Option[UpdateDocumentResult]] = kbElasticService.update(id, update)
-            val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 30.seconds).value.get
-            result_try match {
-              case Success(t) =>
-                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})
-              case Failure(e) =>
-                completeResponse(StatusCodes.BadRequest,
-                  Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})
+          parameters("refresh".as[Int] ? 0) { refresh =>
+            entity(as[KBDocumentUpdate]) { update =>
+              val result: Future[Option[UpdateDocumentResult]] = kbElasticService.update(id, update, refresh)
+              val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 30.seconds).value.get
+              result_try match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})
+                case Failure(e) =>
+                  completeResponse(StatusCodes.BadRequest,
+                    Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})
+              }
             }
           }
         } ~
-          delete {
-            val result: Future[Option[DeleteDocumentResult]] = kbElasticService.delete(id)
+        delete {
+          parameters("refresh".as[Int] ? 0) { refresh =>
+            val result: Future[Option[DeleteDocumentResult]] = kbElasticService.delete(id, refresh)
             completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
           }
+        }
       }
   }
 
