@@ -10,3 +10,5 @@ case class IndexDocumentResult(index: String,
                     version: Long,
                     created: Boolean
                    )
+
+case class IndexDocumentListResult(data: List[IndexDocumentResult])

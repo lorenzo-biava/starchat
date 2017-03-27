@@ -4,6 +4,7 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
+import akka.actor.ActorSystem
 import com.getjenny.starchat.entities._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -16,21 +17,27 @@ import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.unit._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.rest.RestStatus
-
 import com.getjenny.starchat.analyzer.analyzers._
+
+import scala.util.{Failure, Success, Try}
+import akka.event.{Logging, LoggingAdapter}
+import akka.event.Logging._
+import com.getjenny.starchat.SCActorSystem
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
 class DecisionTableService(implicit val executionContext: ExecutionContext) {
   val elastic_client = DecisionTableElasticClient
+  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   case class AnalyzerItem(declaration: String, build: Boolean, analyzer: StarchatAnalyzer)
 
@@ -39,6 +46,14 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
   def getAnalyzers: Map[String, AnalyzerItem] = {
     val client: TransportClient = elastic_client.get_client()
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
+
+    val refresh_res: RefreshResponse =
+      client.admin().indices().prepareRefresh(elastic_client.index_name).get()
+    val failed_shards = refresh_res.getFailedShards
+    if(failed_shards > 0) {
+      throw new Exception("DecisionTable : getAnalyzers : index refresh failed: (" + elastic_client.index_name + ")")
+    }
+    
     val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
@@ -57,11 +72,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       }
 
       val analyzer : StarchatAnalyzer = if (declaration != "") {
-        try {
-          new StarchatAnalyzer(declaration)
-        } catch {
-          case e: Exception => null
-        }
+        new StarchatAnalyzer(declaration)
       } else {
         null
       }
@@ -74,30 +85,35 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     results
   }
 
-  def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = {
+  def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = Future {
     analyzer_map = getAnalyzers
     val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=analyzer_map.size)
-    Future(Option(dt_analyzer_load))
+    Option {dt_analyzer_load}
   }
 
   def getDTAnalyzerMap : Future[Option[DTAnalyzerMap]] = {
-    try {
-      val analyzers = Future(Option(DTAnalyzerMap(analyzer_map.map(x => {
-        val dt_analyzer = DTAnalyzerItem(x._2.declaration, x._2.build)
-        (x._1, dt_analyzer)
-      }))))
-      analyzers
-    } catch {
-      case e: Exception => Future.failed(e)
+    val analyzers = Future(Option(DTAnalyzerMap(analyzer_map.map(x => {
+      val dt_analyzer = DTAnalyzerItem(x._2.declaration, x._2.build)
+      (x._1, dt_analyzer)
+    }))))
+    analyzers
+  }
+
+  def initializeAnalyzers(): Unit = {
+    val result: Try[Option[DTAnalyzerLoad]] =
+      Await.ready(loadAnalyzer, 30.seconds).value.get
+    result match {
+      case Success(t) => log.info("analyzers loaded")
+      case Failure(e) => log.error("can't load analyzers")
     }
   }
 
-  loadAnalyzer // load analyzer map on startup
+  initializeAnalyzers() // load analyzer map on startup
 
   def getNextResponse(request: ResponseRequestIn): Option[ResponseRequestOutOperationResult] = {
     // calculate and return the ResponseRequestOut
 
-    val user_text: String = if(request.user_input.isDefined) {
+    val user_text: String = if (request.user_input.isDefined) {
       request.user_input.get.text.getOrElse("")
     } else {
       ""
@@ -105,17 +121,17 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
     val conversation_id: String = request.conversation_id
 
-    val data: Map[String, String] = if(request.values.isDefined)
-      request.values.get.data.getOrElse(Map[String,String]())
+    val data: Map[String, String] = if (request.values.isDefined)
+      request.values.get.data.getOrElse(Map[String, String]())
     else
-      Map[String,String]()
+      Map[String, String]()
 
-    val return_value: String =  if(request.values.isDefined)
+    val return_value: String = if (request.values.isDefined)
       request.values.get.return_value.getOrElse("")
     else
       ""
 
-    val return_state : Option[ResponseRequestOutOperationResult] = Option {
+    val return_state: Option[ResponseRequestOutOperationResult] = Option {
       if (!return_value.isEmpty) {
         // there is a state in return_value (eg the client asked for a state), no analyzers evaluation
         val state: Future[Option[SearchDTDocumentsResults]] = read(List[String](return_value))
@@ -149,10 +165,12 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             state_data = state_data,
             success_value = doc.success_value,
             failure_value = doc.failure_value,
-            1.0d)
+            score = 1.0d)
 
           val full_response: ResponseRequestOutOperationResult =
-            ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option {response_data}) // success
+            ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option {
+              List(response_data)
+            }) // success
           full_response
         } else {
           val full_response: ResponseRequestOutOperationResult =
@@ -160,37 +178,40 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               "Error during state retrieval"), null) // internal error
           full_response
         }
-      } else {  // No states in the return values
-      val analyzer_values : List[(String, Double)] = analyzer_map.filter(_._2.build == true).map(item => {
-        val evaluation_score = item._2.analyzer.evaluate(user_text)
-        val state_id = item._1
-        (state_id, evaluation_score)
-      }).toList.sortWith(_._2 > _._2)
+      } else {
+        // No states in the return values
+        val max_results: Int = request.max_results.getOrElse(2)
+        val threshold: Double = request.threshold.getOrElse(0.0d)
+        val analyzer_values: Map[String, Double] = analyzer_map.filter(_._2.build == true).map(item => {
+          val evaluation_score = item._2.analyzer.evaluate(user_text)
+          val state_id = item._1
+          (state_id, evaluation_score)
+        }).toList.filter(_._2 > threshold).sortWith(_._2 > _._2).take(max_results).toMap
 
         if(analyzer_values.nonEmpty) {
-          val best_state_id = analyzer_values.head
-          val best_state = read(List(best_state_id._1))
-          val res : Option[SearchDTDocumentsResults] = Await.result(best_state, 30.seconds)
+          val items: Future[Option[SearchDTDocumentsResults]] = read(analyzer_values.keys.toList)
+          val res : Option[SearchDTDocumentsResults] = Await.result(items, 30.seconds)
+          val docs = res.get.hits.map(item => {
+            val doc: DTDocument = item.document
+            val state = doc.state
+            val score: Double = analyzer_values(state)
+            val max_state_count: Int = doc.max_state_count
+            val analyzer: String = doc.analyzer
+            var bubble: String = doc.bubble
+            var action_input: Map[String, String] = doc.action_input
+            val state_data: Map[String, String] = doc.state_data
 
-          val doc : DTDocument = res.get.hits.head.document
-          val state : String = doc.state
-          val max_state_count : Int = doc.max_state_count
-          val analyzer : String = doc.analyzer
-          var bubble : String = doc.bubble
-          var action_input : Map[String,String] = doc.action_input
-          val state_data: Map[String, String] = doc.state_data
-          if (data.nonEmpty) {
-            for ((key,value) <- data) {
-              bubble = bubble.replaceAll("%" + key + "%", value)
-              action_input = doc.action_input map {case (ki, vi) =>
-                val new_value : String = vi.replaceAll("%" + key + "%", value)
-                (ki, new_value)
+            if (data.nonEmpty) {
+              for ((key, value) <- data) {
+                bubble = bubble.replaceAll("%" + key + "%", value)
+                action_input = doc.action_input map { case (ki, vi) =>
+                  val new_value: String = vi.replaceAll("%" + key + "%", value)
+                  (ki, new_value)
+                }
               }
             }
-          }
 
-          val full_response: ResponseRequestOutOperationResult = if (best_state_id._2 > 0) {
-            val response_data : ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
+            val response_item: ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
               state = state,
               max_state_count = max_state_count,
               analyzer = analyzer,
@@ -201,19 +222,12 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
               state_data = state_data,
               success_value = doc.success_value,
               failure_value = doc.failure_value,
-              best_state_id._2)
-
-            ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{response_data}) // success
-
-          } else {
-            ResponseRequestOutOperationResult(ReturnMessageData(204, ""), Option{null}) // success
-          }
-
-          full_response
+              score = score)
+            response_item
+          }).sortWith(_.score > _.score)
+          ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{docs}) // success
         } else {
-          val full_response : ResponseRequestOutOperationResult =
-            ResponseRequestOutOperationResult(ReturnMessageData(204, ""), Option{null})  // no data
-          full_response
+          ResponseRequestOutOperationResult(ReturnMessageData(204, ""), null)  // no data
         }
       }
     }
@@ -243,7 +257,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     if(documentSearch.queries.isDefined) {
       bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
       bool_query_builder.should(
-        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get).boost(1 + (min_score * boost_exact_match_factor))
+        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get)
+          .boost(1 + (min_score * boost_exact_match_factor))
       )
     }
 
@@ -254,7 +269,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       .execute()
       .actionGet()
 
-    val documents : Option[List[SearchDTDocument]] = Option { search_response.getHits.getHits.toList.map( { case(e) =>
+    val documents : Option[List[SearchDTDocument]] =
+      Option { search_response.getHits.getHits.toList.map( { case(e) =>
 
       val item: SearchHit = e
 
@@ -521,5 +537,4 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val search_results_option : Future[Option[SearchDTDocumentsResults]] = Future { Option { search_results } }
     search_results_option
   }
-
 }

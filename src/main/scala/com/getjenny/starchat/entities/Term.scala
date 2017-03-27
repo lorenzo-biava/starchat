@@ -9,19 +9,15 @@ import scala.collection.immutable.{Map}
 case class Term(term: String,
                 synonyms: Option[Map[String, Double]],
                 antonyms: Option[Map[String, Double]],
-                vector: Vector[Double],
-                score: Option[Double]
-               )
-
-case class UpdateTerm(term: Option[String],
-                synonyms: Option[Map[String, Double]],
-                antonyms: Option[Map[String, Double]],
+                tags: Option[String],
+                features: Option[Map[String, String]],
+                frequency: Option[Double],
                 vector: Option[Vector[Double]],
                 score: Option[Double]
                )
 
-case class Terms(terms: Seq[Term])
+case class Terms(terms: List[Term])
 
-case class TermIdsRequest(ids: Seq[String])
+case class TermIdsRequest(ids: List[String])
 
 case class TermsResults(total: Int, max_score: Float, hits: Terms)

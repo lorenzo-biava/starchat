@@ -10,3 +10,5 @@ case class UpdateDocumentResult(index: String,
                                version: Long,
                                created: Boolean
                               )
+
+case class UpdateDocumentListResult(data: List[UpdateDocumentResult])

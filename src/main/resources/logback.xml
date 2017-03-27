@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <target>System.out</target>
-        <encoder>
-            <!--<pattern>%date{MM/dd HH:mm:ss} %-6level[%logger{0}]: %msg%n</pattern>-->
-            <pattern>%-6level[%logger{0}]: %msg%n</pattern>
-        </encoder>
-    </appender>
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>starchat/log/starchat.log</file>
 
-    <logger name="akka" level="INFO" />
-    <logger name="spray" level="INFO" />
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>starchat/log/app.%d{dd-MM-yyyy}.log</fileNamePattern>
+      <maxHistory>60</maxHistory>
+    </rollingPolicy>
 
-    <logger name="io.elegans" level="INFO" />
+    <encoder>
+      <pattern>%date{ISO8601} >%X{akkaTimestamp} %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
+    </encoder>
+  </appender>
 
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-    </root>
+  <root level="DEBUG">
+    <appender-ref ref="FILE"/>
+  </root>
 </configuration>
