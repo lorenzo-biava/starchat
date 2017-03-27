@@ -1,59 +1,115 @@
-package io.elegans.command
+package com.getjenny.command
 
+import akka.http.scaladsl.model.HttpRequest
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.stream.ActorMaterializer
+import akka.http.scaladsl.marshalling.Marshal
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import com.getjenny.starchat.entities.{Term, Terms}
+import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
 
-import scala.concurrent.Future
+import scala.concurrent.Await
+import scala.collection.immutable
+import scala.collection.immutable.Map
+import scala.io.Source
 
-object CalcTermFreq {
-
-//  lazy val textProcessingUtils = new TextProcessingUtils /* lazy initialization of TextProcessingUtils class */
-//  lazy val loadData = new LoadData
+object IndexTerms extends JsonSupport {
 
   private case class Params(
-    host: Option[String] = "http://localhost",
-    port: Int = 8888,
-    path: Option[String] = "/"
-    numpartitions: Int = 1000,
-    appname: String = "CalcTerm freq",
-    minfreq: Int = 0
+    host: String = "http://localhost:8888",
+    path: String = "/term/index",
+    inputfile: String = "vectors.txt",
+    timeout: Int = 60,
+    vecsize: Int = 300
   )
 
   private def doIndexTerms(params: Params) {
-    val responseFuture: Future[HttpResponse] =
-      Http().singleRequest(HttpRequest(uri = "http://akka.io"))
+    implicit val system = ActorSystem()
+    implicit val materializer = ActorMaterializer()
+    implicit val executionContext = system.dispatcher
+    
+    val vecsize = params.vecsize
+
+    val base_url = params.host + params.path
+    lazy val term_text_entries = Source.fromFile(params.inputfile).getLines
+
+    val httpHeader: immutable.Seq[HttpHeader] = immutable.Seq(RawHeader("application", "json"))
+    val timeout = Duration(params.timeout, "s")
+
+    term_text_entries.foreach(entry => {
+      val splitted = entry.split(" ")
+      val term_text = splitted.head
+      var term_vector = Vector.empty[Double]
+
+      try {
+        term_vector = splitted.tail.map(e => e.toDouble).toVector
+      } catch {
+        case e : Exception => println("Error: " + e.getMessage)
+      }
+
+      if (term_vector.length != vecsize) {
+        println("Error: file row does not contains a consistent vector Row(" + entry + ")")
+      } else {
+        val term = Term(term = term_text,
+          synonyms = None: Option[Map[String, Double]],
+          antonyms = None: Option[Map[String, Double]],
+          tags = None: Option[String],
+          features = None: Option[Map[String, String]],
+          frequency_base = None: Option[Double],
+          frequency_stem = None: Option[Double],
+          score = None: Option[Double],
+          vector = Option{term_vector})
+
+        val terms = Terms(terms = List(term))
+        val entityFuture = Marshal(terms).to[MessageEntity]
+        val entity = Await.result(entityFuture, 10.second)
+        val responseFuture: Future[HttpResponse] =
+          Http().singleRequest(HttpRequest(
+            method = HttpMethods.POST,
+            uri = base_url,
+            headers = httpHeader,
+            entity = entity))
+        val result = Await.result(responseFuture, timeout)
+        result.status match {
+          case StatusCodes.OK => println("indexed: " + term.term)
+          case _ =>  println("failed indexing term(" + term.term + ") Row(" + entry + ") Message(" + result.toString() + ")")
+        }
+      }
+    })
+    Await.ready(system.terminate(), Duration.Inf)
   }
 
   def main(args: Array[String]) {
     val defaultParams = Params()
-    val parser = new OptionParser[Params]("Tokenize terms and count term frequency from a set of files") {
-      head("calculate term frequency.")
+    val parser = new OptionParser[Params]("index vector terms") {
+      head("Index vetor terms")
       help("help").text("prints this usage text")
       opt[String]("inputfile")
-        .text(s"the path e.g. tmp/dir" +
+        .text(s"the path of the file with the vectors" +
           s"  default: ${defaultParams.inputfile}")
-        .action((x, c) => c.copy(inputfile = Option(x)))
-      opt[String]("appname")
-        .text(s"application name" +
-          s"  default: ${defaultParams.appname}")
-        .action((x, c) => c.copy(appname = x))
-      opt[String]("outputDir")
-        .text(s"the where to store the output files: topics and document per topics" +
-          s"  default: ${defaultParams.outputDir}")
-        .action((x, c) => c.copy(outputDir = x))
-      opt[Int]("levels")
-        .text(s"the levels where to search for files e.g. for level=2 => tmp/dir/*/*" +
-          s"  default: ${defaultParams.levels}")
-        .action((x, c) => c.copy(levels = x))
-      opt[Int]("numpartitions")
-        .text(s"the number of partitions reading files" +
-          s"  default: ${defaultParams.numpartitions}")
-        .action((x, c) => c.copy(numpartitions = x))
-      opt[Int]("minfreq")
-        .text(s"remove words with a frequency less that minfreq" +
-          s"  default: ${defaultParams.minfreq}")
-        .action((x, c) => c.copy(minfreq = x))
+        .action((x, c) => c.copy(inputfile = x))
+      opt[String]("host")
+        .text(s"*Chat base url" +
+          s"  default: ${defaultParams.host}")
+        .action((x, c) => c.copy(host = x))
+      opt[String]("path")
+        .text(s"the service path" +
+          s"  default: ${defaultParams.path}")
+        .action((x, c) => c.copy(path = x))
+      opt[Int]("vecsize")
+        .text(s"the vector size" +
+          s"  default: ${defaultParams.vecsize}")
+        .action((x, c) => c.copy(vecsize = x))
+      opt[Int]("timeout")
+        .text(s"the timeout in seconds of each insert operation" +
+          s"  default: ${defaultParams.timeout}")
+        .action((x, c) => c.copy(timeout = x))
     }
 
     parser.parse(args, defaultParams) match {

@@ -44,7 +44,11 @@
           "type": "text",
           "store": "yes"
 		},
-		"frequency": {
+		"frequency_base": {
+			"store": "yes",
+			"type": "double"
+		},
+		"frequency_stem": {
 			"store": "yes",
 			"type": "double"
 		},

@@ -61,6 +61,22 @@
 					"analyzer": "jenny_stem_analyzer",
 					"similarity": "BM25"
 				},
+				"shingles_2": {
+					"type": "text",
+					"analyzer": "jenny_shingles_2_analyzer"
+				},
+				"stemmed_shingles_2": {
+					"type": "text",
+					"analyzer": "jenny_stemmed_shingles_2_analyzer"
+				},
+				"shingles_3": {
+					"type": "text",
+					"analyzer": "jenny_shingles_3_analyzer"
+				},
+				"stemmed_shingles_3": {
+					"type": "text",
+					"analyzer": "jenny_stemmed_shingles_3_analyzer"
+				},
 				"shingles_4": {
 					"type": "text",
 					"analyzer": "jenny_shingles_4_analyzer"

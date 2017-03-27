@@ -24,16 +24,18 @@ trait TermResource extends MyResource {
       post {
         operation match {
           case "index" =>
-            entity(as[Terms]) { request_data =>
-              val result: Try[Option[IndexDocumentListResult]] =
-                Await.ready(Future{termService.index_term(request_data)}, 30.seconds).value.get
-              result match {
-                case Success(t) =>
-                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-                case Failure(e) =>
-                  log.error("route=termRoutes method=POST function=index : " + e.getMessage)
-                  completeResponse(StatusCodes.BadRequest,
-                    Future{Option{IndexManagementResponse(message = e.getMessage)}})
+            parameters("refresh".as[Int] ? 0) { refresh =>
+              entity(as[Terms]) { request_data =>
+                val result: Try[Option[IndexDocumentListResult]] =
+                  Await.ready(Future{termService.index_term(request_data, refresh)}, 30.seconds).value.get
+                result match {
+                  case Success(t) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+                  case Failure(e) =>
+                    log.error("route=termRoutes method=POST function=index : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Future{Option{IndexManagementResponse(message = e.getMessage)}})
+                }
               }
             }
           case "get" =>
@@ -56,40 +58,44 @@ trait TermResource extends MyResource {
     } ~
     pathEnd {
       delete {
-        entity(as[TermIdsRequest]) { request_data =>
-          val result: Try[Option[DeleteDocumentListResult]] =
-            Await.ready(Future{termService.delete(request_data)}, 30.seconds).value.get
-          result match {
-            case Success(t) =>
-              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-            case Failure(e) =>
-              log.error("route=termRoutes method=DELETE : " + e.getMessage)
-              completeResponse(StatusCodes.BadRequest,
-                Future{Option{IndexManagementResponse(message = e.getMessage)}})
+        parameters("refresh".as[Int] ? 0) { refresh =>
+          entity(as[TermIdsRequest]) { request_data =>
+            val result: Try[Option[DeleteDocumentListResult]] =
+              Await.ready(Future{termService.delete(request_data, refresh)}, 30.seconds).value.get
+            result match {
+              case Success(t) =>
+                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+              case Failure(e) =>
+                log.error("route=termRoutes method=DELETE : " + e.getMessage)
+                completeResponse(StatusCodes.BadRequest,
+                  Future{Option{IndexManagementResponse(message = e.getMessage)}})
+            }
           }
         }
       } ~
       put {
-        entity(as[Terms]) { request_data =>
-          val result: Try[Option[UpdateDocumentListResult]] =
-            Await.ready(Future {
-              termService.update_term(request_data)
-            }, 30.seconds).value.get
-          result match {
-            case Success(t) =>
-              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {
-                Option {
-                  t
-                }
-              })
-            case Failure(e) =>
-              log.error("route=termRoutes method=PUT : " + e.getMessage)
-              completeResponse(StatusCodes.BadRequest,
-                Future {
+        parameters("refresh".as[Int] ? 0) { refresh =>
+          entity(as[Terms]) { request_data =>
+            val result: Try[Option[UpdateDocumentListResult]] =
+              Await.ready(Future {
+                termService.update_term(request_data, refresh)
+              }, 30.seconds).value.get
+            result match {
+              case Success(t) =>
+                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {
                   Option {
-                    IndexManagementResponse(message = e.getMessage)
+                    t
                   }
                 })
+              case Failure(e) =>
+                log.error("route=termRoutes method=PUT : " + e.getMessage)
+                completeResponse(StatusCodes.BadRequest,
+                  Future {
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    }
+                  })
+            }
           }
         }
       }

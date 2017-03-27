@@ -4,7 +4,8 @@ curl -v -H "Content-Type: application/json" -X PUT http://localhost:8888/term -d
 	"terms": [
 	    {
             "term": "मराठी",
-            "frequency": 1.0,
+            "frequency_base": 1.0,
+            "frequency_stem": 1.0,
             "vector": [1.2, 2.3, 3.4, 4.5],
             "synonyms":
             {
@@ -25,7 +26,8 @@ curl -v -H "Content-Type: application/json" -X PUT http://localhost:8888/term -d
 	    },
 	    {
             "term": "term2",
-            "frequency": 1.0,
+            "frequency_base": 1.0,
+            "frequency_stem": 1.0,
             "vector": [1.6, 2.7, 3.8, 5.9],
             "synonyms":
             {

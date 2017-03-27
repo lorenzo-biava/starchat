@@ -29,6 +29,7 @@ import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
 class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
   val elastic_client = KnowledgeBaseElasticClient
@@ -142,7 +143,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     search_results_option
   }
 
-  def create(document: KBDocument): Future[Option[IndexDocumentResult]] = Future {
+  def create(document: KBDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     builder.field("id", document.id)
@@ -177,6 +178,13 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         .setSource(json)
         .get()
 
+    if (refresh != 0) {
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
+        throw new Exception("KnowledgeBase : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
+
     val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
@@ -187,7 +195,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     Option {doc_result}
   }
 
-  def update(id: String, document: KBDocumentUpdate): Future[Option[UpdateDocumentResult]] = Future {
+  def update(id: String, document: KBDocumentUpdate, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
     document.conversation match {
       case Some(t) => builder.field("conversation", t)
@@ -234,6 +242,13 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       .setDoc(builder)
       .get()
 
+    if (refresh != 0) {
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
+        throw new Exception("KnowledgeBase : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
+
     val doc_result: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
@@ -244,9 +259,16 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     Option {doc_result}
   }
 
-  def delete(id: String): Future[Option[DeleteDocumentResult]] = Future {
+  def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val response: DeleteResponse = client.prepareDelete(elastic_client.index_name, elastic_client.type_name, id).get()
+
+    if (refresh != 0) {
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
+        throw new Exception("KnowledgeBase : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
 
     val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
       dtype = response.getType,

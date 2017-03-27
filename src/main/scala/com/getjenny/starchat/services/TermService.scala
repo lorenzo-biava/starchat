@@ -23,8 +23,9 @@ import org.elasticsearch.search.SearchHit
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
-
 import java.lang.String
+
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
 
 /**
@@ -74,7 +75,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     m
   }
 
-  def index_term(terms: Terms) : Option[IndexDocumentListResult] = {
+  def index_term(terms: Terms, refresh: Int) : Option[IndexDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
@@ -104,8 +105,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
           builder.field("features", indexable)
         case None => ;
       }
-      term.frequency match {
-        case Some(t) => builder.field("frequency", t)
+      term.frequency_base match {
+        case Some(t) => builder.field("frequency_base", t)
+        case None => ;
+      }
+      term.frequency_stem match {
+        case Some(t) => builder.field("frequency_stem", t)
         case None => ;
       }
       term.vector match {
@@ -175,7 +180,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
         case None => None: Option[Map[String, String]]
       }
 
-      val frequency : Option[Double] = source.get("frequency") match {
+      val frequency_base : Option[Double] = source.get("frequency_base") match {
+        case Some(t) => Option {t.asInstanceOf[Double]}
+        case None => None: Option[Double]
+      }
+
+      val frequency_stem : Option[Double] = source.get("frequency_stem") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
@@ -192,7 +202,8 @@ class TermService(implicit val executionContext: ExecutionContext) {
         antonyms = antonyms,
         tags = tags,
         features = features,
-        frequency = frequency,
+        frequency_base = frequency_base,
+        frequency_stem = frequency_stem,
         vector = vector,
         score = None: Option[Double])
     })
@@ -200,7 +211,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     Option {Terms(terms=documents)}
   }
 
-  def update_term(terms: Terms) : Option[UpdateDocumentListResult] = {
+  def update_term(terms: Terms, refresh: Int) : Option[UpdateDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
@@ -230,8 +241,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
           builder.field("features", indexable)
         case None => ;
       }
-      term.frequency match {
-        case Some(t) => builder.field("frequency", t)
+      term.frequency_base match {
+        case Some(t) => builder.field("frequency_base", t)
+        case None => ;
+      }
+      term.frequency_stem match {
+        case Some(t) => builder.field("frequency_stem", t)
         case None => ;
       }
       term.vector match {
@@ -248,6 +263,13 @@ class TermService(implicit val executionContext: ExecutionContext) {
 
     val bulkResponse: BulkResponse = bulkRequest.get()
 
+    if (refresh != 0) {
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
+        throw new Exception("KnowledgeBase : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
+
     val list_of_doc_res: List[UpdateDocumentResult] = bulkResponse.getItems.map(x => {
       UpdateDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
@@ -260,7 +282,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def delete(termGetRequest: TermIdsRequest) : Option[DeleteDocumentListResult] = {
+  def delete(termGetRequest: TermIdsRequest, refresh: Int) : Option[DeleteDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
@@ -270,6 +292,13 @@ class TermService(implicit val executionContext: ExecutionContext) {
       bulkRequest.add(delete_request)
     })
     val bulkResponse: BulkResponse = bulkRequest.get()
+
+    if (refresh != 0) {
+      val refresh_index = elastic_client.refresh_index()
+      if(refresh_index.failed_shards_n > 0) {
+        throw new Exception("KnowledgeBase : index refresh failed: (" + elastic_client.index_name + ")")
+      }
+    }
 
     val list_of_doc_res: List[DeleteDocumentResult] = bulkResponse.getItems.map(x => {
       DeleteDocumentResult(x.getIndex, x.getType, x.getId,
@@ -293,8 +322,11 @@ class TermService(implicit val executionContext: ExecutionContext) {
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
     bool_query_builder.must(QueryBuilders.termQuery("term.base", term.term))
 
-    if (term.frequency.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("frequency", term.frequency.get))
+    if (term.frequency_base.isDefined)
+      bool_query_builder.must(QueryBuilders.termQuery("frequency_base", term.frequency_base.get))
+
+    if (term.frequency_stem.isDefined)
+      bool_query_builder.must(QueryBuilders.termQuery("frequency_stem", term.frequency_stem.get))
 
     if (term.synonyms.isDefined)
       bool_query_builder.must(QueryBuilders.termQuery("synonyms", term.synonyms.get))
@@ -350,7 +382,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
         case None => None: Option[Map[String, String]]
       }
 
-      val frequency : Option[Double] = source.get("frequency") match {
+      val frequency_base : Option[Double] = source.get("frequency_base") match {
+        case Some(t) => Option {t.asInstanceOf[Double]}
+        case None => None: Option[Double]
+      }
+
+      val frequency_stem : Option[Double] = source.get("frequency_stem") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
@@ -367,7 +404,8 @@ class TermService(implicit val executionContext: ExecutionContext) {
         antonyms = antonyms,
         tags = tags,
         features = features,
-        frequency = frequency,
+        frequency_base = frequency_base,
+        frequency_stem = frequency_stem,
         vector = vector,
         score = Option{item.getScore.toDouble})
     })
@@ -436,7 +474,12 @@ class TermService(implicit val executionContext: ExecutionContext) {
         case None => None: Option[Map[String, String]]
       }
 
-      val frequency : Option[Double] = source.get("frequency") match {
+      val frequency_base : Option[Double] = source.get("frequency_base") match {
+        case Some(t) => Option {t.asInstanceOf[Double]}
+        case None => None: Option[Double]
+      }
+
+      val frequency_stem : Option[Double] = source.get("frequency_stem") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
@@ -453,7 +496,8 @@ class TermService(implicit val executionContext: ExecutionContext) {
         antonyms = antonyms,
         tags = tags,
         features = features,
-        frequency = frequency,
+        frequency_base = frequency_base,
+        frequency_stem = frequency_stem,
         vector = vector,
         score = Option{item.getScore.toDouble})
     })

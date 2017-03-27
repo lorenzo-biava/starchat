@@ -8,13 +8,15 @@ import java.net.InetAddress
 
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.transport.client.PreBuiltTransportClient
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
-
+import org.elasticsearch.rest.RestStatus
 import scala.collection.immutable.{List, Map}
 import scala.collection.JavaConverters._
+import com.getjenny.starchat.entities._
 
 trait ElasticClient {
   val config: Config = ConfigFactory.load()
@@ -40,6 +42,28 @@ trait ElasticClient {
     val client: TransportClient = new PreBuiltTransportClient(settings)
       .addTransportAddresses(inet_addresses:_*)
     client
+  }
+
+  def refresh_index(): RefreshIndexResult = {
+    val refresh_res: RefreshResponse =
+      client.admin().indices().prepareRefresh(index_name).get()
+
+    val failed_shards: List[FailedShard] = refresh_res.getShardFailures.map(item => {
+      val failed_shard_item = FailedShard(index_name = item.index,
+        shard_id = item.shardId,
+        reason = item.reason,
+        status = item.status.getStatus
+      )
+      failed_shard_item
+    }).toList
+
+    val refresh_index_result =
+      RefreshIndexResult(failed_shards_n = refresh_res.getFailedShards,
+        successful_shards_n = refresh_res.getSuccessfulShards,
+        total_shards_n = refresh_res.getTotalShards,
+        failed_shards = failed_shards
+      )
+    refresh_index_result
   }
 
   def get_client(): TransportClient = {
