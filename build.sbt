@@ -26,6 +26,8 @@ libraryDependencies ++= {
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "org.elasticsearch.client" % "transport" % ESClientVersion,
     "org.elasticsearch.client" % "rest" % ESClientVersion,
+    "org.scalanlp" %% "breeze" % "0.13",
+    "org.scalanlp" %% "breeze-natives" % "0.13",
     "org.apache.logging.log4j" % "log4j-api" % "2.7",
     "org.apache.logging.log4j" % "log4j-core" % "2.7",
     "org.apache.tika" % "tika-core" % "1.14",

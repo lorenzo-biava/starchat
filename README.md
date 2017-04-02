@@ -92,14 +92,19 @@ curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/index
 Now you have to load the configuration file for the actual chat, aka [decision table](#services). We have provided an example csv in English, therefore:
 
 ```bash
-cd scripts/indexing/
-./index_documents_dt.py ../../doc/sample_state_machine_specification.csv 1
+sbt "run-main com.getjenny.command.IndexDecisionTable --inputfile doc/sample_state_machine_specification.csv --skiplines 1"
 ```
 
 Every time you load the configuration file you need to index the analyzer:
 
 ```bash
 curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_analyzer" 
+```
+
+Items on decision table can be removed using the following command:
+
+```bash
+sbt "run-main com.getjenny.command.DeleteDecisionTable --inputfile doc/sample_state_machine_specification.csv"
 ```
 
 ### 4. Load external corpus (optional)
