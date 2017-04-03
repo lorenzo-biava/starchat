@@ -25,6 +25,9 @@ import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import java.lang.String
 
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse.AnalyzeToken
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
 
@@ -512,6 +515,38 @@ class TermService(implicit val executionContext: ExecutionContext) {
     Option {
       search_results
     }
+  }
+
+  def esAnalyzer(query: AnalyzerQueryRequest) : Option[AnalyzerResponse] = {
+    val analyzer = query.analyzer
+    val is_supported: Boolean = AnalyzersDescription.analyzers_map.isDefinedAt(analyzer)
+    if(! is_supported) {
+      throw new Exception("esAnalyzer: analyzer not found or not supported: (" + analyzer + ")")
+    }
+
+    val client: TransportClient = elastic_client.get_client()
+
+    val analyzer_builder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.query)
+    analyzer_builder.setAnalyzer(analyzer)
+    analyzer_builder.setIndex(elastic_client.index_name)
+
+    val analyze_response: AnalyzeResponse = analyzer_builder
+      .execute()
+      .actionGet()
+
+    val tokens : List[AnalyzerResponseItem] =
+      analyze_response.getTokens.listIterator.asScala.toList.map(t => {
+        val response_item: AnalyzerResponseItem =
+          AnalyzerResponseItem(start_offset = t.getStartOffset,
+            position = t.getPosition,
+            end_offset = t.getEndOffset,
+            token = t.getTerm,
+            token_type = t.getType)
+        response_item
+    })
+
+    val response = Option { AnalyzerResponse(tokens = tokens) }
+    response
   }
 
 }

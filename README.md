@@ -1434,6 +1434,112 @@ Sample output
 }
 ```
 
+
+## `GET /analyzers`
+
+Show a list of supported methods for tokenization and stemming
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/analyzers"
+```
+
+Sample output
+
+```json
+{
+   "shingles2" : "2 words shingles",
+   "shingles3" : "3 words shingles",
+   "shingles2_10" : "from 2 to 10 shingles",
+   "base_stem" : "lowercase + stemming",
+   "base" : "lowercase",
+   "stop" : "lowercase + stopwords elimination",
+   "shingles4" : "4 words shingles",
+   "stop_stem" : "lowercase + stopwords elimination + stemming"
+}
+```
+
+## `POST /analyzers`
+
+get a list of token using the selected analyzer
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/analyzers" -d "
+{
+	\"query\": \"good morning, may I ask you a question?\",
+	\"analyzer\": \"stop\"
+}"
+```
+
+Sample output
+
+```json
+{
+   "tokens" : [
+      {
+         "start_offset" : 0,
+         "end_offset" : 4,
+         "token_type" : "word",
+         "token" : "good",
+         "position" : 0
+      },
+      {
+         "token" : "morning",
+         "position" : 1,
+         "token_type" : "word",
+         "end_offset" : 12,
+         "start_offset" : 5
+      },
+      {
+         "start_offset" : 14,
+         "end_offset" : 17,
+         "token_type" : "word",
+         "token" : "may",
+         "position" : 2
+      },
+      {
+         "token_type" : "word",
+         "token" : "i",
+         "position" : 3,
+         "start_offset" : 18,
+         "end_offset" : 19
+      },
+      {
+         "end_offset" : 23,
+         "start_offset" : 20,
+         "position" : 4,
+         "token" : "ask",
+         "token_type" : "word"
+      },
+      {
+         "end_offset" : 27,
+         "start_offset" : 24,
+         "position" : 5,
+         "token" : "you",
+         "token_type" : "word"
+      },
+      {
+         "end_offset" : 38,
+         "start_offset" : 30,
+         "token" : "question",
+         "position" : 7,
+         "token_type" : "word"
+      }
+   ]
+}
+```
+
 # Indexing terms on term table
 
 The following program index term vectors on the vector table:

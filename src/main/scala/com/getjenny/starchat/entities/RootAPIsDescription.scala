@@ -14,5 +14,6 @@ case class RootAPIsDescription(api : Map[String, String] = Map(
   "/knowledgebase" -> "supported methods: GET, PUT, POST, DELETE",
   "/knowledgebase_search" -> "supported methods: POST",
   "/index_management" -> "supported methods: GET, PUT, POST, DELETE",
-  "/language_guesser" -> "supported methods: GET, POST"
+  "/language_guesser" -> "supported methods: GET, POST",
+  "/analyzers" -> "supported methods: GET, POST"
 ))
