@@ -1477,8 +1477,8 @@ Sample call
 ```bash
 curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/tokenizers" -d "
 {
-	\"query\": \"good morning, may I ask you a question?\",
-	\"analyzer\": \"stop\"
+	\"text\": \"good morning, may I ask you a question?\",
+	\"tokenizer\": \"stop\"
 }"
 ```
 
