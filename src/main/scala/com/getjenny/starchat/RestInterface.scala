@@ -13,7 +13,7 @@ import com.getjenny.starchat.services._
 
 trait Resources extends KnowledgeBaseResource with DecisionTableResource
   with RootAPIResource with IndexManagementResource with LanguageGuesserResource
-  with TermResource with ESAnalyzersResource
+  with TermResource with AnalyzersResource
 
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext

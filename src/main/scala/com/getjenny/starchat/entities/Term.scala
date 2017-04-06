@@ -22,3 +22,10 @@ case class Terms(terms: List[Term])
 case class TermIdsRequest(ids: List[String])
 
 case class TermsResults(total: Int, max_score: Float, hits: Terms)
+
+case class TextTerms(
+                  text: String,
+                  text_terms_n: Int,
+                  terms_found_n: Int,
+                  terms: Option[Terms]
+                  )

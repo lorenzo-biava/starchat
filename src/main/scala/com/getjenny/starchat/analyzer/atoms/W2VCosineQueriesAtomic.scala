@@ -12,10 +12,10 @@ import scala.concurrent._
 import ExecutionContext.Implicits.global
 
 /**
-  * Created by mal on 20/02/2017.
+  * Created by angelo on 05/04/17.
   */
 
-class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
+class W2VCosineQueriesAtomic(val state: String) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -25,6 +25,9 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
     */
 
   val dtTermService = new TermService
+  val dtElasticService = new DecisionTableService
+
+  override def toString: String = "similar_state(\"" + state + "\")"
 
   val empty_vec = Vector.fill(300){0.0}
   def getTextVector(text: String): Vector[Double] = {
@@ -41,14 +44,29 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
     vector
   }
 
-  val sentence_vector = getTextVector(sentence)
+  val query_sentences = dtElasticService.analyzer_map.getOrElse(state, null)
+  if (query_sentences == null) {
+    dtElasticService.log.error("state is null")
+  } else {
+    dtElasticService.log.info("initialization of: " + toString)
+  }
 
-  override def toString: String = "similar(\"" + sentence + "\")"
+  val vector_terms = query_sentences.queries.map(q => q.terms)
+    .filter(item => item.nonEmpty)
+
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
     val query_vector = getTextVector(query)
-    val distance = 1 - cosineDist(sentence_vector, query_vector)
-    distance
+    val distances = vector_terms.map(item => {
+      val vector_terms = item.get.terms.toVector
+        .filter(v => v.vector.nonEmpty).map(x => x.vector.get)
+      val sentence_vector = sumArrayOfArrays(vector_terms)
+      val distance = 1 - cosineDist(sentence_vector, query_vector)
+      distance
+    })
+
+    val max_value = distances.max
+    max_value
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least

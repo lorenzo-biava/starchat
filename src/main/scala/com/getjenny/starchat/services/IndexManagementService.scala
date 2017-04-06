@@ -16,6 +16,7 @@ import java.io._
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
+import org.elasticsearch.common.xcontent.XContentType
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
@@ -44,13 +45,13 @@ class IndexManagementService(implicit val executionContext: ExecutionContext) {
       val state_json: String = Source.fromInputStream(state_json_is, "utf-8").mkString
       val question_json: String = Source.fromInputStream(question_json_is, "utf-8").mkString
       val term_json: String = Source.fromInputStream(term_json_is, "utf-8").mkString
-      
+
       val create_index_res: CreateIndexResponse =
         client.admin().indices().prepareCreate(elastic_client.index_name)
-          .setSettings(Settings.builder().loadFromSource(analyzer_json))
-          .addMapping(elastic_client.dt_type_name, state_json)
-          .addMapping(elastic_client.kb_type_name, question_json)
-          .addMapping(elastic_client.term_type_name, term_json)
+          .setSettings(Settings.builder().loadFromSource(analyzer_json, XContentType.JSON))
+          .addMapping(elastic_client.dt_type_name, state_json, XContentType.JSON)
+          .addMapping(elastic_client.kb_type_name, question_json, XContentType.JSON)
+          .addMapping(elastic_client.term_type_name, term_json, XContentType.JSON)
           .get()
 
       Option {
@@ -119,15 +120,15 @@ class IndexManagementService(implicit val executionContext: ExecutionContext) {
 
       val update_dt_type_res  =
         client.admin().indices().preparePutMapping(elastic_client.index_name)
-          .setType(elastic_client.dt_type_name).setSource(state_json).get()
+          .setType(elastic_client.dt_type_name).setSource(state_json, XContentType.JSON).get()
 
       val update_kb_type_res  =
         client.admin().indices().preparePutMapping(elastic_client.index_name)
-          .setType(elastic_client.kb_type_name).setSource(question_json).get()
+          .setType(elastic_client.kb_type_name).setSource(question_json, XContentType.JSON).get()
 
       val update_term_type_res  =
         client.admin().indices().preparePutMapping(elastic_client.index_name)
-          .setType(elastic_client.kb_type_name).setSource(term_json).get()
+          .setType(elastic_client.kb_type_name).setSource(term_json, XContentType.JSON).get()
 
       Option {
         IndexManagementResponse("updated index: " + elastic_client.index_name

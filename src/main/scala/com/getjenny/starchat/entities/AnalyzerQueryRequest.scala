@@ -19,7 +19,7 @@ object AnalyzersDescription {
 
 case class AnalyzerQueryRequest(
   analyzer: String,
-  query: String
+  text: String
 )
 
 case class AnalyzerResponseItem (

@@ -22,8 +22,9 @@ class SearchAtomic(state: String) extends AbstractAtomic {
   val isEvaluateNormalized: Boolean = false
   val ref_state: String = state
 
+  val dtElasticService = new DecisionTableService
+
   def evaluate(query: String): Double = {
-    val dtElasticService = new DecisionTableService
     val min_score = Option{dtElasticService.elastic_client.query_min_threshold}
     val boost_exact_match_factor = Option{dtElasticService.elastic_client.boost_exact_match_factor}
 

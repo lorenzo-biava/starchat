@@ -21,6 +21,7 @@ import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, Se
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import java.net.InetAddress
 
+import org.elasticsearch.common.xcontent.XContentType
 import scala.collection.JavaConverters._
 import com.typesafe.config.ConfigFactory
 import org.elasticsearch.action.DocWriteResponse.Result
@@ -175,8 +176,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     val client: TransportClient = elastic_client.get_client()
     val response: IndexResponse =
       client.prepareIndex(elastic_client.index_name, elastic_client.type_name, document.id)
-        .setSource(json)
-        .get()
+        .setSource(json, XContentType.JSON).get()
 
     if (refresh != 0) {
       val refresh_index = elastic_client.refresh_index()

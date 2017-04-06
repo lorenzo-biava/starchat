@@ -526,7 +526,7 @@ class TermService(implicit val executionContext: ExecutionContext) {
 
     val client: TransportClient = elastic_client.get_client()
 
-    val analyzer_builder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.query)
+    val analyzer_builder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.text)
     analyzer_builder.setAnalyzer(analyzer)
     analyzer_builder.setIndex(elastic_client.index_name)
 
@@ -547,6 +547,24 @@ class TermService(implicit val executionContext: ExecutionContext) {
 
     val response = Option { AnalyzerResponse(tokens = tokens) }
     response
+  }
+
+  def textToVectors(text: String, analyzer: String = "stop"): Option[TextTerms] = {
+    val analyzer_request = AnalyzerQueryRequest(analyzer = analyzer, text = text)
+    val analyzers_response = esAnalyzer(analyzer_request)
+    val token_list = analyzers_response match {
+      case Some(r) => r.tokens.map(e => e.token)
+      case _  => List.empty[String]
+    }
+    val terms_request = TermIdsRequest(ids = token_list)
+    val term_list = get_term(terms_request)
+    val text_terms = TextTerms(text = text,
+        text_terms_n = token_list.length,
+        terms_found_n = term_list.getOrElse(Terms(terms=List.empty[Term])).terms.length,
+        terms = term_list
+      )
+
+    Option { text_terms }
   }
 
 }

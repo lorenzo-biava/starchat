@@ -9,14 +9,18 @@ import com.getjenny.analyzer.atoms._
 
 class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
 
-  override val operations = Set("keyword" , "similar", "synonym", "regex", "search")
+  override val operations = Set("keyword", "regex", "search",
+                        "synonym", "similar", "similar_state", "similar_emd")
 
-  override def get(name: String, argument: String): AbstractAtomic = name.filter(c => !c.isWhitespace ) match {
-    case "search" => new SearchAtomic(argument)
+  override def get(name: String, argument: String):
+                  AbstractAtomic = name.filter(c => !c.isWhitespace ) match {
     case "keyword" => new KeywordAtomic(argument)
-    case "similar" => new W2VCosineSentenceAtomic(argument)
-    case "synonym" => new W2VCosineWordAtomic(argument)
     case "regex" => new RegularExpressionAtomic(argument)
+    case "search" => new SearchAtomic(argument)
+    case "synonym" => new W2VCosineWordAtomic(argument)
+    case "similar" => new W2VCosineSentenceAtomic(argument)
+    case "similar_state" => new W2VCosineQueriesAtomic(argument)
+    case "similar_emd" => new W2VEarthMoversDistanceAtomic(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 

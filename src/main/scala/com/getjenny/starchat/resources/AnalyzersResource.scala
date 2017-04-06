@@ -15,7 +15,7 @@ import com.getjenny.starchat.services.TermService
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
-trait ESAnalyzersResource extends MyResource {
+trait AnalyzersResource extends MyResource {
   val termService: TermService
   def esAnalyzersRoutes: Route = pathPrefix("analyzers") {
     pathEnd {

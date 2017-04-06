@@ -38,10 +38,14 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 class DecisionTableService(implicit val executionContext: ExecutionContext) {
   val elastic_client = DecisionTableElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  val termService = new TermService
 
-  case class AnalyzerItem(declaration: String, build: Boolean, analyzer: StarchatAnalyzer)
+  case class AnalyzerItem(declaration: String,
+                        build: Boolean,
+                        analyzer: StarchatAnalyzer,
+                        queries: List[TextTerms])
 
-  var analyzer_map : Map[String, AnalyzerItem] =  Map.empty[String, AnalyzerItem]
+  var analyzer_map : Map[String, AnalyzerItem] = Map.empty[String, AnalyzerItem]
 
   def getAnalyzers: Map[String, AnalyzerItem] = {
     val client: TransportClient = elastic_client.get_client()
@@ -55,7 +59,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
-      .setFetchSource(Array("state", "analyzer"), Array.empty[String])
+      .setFetchSource(Array("state", "analyzer", "queries"), Array.empty[String])
       .setScroll(new TimeValue(60000))
       .setSize(1000).get()
 
@@ -77,7 +81,17 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val build = analyzer != null
 
-      val analyzerItem = AnalyzerItem(declaration, build, analyzer)
+      val queries : List[String] = source.get("queries") match {
+        case Some(t) => t.asInstanceOf[java.util.ArrayList[String]].asScala.toList
+        case None => List[String]()
+      }
+
+      val queries_terms: List[TextTerms] = queries.map(q => {
+        val query_terms = termService.textToVectors(q)
+        query_terms
+      }).filter(_.nonEmpty).map(x => x.get)
+
+      val analyzerItem = AnalyzerItem(declaration, build, analyzer, queries_terms)
       (state, analyzerItem)
     }).filter(_._2.declaration != "").toMap
     results
@@ -102,7 +116,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       Await.ready(loadAnalyzer, 30.seconds).value.get
     result match {
       case Success(t) => log.info("analyzers loaded")
-      case Failure(e) => log.error("can't load analyzers")
+      case Failure(e) => log.error("can't load analyzers: " + e.toString)
     }
   }
 
@@ -364,10 +378,9 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
     builder.endObject()
 
-    val json: String = builder.string()
     val client: TransportClient = elastic_client.get_client()
     val response = client.prepareIndex(elastic_client.index_name,
-      elastic_client.type_name, document.state).setSource(json).get()
+      elastic_client.type_name, document.state).setSource(builder).get()
 
     if (refresh != 0) {
       val refresh_index = elastic_client.refresh_index()
