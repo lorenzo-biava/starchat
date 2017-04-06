@@ -4,7 +4,7 @@ package com.getjenny.starchat.entities
   * Created by Angelo Leto <angelo@getjenny.com> on 03/04/17.
   */
 
-object AnalyzersDescription {
+object TokenizersDescription {
   val analyzers_map = Map[String, (String, String)](
     "base" -> ("jenny_base_analyzer", "lowercase"),
     "stop" -> ("jenny_base_analyzer", "lowercase + stopwords elimination"),
@@ -17,12 +17,12 @@ object AnalyzersDescription {
   )
 }
 
-case class AnalyzerQueryRequest(
-  analyzer: String,
+case class TokenizerQueryRequest(
+  tokenizer: String,
   text: String
 )
 
-case class AnalyzerResponseItem (
+case class TokenizerResponseItem(
   start_offset: Int,
   position: Int,
   end_offset: Int,
@@ -30,6 +30,6 @@ case class AnalyzerResponseItem (
   token_type: String
 )
 
-case class AnalyzerResponse (
-  tokens: List[AnalyzerResponseItem]
+case class TokenizerResponse(
+  tokens: List[TokenizerResponseItem]
 )

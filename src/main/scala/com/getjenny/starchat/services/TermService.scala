@@ -517,11 +517,11 @@ class TermService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def esAnalyzer(query: AnalyzerQueryRequest) : Option[AnalyzerResponse] = {
-    val analyzer = query.analyzer
-    val is_supported: Boolean = AnalyzersDescription.analyzers_map.isDefinedAt(analyzer)
+  def esTokenizer(query: TokenizerQueryRequest) : Option[TokenizerResponse] = {
+    val analyzer = query.tokenizer
+    val is_supported: Boolean = TokenizersDescription.analyzers_map.isDefinedAt(analyzer)
     if(! is_supported) {
-      throw new Exception("esAnalyzer: analyzer not found or not supported: (" + analyzer + ")")
+      throw new Exception("esTokenizer: analyzer not found or not supported: (" + analyzer + ")")
     }
 
     val client: TransportClient = elastic_client.get_client()
@@ -534,10 +534,10 @@ class TermService(implicit val executionContext: ExecutionContext) {
       .execute()
       .actionGet()
 
-    val tokens : List[AnalyzerResponseItem] =
+    val tokens : List[TokenizerResponseItem] =
       analyze_response.getTokens.listIterator.asScala.toList.map(t => {
-        val response_item: AnalyzerResponseItem =
-          AnalyzerResponseItem(start_offset = t.getStartOffset,
+        val response_item: TokenizerResponseItem =
+          TokenizerResponseItem(start_offset = t.getStartOffset,
             position = t.getPosition,
             end_offset = t.getEndOffset,
             token = t.getTerm,
@@ -545,13 +545,13 @@ class TermService(implicit val executionContext: ExecutionContext) {
         response_item
     })
 
-    val response = Option { AnalyzerResponse(tokens = tokens) }
+    val response = Option { TokenizerResponse(tokens = tokens) }
     response
   }
 
   def textToVectors(text: String, analyzer: String = "stop"): Option[TextTerms] = {
-    val analyzer_request = AnalyzerQueryRequest(analyzer = analyzer, text = text)
-    val analyzers_response = esAnalyzer(analyzer_request)
+    val analyzer_request = TokenizerQueryRequest(tokenizer = analyzer, text = text)
+    val analyzers_response = esTokenizer(analyzer_request)
     val token_list = analyzers_response match {
       case Some(r) => r.tokens.map(e => e.token)
       case _  => List.empty[String]

@@ -1435,7 +1435,7 @@ Sample output
 ```
 
 
-## `GET /analyzers`
+## `GET /tokenizers`
 
 Show a list of supported methods for tokenization and stemming
 
@@ -1446,7 +1446,7 @@ Show a list of supported methods for tokenization and stemming
 Sample call
 
 ```bash
-curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/analyzers"
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/tokenizers"
 ```
 
 Sample output
@@ -1464,7 +1464,7 @@ Sample output
 }
 ```
 
-## `POST /analyzers`
+## `POST /tokenizers`
 
 get a list of token using the selected analyzer
 
@@ -1475,7 +1475,7 @@ get a list of token using the selected analyzer
 Sample call
 
 ```bash
-curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/analyzers" -d "
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/tokenizers" -d "
 {
 	\"query\": \"good morning, may I ask you a question?\",
 	\"analyzer\": \"stop\"

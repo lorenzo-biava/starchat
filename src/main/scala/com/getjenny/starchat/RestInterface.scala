@@ -13,7 +13,7 @@ import com.getjenny.starchat.services._
 
 trait Resources extends KnowledgeBaseResource with DecisionTableResource
   with RootAPIResource with IndexManagementResource with LanguageGuesserResource
-  with TermResource with AnalyzersResource
+  with TermResource with TokenizersResource
 
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
@@ -27,5 +27,5 @@ trait RestInterface extends Resources {
   val routes: Route = rootAPIsRoutes ~ knowledgeBaseRoutes ~
     knowledgeBaseSearchRoutes ~ decisionTableRoutes ~ decisionTableSearchRoutes ~
     decisionTableResponseRequestRoutes ~ decisionTableAnalyzerRoutes ~ indexManagementRoutes ~
-    languageGuesserRoutes ~ termRoutes ~ esAnalyzersRoutes
+    languageGuesserRoutes ~ termRoutes ~ esTokenizersRoutes
 }

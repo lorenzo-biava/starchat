@@ -15,21 +15,21 @@ import com.getjenny.starchat.services.TermService
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
-trait AnalyzersResource extends MyResource {
+trait TokenizersResource extends MyResource {
   val termService: TermService
-  def esAnalyzersRoutes: Route = pathPrefix("analyzers") {
+  def esTokenizersRoutes: Route = pathPrefix("tokenizers") {
     pathEnd {
       post {
-        entity(as[AnalyzerQueryRequest]) { request_data =>
-            val result: Try[Option[AnalyzerResponse]] =
-            Await.ready(Future { termService.esAnalyzer(request_data)},
+        entity(as[TokenizerQueryRequest]) { request_data =>
+            val result: Try[Option[TokenizerResponse]] =
+            Await.ready(Future { termService.esTokenizer(request_data)},
               30.seconds).value.get
           result match {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest,
                 Future { Option { t } })
             case Failure(e) =>
-              log.error("route=esAnalyzersRoutes method=POST data=(" + request_data +
+              log.error("route=esTokenizersRoutes method=POST data=(" + request_data +
                 ") : " + e.getMessage)
               completeResponse(StatusCodes.BadRequest)
           }
@@ -38,7 +38,7 @@ trait AnalyzersResource extends MyResource {
       {
         get {
           val analyzers_description: Map[String, String] =
-            AnalyzersDescription.analyzers_map.map(e => {
+            TokenizersDescription.analyzers_map.map(e => {
               (e._1, e._2._2)
             })
           val result: Future[Option[Map[String, String]]] =
