@@ -1,6 +1,7 @@
 package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.starchat.analyzer.utils.VectorUtils._
+import com.getjenny.starchat.analyzer.utils.Emd
 import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.entities._
 
@@ -24,45 +25,80 @@ class W2VEarthMoversDistanceAtomic(val sentence: String) extends AbstractAtomic 
     *
     */
 
+  //TODO: this analyzer is not complete
   val termService = new TermService
 
   val empty_vec = Vector.fill(300){0.0}
-  def getTextVectors(text: String): Vector[(Int, (String, Vector[Double]))] = {
-    val text_vectors = termService.textToVectors(text)
-    val vectors = text_vectors match {
-      case Some(t) => {
-        t.terms.get.terms.zipWithIndex.map(e => (e._2, (e._1.term, e._1.vector.get))).toVector
-      }
-      case _ => Vector.empty[(Int, (String, Vector[Double]))]  //default dimension
-    }
-    vectors
-  }
 
-  implicit class Crossable[X](xs: Traversable[X]) {
+  implicit class Crosstable[X](xs: Traversable[X]) {
     def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
   }
 
-  val sentence_vectors = getTextVectors(sentence)
+  def getTextMatrix(text1: String, text2: String): (scala.Vector[Double], scala.Vector[Double], Int) = {
+
+    val text_vectors1 = termService.textToVectors(text = text1)
+    val vectors1 = text_vectors1 match {
+      case Some(t) => {
+        t.terms.get.terms.zipWithIndex.map(e => (e._1.term, e._1.vector.get))
+      }
+      case _ => List.empty[(String, Vector[Double])]
+    }
+
+    val text_vectors2 = termService.textToVectors(text = text2)
+    val vectors2 = text_vectors2 match {
+      case Some(t) => {
+        t.terms.get.terms.zipWithIndex.map(e => (e._1.term, e._1.vector.get))
+      }
+      case _ => List.empty[(String, Vector[Double])]
+    }
+
+    val v1_length = vectors1.length.toDouble
+    val v2_length = vectors2.length.toDouble
+    val words1 = vectors1.groupBy(_._1).map(x =>
+      (x._1, (x._2.length/v1_length, x._2.head._2.asInstanceOf[Vector[Double]])))
+    val words2 = vectors2.groupBy(_._1).map(x =>
+      (x._1, (x._2.length/v2_length, x._2.head._2.asInstanceOf[Vector[Double]])))
+
+    val wordlist: Seq[String] = (words1.keys ++ words2.keys).toSet.toSeq
+
+    /*
+    val m1: scala.Vector[Double] = wordlist.map(w => {
+      val v = words1.getOrElse(w, (0.0, empty_vec))
+      val weighted_v = v._2.map(x => x * v._1)
+      weighted_v
+    }).reduce((a, b) => a ++ b)
+
+    val m2: scala.Vector[Double] = wordlist.map(w => {
+      val v = words2.getOrElse(w, (0.0, empty_vec))
+      val weighted_v = v._2.map(x => x * v._1)
+      weighted_v
+    }).reduce((a, b) => a ++ b)
+    */
+
+    val m1: scala.Vector[Double] = (wordlist cross wordlist).map({ case (t1, t2) =>
+      val v1 = words1.getOrElse(t1, (0.0, empty_vec))
+      val v2 = words2.getOrElse(t2, (0.0, empty_vec))
+      val value = euclideanDist(v1._2, v2._2) * v1._1
+      value
+    }).toVector
+
+   val m2: scala.Vector[Double] = (wordlist cross wordlist).map({ case (t1, t2) =>
+      val v1 = words1.getOrElse(t1, (0.0, empty_vec))
+      val v2 = words2.getOrElse(t2, (0.0, empty_vec))
+      val value = euclideanDist(v1._2, v2._2) * v2._1
+      value
+    }).toVector
+
+   (m1, m2, wordlist.length)
+  }
 
   override def toString: String = "similar_emd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
-    val query_vectors = getTextVectors(query)
-    val distance: Double = if (query_vectors.nonEmpty && sentence_vectors.nonEmpty) {
-      val pairs = (query_vectors.zipWithIndex.map(x => (x._2, x._1))
-        cross sentence_vectors.zipWithIndex.map(x => (x._2, x._1)))
-        .map(x => (x._1._1, (x._1._2, x._2._2)))
-        .groupBy{_._1}
-      val min_distances = pairs.map(query_t => {
-        query_t._2.map(x => euclideanDist(x._2._1._2._2, x._2._2._2._2)).min
-      })
-      val total_distance: Double = min_distances.toList.sum
-      val max_distance: Double = if(total_distance == 0) 1 else 1.0 / total_distance
-      max_distance
-    } else {
-      0.0
-    }
-    distance
+    val flow = getTextMatrix(query, sentence)
+    val emd_dist = Emd.emdDist(flow._1, flow._2, flow._3)
+    println(emd_dist)
+    if (emd_dist == 0) 1.0 else 1.0 / emd_dist
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least

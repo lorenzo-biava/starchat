@@ -40,6 +40,7 @@ libraryDependencies ++= {
 }
 
 scalacOptions += "-deprecation"
+scalacOptions += "-feature"
 
 enablePlugins(JavaServerAppPackaging)
 
