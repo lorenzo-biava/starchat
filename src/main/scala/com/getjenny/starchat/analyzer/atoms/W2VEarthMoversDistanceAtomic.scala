@@ -57,7 +57,7 @@ class W2VEarthMoversDistanceAtomic(val sentence: String) extends AbstractAtomic 
         query_t._2.map(x => euclideanDist(x._2._1._2._2, x._2._2._2._2)).min
       })
       val total_distance: Double = min_distances.toList.sum
-      val max_distance: Double = if(total_distance == 0) 1 else total_distance
+      val max_distance: Double = if(total_distance == 0) 1 else 1.0 / total_distance
       max_distance
     } else {
       0.0
