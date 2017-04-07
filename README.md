@@ -1540,6 +1540,36 @@ Sample output
 }
 ```
 
+## `POST /analyzers_playground`
+
+used to test analyzers on the fly
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+ANALYZER="keyword(\\\"test\\\")"
+QUERY="this is a test"
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/analyzers_playground" -d "
+{
+        \"analyzer\": \"${ANALYZER}\",
+        \"query\": \"${QUERY}\"
+}"
+```
+
+Sample output
+
+```json
+{
+   "value" : 0.25,
+   "build_message" : "success",
+   "build" : true
+}```
+
+
 # Indexing terms on term table
 
 The following program index term vectors on the vector table:

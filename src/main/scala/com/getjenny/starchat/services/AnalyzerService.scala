@@ -81,7 +81,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
 
   def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = Future {
     AnalyzerService.analyzer_map = getAnalyzers
-    val dt_analyzer_load = DTAnalyzerLoad(num_of_entries= AnalyzerService.analyzer_map.size)
+    val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=AnalyzerService.analyzer_map.size)
     Option {dt_analyzer_load}
   }
 
@@ -93,12 +93,35 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
     analyzers
   }
 
+  def evaluateAnalyzer(analyzer_request: AnalyzerEvaluateRequest):
+    Future[Option[AnalyzerEvaluateResponse]] = {
+
+    val analyzer = Try(new StarchatAnalyzer(analyzer_request.analyzer))
+    val response = analyzer match {
+      case Failure(exception) => {
+        val analyzer_response = AnalyzerEvaluateResponse(false, 0.0, exception.getMessage)
+        analyzer_response
+      }
+      case Success(result) => {
+        val eval_res = result.evaluate(analyzer_request.query)
+        val analyzer_response = AnalyzerEvaluateResponse(true, eval_res, "success")
+        analyzer_response
+      }
+    }
+
+    Future { Option { response } }
+  }
+
   def initializeAnalyzers(): Unit = {
-    val result: Try[Option[DTAnalyzerLoad]] =
-      Await.ready(loadAnalyzer, 30.seconds).value.get
-    result match {
-      case Success(t) => log.info("analyzers loaded")
-      case Failure(e) => log.error("can't load analyzers: " + e.toString)
+    if (AnalyzerService.analyzer_map == Map.empty[String, AnalyzerItem]) {
+      val result: Try[Option[DTAnalyzerLoad]] =
+        Await.ready(loadAnalyzer, 30.seconds).value.get
+      result match {
+        case Success(t) => log.info("analyzers loaded")
+        case Failure(e) => log.error("can't load analyzers: " + e.toString)
+      }
+    } else {
+      log.info("analyzers already loaded")
     }
   }
 
