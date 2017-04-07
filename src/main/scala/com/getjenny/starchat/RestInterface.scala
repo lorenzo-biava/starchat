@@ -18,11 +18,13 @@ trait Resources extends KnowledgeBaseResource with DecisionTableResource
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
 
-  lazy val kbElasticService = new KnowledgeBaseService
-  lazy val dtElasticService = new DecisionTableService
+  lazy val knowledgeBaseService = new KnowledgeBaseService
+  lazy val decisionTableService = new DecisionTableService
   lazy val indexManagementService = new IndexManagementService
   lazy val languageGuesserService = new LanguageGuesserService
   lazy val termService = new TermService
+  lazy val responseService = new ResponseService
+  lazy val analyzerService = new AnalyzerService
 
   val routes: Route = rootAPIsRoutes ~ knowledgeBaseRoutes ~
     knowledgeBaseSearchRoutes ~ decisionTableRoutes ~ decisionTableSearchRoutes ~

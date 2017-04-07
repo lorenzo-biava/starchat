@@ -24,11 +24,11 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
     *
     */
 
-  val dtTermService = new TermService
+  val termService = new TermService
 
   val empty_vec = Vector.fill(300){0.0}
   def getTextVector(text: String): Vector[Double] = {
-    val text_vectors = dtTermService.textToVectors(text)
+    val text_vectors = termService.textToVectors(text)
     val vector = text_vectors match {
       case Some(t) => {
         val vectors = t.terms.get.terms.map(e => e.vector.get).toVector

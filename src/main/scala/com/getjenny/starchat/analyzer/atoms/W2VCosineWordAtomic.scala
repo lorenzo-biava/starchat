@@ -16,11 +16,11 @@ class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
 
   override def toString: String = "similar(\"" + word + "\")"
 
-  val dtTermService = new TermService
+  val termService = new TermService
 
   val empty_vec = Vector.fill(300){0.0}
   def getTextVector(text: String): Vector[Double] = {
-    val text_vectors = dtTermService.textToVectors(text)
+    val text_vectors = termService.textToVectors(text)
     val vector = text_vectors match {
       case Some(t) => {
         val vectors = t.terms.get.terms.map(e => e.vector.get).toVector
@@ -36,7 +36,7 @@ class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
   val isEvaluateNormalized: Boolean = true
   private val word_vec = getTextVector(word)
   def evaluate(query: String): Double = {
-    val text_vectors = dtTermService.textToVectors(query)
+    val text_vectors = termService.textToVectors(query)
     val distance: Double = if (text_vectors.nonEmpty && text_vectors.get.terms.nonEmpty) {
       val term_vector = text_vectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)
         .map(term => term.vector.get)

@@ -24,11 +24,11 @@ class W2VEarthMoversDistanceAtomic(val sentence: String) extends AbstractAtomic 
     *
     */
 
-  val dtTermService = new TermService
+  val termService = new TermService
 
   val empty_vec = Vector.fill(300){0.0}
   def getTextVectors(text: String): Vector[(Int, (String, Vector[Double]))] = {
-    val text_vectors = dtTermService.textToVectors(text)
+    val text_vectors = termService.textToVectors(text)
     val vectors = text_vectors match {
       case Some(t) => {
         t.terms.get.terms.zipWithIndex.map(e => (e._2, (e._1.term, e._1.vector.get))).toVector
@@ -44,7 +44,7 @@ class W2VEarthMoversDistanceAtomic(val sentence: String) extends AbstractAtomic 
 
   val sentence_vectors = getTextVectors(sentence)
 
-  override def toString: String = "similar(\"" + sentence + "\")"
+  override def toString: String = "similar_emd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
     val query_vectors = getTextVectors(query)
@@ -57,7 +57,7 @@ class W2VEarthMoversDistanceAtomic(val sentence: String) extends AbstractAtomic 
         query_t._2.map(x => euclideanDist(x._2._1._2._2, x._2._2._2._2)).min
       })
       val total_distance: Double = min_distances.toList.sum
-      val max_distance: Double = if(total_distance == 0) 1 else 1.0 / total_distance
+      val max_distance: Double = if(total_distance == 0) 1 else total_distance
       max_distance
     } else {
       0.0

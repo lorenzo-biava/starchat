@@ -18,14 +18,14 @@ import scala.util.{Failure, Success, Try}
 
 trait KnowledgeBaseResource extends MyResource {
 
-  val kbElasticService: KnowledgeBaseService
+  val knowledgeBaseService: KnowledgeBaseService
 
   def knowledgeBaseRoutes: Route = pathPrefix("knowledgebase") {
     pathEnd {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[KBDocument]) { document =>
-            val result: Future[Option[IndexDocumentResult]] = kbElasticService.create(document, refresh)
+            val result: Future[Option[IndexDocumentResult]] = knowledgeBaseService.create(document, refresh)
             onSuccess(result) {
               case Some(v) =>
                 completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{v}})
@@ -38,7 +38,7 @@ trait KnowledgeBaseResource extends MyResource {
       } ~
       get {
         parameters("ids".as[String].*) { ids =>
-          val result: Future[Option[SearchKBDocumentsResults]] = kbElasticService.read(ids.toList)
+          val result: Future[Option[SearchKBDocumentsResults]] = knowledgeBaseService.read(ids.toList)
           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
         }
       }
@@ -47,7 +47,7 @@ trait KnowledgeBaseResource extends MyResource {
         put {
           parameters("refresh".as[Int] ? 0) { refresh =>
             entity(as[KBDocumentUpdate]) { update =>
-              val result: Future[Option[UpdateDocumentResult]] = kbElasticService.update(id, update, refresh)
+              val result: Future[Option[UpdateDocumentResult]] = knowledgeBaseService.update(id, update, refresh)
               val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 30.seconds).value.get
               result_try match {
                 case Success(t) =>
@@ -61,7 +61,7 @@ trait KnowledgeBaseResource extends MyResource {
         } ~
         delete {
           parameters("refresh".as[Int] ? 0) { refresh =>
-            val result: Future[Option[DeleteDocumentResult]] = kbElasticService.delete(id, refresh)
+            val result: Future[Option[DeleteDocumentResult]] = knowledgeBaseService.delete(id, refresh)
             completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
           }
         }
@@ -72,7 +72,7 @@ trait KnowledgeBaseResource extends MyResource {
     pathEnd {
       post {
         entity(as[KBDocumentSearch]) { docsearch =>
-          val result: Future[Option[SearchKBDocumentsResults]] = kbElasticService.search(docsearch)
+          val result: Future[Option[SearchKBDocumentsResults]] = knowledgeBaseService.search(docsearch)
           completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
         }
       }

@@ -22,17 +22,17 @@ class SearchAtomic(state: String) extends AbstractAtomic {
   val isEvaluateNormalized: Boolean = false
   val ref_state: String = state
 
-  val dtElasticService = new DecisionTableService
+  val decisionTableService = new DecisionTableService
 
   def evaluate(query: String): Double = {
-    val min_score = Option{dtElasticService.elastic_client.query_min_threshold}
-    val boost_exact_match_factor = Option{dtElasticService.elastic_client.boost_exact_match_factor}
+    val min_score = Option{decisionTableService.elastic_client.query_min_threshold}
+    val boost_exact_match_factor = Option{decisionTableService.elastic_client.boost_exact_match_factor}
 
     val dtDocumentSearch : DTDocumentSearch =
       DTDocumentSearch(from = Option{0}, size = Option{10}, min_score = min_score,
         boost_exact_match_factor = boost_exact_match_factor, state = Option{ref_state}, queries = Option{query})
 
-    val state: Future[Option[SearchDTDocumentsResults]] = dtElasticService.search(dtDocumentSearch)
+    val state: Future[Option[SearchDTDocumentsResults]] = decisionTableService.search(dtDocumentSearch)
     //search the state with the closest query value, then return that state
     val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
 

@@ -9,6 +9,8 @@ import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing.MyResource
 import com.getjenny.starchat.services.DecisionTableService
+import com.getjenny.starchat.services.ResponseService
+import com.getjenny.starchat.services.AnalyzerService
 import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.SCActorSystem
 
@@ -18,21 +20,23 @@ import scala.util.{Failure, Success, Try}
 
 trait DecisionTableResource extends MyResource {
 
-  val dtElasticService: DecisionTableService
+  val decisionTableService: DecisionTableService
+  val responseService: ResponseService
+  val analyzerService: AnalyzerService
 
   def decisionTableRoutes: Route = pathPrefix("decisiontable") {
     pathEnd {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[DTDocument]) { document =>
-            val result: Future[Option[IndexDocumentResult]] = dtElasticService.create(document, refresh)
+            val result: Future[Option[IndexDocumentResult]] = decisionTableService.create(document, refresh)
             completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
           }
         }
       } ~
         get {
           parameters("ids".as[String].*) { ids =>
-            val result: Future[Option[SearchDTDocumentsResults]] = dtElasticService.read(ids.toList)
+            val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.read(ids.toList)
             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
           }
         }
@@ -41,7 +45,7 @@ trait DecisionTableResource extends MyResource {
         put {
           entity(as[DTDocumentUpdate]) { update =>
             parameters("refresh".as[Int] ? 0) { refresh =>
-              val result: Future[Option[UpdateDocumentResult]] = dtElasticService.update(id, update, refresh)
+              val result: Future[Option[UpdateDocumentResult]] = decisionTableService.update(id, update, refresh)
               val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result,  30.seconds).value.get
               result_try match {
                 case Success(t) =>
@@ -55,7 +59,7 @@ trait DecisionTableResource extends MyResource {
         } ~
           delete {
             parameters("refresh".as[Int] ? 0) { refresh =>
-              val result: Future[Option[DeleteDocumentResult]] = dtElasticService.delete(id, refresh)
+              val result: Future[Option[DeleteDocumentResult]] = decisionTableService.delete(id, refresh)
               onSuccess(result) {
                 case Some(t) =>
                   if(t.found) {
@@ -74,7 +78,7 @@ trait DecisionTableResource extends MyResource {
     pathEnd {
       get {
         val result: Try[Option[DTAnalyzerMap]] =
-          Await.ready(dtElasticService.getDTAnalyzerMap, 30.seconds).value.get
+          Await.ready(analyzerService.getDTAnalyzerMap, 30.seconds).value.get
         result match {
           case Success(t) =>
             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
@@ -86,7 +90,7 @@ trait DecisionTableResource extends MyResource {
       } ~
       post {
         val result: Try[Option[DTAnalyzerLoad]] =
-          Await.ready(dtElasticService.loadAnalyzer, 30.seconds).value.get
+          Await.ready(analyzerService.loadAnalyzer, 30.seconds).value.get
         result match {
           case Success(t) =>
             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
@@ -103,7 +107,7 @@ trait DecisionTableResource extends MyResource {
     pathEnd {
       post {
         entity(as[DTDocumentSearch]) { docsearch =>
-          val result: Future[Option[SearchDTDocumentsResults]] = dtElasticService.search(docsearch)
+          val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.search(docsearch)
           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
         }
       }
@@ -115,7 +119,7 @@ trait DecisionTableResource extends MyResource {
       post {
         entity(as[ResponseRequestIn]) { response_request =>
           val response: Option[ResponseRequestOutOperationResult] =
-            dtElasticService.getNextResponse(response_request)
+            responseService.getNextResponse(response_request)
           response match {
             case Some(t) =>
               if (t.status.code == 200) {
