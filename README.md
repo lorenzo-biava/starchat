@@ -1567,7 +1567,8 @@ Sample output
    "value" : 0.25,
    "build_message" : "success",
    "build" : true
-}```
+}
+```
 
 
 # Indexing terms on term table

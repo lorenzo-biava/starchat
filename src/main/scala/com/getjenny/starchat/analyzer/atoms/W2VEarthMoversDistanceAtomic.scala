@@ -34,7 +34,8 @@ class W2VEarthMoversDistanceAtomic(val sentence: String) extends AbstractAtomic 
     def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
   }
 
-  def getTextMatrix(text1: String, text2: String): (scala.Vector[Double], scala.Vector[Double], Int) = {
+  def getTextMatrix(text1: String, text2: String):
+      (scala.Vector[Double], scala.Vector[Double], Int) = {
 
     val text_vectors1 = termService.textToVectors(text = text1)
     val vectors1 = text_vectors1 match {
@@ -52,51 +53,51 @@ class W2VEarthMoversDistanceAtomic(val sentence: String) extends AbstractAtomic 
       case _ => List.empty[(String, Vector[Double])]
     }
 
-    val v1_length = vectors1.length.toDouble
-    val v2_length = vectors2.length.toDouble
     val words1 = vectors1.groupBy(_._1).map(x =>
-      (x._1, (x._2.length/v1_length, x._2.head._2.asInstanceOf[Vector[Double]])))
+      (x._1, (x._2.length.toDouble, x._2.head._2.asInstanceOf[Vector[Double]])))
     val words2 = vectors2.groupBy(_._1).map(x =>
-      (x._1, (x._2.length/v2_length, x._2.head._2.asInstanceOf[Vector[Double]])))
+      (x._1, (x._2.length.toDouble, x._2.head._2.asInstanceOf[Vector[Double]])))
 
     val wordlist: Seq[String] = (words1.keys ++ words2.keys).toSet.toSeq
+    val weighted_words1 = words1.map(x => (x._1, (x._2._1 / words2.size, x._2._2)))
+    val weighted_words2 = words2.map(x => (x._1, (x._2._1 / words1.size, x._2._2)))
 
     /*
-    val m1: scala.Vector[Double] = wordlist.map(w => {
+    val m1: scala.Vector[scala.Vector[Double]] = wordlist.map(w => {
       val v = words1.getOrElse(w, (0.0, empty_vec))
       val weighted_v = v._2.map(x => x * v._1)
       weighted_v
-    }).reduce((a, b) => a ++ b)
+    }).toVector
 
-    val m2: scala.Vector[Double] = wordlist.map(w => {
+    val m2: scala.Vector[scala.Vector[Double]] = wordlist.map(w => {
       val v = words2.getOrElse(w, (0.0, empty_vec))
       val weighted_v = v._2.map(x => x * v._1)
       weighted_v
-    }).reduce((a, b) => a ++ b)
+    }).toVector
     */
 
     val m1: scala.Vector[Double] = (wordlist cross wordlist).map({ case (t1, t2) =>
-      val v1 = words1.getOrElse(t1, (0.0, empty_vec))
-      val v2 = words2.getOrElse(t2, (0.0, empty_vec))
-      val value = euclideanDist(v1._2, v2._2) * v1._1
+      val v1 = weighted_words1.getOrElse(t1, (0.0, empty_vec))
+      val v2 = weighted_words2.getOrElse(t2, (0.0, empty_vec))
+      val value = if (v1._1 == 0 || v2._1 == 0) 0.0 else euclideanDist(v1._2, v2._2) * v1._1
       value
     }).toVector
 
    val m2: scala.Vector[Double] = (wordlist cross wordlist).map({ case (t1, t2) =>
-      val v1 = words1.getOrElse(t1, (0.0, empty_vec))
-      val v2 = words2.getOrElse(t2, (0.0, empty_vec))
-      val value = euclideanDist(v1._2, v2._2) * v2._1
+      val v1 = weighted_words1.getOrElse(t1, (0.0, empty_vec))
+      val v2 = weighted_words2.getOrElse(t2, (0.0, empty_vec))
+      val value = if (v1._1 == 0 || v2._1 == 0) 0.0 else euclideanDist(v1._2, v2._2) * v2._1
       value
     }).toVector
 
    (m1, m2, wordlist.length)
   }
 
-  override def toString: String = "similar_emd(\"" + sentence + "\")"
+  override def toString: String = "similarEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
     val flow = getTextMatrix(query, sentence)
-    val emd_dist = Emd.emdDist(flow._1, flow._2, flow._3)
+    val emd_dist = Emd.emdDistV(flow._1, flow._2)
     println(emd_dist)
     if (emd_dist == 0) 1.0 else 1.0 / emd_dist
   }

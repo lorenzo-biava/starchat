@@ -7,42 +7,47 @@ package com.getjenny.starchat.analyzer.utils
 import com.telmomenezes.jfastemd._
 
 object Emd {
-  def getValue(values_map: Vector[Double], x: Int, y: Int, bins: Int): Double = {
-      values_map((y * bins) + x)
+
+  implicit class Crosstable[X](xs: Traversable[X]) {
+    def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
   }
 
-  def getSignature(values_map: Vector[Double], bins: Int): Signature = {
-    // find number of entries in the sparse matrix
-    var n: Int = 0
-    for (x <- 0 until bins) {
-      for (y <- 0 until bins) {
-        if (getValue(values_map, x, y, bins) > 0) {
-            n += 1
-          }
-      }
-    }
+  def generateSignatureM(m: Vector[Vector[Double]]): Signature = {
+    val features_vector = m.zipWithIndex.flatMap(v => v._1.zipWithIndex.map(e => {(v._2, e._2, e._1)}))
+      .filter(e => e._3 != 0).map({ case (x, y, f) => (new Feature2D(x, y), f)})
 
-    // compute features and weights
-    val features: Array[(Feature2D, Double)] =
-    (for { x <- 0 until bins ; y <- 0 until bins } yield (x, y))
-      .map({ case (x: Int, y: Int) =>
-      val weight: Double = getValue(values_map, x, y, bins)
-      if(weight > 0) {
-        val feature: Feature2D = new Feature2D(x, y)
-        (feature, weight)
-      } else (null, weight)
-    }).filter(x => x._1 != null).toArray
-
+    val (features, weights) = features_vector.unzip
     val signature: Signature = new Signature()
-    signature.setNumberOfFeatures(n)
-    signature.setFeatures(features.map({case(feature, weight) => feature}))
-    signature.setWeights(features.map({case(feature, weight) => weight}))
+    signature.setNumberOfFeatures(features_vector.length)
+    signature.setFeatures(features.toArray)
+    signature.setWeights(weights.toArray)
     signature
   }
 
-  def emdDist(map1: Vector[Double], map2: Vector[Double], bins: Int): Double = {
-    val sig1: Signature = getSignature(map1, bins)
-    val sig2: Signature = getSignature(map2, bins)
+  def generateSignatureV(m: Vector[Double]): Signature = {
+    val m_dim = math.sqrt(m.length).toInt
+    val features_vector =
+      (((0 to m_dim).map(x => x.toDouble) cross (0 to m_dim).map(x => x.toDouble))
+        .toList zip m).filter(e => e._2 != 0).map({ case ((x, y), f) => (new Feature2D(x, y), f)})
+
+    val (features, weights) = features_vector.unzip
+    val signature: Signature = new Signature()
+    signature.setNumberOfFeatures(features_vector.length)
+    signature.setFeatures(features.toArray)
+    signature.setWeights(weights.toArray)
+    signature
+  }
+
+  def emdDistV(m1: Vector[Double], m2: Vector[Double]): Double = {
+    val sig1: Signature = generateSignatureV(m1)
+    val sig2: Signature = generateSignatureV(m2)
+    val dist: Double = JFastEMD.distance(sig1, sig2, -1)
+    dist
+  }
+
+  def emdDistM(m1: Vector[Vector[Double]], m2: Vector[Vector[Double]]): Double = {
+    val sig1: Signature = generateSignatureM(m1)
+    val sig2: Signature = generateSignatureM(m2)
     val dist: Double = JFastEMD.distance(sig1, sig2, -1)
     dist
   }
