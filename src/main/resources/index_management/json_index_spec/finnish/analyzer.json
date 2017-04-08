@@ -115,13 +115,13 @@
 			{
 				"tokenizer":    "standard",
 				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "jenny_it_shingle_2_10"]
+				"filter":       [ "lowercase", "jenny_fi_shingle_2_10"]
 			},
 			"jenny_stemmed_shingles_2_10_analyzer":
 			{
 				"tokenizer":    "standard",
 				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "finnish_stemmer", "jenny_it_shingle_2_10"]
+				"filter":       [ "lowercase", "finnish_stemmer", "jenny_fi_shingle_2_10"]
 			},
 			"jenny_delimited_double": {
 				"tokenizer":"whitespace",
