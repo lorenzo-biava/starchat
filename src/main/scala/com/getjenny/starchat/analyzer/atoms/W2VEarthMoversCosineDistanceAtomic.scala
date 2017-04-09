@@ -32,9 +32,9 @@ class W2VEarthMoversCosineDistanceAtomic(val sentence: String) extends AbstractA
   override def toString: String = "similarEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
+    //TODO: reduce the accuracy by dividing the score by the number of missing terms
     val emd_dist = EmDistance.distanceCosine(query, sentence)
-    println(emd_dist)
-    if (emd_dist == 0) 1.0 else 1.0 / emd_dist
+    if (emd_dist == 0) 1.0 else 1 - emd_dist
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least

@@ -37,6 +37,7 @@ class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
   private val word_vec = getTextVector(word)
   def evaluate(query: String): Double = {
     val text_vectors = termService.textToVectors(query)
+    //TODO: reduce the accuracy by dividing the score by the number of missing terms
     val distance: Double = if (text_vectors.nonEmpty && text_vectors.get.terms.nonEmpty) {
       val term_vector = text_vectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)
         .map(term => term.vector.get)
