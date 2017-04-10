@@ -27,17 +27,18 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
   val termService = new TermService
 
   val empty_vec = Vector.fill(300){0.0}
-  def getTextVector(text: String): Vector[Double] = {
+  def getTextVector(text: String): (Vector[Double], Double) = {
     val text_vectors = termService.textToVectors(text)
-    //TODO: reduce the accuracy by dividing the score by the number of missing terms
     val vector = text_vectors match {
       case Some(t) => {
         val vectors = t.terms.get.terms.map(e => e.vector.get).toVector
         val sentence_vector =
           if (vectors.length > 0) sumArrayOfArrays(vectors) else empty_vec
-        sentence_vector
+        val reliability_factor =
+          text_vectors.get.terms_found_n.toDouble / text_vectors.get.text_terms_n.toDouble
+        (sentence_vector, reliability_factor)
       }
-      case _ => empty_vec //default dimension
+      case _ => (empty_vec, 0.0) //default dimension
     }
     vector
   }
@@ -48,7 +49,8 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
     val query_vector = getTextVector(query)
-    val distance = 1 - cosineDist(sentence_vector, query_vector)
+    val distance = (1.0 - cosineDist(sentence_vector._1, query_vector._1)) *
+      (sentence_vector._2 * query_vector._2)
     distance
   }
 

@@ -27,8 +27,7 @@ class W2VEarthMoversEuclideanDistanceAtomic(val sentence: String) extends Abstra
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
     val emd_dist = EmDistance.distanceEuclidean(query, sentence)
-    //TODO: reduce the accuracy by dividing the score by the number of missing terms
-    if (emd_dist == 0) 1.0 else 1.0 / emd_dist
+    emd_dist
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least
