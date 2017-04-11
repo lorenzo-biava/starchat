@@ -68,7 +68,7 @@ object EmDistance {
           (term1, term2, weight1, weight2, vector1, vector2, distance, weight1 * distance)
         }).minBy(_._7)
         min_term._8
-      }).sum
+      }).map(x => math.abs(x)).sum
 
       val work_from_u_to_v = weighted_words2.map({ case((term1, (weight1, vector1))) =>
         val min_term = weighted_words1.map({ case((term2, (weight2, vector2))) =>
@@ -76,7 +76,7 @@ object EmDistance {
           (term1, term2, weight1, weight2, vector1, vector2, distance, weight1 * distance)
         }).minBy(_._7)
         min_term._8
-      }).sum
+      }).map(x => math.abs(x)).sum
 
       val dist = math.max(work_from_u_to_v, work_from_v_to_u)
       println("Info: work_from_u_to_v("
@@ -104,7 +104,7 @@ object EmDistance {
 
   def distanceCosine(text1: String, text2: String): Double = {
     val emd_dist = distanceText(text1 = text1, text2 = text2, cosineDist)
-    val score = (1.0 - emd_dist._1) * (emd_dist._2 * emd_dist._3)
+    val score = (1.0 / (1 + emd_dist._1)) * (emd_dist._2 * emd_dist._3)
     score
   }
 
@@ -116,7 +116,7 @@ object EmDistance {
 
   def distanceCosine(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms]): Double = {
     val emd_dist = distance(textTerms1, textTerms2, cosineDist)
-    val score = (1.0 - emd_dist._1) * (emd_dist._2 * emd_dist._3)
+    val score = (1.0 / (1 + emd_dist._1)) * (emd_dist._2 * emd_dist._3)
     score
   }
 
