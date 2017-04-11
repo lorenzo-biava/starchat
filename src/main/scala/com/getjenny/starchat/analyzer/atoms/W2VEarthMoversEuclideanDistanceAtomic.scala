@@ -23,7 +23,7 @@ class W2VEarthMoversEuclideanDistanceAtomic(val sentence: String) extends Abstra
 
   val termService = new TermService
 
-  override def toString: String = "similarEmd(\"" + sentence + "\")"
+  override def toString: String = "similarEucEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
     val emd_dist = EmDistance.distanceEuclidean(query, sentence)

@@ -27,7 +27,9 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
   case class AnalyzerItem(declaration: String,
                           build: Boolean,
-                          analyzer: StarchatAnalyzer)
+                          analyzer: StarchatAnalyzer,
+                          queries: List[TextTerms]
+                         )
 
 object AnalyzerService {
   var analyzer_map : Map[String, AnalyzerItem] = Map.empty[String, AnalyzerItem]
@@ -51,7 +53,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
     val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
-      .setFetchSource(Array("state", "analyzer"), Array.empty[String])
+      .setFetchSource(Array("state", "analyzer", "queries"), Array.empty[String])
       .setScroll(new TimeValue(60000))
       .setSize(1000).get()
 
@@ -73,7 +75,17 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
 
       val build = analyzer != null
 
-      val analyzerItem = AnalyzerItem(declaration, build, analyzer)
+      val queries : List[String] = source.get("queries") match {
+        case Some(t) => t.asInstanceOf[java.util.ArrayList[String]].asScala.toList
+        case None => List[String]()
+      }
+
+      val queries_terms: List[TextTerms] = queries.map(q => {
+        val query_terms = termService.textToVectors(q)
+        query_terms
+      }).filter(_.nonEmpty).map(x => x.get)
+
+      val analyzerItem = AnalyzerItem(declaration, build, analyzer, queries_terms)
       (state, analyzerItem)
     }).filter(_._2.declaration != "").toMap
     results
