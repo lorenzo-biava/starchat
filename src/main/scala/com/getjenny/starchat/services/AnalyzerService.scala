@@ -113,8 +113,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
       case Failure(exception) => {
         val analyzer_response = AnalyzerEvaluateResponse(false, 0.0, exception.getMessage)
         analyzer_response
-      }
-      case Success(result) => {
+      } case Success(result) => {
         val eval_res = result.evaluate(analyzer_request.query)
         val analyzer_response = AnalyzerEvaluateResponse(true, eval_res, "success")
         analyzer_response

@@ -79,6 +79,11 @@ object EmDistance {
       }).sum
 
       val dist = math.max(work_from_u_to_v, work_from_v_to_u)
+      println("Info: work_from_u_to_v("
+        + work_from_u_to_v + ") work_from_v_to_u(" + work_from_v_to_u + ") dist(" + dist + ")"
+        + " reliability_factor1(" + reliability_factor1 + ")"
+        + " reliability_factor2(" + reliability_factor2 + ")"
+      )
       (dist, reliability_factor1, reliability_factor2)
     }
   }
@@ -93,7 +98,7 @@ object EmDistance {
 
   def distanceEuclidean(text1: String, text2: String): Double = {
     val emd_dist = distanceText(text1 = text1, text2 = text2, euclideanDist)
-    val score = (1.0 / emd_dist._1) * (emd_dist._2 * emd_dist._3)
+    val score = (1.0 / (1 + emd_dist._1)) * (emd_dist._2 * emd_dist._3)
     score
   }
 
@@ -105,7 +110,7 @@ object EmDistance {
 
   def distanceEuclidean(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms]): Double = {
     val emd_dist = distance(textTerms1, textTerms2, euclideanDist)
-    val score = (1.0 / emd_dist._1) * (emd_dist._2 * emd_dist._3)
+    val score = (1.0 / (1 + emd_dist._1)) * (emd_dist._2 * emd_dist._3)
     score
   }
 
