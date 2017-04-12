@@ -43,11 +43,13 @@ object EmDistance {
       case _ => List.empty[(String, Vector[Double])]
     }
 
-    val reliability_factor1 =
+    val reliability_factor1 = if(textTerms1.nonEmpty && textTerms1.nonEmpty) {
       textTerms1.get.terms_found_n.toDouble / textTerms1.get.text_terms_n.toDouble
+    } else 0.0
 
-    val reliability_factor2 =
+    val reliability_factor2 = if(textTerms2.nonEmpty && textTerms2.nonEmpty) {
       textTerms2.get.terms_found_n.toDouble / textTerms2.get.text_terms_n.toDouble
+    } else 0.0
 
     val words1 = vectors1.groupBy(_._1).map(x =>
       (x._1, (x._2.length.toDouble, x._2.head._2.asInstanceOf[Vector[Double]])))
