@@ -1,4 +1,9 @@
 package com.getjenny.starchat.analyzer.atoms
+
+/**
+  * Created by angelo on 07/04/17.
+  */
+
 import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.starchat.analyzer.utils.VectorUtils._
@@ -9,11 +14,7 @@ import com.getjenny.starchat.services._
 
 import ExecutionContext.Implicits.global
 
-/**
-  * Created by mal on 20/02/2017.
-  */
-
-class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
+class W2VEuclideanWordAtomic(word: String) extends AbstractAtomic {
   /**
     * Return the normalized w2vcosine similarity of the nearest word
     */
@@ -30,10 +31,11 @@ class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
       val term_vector = text_vectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)
         .map(term => term.vector.get)
       val distance_list = term_vector.map(vector => {
-        if(vector.isEmpty || word_vec._2 == 0.0) {
+        if(vector.isEmpty || word_vec._2 != 0.0) {
           0.0
         } else {
-          1 - cosineDist(vector, word_vec._1)
+          val eucl_distance = euclideanDist(vector, word_vec._1)
+          if (eucl_distance == 0) 1 else 1.0 / eucl_distance
         }
       })
       distance_list.max

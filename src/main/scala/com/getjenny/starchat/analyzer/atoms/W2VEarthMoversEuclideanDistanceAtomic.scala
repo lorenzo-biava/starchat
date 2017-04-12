@@ -1,23 +1,18 @@
 package com.getjenny.starchat.analyzer.atoms
 
-import com.getjenny.starchat.analyzer.utils.VectorUtils._
-import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
+import com.getjenny.starchat.analyzer.utils.EmDistance
 import com.getjenny.analyzer.atoms.AbstractAtomic
-import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
-import com.getjenny.starchat.entities._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
 
-import scala.concurrent.duration._
-import scala.concurrent._
 import ExecutionContext.Implicits.global
 
 /**
-  * Created by mal on 20/02/2017.
+  * Created by angelo on 04/04/17.
   */
 
-class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
+class W2VEarthMoversEuclideanDistanceAtomic(val sentence: String) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -28,18 +23,15 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
 
   val termService = new TermService
 
-  val sentence_vector = TextToVectorsTools.getSumOfVectorsFromText(sentence)
-
-  override def toString: String = "similar(\"" + sentence + "\")"
+  override def toString: String = "similarEucEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
-    val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
-    val distance = (1.0 - cosineDist(sentence_vector._1, query_vector._1)) *
-      (sentence_vector._2 * query_vector._2)
-    distance
+    val emd_dist = EmDistance.distanceEuclidean(query, sentence)
+    emd_dist
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least
+
   // angle < pi/2 (cosine > 0), but for synonyms let's put cosine > 0.6, i.e. self.evaluate > 0.8
   override val match_threshold: Double = 0.8
 }

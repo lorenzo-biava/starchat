@@ -25,6 +25,9 @@ import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import java.lang.String
 
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse.AnalyzeToken
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
 
@@ -512,6 +515,57 @@ class TermService(implicit val executionContext: ExecutionContext) {
     Option {
       search_results
     }
+  }
+
+  def esTokenizer(query: TokenizerQueryRequest) : Option[TokenizerResponse] = {
+    val analyzer = query.tokenizer
+    val is_supported: Boolean = TokenizersDescription.analyzers_map.isDefinedAt(analyzer)
+    if(! is_supported) {
+      throw new Exception("esTokenizer: analyzer not found or not supported: (" + analyzer + ")")
+    }
+
+    val client: TransportClient = elastic_client.get_client()
+
+    val analyzer_builder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.text)
+    analyzer_builder.setAnalyzer(analyzer)
+    analyzer_builder.setIndex(elastic_client.index_name)
+
+    val analyze_response: AnalyzeResponse = analyzer_builder
+      .execute()
+      .actionGet()
+
+    val tokens : List[TokenizerResponseItem] =
+      analyze_response.getTokens.listIterator.asScala.toList.map(t => {
+        val response_item: TokenizerResponseItem =
+          TokenizerResponseItem(start_offset = t.getStartOffset,
+            position = t.getPosition,
+            end_offset = t.getEndOffset,
+            token = t.getTerm,
+            token_type = t.getType)
+        response_item
+    })
+
+    val response = Option { TokenizerResponse(tokens = tokens) }
+    response
+  }
+
+  def textToVectors(text: String, analyzer: String = "stop", unique: Boolean = false): Option[TextTerms] = {
+    val analyzer_request = TokenizerQueryRequest(tokenizer = analyzer, text = text)
+    val analyzers_response = esTokenizer(analyzer_request)
+    val full_token_list = analyzers_response match {
+      case Some(r) => r.tokens.map(e => e.token)
+      case _  => List.empty[String]
+    }
+    val token_list = if (unique) full_token_list.toSet.toList else full_token_list
+    val terms_request = TermIdsRequest(ids = token_list)
+    val term_list = get_term(terms_request)
+    val text_terms = TextTerms(text = text,
+        text_terms_n = token_list.length,
+        terms_found_n = term_list.getOrElse(Terms(terms=List.empty[Term])).terms.length,
+        terms = term_list
+      )
+
+    Option { text_terms }
   }
 
 }

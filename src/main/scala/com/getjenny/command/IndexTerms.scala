@@ -25,6 +25,7 @@ object IndexTerms extends JsonSupport {
     host: String = "http://localhost:8888",
     path: String = "/term/index",
     inputfile: String = "vectors.txt",
+    skiplines: Int = 0,
     timeout: Int = 60,
     vecsize: Int = 300
   )
@@ -35,6 +36,7 @@ object IndexTerms extends JsonSupport {
     implicit val executionContext = system.dispatcher
     
     val vecsize = params.vecsize
+    val skiplines = params.skiplines
 
     val base_url = params.host + params.path
     lazy val term_text_entries = Source.fromFile(params.inputfile).getLines
@@ -42,7 +44,7 @@ object IndexTerms extends JsonSupport {
     val httpHeader: immutable.Seq[HttpHeader] = immutable.Seq(RawHeader("application", "json"))
     val timeout = Duration(params.timeout, "s")
 
-    term_text_entries.foreach(entry => {
+    term_text_entries.drop(skiplines).foreach(entry => {
       val splitted = entry.split(" ")
       val term_text = splitted.head
       var term_vector = Vector.empty[Double]
@@ -78,7 +80,8 @@ object IndexTerms extends JsonSupport {
         val result = Await.result(responseFuture, timeout)
         result.status match {
           case StatusCodes.OK => println("indexed: " + term.term)
-          case _ =>  println("failed indexing term(" + term.term + ") Row(" + entry + ") Message(" + result.toString() + ")")
+          case _ =>
+            println("failed indexing term(" + term.term + ") Row(" + entry + ") Message(" + result.toString() + ")")
         }
       }
     })
@@ -87,7 +90,7 @@ object IndexTerms extends JsonSupport {
 
   def main(args: Array[String]) {
     val defaultParams = Params()
-    val parser = new OptionParser[Params]("index vector terms") {
+    val parser = new OptionParser[Params]("IndexTerms") {
       head("Index vetor terms")
       help("help").text("prints this usage text")
       opt[String]("inputfile")
@@ -110,6 +113,10 @@ object IndexTerms extends JsonSupport {
         .text(s"the timeout in seconds of each insert operation" +
           s"  default: ${defaultParams.timeout}")
         .action((x, c) => c.copy(timeout = x))
+      opt[Int]("skiplines")
+        .text(s"skip the first N lines from vector file" +
+          s"  default: ${defaultParams.skiplines}")
+        .action((x, c) => c.copy(skiplines = x))
     }
 
     parser.parse(args, defaultParams) match {

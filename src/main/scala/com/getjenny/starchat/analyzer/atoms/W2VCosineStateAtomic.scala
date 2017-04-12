@@ -1,9 +1,13 @@
 package com.getjenny.starchat.analyzer.atoms
 
+/**
+  * Created by angelo on 11/04/17.
+  */
+
 import com.getjenny.starchat.analyzer.utils.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
-import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
+import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.entities._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -13,11 +17,7 @@ import scala.concurrent.duration._
 import scala.concurrent._
 import ExecutionContext.Implicits.global
 
-/**
-  * Created by mal on 20/02/2017.
-  */
-
-class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
+class W2VCosineStateAtomic(val state: String) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -26,16 +26,31 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
     *
     */
 
-  val termService = new TermService
+  override def toString: String = "similarState(\"" + state + "\")"
 
-  val sentence_vector = TextToVectorsTools.getSumOfVectorsFromText(sentence)
+  val analyzerService = new AnalyzerService
 
-  override def toString: String = "similar(\"" + sentence + "\")"
+  val query_sentences = AnalyzerService.analyzer_map.getOrElse(state, null)
+  if (query_sentences == null) {
+    analyzerService.log.error(toString + " : state is null")
+  } else {
+    analyzerService.log.info(toString + " : initialized")
+  }
+
+  val query_terms = query_sentences.queries
+  val query_vectors = query_terms.map(item => {
+    val query_vector = TextToVectorsTools.getSumOfTermsVectors(Option{item})
+    query_vector
+  })
+
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
-    val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
-    val distance = (1.0 - cosineDist(sentence_vector._1, query_vector._1)) *
-      (sentence_vector._2 * query_vector._2)
+    val distance = query_vectors.map(q_item => {
+      val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
+      val dist = (1.0 - cosineDist(q_item._1, query_vector._1)) *
+        (q_item._2 * query_vector._2)
+      dist
+    }).max
     distance
   }
 

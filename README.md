@@ -92,14 +92,19 @@ curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/index
 Now you have to load the configuration file for the actual chat, aka [decision table](#services). We have provided an example csv in English, therefore:
 
 ```bash
-cd scripts/indexing/
-./index_documents_dt.py ../../doc/sample_state_machine_specification.csv 1
+sbt "run-main com.getjenny.command.IndexDecisionTable --inputfile doc/sample_state_machine_specification.csv --skiplines 1"
 ```
 
 Every time you load the configuration file you need to index the analyzer:
 
 ```bash
 curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/decisiontable_analyzer" 
+```
+
+Items on decision table can be removed using the following command:
+
+```bash
+sbt "run-main com.getjenny.command.DeleteDecisionTable --inputfile doc/sample_state_machine_specification.csv"
 ```
 
 ### 4. Load external corpus (optional)
@@ -1428,6 +1433,143 @@ Sample output
    "total" : 2
 }
 ```
+
+
+## `GET /tokenizers`
+
+Show a list of supported methods for tokenization and stemming
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/tokenizers"
+```
+
+Sample output
+
+```json
+{
+   "shingles2" : "2 words shingles",
+   "shingles3" : "3 words shingles",
+   "shingles2_10" : "from 2 to 10 shingles",
+   "base_stem" : "lowercase + stemming",
+   "base" : "lowercase",
+   "stop" : "lowercase + stopwords elimination",
+   "shingles4" : "4 words shingles",
+   "stop_stem" : "lowercase + stopwords elimination + stemming"
+}
+```
+
+## `POST /tokenizers`
+
+get a list of token using the selected analyzer
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/tokenizers" -d "
+{
+	\"text\": \"good morning, may I ask you a question?\",
+	\"tokenizer\": \"stop\"
+}"
+```
+
+Sample output
+
+```json
+{
+   "tokens" : [
+      {
+         "start_offset" : 0,
+         "end_offset" : 4,
+         "token_type" : "word",
+         "token" : "good",
+         "position" : 0
+      },
+      {
+         "token" : "morning",
+         "position" : 1,
+         "token_type" : "word",
+         "end_offset" : 12,
+         "start_offset" : 5
+      },
+      {
+         "start_offset" : 14,
+         "end_offset" : 17,
+         "token_type" : "word",
+         "token" : "may",
+         "position" : 2
+      },
+      {
+         "token_type" : "word",
+         "token" : "i",
+         "position" : 3,
+         "start_offset" : 18,
+         "end_offset" : 19
+      },
+      {
+         "end_offset" : 23,
+         "start_offset" : 20,
+         "position" : 4,
+         "token" : "ask",
+         "token_type" : "word"
+      },
+      {
+         "end_offset" : 27,
+         "start_offset" : 24,
+         "position" : 5,
+         "token" : "you",
+         "token_type" : "word"
+      },
+      {
+         "end_offset" : 38,
+         "start_offset" : 30,
+         "token" : "question",
+         "position" : 7,
+         "token_type" : "word"
+      }
+   ]
+}
+```
+
+## `POST /analyzers_playground`
+
+used to test analyzers on the fly
+
+### Return codes 
+
+#### 200
+
+Sample call
+
+```bash
+ANALYZER="keyword(\\\"test\\\")"
+QUERY="this is a test"
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/analyzers_playground" -d "
+{
+        \"analyzer\": \"${ANALYZER}\",
+        \"query\": \"${QUERY}\"
+}"
+```
+
+Sample output
+
+```json
+{
+   "value" : 0.25,
+   "build_message" : "success",
+   "build" : true
+}
+```
+
 
 # Indexing terms on term table
 

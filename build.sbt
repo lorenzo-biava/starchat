@@ -14,7 +14,7 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
 libraryDependencies ++= {
   val AkkaVersion       = "2.4.17"
   val AkkaHttpVersion   = "10.0.4"
-  val ESClientVersion   = "5.2.2"
+  val ESClientVersion   = "5.3.0"
   Seq(
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
     "com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
@@ -26,6 +26,8 @@ libraryDependencies ++= {
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "org.elasticsearch.client" % "transport" % ESClientVersion,
     "org.elasticsearch.client" % "rest" % ESClientVersion,
+    "org.scalanlp" %% "breeze" % "0.13",
+    "org.scalanlp" %% "breeze-natives" % "0.13",
     "org.apache.logging.log4j" % "log4j-api" % "2.7",
     "org.apache.logging.log4j" % "log4j-core" % "2.7",
     "org.apache.tika" % "tika-core" % "1.14",
@@ -38,6 +40,7 @@ libraryDependencies ++= {
 }
 
 scalacOptions += "-deprecation"
+scalacOptions += "-feature"
 
 enablePlugins(JavaServerAppPackaging)
 
