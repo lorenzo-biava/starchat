@@ -12,16 +12,19 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.unmarshalling.Unmarshal
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
 import breeze.io.CSVReader
+import au.com.bytecode.opencsv.CSVWriter
+
 import scala.concurrent.Await
 import scala.collection.immutable
 import scala.collection.immutable.{List, Map}
-import java.io.{File, FileReader}
+import java.io.{File, FileReader, FileWriter}
 
 object SimilarityTest extends JsonSupport {
 
@@ -29,7 +32,10 @@ object SimilarityTest extends JsonSupport {
                             host: String = "http://localhost:8888",
                             path: String = "/analyzers_playground",
                             inputfile: String = "pairs.csv",
+                            outputfile: String = "output.csv",
                             analyzer: String = "keyword(\"test\")",
+                            text1_index: Int = 3,
+                            text2_index: Int = 4,
                             separator: Char = ',',
                             skiplines: Int = 1,
                             timeout: Int = 60
@@ -52,15 +58,19 @@ object SimilarityTest extends JsonSupport {
     val httpHeader: immutable.Seq[HttpHeader] = immutable.Seq(RawHeader("application", "json"))
     val timeout = Duration(params.timeout, "s")
 
-    term_text_entries.foreach(entry => {
-      val id = entry(0)
-      val qid1 = entry(1)
-      val qid2 = entry(2)
-      val text1 = entry(3)
-      val text2 = entry(4)
-      val is_duplicate = entry(5)
+    val out_file = new File(params.outputfile)
+    val file_writer = new FileWriter(out_file)
+    val output_csv = new CSVWriter(file_writer, params.separator, '"')
 
-      val analyzer: String = params.analyzer.replace("%text1", text1).replace("%text2", text2)
+    term_text_entries.foreach(entry => {
+
+      val text1 = entry(params.text1_index).toString
+      val text2 = entry(params.text2_index).toString
+      val escaped_text1 = text1.replace("\"", "\\\"")
+      val escaped_text2 = text2.replace("\"", "\\\"")
+
+      val analyzer: String =
+        params.analyzer.replace("%text1", escaped_text1).replace("%text2", escaped_text2)
       val evaluate_request = AnalyzerEvaluateRequest(
         analyzer = analyzer,
         query = text2
@@ -80,10 +90,10 @@ object SimilarityTest extends JsonSupport {
           val response =
             Unmarshal(result.entity).to[AnalyzerEvaluateResponse]
           val value = response.value.get.get
-          println(id, qid1, qid2,
-            "\"" + text1.replace("\"", "\"\"") + "\"",
-            "\"" + text2.replace("\"", "\"\"") + "\"",
-            is_duplicate, value.value)
+          val score = value.value.toString
+          val input_csv_fields = entry.toArray
+          val csv_line = input_csv_fields ++ Array(score)
+          output_csv.writeNext(csv_line)
         }
         case _ =>
           println("failed running analyzer(" + evaluate_request.analyzer
@@ -103,6 +113,10 @@ object SimilarityTest extends JsonSupport {
         .text(s"the path of the csv file with sentences" +
           s"  default: ${defaultParams.inputfile}")
         .action((x, c) => c.copy(inputfile = x))
+      opt[String]("outputfile")
+        .text(s"the path of the output csv file" +
+          s"  default: ${defaultParams.outputfile}")
+        .action((x, c) => c.copy(outputfile = x))
       opt[String]("host")
         .text(s"*Chat base url" +
           s"  default: ${defaultParams.host}")
@@ -115,6 +129,14 @@ object SimilarityTest extends JsonSupport {
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")
         .action((x, c) => c.copy(path = x))
+      opt[Int]("text1_index")
+        .text(s"the index of the text1 element" +
+          s"  default: ${defaultParams.text1_index}")
+        .action((x, c) => c.copy(text1_index = x))
+       opt[Int]("text2_index")
+        .text(s"the index of the text2 element" +
+          s"  default: ${defaultParams.text2_index}")
+        .action((x, c) => c.copy(text2_index = x))
       opt[Int]("timeout")
         .text(s"the timeout in seconds of each insert operation" +
           s"  default: ${defaultParams.timeout}")

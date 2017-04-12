@@ -549,7 +549,8 @@ class TermService(implicit val executionContext: ExecutionContext) {
     response
   }
 
-  def textToVectors(text: String, analyzer: String = "stop", unique: Boolean = false): Option[TextTerms] = {
+  def textToVectors(text: String, analyzer: String = "stop", unique: Boolean = false):
+  Option[TextTerms] = {
     val analyzer_request = TokenizerQueryRequest(tokenizer = analyzer, text = text)
     val analyzers_response = esTokenizer(analyzer_request)
     val full_token_list = analyzers_response match {
@@ -557,15 +558,19 @@ class TermService(implicit val executionContext: ExecutionContext) {
       case _  => List.empty[String]
     }
     val token_list = if (unique) full_token_list.toSet.toList else full_token_list
-    val terms_request = TermIdsRequest(ids = token_list)
-    val term_list = get_term(terms_request)
-    val text_terms = TextTerms(text = text,
+    val return_value = if(token_list.nonEmpty) {
+      val terms_request = TermIdsRequest(ids = token_list)
+      val term_list = get_term(terms_request)
+      val text_terms = TextTerms(text = text,
         text_terms_n = token_list.length,
         terms_found_n = term_list.getOrElse(Terms(terms=List.empty[Term])).terms.length,
         terms = term_list
       )
-
-    Option { text_terms }
+      Option { text_terms }
+    } else {
+      None: Option[TextTerms]
+    }
+    return_value
   }
 
 }
