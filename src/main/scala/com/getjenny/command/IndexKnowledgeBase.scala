@@ -91,7 +91,7 @@ object IndexKnowledgeBase extends JsonSupport {
     conv_pairs.toList
   }
 
-  private def doIndexTerms(params: Params) {
+  private def doIndexConversationPairs(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -185,7 +185,7 @@ object IndexKnowledgeBase extends JsonSupport {
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doIndexTerms(params)
+        doIndexConversationPairs(params)
       case _ =>
         sys.exit(1)
     }

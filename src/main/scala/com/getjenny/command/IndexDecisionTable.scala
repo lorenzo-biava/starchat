@@ -38,7 +38,7 @@ object IndexDecisionTable extends JsonSupport {
                              numcols: Int = 10
                            )
 
-  private def doIndexTerms(params: Params) {
+  private def doIndexDecisionTable(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -49,14 +49,14 @@ object IndexDecisionTable extends JsonSupport {
     val base_url = params.host + params.path
     val file = new File(params.inputfile)
     val file_reader = new FileReader(file)
-    lazy val term_text_entries = CSVReader.read(input=file_reader, separator=params.separator,
+    lazy val file_entries = CSVReader.read(input=file_reader, separator=params.separator,
       quote = '"', skipLines=skiplines)
 
     val httpHeader: immutable.Seq[HttpHeader] = immutable.Seq(RawHeader("application", "json"))
     val timeout = Duration(params.timeout, "s")
     val refnumcol = params.numcols
 
-    term_text_entries.foreach(entry => {
+    file_entries.foreach(entry => {
       if (entry.length != refnumcol) {
         println("Error: file row is not consistent  Row(" + entry.toString + ")")
       } else {
@@ -144,7 +144,7 @@ object IndexDecisionTable extends JsonSupport {
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doIndexTerms(params)
+        doIndexDecisionTable(params)
       case _ =>
         sys.exit(1)
     }
