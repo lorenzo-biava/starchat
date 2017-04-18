@@ -110,7 +110,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
       help("help").text("prints this usage text")
       opt[String]("inputfile")
         .text(s"path of the file input file, a document per line, eventually base64 encoded" +
-          s"  default: ${defaultParams.hostinputfile}")
+          s"  default: ${defaultParams.inputfile}")
         .action((x, c) => c.copy(inputfile = Option(x)))
       opt[String]("host")
         .text(s"*Chat base url" +
