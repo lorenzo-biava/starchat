@@ -42,8 +42,9 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
                            )
 
   private def decodeBase64(in: String): String = {
-    val decoded = Base64.getDecoder.decode(in)
-    decoded.toString
+    val decoded_bytes = Base64.getDecoder.decode(in)
+    val decoded = new String(decoded_bytes, "UTF-8")
+    decoded
   }
 
   private def doIndexCorpus(params: Params) {
@@ -68,15 +69,14 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
 
     lines.foreach(entry => {
       val document_string = conv_items(entry)
-      val id: String = document_string.toString().sha256
-
+      val id: String = document_string.sha256
 
       val kb_document: KBDocument = KBDocument(
         id = id,
         conversation = "corpora",
         index_in_conversation = Option { -1 },
         question = document_string,
-        answer = "",
+        answer = document_string,
         verified = false,
         topics = None: Option[String],
         doctype = doctypes.hidden,

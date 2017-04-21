@@ -44,8 +44,9 @@ object IndexKnowledgeBase extends JsonSupport {
                            )
 
   private def decodeBase64(in: String): String = {
-    val decoded = Base64.getDecoder.decode(in)
-    decoded.toString
+    val decoded_bytes = Base64.getDecoder.decode(in)
+    val decoded = new String(decoded_bytes, "UTF-8")
+    decoded
   }
 
   private def load_data(params: Params, transform: String => String):
