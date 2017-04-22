@@ -1570,7 +1570,113 @@ Sample output
 }
 ```
 
+## `POST /spellcheck/terms`
 
+terms spellchecker based on knowledgebase text 
+
+### Return codes
+
+#### 200
+
+Sample call
+
+```bash
+QUERY=${1:-"this is a tes for splellchecker"}
+curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/spellcheck/terms -d "{
+  \"text\": \"${QUERY}\",
+  \"prefix_length\": 3,
+  \"min_doc_freq\": 1
+}"
+```
+
+```json
+{
+   "tokens" : [
+      {
+         "offset" : 0,
+         "options" : [
+            {
+               "freq" : 1284,
+               "score" : 0.800000011920929,
+               "text" : "hello"
+            },
+            {
+               "text" : "hella",
+               "score" : 0.800000011920929,
+               "freq" : 2
+            },
+            {
+               "freq" : 2,
+               "score" : 0.800000011920929,
+               "text" : "helle"
+            },
+            {
+               "text" : "help",
+               "score" : 0.75,
+               "freq" : 35395
+            },
+            {
+               "score" : 0.75,
+               "freq" : 5,
+               "text" : "hell"
+            }
+         ],
+         "length" : 5,
+         "text" : "hellp"
+      },
+      {
+         "length" : 4,
+         "options" : [],
+         "offset" : 7,
+         "text" : "this"
+      },
+      {
+         "length" : 2,
+         "options" : [],
+         "offset" : 12,
+         "text" : "is"
+      },
+      {
+         "length" : 1,
+         "offset" : 15,
+         "options" : [],
+         "text" : "a"
+      },
+      {
+         "length" : 4,
+         "offset" : 17,
+         "options" : [
+            {
+               "text" : "test",
+               "score" : 0.75,
+               "freq" : 191
+            },
+            {
+               "freq" : 10,
+               "score" : 0.5,
+               "text" : "tessa"
+            },
+            {
+               "text" : "tesco",
+               "score" : 0.5,
+               "freq" : 9
+            },
+            {
+               "text" : "tesia",
+               "score" : 0.5,
+               "freq" : 2
+            },
+            {
+               "freq" : 2,
+               "score" : 0.5,
+               "text" : "tester"
+            }
+         ],
+         "text" : "tesr"
+      }
+   ]
+}
+```
 # Indexing terms on term table
 
 The following program index term vectors on the vector table:

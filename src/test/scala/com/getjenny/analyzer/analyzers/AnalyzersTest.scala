@@ -8,29 +8,29 @@ import org.scalatest._
 class AnalyzersTest extends FlatSpec with Matchers {
 
   "A DefaultAnalyzer" should "parse a rule and evaluate the operations on a provided input text" in {
-    val analBayes = new DefaultAnalyzer("""disjunction( keyword("stupid"), keyword("idiot") )""")
+    val analBayes = new DefaultAnalyzer("""disjunction( keyword("clever"), keyword("gentleman") )""")
 
-    val idiot = analBayes.evaluate("ciao nice idiot moron")
-    val stupid_idiot_long = analBayes.evaluate("ciao stupid moron idiot")
-    val stupid_idiot_short = analBayes.evaluate("ciao stupid idiot")
+    val gentleman = analBayes.evaluate("ciao nice gentleman fool")
+    val clever_gentleman_long = analBayes.evaluate("ciao clever fool gentleman")
+    val clever_gentleman_short = analBayes.evaluate("ciao clever gentleman")
 
     //two is better than one
-    stupid_idiot_long should be > idiot
-    stupid_idiot_short should be > idiot
+    clever_gentleman_long should be > gentleman
+    clever_gentleman_short should be > gentleman
 
     //finding in short is better than finding in longer
-    stupid_idiot_short should be > stupid_idiot_long
+    clever_gentleman_short should be > clever_gentleman_long
   }
   it should "throw a AnalyzerParsingException if parenthesis are not balanced" in {
     a [AnalyzerParsingException] should be thrownBy {
-      new DefaultAnalyzer("""disjunction( keyword("stupid")), keyword("idiot") )""")
+      new DefaultAnalyzer("""disjunction( keyword("clever")), keyword("gentleman") )""")
     }
   }
   /*
   //TODO: enable after changing the parser
   it should "throw a AnalyzerCommandException if the command is not supported" in {
     a [AnalyzerCommandException] should be thrownBy {
-      new DefaultAnalyzer("""fakeDisjunction( keyword("stupid"), keyword("idiot") )""")
+      new DefaultAnalyzer("""fakeDisjunction( keyword("clever"), keyword("gentleman") )""")
     }
   }*/
 
