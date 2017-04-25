@@ -60,7 +60,7 @@ object IndexKnowledgeBase extends JsonSupport {
       (entry(0), transform(entry(1)))
     }).toMap
 
-    val file_answers = new File(params.questions_path.get)
+    val file_answers = new File(params.answers_path.get)
     val file_reader_answers = new FileReader(file_answers)
     lazy val answers_entries = CSVReader.read(input = file_reader_answers, separator = params.separator,
       quote = '"', skipLines = 0)
