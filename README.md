@@ -40,12 +40,12 @@ The easiest way is to install *chat using two docker images. You only need:
 * [docker](https://docs.docker.com/engine/installation/)
 * [docker compose](https://docs.docker.com/compose/install/)
 
-In this way, you will put all the indices in the Elasticsearch (V 5.2) image, and *chat itself in the Java (8) image.
+In this way, you will put all the indices in the Elasticsearch (version 5.3) image, and *chat itself in the Java (8) image.
 
 _If you do not use docker_ you therefore need on your machine:
 
 1. [Scala 12.2](http://scala-lang.org)
-2. [Elasticsearch 5.2](http://elastic.co)
+2. [Elasticsearch 5.3](http://elastic.co)
 
 ## Setup with Docker (recommended)
 
