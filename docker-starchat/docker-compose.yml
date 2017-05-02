@@ -1,5 +1,5 @@
 elasticsearch:
-  image: elasticsearch:5.3.0
+  image: elasticsearch:5.3.2
   command: elasticsearch
   ports:
     - "0.0.0.0:9200:9200"
@@ -18,7 +18,7 @@ starchat:
   image: java:8
   command: /starchat/bin/starchat
   volumes:
-    - ./starchat-master:/starchat
+    - ./starchat:/starchat
   ports:
     - "0.0.0.0:8888:8888"
   links:
