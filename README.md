@@ -62,10 +62,10 @@ cd  docker-starchat
 ```
 Extract the packet into the docker-starchat folder: 
 ```bash
-unzip ../target/universal/starchat-master.zip
+unzip ../target/universal/data/WORK/GetJenny/starchat/target/universal/starchat-581e3255e5141185bb66fa8ffce0257f055596c2-SNAPSHOT.zip
 ```
 
-Review the configuration files `starchat-master/config/application.conf` and configure 
+Review the configuration files `starchat-581e3255e5141185bb66fa8ffce0257f055596c2-SNAPSHOT/config/application.conf` and configure 
 the language if needed (by default you have `index_language = "english"`)
 
 (If you are re-installing *Chat, and want to start from scratch see [start from scratch](#docker-start-from-scratch).)

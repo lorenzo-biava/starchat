@@ -2,8 +2,6 @@ import NativePackagerHelper._
 
 name := "StarChat"
 
-version := "master"
-
 organization := "com.getjenny"
 
 scalaVersion := "2.12.1"
@@ -43,6 +41,7 @@ scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
 enablePlugins(JavaServerAppPackaging)
+enablePlugins(GitVersioning)
 
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")
