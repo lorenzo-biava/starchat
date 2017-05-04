@@ -23,6 +23,7 @@ Before contributing (or opening issues), you might want send us an email at star
       * [Client functions](#client-functions)
       * [Mechanics](#mechanics)
       * [Scalability](#scalability)
+      * [Security](#security)
    * [APIs](#apis)
    * [Test](#test)
    * [Troubleshooting](#troubleshooting)
@@ -323,6 +324,51 @@ Elasticsearch cluster.
 
 Similarly, Elasticsearch can easily scale horizontally adding new nodes to the cluster, as explained
  in [Elasticsearch Documentation](https://www.elastic.co/guide/en/elasticsearch/guide/master/_scale_horizontally.html).
+ 
+## Security
+
+*Chat is a backend service and *should never* be exposed to the internet,
+it should be placed behind a firewall.
+One of the most effective and flexible method to add an access control layer is to use 
+[Kong](https://getkong.org) in front of *Chat as a gateway, in this way
+*Chat can be shield by unwanted accesses.
+
+In addition *Chat support TLS connections, the configuration file allow to
+choose if the service should expose an https connection or an http connection
+or both.
+In order to use the https connection the user must do the following things:
+ * obtain a pkcs12 server certificate from a certification authority or [create a self signed certificate](http://typesafehub.github.io/ssl-config/CertificateGeneration.html)
+ * save the certificate inside the folder ```config/tls/certs/``` e.g. ```config/tls/certs/server.p12```
+ * set the password for the certificate inside the configuration file
+ * enable the https connection setting to true the https.enable property of the configuration file
+ * optionally disable the http connection setting to false the http.enable property of the configuration file
+
+Follows the block of the configuration file which is to be modified as described above in
+ order to use https:
+
+```yaml
+https {
+  host = "0.0.0.0"
+  host = ${?HOST}
+  port = 8443
+  port = ${?PORT}
+  certificate = "server.p12"
+  password = "uma7KnKwvh"
+  enable = false
+}
+
+http {
+  host = "0.0.0.0"
+  host = ${?HOST}
+  port = 8888
+  port = ${?PORT}
+  enable = true
+}
+```
+
+*Chat come with a default self-signed certificate for testing,
+using it for production or sensitive environment is highly discouraged
+as well as useless from a security point of view.
 
 # APIs
 

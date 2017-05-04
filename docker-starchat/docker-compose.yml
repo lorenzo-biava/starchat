@@ -21,6 +21,7 @@ starchat:
     - ./starchat:/starchat
   ports:
     - "0.0.0.0:8888:8888"
+    - "0.0.0.0:8443:8443"
   links:
     - "elasticsearch:getjenny-es"
 
