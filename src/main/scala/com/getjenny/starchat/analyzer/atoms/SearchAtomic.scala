@@ -34,7 +34,7 @@ class SearchAtomic(state: String) extends AbstractAtomic {
 
     val state: Future[Option[SearchDTDocumentsResults]] = decisionTableService.search(dtDocumentSearch)
     //search the state with the closest query value, then return that state
-    val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
+    val res : Option[SearchDTDocumentsResults] = Await.result(state, 60.seconds)
 
     val res_count = if (res.isEmpty) 0 else res.get.total
 

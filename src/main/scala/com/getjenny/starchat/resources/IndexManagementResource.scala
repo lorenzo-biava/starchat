@@ -36,7 +36,7 @@ trait IndexManagementResource extends MyResource {
               }
             case "create" =>
               val result: Try[Option[IndexManagementResponse]] =
-                Await.ready(Future { indexManagementService.create_index() }, 30.seconds).value.get
+                Await.ready(Future { indexManagementService.create_index() }, 60.seconds).value.get
               result match {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {
                   Option {t}})
@@ -52,7 +52,7 @@ trait IndexManagementResource extends MyResource {
     pathEnd {
       get {
         val result: Try[Option[IndexManagementResponse]] =
-          Await.ready(Future{indexManagementService.check_index()},30.seconds).value.get
+          Await.ready(Future{indexManagementService.check_index()}, 60.seconds).value.get
         result match {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
@@ -61,7 +61,7 @@ trait IndexManagementResource extends MyResource {
       } ~
       delete {
         val result: Try[Option[IndexManagementResponse]] =
-          Await.ready(Future{indexManagementService.remove_index()},30.seconds).value.get
+          Await.ready(Future{indexManagementService.remove_index()}, 60.seconds).value.get
         result match {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
@@ -70,7 +70,7 @@ trait IndexManagementResource extends MyResource {
       } ~
       put {
         val result: Try[Option[IndexManagementResponse]] =
-          Await.ready(Future{indexManagementService.update_index()},30.seconds).value.get
+          Await.ready(Future{indexManagementService.update_index()}, 60.seconds).value.get
         result match {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,

@@ -55,7 +55,8 @@ class W2VEarthMoversCosineDistanceStateAtomic(val state: String) extends Abstrac
       val distance = (1.0 / cosineDist(query_vector._1, item._1)) * (query_vector._2 * item._2)
       distance
     }).max
-    emd_dist
+    val value = if (emd_dist.nonEmpty) emd_dist.max else 0
+    value
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least

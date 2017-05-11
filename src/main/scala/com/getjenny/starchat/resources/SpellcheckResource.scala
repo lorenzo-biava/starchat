@@ -26,7 +26,7 @@ trait SpellcheckResource extends MyResource {
           entity(as[SpellcheckTermsRequest]) { request =>
             val result: Try[Option[SpellcheckTermsResponse]] =
               Await.ready(Future{spellcheckService.termsSuggester(request)},
-                30.seconds).value.get
+                60.seconds).value.get
             result match {
               case Success(t) =>
                 completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {

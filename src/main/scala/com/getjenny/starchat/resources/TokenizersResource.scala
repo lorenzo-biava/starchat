@@ -23,7 +23,7 @@ trait TokenizersResource extends MyResource {
         entity(as[TokenizerQueryRequest]) { request_data =>
             val result: Try[Option[TokenizerResponse]] =
             Await.ready(Future { termService.esTokenizer(request_data)},
-              30.seconds).value.get
+              60.seconds).value.get
           result match {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest,

@@ -126,7 +126,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
   def initializeAnalyzers(): Unit = {
     if (AnalyzerService.analyzer_map == Map.empty[String, AnalyzerItem]) {
       val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzer, 30.seconds).value.get
+        Await.ready(loadAnalyzer, 60.seconds).value.get
       result match {
         case Success(t) => log.info("analyzers loaded")
         case Failure(e) => log.error("can't load analyzers: " + e.toString)

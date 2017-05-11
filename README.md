@@ -67,6 +67,16 @@ unzip ../target/universal/data/WORK/GetJenny/starchat/target/universal/starchat-
 ln -s starchat-581e3255e5141185bb66fa8ffce0257f055596c2-SNAPSHOT starchat
 ```
 
+The zip packet contains:
+* a set of scripts to test the endpoints and as a complement for the documentation: ```starchat-adf23af60508d50b0db61172a101d78339043fc4-SNAPSHOT/scripts/api_test/```
+* a set of command line programs ```starchat-adf23af60508d50b0db61172a101d78339043fc4-SNAPSHOT/bin``` to run starchat and other tools.
+    * delete-decision-table: delete items from the decision table
+    * index-corpus-on-knowledge-base: index a corpus on knowledge base as hidden (to improve the language model)
+    * index-decision-table: index data on the decision table from a csv
+    * index-knowledge-base: index data into the knowledge base
+    * index-terms: index terms vectors
+    * starchat: start starchat
+
 Review the configuration files `starchat-581e3255e5141185bb66fa8ffce0257f055596c2-SNAPSHOT/config/application.conf` and configure 
 the language if needed (by default you have `index_language = "english"`)
 
@@ -87,7 +97,6 @@ Run from a terminal:
 # create the indices in Elasticsearch
 curl -v -H "Content-Type: application/json" -X POST "http://localhost:8888/index_management"
 ```
-
 
 ### 3. Load the configuration file
 
@@ -385,7 +394,7 @@ Data to post:
     "user_input": "(Optional)",
     "text" : "the text typed by the user (Optional)",
     "img": "(e.g.) image attached by the user (Optional)",
-    "values": "(Optional)",
+l
     "return_value": "the value either in success_value or in failure_value (Optional)",
     "data": "all the variables, e.g. for the STRING TEMPLATEs (Optional)"
 }

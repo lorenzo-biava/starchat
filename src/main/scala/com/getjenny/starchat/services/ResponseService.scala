@@ -60,7 +60,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
         // there is a state in return_value (eg the client asked for a state), no analyzers evaluation
         val state: Future[Option[SearchDTDocumentsResults]] =
           decisionTableService.read(List[String](return_value))
-        val res: Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
+        val res: Option[SearchDTDocumentsResults] = Await.result(state, 60.seconds)
         if (res.get.total > 0) {
           val doc: DTDocument = res.get.hits.head.document
           val state: String = doc.state
@@ -117,7 +117,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
         if(analyzer_values.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] =
             decisionTableService.read(analyzer_values.keys.toList)
-          val res : Option[SearchDTDocumentsResults] = Await.result(items, 30.seconds)
+          val res : Option[SearchDTDocumentsResults] = Await.result(items, 60.seconds)
           val docs = res.get.hits.map(item => {
             val doc: DTDocument = item.document
             val state = doc.state

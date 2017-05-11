@@ -26,7 +26,7 @@ trait LanguageGuesserResource extends MyResource {
       post {
         entity(as[LanguageGuesserRequestIn]) { request_data =>
           val result: Try[Option[LanguageGuesserRequestOut]] =
-            Await.ready(Future{languageGuesserService.guess_language(request_data)},30.seconds).value.get
+            Await.ready(Future{languageGuesserService.guess_language(request_data)}, 60.seconds).value.get
           result match {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest,
@@ -42,7 +42,7 @@ trait LanguageGuesserResource extends MyResource {
     path(Segment) { language: String =>
       get {
         val result: Try[Option[LanguageGuesserInformations]] =
-          Await.ready(Future{languageGuesserService.get_languages(language)},30.seconds).value.get
+          Await.ready(Future{languageGuesserService.get_languages(language)}, 60.seconds).value.get
         result match {
           case Success(t) =>
             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {Option {t}})

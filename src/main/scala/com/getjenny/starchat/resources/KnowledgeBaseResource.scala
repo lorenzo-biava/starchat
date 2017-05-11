@@ -48,7 +48,7 @@ trait KnowledgeBaseResource extends MyResource {
           parameters("refresh".as[Int] ? 0) { refresh =>
             entity(as[KBDocumentUpdate]) { update =>
               val result: Future[Option[UpdateDocumentResult]] = knowledgeBaseService.update(id, update, refresh)
-              val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 30.seconds).value.get
+              val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 60.seconds).value.get
               result_try match {
                 case Success(t) =>
                   completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})

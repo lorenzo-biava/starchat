@@ -11,7 +11,7 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
 
 libraryDependencies ++= {
   val AkkaVersion       = "2.5.1"
-  val AkkaHttpVersion   = "10.0.5"
+  val AkkaHttpVersion   = "10.0.6"
   val ESClientVersion   = "5.3.2"
   Seq(
     "com.typesafe.akka" %% "akka-actor" % AkkaVersion,

@@ -53,10 +53,10 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val state: String) extends Abst
     val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
     val emd_dist = queries_vectors.map(item => {
       val distance = (1.0 - euclideanDist(query_vector._1, item._1)) * (query_vector._2 * item._2)
-//      val score = (1.0 - emd_dist._1) * (emd_dist._2 * emd_dist._3)
       distance
-    }).max
-    emd_dist
+    })
+    val value = if (emd_dist.nonEmpty) emd_dist.max else 0
+    value
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least
