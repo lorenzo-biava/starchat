@@ -52,11 +52,10 @@ class W2VEarthMoversCosineDistanceStateAtomic(val state: String) extends Abstrac
   def evaluate(query: String): Double = {
     val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
     val emd_dist = queries_vectors.map(item => {
-      val distance = (1.0 / cosineDist(query_vector._1, item._1)) * (query_vector._2 * item._2)
+      val distance: Double = (1.0 / cosineDist(query_vector._1, item._1)) * (query_vector._2 * item._2)
       distance
     }).max
-    val value = if (emd_dist.nonEmpty) emd_dist.max else 0
-    value
+    emd_dist
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least
