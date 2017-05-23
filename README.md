@@ -235,7 +235,7 @@ You configure the DecisionTable through CSV file. Please have a look at the one 
 |state|max_state_count|analyzer|queries |bubble|action|action_input|state_data|success_value |failure_value|
 |-----|---------------|-----|--------|------|------|------------|----------|--------------|-------------|
 |start|0              |     |      |"How may I help you?"||||||
-|further_details_access_question|0|((forgot).*(password))|"[""cannot access account"", ""problem access account""]"||show_buttons|"{""Forgot Password"": ""forgot_password"", ""Account locked"": ""account_locked"", ""None of the above"": ""start""}"||eval(show_buttons),"""dont_understand"""|
+|further_details_access_question|0|((forgot).*(password))|"[""cannot access account"", ""problem access account""]"||show_buttons|"{""Forgot Password"": ""forgot_password"", ""Account locked"": ""account_locked"", ""None of the above"": ""start""}"||eval(show_buttons)|"""dont_understand"""|
 |forgot_password|0||"[""Forgot password""]"|"I will send you a new password generation link, enter your email."|input_form|"{""email"": ""email""}"||"""send_password_generation_link"""|"""dont_understand"""|
 |send_password_generation_link|0|||"Sending message to %email% with instructions."|send_password_generation_link|"{ ""template"": "If you requested a password reset, follow this link: %link%"", ""email"": ""%email%"" }"||"""any_further"""|call_operator|
 
