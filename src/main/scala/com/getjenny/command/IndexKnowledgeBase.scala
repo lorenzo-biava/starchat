@@ -28,7 +28,7 @@ import com.roundeights.hasher.Implicits._
 import scala.concurrent.Await
 import scala.collection.immutable
 import scala.collection.immutable.{List, Map}
-import java.io.{File, FileReader}
+import java.io.{File, FileReader, Reader, FileInputStream, InputStreamReader}
 import java.util.Base64
 
 object IndexKnowledgeBase extends JsonSupport {
@@ -51,23 +51,35 @@ object IndexKnowledgeBase extends JsonSupport {
 
   private def load_data(params: Params, transform: String => String):
       List[Map[String, String]] = {
-    val file_questions = new File(params.questions_path.get)
-    val file_reader_questions = new FileReader(file_questions)
-    lazy val questions_entries = CSVReader.read(input = file_reader_questions, separator = params.separator,
+    val questions_input_stream: Reader = new InputStreamReader(new FileInputStream(params.questions_path.get), "UTF-8")
+    lazy val questions_entries = CSVReader.read(input = questions_input_stream, separator = params.separator,
       quote = '"', skipLines = 0)
 
-    val questions_map = questions_entries.map(entry => {
-      (entry(0), transform(entry(1)))
-    }).toMap
+    val questions_map = questions_entries.zipWithIndex.map(entry => {
+      if (entry._1.size < 2) {
+        println("Error [questions] with line: " + entry._2)
+        (entry._2, false, "", "")
+      } else {
+        val entry0: String = entry._1(0)
+        val entry1: String = entry._1(1)
+        (entry._2, true, entry0, transform(entry1))
+      }
+    }).filter(_._2).map(x => (x._3, x._4)).toMap
 
-    val file_answers = new File(params.answers_path.get)
-    val file_reader_answers = new FileReader(file_answers)
-    lazy val answers_entries = CSVReader.read(input = file_reader_answers, separator = params.separator,
+    val answers_input_stream: Reader = new InputStreamReader(new FileInputStream(params.questions_path.get), "UTF-8")
+    lazy val answers_entries = CSVReader.read(input = answers_input_stream, separator = params.separator,
       quote = '"', skipLines = 0)
 
-    val answer_map = answers_entries.map(entry => {
-      (entry(0), transform(entry(1)))
-    }).toMap
+    val answer_map = answers_entries.zipWithIndex.map(entry => {
+      if (entry._1.size < 2) {
+        println("Error [answers] with line: " + entry._2)
+        (entry._2, false, "", "")
+      } else {
+        val entry0: String = entry._1(0)
+        val entry1: String = entry._1(1)
+        (entry._2, true, entry0, transform(entry1))
+      }
+    }).filter(_._2).map(x => (x._3, x._4)).toMap
 
     val file_assoc = new File(params.associations_path.get)
     val file_reader_assoc = new FileReader(file_assoc)
