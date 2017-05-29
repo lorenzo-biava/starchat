@@ -22,6 +22,8 @@ class SearchAtomic(state: String) extends AbstractAtomic {
   val isEvaluateNormalized: Boolean = false
   val ref_state: String = state
 
+  override val match_threshold: Double = 0.65
+
   val decisionTableService = new DecisionTableService
 
   def evaluate(query: String): Double = {
