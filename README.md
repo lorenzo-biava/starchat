@@ -4,7 +4,7 @@ This is the official repository for StarChat, a scalable conversational engine f
 
 # Documentation
 
-Go to the [documentaion](https://getjenny.github.io/starchat-doc/)
+Go to the [documentation](https://getjenny.github.io/starchat-doc/)
 
 # How to contribute
 
