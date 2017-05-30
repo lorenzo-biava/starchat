@@ -42,19 +42,17 @@ class W2VEarthMoversCosineDistanceStateAtomic(val state: String) extends Abstrac
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val queries_terms = queries_sentences.queries
-  val queries_vectors = queries_terms.map(item => {
-    val query_vector = TextToVectorsTools.getSumOfTermsVectors(Option{item})
-    query_vector
-  })
+  val queries_vectors = queries_sentences.queries.map(item => Option{item})
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
-    val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
-    val emd_dist = queries_vectors.map(item => {
-      val distance: Double = (1.0 / cosineDist(query_vector._1, item._1)) * (query_vector._2 * item._2)
-      distance
-    }).max
+    val query_vectors = termService.textToVectors(text = query)
+    val emd_dist_queries = queries_vectors.map(q => {
+      val dist = EmDistance.distanceCosine(q , query_vectors)
+      dist
+    })
+
+    val emd_dist = if (emd_dist_queries.nonEmpty) emd_dist_queries.max else 0.0
     emd_dist
   }
 

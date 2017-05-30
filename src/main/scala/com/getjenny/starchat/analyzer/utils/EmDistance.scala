@@ -43,11 +43,11 @@ object EmDistance {
       case _ => List.empty[(String, Vector[Double])]
     }
 
-    val reliability_factor1 = if(textTerms1.nonEmpty && textTerms1.nonEmpty) {
+    val reliability_factor1 = if(textTerms1.nonEmpty) {
       textTerms1.get.terms_found_n.toDouble / textTerms1.get.text_terms_n.toDouble
     } else 0.0
 
-    val reliability_factor2 = if(textTerms2.nonEmpty && textTerms2.nonEmpty) {
+    val reliability_factor2 = if(textTerms2.nonEmpty) {
       textTerms2.get.terms_found_n.toDouble / textTerms2.get.text_terms_n.toDouble
     } else 0.0
 

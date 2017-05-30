@@ -42,21 +42,18 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val state: String) extends Abst
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val queries_terms = queries_sentences.queries
-  val queries_vectors = queries_terms.map(item => {
-    val query_vector = TextToVectorsTools.getSumOfTermsVectors(Option{item})
-    query_vector
-  })
+  val queries_vectors = queries_sentences.queries.map(item => Option{item})
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String): Double = {
-    val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
-    val emd_dist = queries_vectors.map(item => {
-      val distance = (1.0 - euclideanDist(query_vector._1, item._1)) * (query_vector._2 * item._2)
-      distance
+    val query_vectors = termService.textToVectors(text = query)
+    val emd_dist_queries = queries_vectors.map(q => {
+      val dist = EmDistance.distanceEuclidean(q , query_vectors)
+      dist
     })
-    val value = if (emd_dist.nonEmpty) emd_dist.max else 0
-    value
+
+    val emd_dist = if (emd_dist_queries.nonEmpty) emd_dist_queries.max else 0.0
+    emd_dist
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least
