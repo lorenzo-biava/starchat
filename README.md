@@ -1,6 +1,6 @@
 # Welcome!
 
-This is the official repository for StarChat, a scalable conversational engine for B2B applications provided by [GetJenny Ltd](https://getjenny.com)
+This is the official repository for StarChat, a scalable conversational engine for B2B applications provided by [GetJenny](https://getjenny.com)
 
 # Documentation
 
