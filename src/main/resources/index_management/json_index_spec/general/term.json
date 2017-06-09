@@ -3,7 +3,7 @@
 		"term":
 		{
 			"type": "text",
-			"store": "yes",
+			"store": true,
 			"fields": {
 				"raw": {
 					"type": "keyword"
@@ -37,19 +37,19 @@
 		"tags":
 		{
 			"type": "text",
-			"store": "yes"
+			"store": true
 		},
 		"features":
 		{
           "type": "text",
-          "store": "yes"
+          "store": true
 		},
 		"frequency_base": {
-			"store": "yes",
+			"store": true,
 			"type": "double"
 		},
 		"frequency_stem": {
-			"store": "yes",
+			"store": true,
 			"type": "double"
 		},
 		"vector":

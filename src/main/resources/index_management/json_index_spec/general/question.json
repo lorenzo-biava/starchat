@@ -3,15 +3,15 @@
 		"doctype":
 		{
 			"type": "keyword",
-			"store": "yes",
-			"index": "not_analyzed",
+			"store": true,
+			"index": true,
 			"null_value": "hidden"
 		},
 		"state":
 		{
 			"type": "keyword",
-			"store": "yes",
-			"index": "not_analyzed",
+			"store": true,
+			"index": true,
 			"null_value": ""
 		},
 		"verified":
@@ -19,24 +19,24 @@
 			"type": "boolean",
 			"store": true,
 			"null_value": false,
-			"index": "not_analyzed"
+			"index": true
 		},
 		"conversation":
 		{
 			"type": "keyword",
-			"index": "not_analyzed",
-			"store": "yes"
+			"index": true,
+			"store": true
 		},
 		"index_in_conversation":
 		{
 			"type": "integer",
-			"store": "yes",
+			"store": true,
 			"null_value": -1
 		},
 		"topics":
 		{
 			"type": "text",
-			"store": "yes",
+			"store": true,
 			"fields": {
 				"base": {
 					"fielddata": true,
@@ -53,7 +53,7 @@
 		"question":
 		{
 			"type": "text",
-			"store": "yes",
+			"store": true,
 			"fields": {
 				"raw": {
 					"type": "keyword"
@@ -123,7 +123,7 @@
 		"answer":
 		{
 			"type": "text",
-			"store": "yes",
+			"store": true,
 			"fields": {
 				"raw": {
 					"type": "keyword"
@@ -192,7 +192,7 @@
 		},
 		"status": {
 			"type": "integer",
-			"store": "yes",
+			"store": true,
 			"null_value": 0
 		}
 	}

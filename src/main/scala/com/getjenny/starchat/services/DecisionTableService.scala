@@ -4,6 +4,8 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
+import java.util
+
 import akka.actor.ActorSystem
 import com.getjenny.starchat.entities._
 
@@ -17,7 +19,7 @@ import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders, InnerHitBuilder}
 import org.elasticsearch.common.unit._
 
 import scala.collection.JavaConverters._
@@ -31,6 +33,8 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
+import org.apache.lucene.search.join._
+
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
@@ -38,6 +42,9 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 class DecisionTableService(implicit val executionContext: ExecutionContext) {
   val elastic_client = DecisionTableElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+
+  val queries_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
+            "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def search(documentSearch: DTDocumentSearch): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
@@ -60,11 +67,16 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get))
 
     if(documentSearch.queries.isDefined) {
-      bool_query_builder.must(QueryBuilders.matchQuery("queries.stem_bm25", documentSearch.queries.get))
-      bool_query_builder.should(
-        QueryBuilders.matchPhraseQuery("queries.raw", documentSearch.queries.get)
-          .boost(1 + (min_score * boost_exact_match_factor))
-      )
+      val nested_query: QueryBuilder = QueryBuilders.nestedQuery(
+        "queries",
+        QueryBuilders.boolQuery()
+          .must(QueryBuilders.matchQuery("queries.query.stem_bm25", documentSearch.queries.get))
+          .should(QueryBuilders.matchPhraseQuery("queries.query.raw", documentSearch.queries.get)
+            .boost(1 + (min_score * boost_exact_match_factor))
+          ),
+        queries_score_mode.getOrElse(elastic_client.queries_score_mode, ScoreMode.Max)
+      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(10000), true)
+      bool_query_builder.must(nested_query)
     }
 
     search_builder.setQuery(bool_query_builder)
@@ -94,8 +106,15 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       }
 
       val queries : List[String] = source.get("queries") match {
-        case Some(t) => t.asInstanceOf[java.util.ArrayList[String]].asScala.toList
-        case None => List[String]()
+        case Some(t) =>
+          val offsets = e.getInnerHits.get("queries").hits.toList.map(inner_hit => {
+            inner_hit.getNestedIdentity.getOffset
+          })
+          val query_array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
+            .map(q_e => q_e.get("query"))
+          val queries_ordered : List[String] = offsets.map(i => query_array(i))
+          queries_ordered
+        case None => List.empty[String]
       }
 
       val bubble : String = source.get("bubble") match {
@@ -154,7 +173,13 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     builder.field("state", document.state)
     builder.field("max_state_count", document.max_state_count)
     builder.field("analyzer", document.analyzer)
-    builder.array("queries", document.queries:_*)
+
+    val array = builder.startArray("queries")
+    document.queries.foreach(q => {
+      array.startObject().field("query", q).endObject()
+    })
+    array.endArray()
+
     builder.field("bubble", document.bubble)
     builder.field("action", document.action)
 
@@ -205,7 +230,12 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     }
     document.queries match {
       case Some(t) =>
-        builder.array("queries", t:_*)
+
+        val array = builder.startArray("queries")
+        t.foreach(q => {
+          array.startObject().field("query", q).endObject()
+        })
+        array.endArray()
       case None => ;
     }
     document.bubble match {
@@ -309,7 +339,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       }
 
       val queries : List[String] = source.get("queries") match {
-        case Some(t) => t.asInstanceOf[java.util.ArrayList[String]].asScala.toList
+        case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+          .asScala.map(_.getOrDefault("query", null)).filter(_ != null).toList
         case None => List[String]()
       }
 

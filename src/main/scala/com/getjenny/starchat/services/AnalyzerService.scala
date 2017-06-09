@@ -76,7 +76,10 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
       val build = analyzer != null
 
       val queries : List[String] = source.get("queries") match {
-        case Some(t) => t.asInstanceOf[java.util.ArrayList[String]].asScala.toList
+        case Some(t) =>
+          val query_array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
+            .map(q_e => q_e.get("query"))
+          query_array
         case None => List[String]()
       }
 
