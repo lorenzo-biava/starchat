@@ -50,8 +50,9 @@ class W2VCosineStateAtomic(val state: String) extends AbstractAtomic  {
       val dist = (1.0 - cosineDist(q_item._1, query_vector._1)) *
         (q_item._2 * query_vector._2)
       dist
-    }).max
-    distance
+    })
+    val dist = if (distance.nonEmpty) distance.max else 0.0
+    dist
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least

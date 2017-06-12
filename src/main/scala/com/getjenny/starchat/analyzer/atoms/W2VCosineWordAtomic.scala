@@ -36,7 +36,8 @@ class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
           1 - cosineDist(vector, word_vec._1)
         }
       })
-      distance_list.max
+      val dist = if (distance_list.nonEmpty) distance_list.max else 0.0
+      dist
     } else {
       0.0
     }
