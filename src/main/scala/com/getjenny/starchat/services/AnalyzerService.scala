@@ -139,6 +139,5 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
     }
   }
 
-  initializeAnalyzers()
 }
 

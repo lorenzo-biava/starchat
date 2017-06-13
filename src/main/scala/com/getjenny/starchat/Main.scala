@@ -81,4 +81,6 @@ object Main extends App with RestInterface {
     }
   }
 
+  /* try to initialize the analyzers, elasticsearch must be up and running */
+  analyzerService.initializeAnalyzers()
 }
