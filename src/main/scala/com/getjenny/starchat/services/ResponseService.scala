@@ -109,7 +109,14 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
         val threshold: Double = request.threshold.getOrElse(0.0d)
         val analyzer_values: Map[String, Double] =
           AnalyzerService.analyzer_map.filter(_._2.build == true).map(item => {
-            val evaluation_score = item._2.analyzer.evaluate(user_text)
+            val evaluation_score = try {
+              log.info("Evaluation of (" + item._1 + ")")
+              item._2.analyzer.evaluate(user_text)
+            } catch {
+              case e: Exception =>
+                log.error("Evaluation of (" + item._1 + ") : " + e.getMessage)
+                0.0
+            }
             val state_id = item._1
             (state_id, evaluation_score)
         }).toList.filter(_._2 > threshold).sortWith(_._2 > _._2).take(max_results).toMap
