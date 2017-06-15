@@ -9,3 +9,6 @@ case class AnalyzerParsingException(message: String = "", cause: Throwable = nul
 
 case class AnalyzerCommandException(message: String = "", cause: Throwable = null)
   extends Exception(message, cause)
+
+case class AnalyzerEvaluationException(message: String = "", cause: Throwable = null)
+  extends Exception(message, cause)

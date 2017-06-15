@@ -13,6 +13,7 @@ import com.getjenny.starchat.services.ResponseService
 import com.getjenny.starchat.services.AnalyzerService
 import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.SCActorSystem
+import com.getjenny.analyzer.analyzers._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -88,18 +89,18 @@ trait DecisionTableResource extends MyResource {
               Future{Option{IndexManagementResponse(message = e.getMessage)}})
         }
       } ~
-      post {
-        val result: Try[Option[DTAnalyzerLoad]] =
-          Await.ready(analyzerService.loadAnalyzer, 60.seconds).value.get
-        result match {
-          case Success(t) =>
-            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-          case Failure(e) =>
-            log.error("route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
-            completeResponse(StatusCodes.BadRequest,
-              Future{Option{IndexManagementResponse(message = e.getMessage)}})
+        post {
+          val result: Try[Option[DTAnalyzerLoad]] =
+            Await.ready(analyzerService.loadAnalyzer, 60.seconds).value.get
+          result match {
+            case Success(t) =>
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+            case Failure(e) =>
+              log.error("route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Future{Option{IndexManagementResponse(message = e.getMessage)}})
+          }
         }
-      }
     }
   }
 
@@ -117,18 +118,44 @@ trait DecisionTableResource extends MyResource {
   def decisionTableResponseRequestRoutes: Route = pathPrefix("get_next_response") {
     pathEnd {
       post {
-        entity(as[ResponseRequestIn]) { response_request =>
-          val response: Option[ResponseRequestOutOperationResult] =
-            responseService.getNextResponse(response_request)
-          response match {
-            case Some(t) =>
-              if (t.status.code == 200) {
-                completeResponse(StatusCodes.OK, StatusCodes.Gone, Future{t.response_request_out})
-              }  else {
-                completeResponse(StatusCodes.NoContent) // no response found
-              }
-            case None => completeResponse(StatusCodes.BadRequest)
-          }
+        entity(as[ResponseRequestIn])
+        {
+          response_request =>
+            val response: Try[Option[ResponseRequestOutOperationResult]] =
+              Await.ready(responseService.getNextResponse(response_request), 60.seconds).value.get
+            response match {
+              case Failure(e) =>
+                log.error("DecisionTableResource: Unable to complete the request: " + e.getMessage)
+                completeResponse(StatusCodes.BadRequest,
+                  Future {
+                    Option {
+                      ResponseRequestOutOperationResult(
+                        ReturnMessageData(code = 102, message = e.getMessage),
+                        Option{ List.empty[ResponseRequestOut] })
+                    }
+                  }
+                )
+              case Success(response_value) =>
+                response_value match {
+                  case Some(t) =>
+                    if (t.status.code == 200) {
+                      completeResponse(StatusCodes.OK, StatusCodes.Gone, Future{t.response_request_out})
+                    }  else {
+                      completeResponse(StatusCodes.NoContent) // no response found
+                    }
+                  case None =>
+                    log.error("DecisionTableResource: Unable to complete the request")
+                    completeResponse(StatusCodes.BadRequest,
+                      Future {
+                        Option {
+                          ResponseRequestOutOperationResult(
+                            ReturnMessageData(code = 101, message = "unable to complete the response"),
+                            Option{ List.empty[ResponseRequestOut] })
+                        }
+                      }
+                    )
+                }
+            }
         }
       }
     }

@@ -24,6 +24,7 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
+import com.getjenny.analyzer.analyzers._
 
 /**
   * Implements response functionalities
@@ -34,7 +35,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
   val termService = new TermService
   val decisionTableService = new DecisionTableService
 
-  def getNextResponse(request: ResponseRequestIn): Option[ResponseRequestOutOperationResult] = {
+  def getNextResponse(request: ResponseRequestIn): Future[Option[ResponseRequestOutOperationResult]] = Future {
     // calculate and return the ResponseRequestOut
 
     val user_text: String = if (request.user_input.isDefined) {
@@ -110,12 +111,12 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
         val analyzer_values: Map[String, Double] =
           AnalyzerService.analyzer_map.filter(_._2.build == true).map(item => {
             val evaluation_score = try {
-              log.info("Evaluation of (" + item._1 + ")")
+              log.debug("ResponseService: Evaluation of (" + item._1 + ")")
               item._2.analyzer.evaluate(user_text)
             } catch {
               case e: Exception =>
-                log.error("Evaluation of (" + item._1 + ") : " + e.getMessage)
-                0.0
+                log.error("ResponseService: Evaluation of (" + item._1 + ") : " + e.getMessage)
+                throw new AnalyzerEvaluationException(e.getMessage, e)
             }
             val state_id = item._1
             (state_id, evaluation_score)
@@ -161,7 +162,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
           }).sortWith(_.score > _.score)
           ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{docs}) // success
         } else {
-          ResponseRequestOutOperationResult(ReturnMessageData(204, ""), null)  // no data
+          ResponseRequestOutOperationResult(ReturnMessageData(204, ""), Option{List.empty[ResponseRequestOut]})
         }
       }
     }
