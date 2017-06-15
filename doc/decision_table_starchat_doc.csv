@@ -1,0 +1,68 @@
+state,max_state_count,analyzer,"queries (T,I)",bubble (R),action (R),action_input (R),state_data (R),success_value (R),failure_value (R)
+help,0,"band(keyword(""help""))",,Ask me questions like... how to install? ...how to contribute? ...is it open source? ...how to install with docker? ...how to make a standalone installation?,,,,,
+test_state,0,"booleanAnd(booleanNot(booleanOr(keyword(""dont""),keyword(""don't""))), keyword(""test""), booleanOr(keyword(""send""), keyword(""get"")))",,This is the test state!,,,,,
+further_details_access_question,0,"or(and(or(keyword(""problem.*""),keyword(""issue.*""),keyword(""trouble.*"")),keyword(""account"")))","[""cannot access account"", ""problem access account""]",Can you specify which of the following problems you have? [NB works only if buttons can be shown!],show_buttons,"{""Forgot Password"": ""forgot_password"", ""Account locked"": ""account_locked"", ""Specify your problem"": ""specify_problem"", ""I want to call an operator"": ""call_operator"", ""None of the above"": ""start""}","{""verification"": ""did you mean you can't access to your account?""}",eval(show_buttons),dont_understand
+contribute,0,"keyword(""contribute"")",,"To contribute to StarChat, please send us a pull request from your fork of this repository.
+Our concise contribution guideline contains the bare minumum requirements of the code contributions.
+Before contributing (or opening issues), you might want send us an email at starchat@getjenny.com.",input_form,"{""email"": ""email""}","{""verification"": ""did you mean you forgot the password?""}",send_password_generation_link,dont_understand
+quickstart,0,"bor(band(keyword(""quick""), keyword(""start"")), keyword(""quickstart""))",,"The easiest way is to install StarChat using two docker images. You only need:
+
+* sbt
+* docker
+* docker compose
+
+In this way, you will put all the indices in the Elasticsearch (version 5.3) image, and StarChat itself in the Java (8) image.
+
+If you do not use docker you therefore need on your machine:
+
+* Scala 12.2
+* Elasticsearch 5.3
+
+Just type “docker install” or “standalone install” to go on.
+",send_password_generation_link,"{ ""template"": ""Hi,\nSomeone requested a new password for your account. You can set a new password here: %link%\nIf you did not request this, just ignore this message."", ""email"": ""%email%"", ""subject"": ""New password"" }",,any_further,call_operator
+docker_install,0,"band(keyword(""docker""), keyword(""install""))",,"In the terminal, go into the root directory of StarChat, and generate a packet distribution:
+
+$ sbt dist
+
+Then enter the directory docker-starchat:
+
+$ cd  docker-starchat
+
+You will get a message like “Your package is ready in ...../target/universal/starchat-4ee.... .zip”. Extract the packet into the docker-starchat folder:
+
+$ unzip ../target/universal/starchat-4eee.....zip
+$ ln -s starchat-4ee..../  starchat
+
+Now launch the dockers:
+
+$ docker-compose up -d
+
+If you have problems, tell me the output (eg “elastisearch exited with code 78”) otherwise type “create elasticsearch indices”.",,,,any_further,
+create_es_indices,0,"band(keyword(""create""), keyword(“elastic.*”),  bor(keyword(“index”),  keyword(“indices”),  keyword(“indeces”),  keyword(“indexes”)))",,"Run
+
+$ curl -v -H ""Content-Type: application/json"" -X POST ""http://localhost:8888/index_management""
+
+Now ask me how to “load configuration file”
+",,,,,
+load_conf_file,0,"band(keyword(""load.*""), keyword(""config.*""), keyword(""file.*""))",,"Now you have to load the configuration file for the actual chat, aka [decision table](#services). We have provided an example csv in English, therefore:
+
+```bash
+cd $STARCHAT_DIR  # or cd ..
+sbt ""run-main com.getjenny.command.IndexDecisionTable --inputfile doc/sample_state_machine_specification.csv --skiplines 1""
+```
+",,,,,
+standalone_install,0,"band(keyword(""standal.*""), keyword(""install""))",,…,show_buttons,"{ ""Excellent"": ""excellent_feedback"", ""Terrible"": ""terrible_feedback"" }",,eval(show_buttons),dont_understand
+code_78,0,"band(keyword(""code""),keyword(""78""))",,"If elasticsearch complain about the size of the virtual memory:
+
+max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+
+elastisearch exited with code 78
+
+run:
+
+Sysctl -w vm.max_map_count=262144",,,,,
+licence,0,"bor(band(keyword(""open""), keyword(""source"")), keyword(""opensource""), keyword(""licence""))",,"I am Open Source software, namely released under the General Public Licence 2. More information on my website",,,,,
+terrible_feedback,0,"booleanor(keyword(""idiot""), keyword(""fuck.*""), keyword(""screw""), keyword(""damn.*""), keyword(""asshole""))",,"I might be wrong, but I detected swearing. Cannot answer to that.",,,,,
+call_operator,0,"band(bor(keyword(""call""),keyword(""talk""),keyword(""speak"")),keyword(""operator""))",,"No operator is available at the moment, sorry. You just have me.",,,,,
+any_further,0,,,"Let me know if you have any other request, or type 'Bye' to close the chat",,,,,
+dont_understand,0,,,"I do not understand your input, please try again",,,,,
