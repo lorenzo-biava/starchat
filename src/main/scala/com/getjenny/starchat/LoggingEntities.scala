@@ -27,8 +27,7 @@ object LoggingEntities {
         " ReqEntity(" + req.entity + ")" +
         " ReqB64Entity(" + Base64.getEncoder.encodeToString(req.entity.toString.getBytes) + ")" +
         " ResEntity(" + res.entity + ")" +
-        " ResB64Entity(" + Base64.getEncoder.encodeToString(res.entity.toString.getBytes) + ")" +
-        , Logging.InfoLevel))
+        " ResB64Entity(" + Base64.getEncoder.encodeToString(res.entity.toString.getBytes) + ")", Logging.InfoLevel))
     case _ ⇒ None
   }
 
