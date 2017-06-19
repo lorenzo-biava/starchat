@@ -111,8 +111,10 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
         val analyzer_values: Map[String, Double] =
           AnalyzerService.analyzer_map.filter(_._2.build == true).map(item => {
             val evaluation_score = try {
-              log.debug("ResponseService: Evaluation of (" + item._1 + ")")
-              item._2.analyzer.evaluate(user_text)
+              val score = item._2.analyzer.evaluate(user_text)
+              log.debug("ResponseService: Evaluation of State(" +
+                item._1 + ") Query(" + user_text + ") Score(" + score.toString + ")")
+              score
             } catch {
               case e: Exception =>
                 log.error("ResponseService: Evaluation of (" + item._1 + ") : " + e.getMessage)

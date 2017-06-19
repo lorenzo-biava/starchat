@@ -15,11 +15,39 @@ import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.analyzer.analyzers._
 
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
+import akka.http.scaladsl.server.directives.DebuggingDirectives
+import akka.http.scaladsl.server.directives.LoggingMagnet
+import akka.http.scaladsl.server.directives.LogEntry
+import akka.http.scaladsl.model.{HttpRequest}
+import akka.http.scaladsl.server.RouteResult
+
 trait DecisionTableResource extends MyResource {
+
+  def requestAsInfo(req: HttpRequest): LogEntry = LogEntry(req, Logging.DebugLevel)
+  val logRequestAsInfo = DebuggingDirectives.logRequest(requestAsInfo _)
+
+  def responseAsInfo(res: RouteResult): LogEntry = LogEntry(res, Logging.DebugLevel)
+  val logResponseAsInfo = DebuggingDirectives.logResult(responseAsInfo _)
+
+  // logs just the request method and response status at info level
+  def requestMethodAndResponseStatus(req: HttpRequest): RouteResult => Option[LogEntry] = {
+    case RouteResult.Complete(res) => Some(LogEntry(req.method.name + ": " + res.status, Logging.InfoLevel))
+    case RouteResult.Rejected(rejections) ⇒
+      Some(LogEntry(s"Request: $req\nwas rejected with rejections:\n$rejections", Logging.WarningLevel))
+    case _ ⇒ Some(LogEntry(s"Request: $req\n has an unknown statusrejected", Logging.ErrorLevel))
+  }
+  def printRequestMethodAndResponseStatus(req: HttpRequest)(res: RouteResult): Unit =
+    LogEntry(requestMethodAndResponseStatus(req)(res).map(_.obj.toString).getOrElse(""))
+  val logRequestResultPrintln = DebuggingDirectives.logRequestResult(LoggingMagnet(_ => printRequestMethodAndResponseStatus))
+
+
+  ///def decisionTableResponseRequestRoutes: Route = logResponseAsInfo(logRequestAsInfo(decisionTableResponseRequestRoutes2))
+  def decisionTableResponseRequestRoutes: Route = logRequestResultPrintln(decisionTableResponseRequestRoutes2)
 
   val decisionTableService: DecisionTableService
   val responseService: ResponseService
@@ -115,7 +143,7 @@ trait DecisionTableResource extends MyResource {
     }
   }
 
-  def decisionTableResponseRequestRoutes: Route = pathPrefix("get_next_response") {
+  def decisionTableResponseRequestRoutes2: Route = pathPrefix("get_next_response") {
     pathEnd {
       post {
         entity(as[ResponseRequestIn])
@@ -160,7 +188,6 @@ trait DecisionTableResource extends MyResource {
       }
     }
   }
-
 }
 
 
