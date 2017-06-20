@@ -16,12 +16,15 @@ import org.elasticsearch.common.transport.{InetSocketTransportAddress, Transport
 import org.elasticsearch.action.index.IndexResponse
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.action.delete.DeleteResponse
+import org.elasticsearch.action.get.{MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
 import java.net.InetAddress
+import java.util
 
 import org.elasticsearch.common.xcontent.XContentType
+
 import scala.collection.JavaConverters._
 import com.typesafe.config.ConfigFactory
 import org.elasticsearch.action.DocWriteResponse.Result
@@ -31,10 +34,18 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
+import org.apache.lucene.search.join._
+import org.elasticsearch.common.lucene.search.function.ScriptScoreFunction
+import org.elasticsearch.index.query.ScriptQueryBuilder
+import org.elasticsearch.index.query.functionscore._
+import org.elasticsearch.script._
 
 class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
   val elastic_client = KnowledgeBaseElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+
+  val nested_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
+            "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def search(documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
@@ -56,6 +67,23 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     if(documentSearch.question.isDefined)
       bool_query_builder.must(QueryBuilders.matchQuery("question.stem_bm25", documentSearch.question.get))
 
+    if(documentSearch.question_scored_terms.isDefined) {
+
+      val query_terms = QueryBuilders.boolQuery()
+          .should(QueryBuilders.matchQuery("question_scored_terms.term", documentSearch.question_scored_terms.get))
+      val script: Script = new Script("doc[\"question_scored_terms.score\"].value")
+      val script_function = new ScriptScoreFunctionBuilder(script)
+      val function_score_query: QueryBuilder = QueryBuilders.functionScoreQuery(query_terms, script_function)
+
+      val nested_query: QueryBuilder = QueryBuilders.nestedQuery(
+        "question_scored_terms",
+        function_score_query,
+        nested_score_mode.getOrElse(elastic_client.queries_score_mode, ScoreMode.Total)
+      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(10000), true)
+
+      bool_query_builder.should(nested_query)
+    }
+
     if(documentSearch.answer.isDefined)
       bool_query_builder.must(QueryBuilders.matchQuery("answer.stem_bm25", documentSearch.answer.get))
 
@@ -73,10 +101,10 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
       val item: SearchHit = e
 
-      //        val fields : Map[String, GetField] = item.getFields.toMap
+      // val fields : Map[String, GetField] = item.getFields.toMap
       val id : String = item.getId
 
-      //        val score : Float = fields.get("_score").asInstanceOf[Float]
+      // val score : Float = fields.get("_score").asInstanceOf[Float]
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
       val conversation : String = source.get("conversation") match {
@@ -94,9 +122,31 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
+      val question_scored_terms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
+        case Some(t) => Option {
+          t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
+              .map(pair =>
+                (pair.getOrDefault("term", "").asInstanceOf[String],
+                  pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
+            .toList
+        }
+        case None => None : Option[List[(String, Double)]]
+      }
+
       val answer : String = source.get("answer") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
+      }
+
+      val answer_scored_terms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
+        case Some(t) => Option {
+          t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
+              .map(pair =>
+                (pair.getOrDefault("term", "").asInstanceOf[String],
+                  pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
+            .toList
+        }
+        case None => None : Option[List[(String, Double)]]
       }
 
       val verified : Boolean = source.get("verified") match {
@@ -126,7 +176,9 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
       val document : KBDocument = KBDocument(id = id, conversation = conversation,
         index_in_conversation = index_in_conversation, question = question,
-        answer = answer, verified = verified, topics = topics, doctype = doctype,
+        question_scored_terms = question_scored_terms,
+        answer = answer, answer_scored_terms = answer_scored_terms,
+        verified = verified, topics = topics, doctype = doctype,
         state = state, status = status)
 
       val search_document : SearchKBDocument = SearchKBDocument(score = item.score, document = document)
@@ -156,7 +208,30 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     }
 
     builder.field("question", document.question)
+
+    document.question_scored_terms match {
+      case Some(t) =>
+        val array = builder.startArray("question_scored_terms")
+        t.foreach(q => {
+          array.startObject().field("term", q._1)
+            .field("score", q._2).endObject()
+        })
+        array.endArray()
+      case None => ;
+    }
+
     builder.field("answer", document.answer)
+
+    document.answer_scored_terms match {
+      case Some(t) =>
+        val array = builder.startArray("answer_scored_terms")
+        t.foreach(q => {
+          array.startObject().field("term", q._1).field("score", q._2).endObject()
+        })
+        array.endArray()
+      case None => ;
+    }
+
     builder.field("verified", document.verified)
 
     document.topics match {
@@ -197,12 +272,25 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
   def update(id: String, document: KBDocumentUpdate, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
+
     document.conversation match {
       case Some(t) => builder.field("conversation", t)
       case None => ;
     }
+
     document.question match {
       case Some(t) => builder.field("question", t)
+      case None => ;
+    }
+
+    document.question_scored_terms match {
+      case Some(t) =>
+        val array = builder.startArray("question_scored_terms")
+        t.foreach(q => {
+          array.startObject().field("term", q._1)
+            .field("score", q._2).endObject()
+        })
+        array.endArray()
       case None => ;
     }
 
@@ -215,26 +303,42 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       case Some(t) => builder.field("answer", t)
       case None => ;
     }
+
+    document.answer_scored_terms match {
+      case Some(t) =>
+        val array = builder.startArray("answer_scored_terms")
+        t.foreach(q => {
+          array.startObject().field("term", q._1).field("score", q._2).endObject()
+        })
+        array.endArray()
+      case None => ;
+    }
+
     document.verified match {
       case Some(t) => builder.field("verified", t)
       case None => ;
     }
+
     document.topics match {
       case Some(t) => builder.field("topics", t)
       case None => ;
     }
+
     document.doctype match {
       case Some(t) => builder.field("doctype", t)
       case None => ;
     }
+
     document.state match {
       case Some(t) => builder.field("state", t)
       case None => ;
     }
+
     document.status match {
       case Some(t) => builder.field("status", t)
       case None => ;
     }
+
     builder.endObject()
 
     val client: TransportClient = elastic_client.get_client()
@@ -287,66 +391,90 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     val response: MultiGetResponse = multiget_builder.get()
 
     val documents : Option[List[SearchKBDocument]] = Option { response.getResponses
-        .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
+      .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
 
-        val id : String = item.getId
+      val id : String = item.getId
 
-        val source : Map[String, Any] = item.getSource.asScala.toMap
+      val source : Map[String, Any] = item.getSource.asScala.toMap
 
-        val conversation : String = source.get("conversation") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
+      val conversation : String = source.get("conversation") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
 
-        val index_in_conversation : Option[Int] = source.get("index_in_conversation") match {
-          case Some(t) => Option { t.asInstanceOf[Int] }
-          case None => None : Option[Int]
-        }
+      val index_in_conversation : Option[Int] = source.get("index_in_conversation") match {
+        case Some(t) => Option { t.asInstanceOf[Int] }
+        case None => None : Option[Int]
+      }
 
-        val question : String = source.get("question") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
+      val question : String = source.get("question") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
 
-        val answer : String = source.get("answer") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
+      val question_scored_terms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
+        case Some(t) =>
+          Option {
+            t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+              .asScala.map(_.asScala.toMap)
+              .map(term => (term.getOrElse("term", "").asInstanceOf[String],
+                term.getOrElse("score", 0.0).asInstanceOf[Double])).filter(_._1 != "").toList
+          }
+        case None => None : Option[List[(String, Double)]]
+      }
 
-        val verified : Boolean = source.get("verified") match {
-          case Some(t) => t.asInstanceOf[Boolean]
-          case None => false
-        }
+      val answer : String = source.get("answer") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
 
-        val topics : Option[String] = source.get("topics") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case None => None : Option[String]
-        }
+      val answer_scored_terms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
+        case Some(t) =>
+          Option {
+            t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+              .asScala.map(_.asScala.toMap)
+              .map(term => (term.getOrElse("term", "").asInstanceOf[String],
+                term.getOrElse("score", 0.0).asInstanceOf[Double])).filter(_._1 != "").toList
+          }
+        case None => None : Option[List[(String, Double)]]
+      }
 
-        val doctype : String = source.get("doctype") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => doctypes.normal
-        }
+      val verified : Boolean = source.get("verified") match {
+        case Some(t) => t.asInstanceOf[Boolean]
+        case None => false
+      }
 
-        val state : Option[String] = source.get("state") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case None => None : Option[String]
-        }
+      val topics : Option[String] = source.get("topics") match {
+        case Some(t) => Option { t.asInstanceOf[String] }
+        case None => None : Option[String]
+      }
 
-        val status : Int = source.get("status") match {
-          case Some(t) => t.asInstanceOf[Int]
-          case None => 0
-        }
+      val doctype : String = source.get("doctype") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => doctypes.normal
+      }
 
-        val document : KBDocument = KBDocument(id = id, conversation = conversation,
-          index_in_conversation = index_in_conversation, question = question,
-          answer = answer, verified = verified, topics = topics, doctype = doctype,
-          state = state, status = status)
+      val state : Option[String] = source.get("state") match {
+        case Some(t) => Option { t.asInstanceOf[String] }
+        case None => None : Option[String]
+      }
 
-        val search_document : SearchKBDocument = SearchKBDocument(score = .0f, document = document)
-        search_document
+      val status : Int = source.get("status") match {
+        case Some(t) => t.asInstanceOf[Int]
+        case None => 0
+      }
+
+      val document : KBDocument = KBDocument(id = id, conversation = conversation,
+        index_in_conversation = index_in_conversation,
+        question = question, question_scored_terms = question_scored_terms,
+        answer = answer, answer_scored_terms = answer_scored_terms,
+        verified = verified, topics = topics, doctype = doctype,
+        state = state, status = status)
+
+      val search_document : SearchKBDocument = SearchKBDocument(score = .0f, document = document)
+      search_document
     }) }
 
     val filtered_doc : List[SearchKBDocument] = documents.getOrElse(List[SearchKBDocument]())
