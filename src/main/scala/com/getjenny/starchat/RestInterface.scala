@@ -29,7 +29,7 @@ trait RestInterface extends Resources {
   lazy val spellcheckService = new SpellcheckService
 
   val routes: Route = LoggingEntities.logRequestAndResult(rootAPIsRoutes) ~
-    LoggingEntities.logRequestAndResultB64(knowledgeBaseRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(knowledgeBaseRoutes) ~
     LoggingEntities.logRequestAndResultB64(knowledgeBaseSearchRoutes) ~
     LoggingEntities.logRequestAndResultB64(decisionTableRoutes) ~
     LoggingEntities.logRequestAndResultB64(decisionTableSearchRoutes) ~
@@ -37,7 +37,7 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResult(decisionTableAnalyzerRoutes) ~
     LoggingEntities.logRequestAndResult(indexManagementRoutes) ~
     LoggingEntities.logRequestAndResult(languageGuesserRoutes) ~
-    LoggingEntities.logRequestAndResult(termRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(termRoutes) ~
     LoggingEntities.logRequestAndResult(esTokenizersRoutes) ~
     LoggingEntities.logRequestAndResult(analyzersPlaygroundRoutes) ~
     LoggingEntities.logRequestAndResult(spellcheckRoutes)

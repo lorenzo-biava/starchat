@@ -13,6 +13,13 @@ import java.util.Base64
 
 object LoggingEntities {
 
+  def requestMethodAndResponseStatusReduced(req: HttpRequest): RouteResult => Option[LogEntry] = {
+    case RouteResult.Complete(res) =>
+      Some(LogEntry("ReqUri(" + req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
+        Logging.InfoLevel))
+    case _ ⇒ None
+  }
+
   def requestMethodAndResponseStatus(req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
       Some(LogEntry("ReqUri(" + req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
@@ -33,6 +40,7 @@ object LoggingEntities {
 
   val logRequestAndResult = DebuggingDirectives.logRequestResult(requestMethodAndResponseStatus _)
   val logRequestAndResultB64 = DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusB64 _)
+  val logRequestAndResultReduced = DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusReduced _)
 
 }
 
