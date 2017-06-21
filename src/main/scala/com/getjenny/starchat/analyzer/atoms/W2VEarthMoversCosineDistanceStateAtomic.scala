@@ -37,7 +37,7 @@ class W2VEarthMoversCosineDistanceStateAtomic(val state: String) extends Abstrac
 
   val queries_sentences = AnalyzerService.analyzer_map.getOrElse(state, null)
   if (queries_sentences == null) {
-    analyzerService.log.error(toString + " : state is null")
+    analyzerService.log.debug(toString + " : state is null")
   } else {
     analyzerService.log.info(toString + " : initialized")
   }

@@ -25,11 +25,11 @@ import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
-  case class AnalyzerItem(declaration: String,
-                          build: Boolean,
-                          analyzer: StarchatAnalyzer,
-                          queries: List[TextTerms]
-                         )
+case class AnalyzerItem(declaration: String,
+                        build: Boolean,
+                        analyzer: StarchatAnalyzer,
+                        queries: List[TextTerms]
+                       )
 
 object AnalyzerService {
   var analyzer_map : Map[String, AnalyzerItem] = Map.empty[String, AnalyzerItem]
@@ -58,7 +58,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
       .setSize(1000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
-    val results : Map[String, AnalyzerItem] = scroll_resp.getHits.getHits.toList.map({ e =>
+    val analyzers_data : Map[String, AnalyzerItem] = scroll_resp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
       val source : Map[String, Any] = item.getSource.asScala.toMap
@@ -66,14 +66,6 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
-
-      val analyzer : StarchatAnalyzer = if (declaration != "") {
-        new StarchatAnalyzer(declaration)
-      } else {
-        null
-      }
-
-      val build = analyzer != null
 
       val queries : List[String] = source.get("queries") match {
         case Some(t) =>
@@ -88,14 +80,31 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
         query_terms
       }).filter(_.nonEmpty).map(x => x.get)
 
-      val analyzerItem = AnalyzerItem(declaration, build, analyzer, queries_terms)
+      val analyzerItem = AnalyzerItem(declaration, false, null, queries_terms)
       (state, analyzerItem)
     }).filter(_._2.declaration != "").toMap
-    results
+    analyzers_data
+  }
+
+  def buildAnalyzers(analyzers_map: Map[String, AnalyzerItem]): Map[String, AnalyzerItem] = {
+    val result = analyzers_map.map(item => {
+      val declaration = item._2.declaration
+      val queries_terms = item._2.queries
+      val analyzer : StarchatAnalyzer = if (declaration != "") {
+        new StarchatAnalyzer(declaration)
+      } else {
+        null
+      }
+      val build = analyzer != null
+
+      val analyzerItem = AnalyzerItem(declaration, build, analyzer, queries_terms)
+      (item._1, analyzerItem)
+    }).filter(_._2.build)
+    result
   }
 
   def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = Future {
-    AnalyzerService.analyzer_map = getAnalyzers
+    AnalyzerService.analyzer_map = buildAnalyzers(getAnalyzers)
     val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=AnalyzerService.analyzer_map.size)
     Option {dt_analyzer_load}
   }
