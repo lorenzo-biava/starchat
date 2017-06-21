@@ -44,7 +44,7 @@ object IndexTerms extends JsonSupport {
     val httpHeader: immutable.Seq[HttpHeader] = immutable.Seq(RawHeader("application", "json"))
     val timeout = Duration(params.timeout, "s")
 
-    term_text_entries.drop(skiplines).foreach(entry => {
+    (term_text_entries.drop(skiplines)).foreach(entry => {
       val splitted = entry.split(" ")
       val term_text = splitted.head
       var term_vector = Vector.empty[Double]
