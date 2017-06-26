@@ -7,7 +7,9 @@ package com.getjenny.starchat.entities
 import scala.collection.immutable.{List, Map}
 
 case class DTDocument(state: String,
+                      execution_order: Int,
                       max_state_count: Int,
+                      pattern_extractor: String,
                       analyzer: String,
                       queries: List[String],
                       bubble: String,

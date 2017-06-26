@@ -6,7 +6,9 @@ package com.getjenny.starchat.entities
 
 import scala.collection.immutable.{List, Map}
 
-case class DTDocumentUpdate(max_state_count: Option[Int],
+case class DTDocumentUpdate(execution_order: Option[Int],
+                            max_state_count: Option[Int],
+                            pattern_extractor: Option[String],
                             analyzer: Option[String],
                             queries: Option[List[String]],
                             bubble: Option[String],

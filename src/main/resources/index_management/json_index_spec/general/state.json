@@ -7,9 +7,20 @@
       "index": true,
       "null_value": ""
     },
+    "execution_order":
+    {
+      "type": "integer"
+    },
     "max_state_count":
     {
       "type": "integer"
+    },
+    "pattern_extractor":
+    {
+      "type": "keyword",
+      "store": true,
+      "index": true,
+      "null_value": ""
     },
     "analyzer":
     {

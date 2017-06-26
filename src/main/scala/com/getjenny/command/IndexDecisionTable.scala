@@ -61,9 +61,9 @@ object IndexDecisionTable extends JsonSupport {
         println("Error: file row is not consistent  Row(" + entry.toString + ")")
       } else {
 
-        val queries_csv_string = entry(3)
-        val action_input_csv_string = entry(6)
-        val state_data_csv_string = entry(7)
+        val queries_csv_string = entry(5)
+        val action_input_csv_string = entry(8)
+        val state_data_csv_string = entry(9)
 
         val queries_future: Future[List[String]] = queries_csv_string match {
           case "" => Future { List.empty[String] }
@@ -85,15 +85,17 @@ object IndexDecisionTable extends JsonSupport {
         val state_data = Await.result(state_data_future, 10.second)
 
         val state = DTDocument(state = entry(0),
-          max_state_count = entry(1).toInt,
-          analyzer = entry(2),
+          execution_order = entry(1).toInt,
+          max_state_count = entry(2).toInt,
+          pattern_extractor = entry(3),
+          analyzer = entry(4),
           queries = queries,
-          bubble = entry(4),
-          action = entry(5),
+          bubble = entry(6),
+          action = entry(7),
           action_input = action_input,
           state_data = state_data,
-          success_value = entry(8),
-          failure_value = entry(9)
+          success_value = entry(10),
+          failure_value = entry(11)
         )
 
         val entity_future = Marshal(state).to[MessageEntity]

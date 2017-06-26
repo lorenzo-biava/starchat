@@ -51,6 +51,10 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
     else
       Map[String, String]()
 
+    val traversed_states: List[String] = request.traversed_states.getOrElse(List.empty[String])
+    val traversed_states_count: Map[String, Int] =
+      traversed_states.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
+
     val return_value: String = if (request.values.isDefined)
       request.values.get.return_value.getOrElse("")
     else
@@ -80,8 +84,10 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
             }
           }
 
+          /* we do not update the traversed_states list, if the state is requested we just return it */
           val response_data: ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
             state = state,
+            traversed_states = traversed_states,
             max_state_count = max_state_count,
             analyzer = analyzer,
             bubble = bubble,
@@ -109,16 +115,20 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
         val max_results: Int = request.max_results.getOrElse(2)
         val threshold: Double = request.threshold.getOrElse(0.0d)
         val analyzer_values: Map[String, Double] =
-          AnalyzerService.analyzer_map.filter(_._2.build == true).map(item => {
+          AnalyzerService.analyzer_map.filter(_._2.analyzer.build == true).filter(v => {
+            val traversed_state_count = traversed_states_count.getOrElse(v._1, 0)
+            val max_state_count = v._2.max_state_counter
+            max_state_count == 0 || traversed_state_count < max_state_count // skip states already evaluated too much times
+          }).map(item => {
             val evaluation_score = try {
-              val score = item._2.analyzer.evaluate(user_text)
+              val score = item._2.analyzer.analyzer.evaluate(user_text)
               log.debug("ResponseService: Evaluation of State(" +
                 item._1 + ") Query(" + user_text + ") Score(" + score.toString + ")")
               score
             } catch {
               case e: Exception =>
                 log.error("ResponseService: Evaluation of (" + item._1 + ") : " + e.getMessage)
-                throw new AnalyzerEvaluationException(e.getMessage, e)
+                throw AnalyzerEvaluationException(e.getMessage, e)
             }
             val state_id = item._1
             (state_id, evaluation_score)
@@ -148,9 +158,11 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
               }
             }
 
+            val traversed_states_updated: List[String] = traversed_states ++ List(state)
             val response_item: ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
               state = state,
               max_state_count = max_state_count,
+              traversed_states = traversed_states_updated,
               analyzer = analyzer,
               bubble = bubble,
               action = doc.action,

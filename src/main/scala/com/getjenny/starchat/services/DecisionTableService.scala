@@ -66,6 +66,9 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     if (documentSearch.state.isDefined)
       bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get))
 
+    if (documentSearch.execution_order.isDefined)
+      bool_query_builder.must(QueryBuilders.matchQuery("execution_order", documentSearch.state.get))
+
     if(documentSearch.queries.isDefined) {
       val nested_query: QueryBuilder = QueryBuilders.nestedQuery(
         "queries",
@@ -95,9 +98,19 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
+        val execution_order: Int = source.get("execution_order") match {
+        case Some(t) => t.asInstanceOf[Int]
+        case None => 0
+      }
+
       val max_state_count : Int = source.get("max_state_count") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
+      }
+
+      val pattern_extractor : String = source.get("pattern_extractor") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
       }
 
       val analyzer : String = source.get("analyzer") match {
@@ -147,7 +160,9 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
-      val document : DTDocument = DTDocument(state = state, max_state_count = max_state_count,
+      val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
+        max_state_count = max_state_count,
+        pattern_extractor = pattern_extractor,
         analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)
@@ -171,8 +186,10 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     builder.field("state", document.state)
+    builder.field("execution_order", document.execution_order)
     builder.field("max_state_count", document.max_state_count)
     builder.field("analyzer", document.analyzer)
+    builder.field("pattern_extractor", document.pattern_extractor)
 
     val array = builder.startArray("queries")
     document.queries.foreach(q => {
@@ -220,8 +237,18 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
   def update(id: String, document: DTDocumentUpdate, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
+    document.pattern_extractor match {
+      case Some(t) => builder.field("pattern_extractor", t)
+      case None => ;
+    }
+
     document.analyzer match {
       case Some(t) => builder.field("analyzer", t)
+      case None => ;
+    }
+
+    document.execution_order match {
+      case Some(t) => builder.field("execution_order", t)
       case None => ;
     }
     document.max_state_count match {
@@ -328,9 +355,19 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
+      val execution_order : Int = source.get("execution_order") match {
+        case Some(t) => t.asInstanceOf[Int]
+        case None => 0
+      }
+
       val max_state_count : Int = source.get("max_state_count") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
+      }
+
+      val pattern_extractor : String = source.get("pattern_extractor") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
       }
 
       val analyzer : String = source.get("analyzer") match {
@@ -374,7 +411,9 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
-      val document : DTDocument = DTDocument(state = state, max_state_count = max_state_count,
+      val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
+        max_state_count = max_state_count,
+        pattern_extractor = pattern_extractor,
         analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)

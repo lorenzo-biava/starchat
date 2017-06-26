@@ -32,6 +32,8 @@ class SearchAtomic(state: String) extends AbstractAtomic {
 
     val dtDocumentSearch : DTDocumentSearch =
       DTDocumentSearch(from = Option{0}, size = Option{10}, min_score = min_score,
+        execution_order = None: Option[Int],
+        pattern_extractor = None: Option[String],
         boost_exact_match_factor = boost_exact_match_factor, state = Option{ref_state}, queries = Option{query})
 
     val state: Future[Option[SearchDTDocumentsResults]] = decisionTableService.search(dtDocumentSearch)
