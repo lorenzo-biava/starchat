@@ -121,18 +121,18 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
             val max_state_count = v._2.max_state_counter
             max_state_count == 0 || traversed_state_count < max_state_count // skip states already evaluated too much times
           }).map(item => {
-            val evaluation_score = try {
-              val score = item._2.analyzer.analyzer.evaluate(user_text)
+            val analyzer_evaluation = try {
+              val evaluation_res = item._2.analyzer.analyzer.evaluate(user_text)
               log.debug("ResponseService: Evaluation of State(" +
-                item._1 + ") Query(" + user_text + ") Score(" + score.toString + ")")
-              score
+                item._1 + ") Query(" + user_text + ") Score(" + evaluation_res.toString + ")")
+              evaluation_res
             } catch {
               case e: Exception =>
                 log.error("ResponseService: Evaluation of (" + item._1 + ") : " + e.getMessage)
                 throw AnalyzerEvaluationException(e.getMessage, e)
             }
             val state_id = item._1
-            (state_id, evaluation_score)
+            (state_id, analyzer_evaluation)
         }).toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(max_results).toMap
 
         if(analyzer_values.nonEmpty) {
@@ -142,20 +142,26 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
           val docs = res.get.hits.map(item => {
             val doc: DTDocument = item.document
             val state = doc.state
-            val score: Double = analyzer_values(state).score
+            val evaluation_res: Result = analyzer_values(state)
             val max_state_count: Int = doc.max_state_count
             val analyzer: String = doc.analyzer
             var bubble: String = doc.bubble
             var action_input: Map[String, String] = doc.action_input
             val state_data: Map[String, String] = doc.state_data
 
-            if (data.nonEmpty) {
-              for ((key, value) <- data) {
-                bubble = bubble.replaceAll("%" + key + "%", value)
-                action_input = doc.action_input map { case (ki, vi) =>
-                  val new_value: String = vi.replaceAll("%" + key + "%", value)
-                  (ki, new_value)
-                }
+            for ((key, value) <- data) {
+              bubble = bubble.replaceAll("%" + key + "%", value)
+              action_input = doc.action_input map { case (ki, vi) =>
+                val new_value: String = vi.replaceAll("%" + key + "%", value)
+                (ki, new_value)
+              }
+            }
+
+            for ((key, value) <- evaluation_res.extracted_variables) {
+              bubble = bubble.replaceAll("%" + key + "%", value)
+              action_input = doc.action_input map { case (ki, vi) =>
+                val new_value: String = vi.replaceAll("%" + key + "%", value)
+                (ki, new_value)
               }
             }
 
@@ -172,7 +178,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
               state_data = state_data,
               success_value = doc.success_value,
               failure_value = doc.failure_value,
-              score = score)
+              score = evaluation_res.score)
             response_item
           }).sortWith(_.score > _.score)
           ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{docs}) // success
