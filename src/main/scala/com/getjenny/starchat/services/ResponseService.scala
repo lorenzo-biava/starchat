@@ -132,7 +132,6 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
                 throw AnalyzerEvaluationException(e.getMessage, e)
             }
             val state_id = item._1
-            println("AAAAAAAAAA: " + (state_id, analyzer_evaluation))
             (state_id, analyzer_evaluation)
         }).toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(max_results).toMap
 

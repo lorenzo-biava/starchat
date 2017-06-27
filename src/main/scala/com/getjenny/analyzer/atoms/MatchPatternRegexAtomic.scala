@@ -15,9 +15,7 @@ class MatchPatternRegexAtomic(val regex: String) extends AbstractAtomic {
 
   def evaluate(query: String): Result = {
     val res = try {
-      println("AAAAAAAAABBBBBBBBBBBBBBB: " + regex)
       val extracted_variables = regex_extractor.evaluate(query)
-      println("AAAAAA111: " + extracted_variables)
       Result(score=1.0, extracted_variables=extracted_variables)
     } catch {
       case e: PatternExtractionNoMatchException =>
