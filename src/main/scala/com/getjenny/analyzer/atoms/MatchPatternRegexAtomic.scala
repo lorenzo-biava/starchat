@@ -19,7 +19,7 @@ class MatchPatternRegexAtomic(val regex: String) extends AbstractAtomic {
       Result(score=1.0, extracted_variables=extracted_variables)
     } catch {
       case e: PatternExtractionNoMatchException =>
-        println("DEBUG: no match for regular expression specification(" + regex + "), query(" + query + ")")
+        //println("DEBUG: no match for regular expression specification(" + regex + "), query(" + query + ")")
         Result(score=0)
       case e: Exception =>
         throw ExceptionAtomic("Parsing of regular expression specification(" + regex + "), query(" + query + ")", e)
