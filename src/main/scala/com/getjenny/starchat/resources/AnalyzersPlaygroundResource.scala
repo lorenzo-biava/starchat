@@ -23,8 +23,7 @@ trait AnalyzersPlaygroundResource extends MyResource {
     pathEnd {
       post {
        entity(as[AnalyzerEvaluateRequest]) { request =>
-         val result: Try[Option[AnalyzerEvaluateResponse]] =
-           Await.ready(analyzerService.evaluateAnalyzer(request), 60.seconds).value.get
+         val result = Try(analyzerService.evaluateAnalyzer(request))
          result match {
            case Success(t) =>
              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {
@@ -37,7 +36,7 @@ trait AnalyzersPlaygroundResource extends MyResource {
              completeResponse(StatusCodes.BadRequest,
                Future {
                  Option {
-                   IndexManagementResponse(message = e.getMessage)
+                   ReturnMessageData(code=100, message = e.getMessage)
                  }
                })
          }

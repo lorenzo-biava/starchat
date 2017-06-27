@@ -26,31 +26,18 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import com.getjenny.pattern_extraction._
-
-case class PatternExtractionItem(declaration: String,
-                                 extractor: PatternExtraction,
-                                 build: Boolean,
-                                 message: String)
+import com.getjenny.analyzer.expressions.Result
 
 case class AnalyzerItem(declaration: String,
                          analyzer: StarchatAnalyzer,
-                         build: Boolean)
+                         build: Boolean,
+                         message: String)
 
 case class DecisionTableRuntimeItem(execution_order: Int,
                                     max_state_counter: Int,
                                     analyzer: AnalyzerItem,
-                                    pattern_extractor: PatternExtractionItem,
                                     queries: List[TextTerms]
                                    )
-
-//begin
-//val regex_elements = Map("regex" ->
-//  """((?:[1-9]+)-(?:[0-9]+)(?: (?:[1-9]+)-(?:[0-9]+))*)""", "groups" -> "group1")
-//val regex_elements = Map("regex" ->
-//  """([1-9]+)-([0-9]+)""", "groups" -> "group1,group2")
-//val regex_input = "111-222 333-342"
-//end
 
 object AnalyzerService {
   var analyzer_map : mutable.LinkedHashMap[String, DecisionTableRuntimeItem] =
@@ -75,7 +62,8 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
     val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
-      .setFetchSource(Array("state", "execution_order", "analyzer", "queries"), Array.empty[String])
+      .setFetchSource(Array("state", "execution_order", "max_state_counter",
+        "analyzer", "queries"), Array.empty[String])
       .setScroll(new TimeValue(60000))
       .setSize(1000).get()
 
@@ -91,13 +79,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
-      val pattern_extractor_declaration : String = source.get("pattern_extractor") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
-
-      val execution_order : Int = source.get("execution_oder") match {
+     val execution_order : Int = source.get("execution_oder") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
       }
@@ -122,10 +104,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
 
       val decisionTableRuntimeItem: DecisionTableRuntimeItem = DecisionTableRuntimeItem(execution_order=execution_order,
         max_state_counter=max_state_counter,
-        analyzer=AnalyzerItem(declaration=analyzer_declaration, build=false,
-          analyzer=null),
-        pattern_extractor=PatternExtractionItem(declaration=pattern_extractor_declaration, build=false,
-          extractor=null, message = ""),
+        analyzer=AnalyzerItem(declaration=analyzer_declaration, build=false, analyzer=null, message = "not built"),
         queries=queries_terms)
       (state, decisionTableRuntimeItem)
     }).filter(_._2.analyzer.declaration != "").sortWith(_._2.execution_order < _._2.execution_order)
@@ -143,74 +122,33 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
       val max_state_counter = item._2.max_state_counter
       val analyzer_declaration = item._2.analyzer.declaration
       val queries_terms = item._2.queries
-      val analyzer : StarchatAnalyzer = if (analyzer_declaration != "") {
-        new StarchatAnalyzer(analyzer_declaration)
+      val (analyzer : StarchatAnalyzer, message: String) = if (analyzer_declaration != "") {
+        try {
+          val analyzer_object = new StarchatAnalyzer(analyzer_declaration)
+          (analyzer_object, "Analyzer successfully built: " + item._1)
+        } catch {
+          case e: Exception =>
+            (null,
+              "Error building analyzer (" + item._1 + ") declaration(" + analyzer_declaration + "): " + e.getMessage)
+        }
       } else {
-        null
+        (null, "analyzer declaration is empty")
       }
 
       val build = analyzer != null
 
       val decisionTableRuntimeItem = DecisionTableRuntimeItem(execution_order=execution_order,
         max_state_counter=max_state_counter,
-        analyzer=AnalyzerItem(declaration=analyzer_declaration, build=build, analyzer=analyzer),
-        pattern_extractor=item._2.pattern_extractor,
+        analyzer=AnalyzerItem(declaration=analyzer_declaration, build=build, analyzer=analyzer, message = message),
         queries=queries_terms)
       (item._1, decisionTableRuntimeItem)
     }).filter(_._2.analyzer.build)
     result
   }
 
-  def buildPatternMatching(analyzers_map: mutable.LinkedHashMap[String, DecisionTableRuntimeItem]):
-                                                      mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
-    val result = analyzers_map.map(item => {
-      if (item._2.pattern_extractor.declaration != "") {
-        val execution_order = item._2.execution_order
-        val max_state_counter = item._2.max_state_counter
-        val pattern_extractor_declaration = item._2.pattern_extractor.declaration
-        val queries_terms = item._2.queries
-        val analyzer = item._2.analyzer
-
-
-        val (pattern_extractor : PatternExtractionRegex, message: String) = try {
-          val extractor = new PatternExtractionRegex(pattern_extractor_declaration)
-          val message = "no errors"
-          (extractor, message)
-        } catch {
-          case e: PatternExtractionDeclarationParsingException =>
-            val message = "Cannot parse the string with [<groups>+]|<regex>?: " + e.message
-            log.error(message)
-            (null, message)
-          case e: PatternExtractionParsingException =>
-            val message = "Cannot parse the regular expression: " + e.message
-            log.error(message)
-            (null, message)
-          case e: PatternExtractionBadSpecificationException =>
-            val message = "Bad specification of the pattern matching expression: " + e.message
-            log.error(message)
-            (null, message)
-        }
-
-        val build = pattern_extractor != null
-        val pattern_extractor_item = PatternExtractionItem(build = build, extractor = pattern_extractor,
-          declaration = pattern_extractor_declaration, message = message)
-
-        val decisionTableRuntimeItem = DecisionTableRuntimeItem(execution_order=execution_order,
-          max_state_counter=max_state_counter,
-          analyzer=analyzer,
-          pattern_extractor=pattern_extractor_item,
-          queries=queries_terms)
-        (item._1, decisionTableRuntimeItem)
-      } else {
-        // no Pattern matching declaration
-        item
-      }
-    }).filter(_._2.pattern_extractor.build)
-    result
-  }
-
   def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = Future {
-    AnalyzerService.analyzer_map = buildAnalyzers(getAnalyzers)
+    AnalyzerService.analyzer_map = getAnalyzers
+    AnalyzerService.analyzer_map = buildAnalyzers(AnalyzerService.analyzer_map)
     val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=AnalyzerService.analyzer_map.size)
     Option {dt_analyzer_load}
   }
@@ -223,19 +161,16 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
     analyzers
   }
 
-  def evaluateAnalyzer(analyzer_request: AnalyzerEvaluateRequest):
-    Future[Option[AnalyzerEvaluateResponse]] = {
-
+  def evaluateAnalyzer(analyzer_request: AnalyzerEvaluateRequest): Future[Option[AnalyzerEvaluateResponse]] = {
     val analyzer = Try(new StarchatAnalyzer(analyzer_request.analyzer))
-    val response = analyzer match {
+    lazy val response = analyzer match {
       case Failure(exception) =>
-        val analyzer_response = AnalyzerEvaluateResponse(build = false,
-          value = 0.0, build_message = exception.getMessage)
-        analyzer_response
+        log.error("error during evaluation of analyzer: " + exception.getMessage)
+        throw exception
       case Success(result) =>
         val eval_res = result.evaluate(analyzer_request.query)
         val analyzer_response = AnalyzerEvaluateResponse(build = true,
-          value = eval_res, build_message = "success")
+          value = eval_res.score, variables = eval_res.extracted_variables, build_message = "success")
         analyzer_response
     }
 

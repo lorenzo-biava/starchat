@@ -15,10 +15,11 @@ class BooleanOrOperator(children: List[Expression]) extends AbstractOperator(chi
         case _ => throw OperatorException("booleanOr: trying to add to smt else than an operator")
       }
   }
-  def evaluate(query: String): Double = {
-    def loop(l: List[Expression]): Double = {
-      if (l.head.matches(query)) 1
-      else if (l.tail == Nil) 0
+  def evaluate(query: String): Result = {
+    def loop(l: List[Expression]): Result = {
+      val res = l.head.matches(query)
+      if (res.score == 1) Result(score=1, extracted_variables = res.extracted_variables)
+      else if (l.tail == Nil) Result(score=0, extracted_variables = res.extracted_variables)
       else loop(l.tail)
     }
     loop(children)

@@ -1,5 +1,7 @@
 package com.getjenny.analyzer.atoms
 
+import com.getjenny.analyzer.expressions.Result
+
 /**
   * Created by mal on 20/02/2017.
   */
@@ -12,11 +14,13 @@ class KeywordAtomic(val keyword: String) extends AbstractAtomic {
   override def toString: String = "keyword(\"" + keyword + "\")"
   val isEvaluateNormalized: Boolean = true
   private val rx = {"""\b""" + keyword + """\b"""}.r
-  def evaluate(query: String): Double = {
+  def evaluate(query: String): Result = {
     val freq = rx.findAllIn(query).toList.length
     val query_length = """\S+""".r.findAllIn(query).toList.length
-    if (freq > 0) println("DEBUG: KeywordAtomic: '" + keyword + "' found " + freq + " times in " + query + " (length=" + query_length + ").")
-    freq.toDouble / query_length.toDouble
+    if (freq > 0) println("DEBUG: KeywordAtomic: '" + keyword + "' found " + freq +
+      " times in " + query + " (length=" + query_length + ").")
+    val score = freq.toDouble / query_length.toDouble
+    Result(score = score)
   }
 
 }

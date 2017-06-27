@@ -12,6 +12,7 @@ import com.getjenny.starchat.services._
 import scala.concurrent.duration._
 import scala.concurrent._
 import ExecutionContext.Implicits.global
+import com.getjenny.analyzer.expressions.Result
 
 /**
   * Created by mal on 20/02/2017.
@@ -32,11 +33,11 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
 
   override def toString: String = "similar(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String): Double = {
+  def evaluate(query: String): Result = {
     val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
     val distance = (1.0 - cosineDist(sentence_vector._1, query_vector._1)) *
       (sentence_vector._2 * query_vector._2)
-    distance
+    Result(score=distance)
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least

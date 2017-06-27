@@ -15,12 +15,16 @@ class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(c
       case _ => throw OperatorException("Conjunction: trying to add to smt else than an operator")
     }
   }
-  def evaluate(query: String): Double = {
-    def conjunction(l: List[Expression]): Double = {
+  def evaluate(query: String): Result = {
+    def conjunction(l: List[Expression]): Result = {
       val eval = l.head.evaluate(query)
-      if (eval == 0) 0
+      if (eval.score == 0) Result(score = 0, extracted_variables = eval.extracted_variables)
       else if (l.tail == Nil) eval
-      else eval * conjunction(l.tail)
+      else {
+        val res = conjunction(l.tail)
+        Result(score = eval.score * res.score,
+          extracted_variables = eval.extracted_variables ++ res.extracted_variables)
+      }
     }
     conjunction(children)
   }

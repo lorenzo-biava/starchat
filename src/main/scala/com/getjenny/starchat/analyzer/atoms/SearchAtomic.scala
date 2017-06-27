@@ -5,6 +5,7 @@ package com.getjenny.starchat.analyzer.atoms
   */
 
 import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.expressions.Result
 import com.getjenny.starchat.entities._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -26,14 +27,13 @@ class SearchAtomic(state: String) extends AbstractAtomic {
 
   val decisionTableService = new DecisionTableService
 
-  def evaluate(query: String): Double = {
+  def evaluate(query: String): Result = {
     val min_score = Option{decisionTableService.elastic_client.query_min_threshold}
     val boost_exact_match_factor = Option{decisionTableService.elastic_client.boost_exact_match_factor}
 
     val dtDocumentSearch : DTDocumentSearch =
       DTDocumentSearch(from = Option{0}, size = Option{10}, min_score = min_score,
         execution_order = None: Option[Int],
-        pattern_extractor = None: Option[String],
         boost_exact_match_factor = boost_exact_match_factor, state = Option{ref_state}, queries = Option{query})
 
     val state: Future[Option[SearchDTDocumentsResults]] = decisionTableService.search(dtDocumentSearch)
@@ -42,17 +42,17 @@ class SearchAtomic(state: String) extends AbstractAtomic {
 
     val res_count = if (res.isEmpty) 0 else res.get.total
 
-    val score : Float = res_count match {
+    val score : Double = res_count match {
       case 0 => 0.0f
       case _ =>
         val doc : DTDocument = res.get.hits.head.document
         val state : String = doc.state
-        val max_score : Float = res.get.max_score
-        val sum_of_scores : Float = res.get.hits.map(x => x.score).sum
+        val max_score : Double = res.get.max_score
+        val sum_of_scores : Double = res.get.hits.map(x => x.score).sum
         val norm_score = max_score / (sum_of_scores + 1)
         norm_score
     }
-    score
+    Result(score=score)
   } // returns elasticsearch score of the highest query in queries
 
 }

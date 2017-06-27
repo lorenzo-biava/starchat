@@ -108,12 +108,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => 0
       }
 
-      val pattern_extractor : String = source.get("pattern_extractor") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
-      val analyzer : String = source.get("analyzer") match {
+     val analyzer : String = source.get("analyzer") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
@@ -162,7 +157,6 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
         max_state_count = max_state_count,
-        pattern_extractor = pattern_extractor,
         analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)
@@ -189,7 +183,6 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     builder.field("execution_order", document.execution_order)
     builder.field("max_state_count", document.max_state_count)
     builder.field("analyzer", document.analyzer)
-    builder.field("pattern_extractor", document.pattern_extractor)
 
     val array = builder.startArray("queries")
     document.queries.foreach(q => {
@@ -236,11 +229,6 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
   def update(id: String, document: DTDocumentUpdate, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
-
-    document.pattern_extractor match {
-      case Some(t) => builder.field("pattern_extractor", t)
-      case None => ;
-    }
 
     document.analyzer match {
       case Some(t) => builder.field("analyzer", t)
@@ -365,11 +353,6 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => 0
       }
 
-      val pattern_extractor : String = source.get("pattern_extractor") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
       val analyzer : String = source.get("analyzer") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
@@ -413,7 +396,6 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
         max_state_count = max_state_count,
-        pattern_extractor = pattern_extractor,
         analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)

@@ -15,14 +15,7 @@
     {
       "type": "integer"
     },
-    "pattern_extractor":
-    {
-      "type": "keyword",
-      "store": true,
-      "index": true,
-      "null_value": ""
-    },
-    "analyzer":
+   "analyzer":
     {
       "type": "keyword",
       "store": true,

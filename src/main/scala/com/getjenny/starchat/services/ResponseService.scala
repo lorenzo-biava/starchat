@@ -25,6 +25,7 @@ import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import com.getjenny.analyzer.analyzers._
+import com.getjenny.analyzer.expressions.Result
 
 /**
   * Implements response functionalities
@@ -114,7 +115,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
         // No states in the return values
         val max_results: Int = request.max_results.getOrElse(2)
         val threshold: Double = request.threshold.getOrElse(0.0d)
-        val analyzer_values: Map[String, Double] =
+        val analyzer_values: Map[String, Result] =
           AnalyzerService.analyzer_map.filter(_._2.analyzer.build == true).filter(v => {
             val traversed_state_count = traversed_states_count.getOrElse(v._1, 0)
             val max_state_count = v._2.max_state_counter
@@ -132,7 +133,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
             }
             val state_id = item._1
             (state_id, evaluation_score)
-        }).toList.filter(_._2 > threshold).sortWith(_._2 > _._2).take(max_results).toMap
+        }).toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(max_results).toMap
 
         if(analyzer_values.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] =
@@ -141,7 +142,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
           val docs = res.get.hits.map(item => {
             val doc: DTDocument = item.document
             val state = doc.state
-            val score: Double = analyzer_values(state)
+            val score: Double = analyzer_values(state).score
             val max_state_count: Int = doc.max_state_count
             val analyzer: String = doc.analyzer
             var bubble: String = doc.bubble
