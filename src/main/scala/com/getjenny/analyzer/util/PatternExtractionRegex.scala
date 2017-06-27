@@ -11,7 +11,7 @@ import scala.util.matching._
 class PatternExtractionRegex(declaration: String) extends
   PatternExtraction(declaration) {
 
-  val pattern_extraction_field_regex = """(\[[\w\d\.\_]+(?:\s*,\s*[\w\d\.\_]+)*\])(\(.*\))""".r
+  val pattern_extraction_field_regex = """(?:\[([\w\d\.\_]+(?:\s*,\s*[\w\d\.\_]+)*)\])(\(.*\))""".r
   //"es. [group1,group2, group3]((?:[1-9]+)-(?:[0-9]+)(?: (?:[1-9]+)-(?:[0-9]+))*)"
 
   val regex_components: Map[String, String] = try {

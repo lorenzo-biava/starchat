@@ -1,8 +1,6 @@
-package com.getjenny.starchat.analyzer.atoms
+package com.getjenny.analyzer.atoms
 
 import com.getjenny.analyzer.expressions.Result
-import com.getjenny.analyzer.atoms.AbstractAtomic
-import com.getjenny.analyzer.atoms.ExceptionAtomic
 import com.getjenny.starchat.analyzer.utils._
 
 /**
@@ -10,15 +8,17 @@ import com.getjenny.starchat.analyzer.utils._
   */
 
 class MatchPatternRegexAtomic(val regex: String) extends AbstractAtomic {
-  override def toString: String = "matchRegexPattern(" + regex + ")"
+  override def toString: String = "matchPatternRegex(" + regex + ")"
   val isEvaluateNormalized: Boolean = true
 
   val regex_extractor = new PatternExtractionRegex(regex)
 
   def evaluate(query: String): Result = {
     val res = try {
+      println("AAAAAAAAABBBBBBBBBBBBBBB: " + regex)
       val extracted_variables = regex_extractor.evaluate(query)
-      Result(score=1.0, extracted_variables = extracted_variables)
+      println("AAAAAA111: " + extracted_variables)
+      Result(score=1.0, extracted_variables=extracted_variables)
     } catch {
       case e: PatternExtractionNoMatchException =>
         Result(score=0)

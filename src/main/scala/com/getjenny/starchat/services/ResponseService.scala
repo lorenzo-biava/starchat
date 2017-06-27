@@ -132,6 +132,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
                 throw AnalyzerEvaluationException(e.getMessage, e)
             }
             val state_id = item._1
+            println("AAAAAAAAAA: " + (state_id, analyzer_evaluation))
             (state_id, analyzer_evaluation)
         }).toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(max_results).toMap
 
@@ -165,6 +166,9 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
               }
             }
 
+            val cleaned_data =
+              data ++ evaluation_res.extracted_variables.filter(item => !(item._1 matches "\\A__temp__.*"))
+
             val traversed_states_updated: List[String] = traversed_states ++ List(state)
             val response_item: ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
               state = state,
@@ -173,7 +177,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
               analyzer = analyzer,
               bubble = bubble,
               action = doc.action,
-              data = data,
+              data = cleaned_data,
               action_input = action_input,
               state_data = state_data,
               success_value = doc.success_value,

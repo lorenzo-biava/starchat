@@ -79,7 +79,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
-     val execution_order : Int = source.get("execution_oder") match {
+     val execution_order : Int = source.get("execution_order") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
       }
@@ -155,7 +155,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
 
   def getDTAnalyzerMap : Future[Option[DTAnalyzerMap]] = {
     val analyzers = Future(Option(DTAnalyzerMap(AnalyzerService.analyzer_map.map(x => {
-      val dt_analyzer = DTAnalyzerItem(x._2.analyzer.declaration, x._2.analyzer.build)
+      val dt_analyzer = DTAnalyzerItem(x._2.analyzer.declaration, x._2.analyzer.build, x._2.execution_order)
       (x._1, dt_analyzer)
     }).toMap)))
     analyzers

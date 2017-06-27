@@ -4,6 +4,7 @@
 curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable -d '{
 	"state": "further_details_access_question",
         "max_state_count": 0,
+        "execution_order": 0,
         "analyzer": "",
 	"queries": ["cannot access account", "problem access account"],
 	"bubble": "What seems to be the problem exactly?",

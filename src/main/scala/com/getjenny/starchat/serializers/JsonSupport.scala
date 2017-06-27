@@ -33,7 +33,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val updateDocumentResultListFormat = jsonFormat1(UpdateDocumentListResult)
   implicit val deleteDocumentResultListFormat = jsonFormat1(DeleteDocumentListResult)
   implicit val listOfDocumentIdFormat = jsonFormat1(ListOfDocumentId)
-  implicit val dtAnalyzerItem = jsonFormat2(DTAnalyzerItem)
+  implicit val dtAnalyzerItem = jsonFormat3(DTAnalyzerItem)
   implicit val dtAnalyzerMapFormat = jsonFormat1(DTAnalyzerMap)
   implicit val dtAnalyzerLoadFormat = jsonFormat1(DTAnalyzerLoad)
   implicit val indexManagementResponseFormat = jsonFormat1(IndexManagementResponse)
