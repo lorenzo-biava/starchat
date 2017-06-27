@@ -1,7 +1,7 @@
 package com.getjenny.analyzer.atoms
 
 import com.getjenny.analyzer.expressions.Result
-import com.getjenny.starchat.analyzer.utils._
+import com.getjenny.analyzer.utils._
 
 /**
   * Created by angelo on 27/06/17.
@@ -19,6 +19,7 @@ class MatchPatternRegexAtomic(val regex: String) extends AbstractAtomic {
       Result(score=1.0, extracted_variables=extracted_variables)
     } catch {
       case e: PatternExtractionNoMatchException =>
+        println("DEBUG: no match for regular expression specification(" + regex + "), query(" + query + ")")
         Result(score=0)
       case e: Exception =>
         throw ExceptionAtomic("Parsing of regular expression specification(" + regex + "), query(" + query + ")", e)

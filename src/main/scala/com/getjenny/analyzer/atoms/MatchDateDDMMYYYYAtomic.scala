@@ -1,7 +1,7 @@
 package com.getjenny.analyzer.atoms
 
 import com.getjenny.analyzer.expressions.Result
-import com.getjenny.starchat.analyzer.utils._
+import com.getjenny.analyzer.utils._
 
 /**
   * Created by angelo on 26/06/17.
