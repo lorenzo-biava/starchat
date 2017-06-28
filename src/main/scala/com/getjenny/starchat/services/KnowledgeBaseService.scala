@@ -181,7 +181,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         verified = verified, topics = topics, doctype = doctype,
         state = state, status = status)
 
-      val search_document : SearchKBDocument = SearchKBDocument(score = item.score, document = document)
+      val search_document : SearchKBDocument = SearchKBDocument(score = item.getScore, document = document)
       search_document
     }) }
 

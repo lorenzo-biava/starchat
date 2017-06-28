@@ -115,7 +115,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val queries : List[String] = source.get("queries") match {
         case Some(t) =>
-          val offsets = e.getInnerHits.get("queries").hits.toList.map(inner_hit => {
+          val offsets = e.getInnerHits.get("queries").getHits.toList.map(inner_hit => {
             inner_hit.getNestedIdentity.getOffset
           })
           val query_array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
@@ -161,7 +161,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)
 
-      val search_document : SearchDTDocument = SearchDTDocument(score = item.score, document = document)
+      val search_document : SearchDTDocument = SearchDTDocument(score = item.getScore, document = document)
       search_document
     }) }
 
