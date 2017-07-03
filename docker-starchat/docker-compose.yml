@@ -38,7 +38,7 @@ services:
     volumes:
       - ./manaus/data:/manaus/data
       - ./manaus/log:/manaus/log
-    command: ["/manaus/scripts/wait-for-it.sh", "getjenny-es", "9300", "/manaus/bin/continuous-keywords-update", "--temp_data_folder", "/manaus/data", "--host_map", "getjenny-es=9300", "--interval_sec", "120", "--word_frequencies", "/manaus/statistics_data/english/word_frequency.tsv"]
+    command: ["/manaus/scripts/wait-for-it.sh", "getjenny-es", "9300", "/manaus/bin/continuous-keywords-update", "--temp_data_folder", "/manaus/data", "--host_map", "getjenny-es=9300", "--interval_sec", "14400", "--word_frequencies", "/manaus/statistics_data/english/word_frequency.tsv"]
     links:
       - "starchat:starchat"
       - "elasticsearch:getjenny-es"
