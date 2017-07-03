@@ -45,8 +45,11 @@ libraryDependencies ++= {
 scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
-enablePlugins(JavaServerAppPackaging)
 enablePlugins(GitVersioning)
+enablePlugins(JavaServerAppPackaging)
+enablePlugins(UniversalPlugin)
+enablePlugins(DockerPlugin)
+enablePlugins(GitBranchPrompt)
 
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")
