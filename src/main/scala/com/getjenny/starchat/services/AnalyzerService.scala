@@ -128,11 +128,14 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
           (analyzer_object, "Analyzer successfully built: " + item._1)
         } catch {
           case e: Exception =>
-            (null,
-              "Error building analyzer (" + item._1 + ") declaration(" + analyzer_declaration + "): " + e.getMessage)
+            val msg = "Error building analyzer (" + item._1 + ") declaration(" + analyzer_declaration + "): " + e.getMessage
+            log.error(msg)
+            (null, msg)
         }
       } else {
-        (null, "analyzer declaration is empty")
+        val msg = "analyzer declaration is empty"
+        log.debug(msg)
+        (null, msg)
       }
 
       val build = analyzer != null
