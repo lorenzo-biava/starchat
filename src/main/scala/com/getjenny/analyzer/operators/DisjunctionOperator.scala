@@ -15,12 +15,18 @@ class DisjunctionOperator(children: List[Expression]) extends AbstractOperator(c
       case _ => throw OperatorException("Disjunction: trying to add to smt else than an operator")
     }
   }
-  def evaluate(query: String): Double = {
-    def compDisjunction(l: List[Expression]): Double = {
-      if (l.tail == Nil) 1.0 - l.head.evaluate(query)
-      else (1.0 - l.head.evaluate(query)) * compDisjunction(l.tail)
+  def evaluate(query: String): Result = {
+    def compDisjunction(l: List[Expression]): Result = {
+      val res = l.head.evaluate(query)
+      if (l.tail == Nil) Result(score = 1.0 - res.score, extracted_variables = res.extracted_variables)
+      else {
+        val comp_disj = compDisjunction(l.tail)
+        Result(score = (1.0 - res.score) * comp_disj.score,
+          extracted_variables = comp_disj.extracted_variables ++ res.extracted_variables)
+      }
     }
-    1.0 - compDisjunction(children)
+    val comp_disj = compDisjunction(children)
+    Result(score=1.0 - comp_disj.score, extracted_variables = comp_disj.extracted_variables)
   }
 }
 

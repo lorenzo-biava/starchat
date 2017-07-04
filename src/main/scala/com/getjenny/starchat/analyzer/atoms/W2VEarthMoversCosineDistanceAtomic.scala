@@ -7,6 +7,7 @@ import com.getjenny.starchat.analyzer.utils.EmDistance
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
+import com.getjenny.analyzer.expressions.Result
 
 import ExecutionContext.Implicits.global
 
@@ -31,9 +32,9 @@ class W2VEarthMoversCosineDistanceAtomic(val sentence: String) extends AbstractA
 
   override def toString: String = "similarCosEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String): Double = {
+  def evaluate(query: String): Result = {
     val emd_dist = EmDistance.distanceCosine(query, sentence)
-    emd_dist
+    Result(score=emd_dist)
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least

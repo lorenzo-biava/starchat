@@ -6,7 +6,7 @@ package com.getjenny.analyzer.analyzers
 
 import com.getjenny.analyzer.operators._
 import com.getjenny.analyzer.atoms._
-import com.getjenny.analyzer.expressions.Expression
+import com.getjenny.analyzer.expressions.{Expression, Result}
 import com.getjenny.analyzer.interfaces.Factory
 
 
@@ -31,9 +31,9 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
   override def toString: String = operator.toString
   /** Read a sentence and produce a score (the higher, the more confident)
     */
-  def evaluate(sentence: String): Double = {
+  def evaluate(sentence: String): Result = {
     val res = operator.evaluate(sentence)
-    if (res > 0) println("DEBUG: DefaultParser: '" + this + "' evaluated to " + res)
+    if (res.score > 0) println("DEBUG: DefaultParser: '" + this + "' evaluated to " + res)
     res
   }
 

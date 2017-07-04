@@ -15,11 +15,11 @@ class AnalyzersTest extends FlatSpec with Matchers {
     val clever_gentleman_short = analBayes.evaluate("ciao clever gentleman")
 
     //two is better than one
-    clever_gentleman_long should be > gentleman
-    clever_gentleman_short should be > gentleman
+    clever_gentleman_long.score should be > gentleman.score
+    clever_gentleman_short.score should be > gentleman.score
 
     //finding in short is better than finding in longer
-    clever_gentleman_short should be > clever_gentleman_long
+    clever_gentleman_short.score should be > clever_gentleman_long.score
   }
   it should "throw a AnalyzerParsingException if parenthesis are not balanced" in {
     a [AnalyzerParsingException] should be thrownBy {

@@ -10,10 +10,12 @@ import com.getjenny.analyzer.atoms._
 class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
 
   override val operations = Set("keyword", "regex", "search",
-                        "synonym", "synonymCosine",
-                        "similar", "similarState",
-                        "similarEucEmd", "similarEucEmdState",
-                        "similarCosEmd", "similarCosEmdState")
+    "synonym", "synonymCosine",
+    "similar", "similarState",
+    "similarEucEmd", "similarEucEmdState",
+    "similarCosEmd", "similarCosEmdState",
+    "matchPatternRegex", "matchDateDDMMYYYY"
+  )
 
   override def get(name: String, argument: String):
                   AbstractAtomic = name.filter(c => !c.isWhitespace ) match {
@@ -27,7 +29,8 @@ class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
     case "similarEucEmdState" => new W2VEarthMoversEuclideanDistanceStateAtomic(argument)
     case "similarCosEmd" => new W2VEarthMoversCosineDistanceAtomic(argument)
     case "similarCosEmdState" => new W2VEarthMoversCosineDistanceStateAtomic(argument)
+    case "matchPatternRegex" => new MatchPatternRegexAtomic(argument)
+    case "matchDateDDMMYYYY" => new MatchDateDDMMYYYYAtomic(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
-
 }

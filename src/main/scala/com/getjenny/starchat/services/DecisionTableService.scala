@@ -66,6 +66,9 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     if (documentSearch.state.isDefined)
       bool_query_builder.must(QueryBuilders.termQuery("state", documentSearch.state.get))
 
+    if (documentSearch.execution_order.isDefined)
+      bool_query_builder.must(QueryBuilders.matchQuery("execution_order", documentSearch.state.get))
+
     if(documentSearch.queries.isDefined) {
       val nested_query: QueryBuilder = QueryBuilders.nestedQuery(
         "queries",
@@ -95,19 +98,24 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
+        val execution_order: Int = source.get("execution_order") match {
+        case Some(t) => t.asInstanceOf[Int]
+        case None => 0
+      }
+
       val max_state_count : Int = source.get("max_state_count") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
       }
 
-      val analyzer : String = source.get("analyzer") match {
+     val analyzer : String = source.get("analyzer") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
 
       val queries : List[String] = source.get("queries") match {
         case Some(t) =>
-          val offsets = e.getInnerHits.get("queries").hits.toList.map(inner_hit => {
+          val offsets = e.getInnerHits.get("queries").getHits.toList.map(inner_hit => {
             inner_hit.getNestedIdentity.getOffset
           })
           val query_array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
@@ -147,12 +155,13 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
-      val document : DTDocument = DTDocument(state = state, max_state_count = max_state_count,
+      val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
+        max_state_count = max_state_count,
         analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)
 
-      val search_document : SearchDTDocument = SearchDTDocument(score = item.score, document = document)
+      val search_document : SearchDTDocument = SearchDTDocument(score = item.getScore, document = document)
       search_document
     }) }
 
@@ -171,6 +180,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     builder.field("state", document.state)
+    builder.field("execution_order", document.execution_order)
     builder.field("max_state_count", document.max_state_count)
     builder.field("analyzer", document.analyzer)
 
@@ -222,6 +232,11 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
     document.analyzer match {
       case Some(t) => builder.field("analyzer", t)
+      case None => ;
+    }
+
+    document.execution_order match {
+      case Some(t) => builder.field("execution_order", t)
       case None => ;
     }
     document.max_state_count match {
@@ -328,6 +343,11 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
+      val execution_order : Int = source.get("execution_order") match {
+        case Some(t) => t.asInstanceOf[Int]
+        case None => 0
+      }
+
       val max_state_count : Int = source.get("max_state_count") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
@@ -374,7 +394,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
-      val document : DTDocument = DTDocument(state = state, max_state_count = max_state_count,
+      val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
+        max_state_count = max_state_count,
         analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)

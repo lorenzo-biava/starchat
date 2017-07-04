@@ -7,11 +7,15 @@
       "index": true,
       "null_value": ""
     },
+    "execution_order":
+    {
+      "type": "integer"
+    },
     "max_state_count":
     {
       "type": "integer"
     },
-    "analyzer":
+   "analyzer":
     {
       "type": "keyword",
       "store": true,

@@ -11,8 +11,8 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
 
 libraryDependencies ++= {
   val AkkaVersion       = "2.5.3"
-  val AkkaHttpVersion   = "10.0.7"
-  val ESClientVersion   = "5.3.2"
+  val AkkaHttpVersion   = "10.0.9"
+  val ESClientVersion   = "5.4.2"
   Seq(
     "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
@@ -45,8 +45,11 @@ libraryDependencies ++= {
 scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
-enablePlugins(JavaServerAppPackaging)
 enablePlugins(GitVersioning)
+enablePlugins(JavaServerAppPackaging)
+enablePlugins(UniversalPlugin)
+enablePlugins(DockerPlugin)
+enablePlugins(GitBranchPrompt)
 
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")

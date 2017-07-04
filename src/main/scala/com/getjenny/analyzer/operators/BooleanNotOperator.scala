@@ -27,5 +27,8 @@ class BooleanNotOperator(child: List[Expression]) extends AbstractOperator(child
       case _ => throw OperatorException("BooleanNotOperator: trying to add to smt else than an operator.")
     }
   }
-  def evaluate(query: String): Double = if(child.head.matches(query)) 0.0 else 1.0
+  def evaluate(query: String): Result = {
+    val res = child.head.matches(query)
+    Result(score=1 - res.score, extracted_variables = res.extracted_variables)
+  }
 }

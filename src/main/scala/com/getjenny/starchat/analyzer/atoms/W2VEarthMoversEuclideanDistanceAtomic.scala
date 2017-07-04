@@ -7,6 +7,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
 
 import ExecutionContext.Implicits.global
+import com.getjenny.analyzer.expressions.Result
 
 /**
   * Created by angelo on 04/04/17.
@@ -25,9 +26,9 @@ class W2VEarthMoversEuclideanDistanceAtomic(val sentence: String) extends Abstra
 
   override def toString: String = "similarEucEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String): Double = {
+  def evaluate(query: String): Result = {
     val emd_dist = EmDistance.distanceEuclidean(query, sentence)
-    emd_dist
+    Result(score=emd_dist)
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least

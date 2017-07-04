@@ -47,9 +47,8 @@ trait DecisionTableResource extends MyResource {
         put {
           entity(as[DTDocumentUpdate]) { update =>
             parameters("refresh".as[Int] ? 0) { refresh =>
-              val result: Future[Option[UpdateDocumentResult]] = decisionTableService.update(id, update, refresh)
-              val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result,  60.seconds).value.get
-              result_try match {
+              val result = Try(decisionTableService.update(id, update, refresh))
+              result match {
                 case Success(t) =>
                   completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})
                 case Failure(e) =>
@@ -79,8 +78,7 @@ trait DecisionTableResource extends MyResource {
   def decisionTableAnalyzerRoutes: Route = pathPrefix("decisiontable_analyzer") {
     pathEnd {
       get {
-        val result: Try[Option[DTAnalyzerMap]] =
-          Await.ready(analyzerService.getDTAnalyzerMap, 60.seconds).value.get
+        val result = Await.ready(analyzerService.getDTAnalyzerMap, 60.seconds).value.get
         result match {
           case Success(t) =>
             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
