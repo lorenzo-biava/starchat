@@ -122,6 +122,30 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
+      val question_positive : Option[List[String]] = source.get("question_positive") match {
+        case Some(t) =>
+          val offsets = e.getInnerHits.get("question_positive").getHits.toList.map(inner_hit => {
+            inner_hit.getNestedIdentity.getOffset
+          })
+          val array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
+            .map(q_e => q_e.get("query"))
+          val entries_ordered : List[String] = offsets.map(i => array(i))
+          Option { entries_ordered }
+        case None => None: Option[List[String]]
+      }
+
+      val question_negative : Option[List[String]] = source.get("question_negative") match {
+        case Some(t) =>
+          val offsets = e.getInnerHits.get("question_negative").getHits.toList.map(inner_hit => {
+            inner_hit.getNestedIdentity.getOffset
+          })
+          val array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
+            .map(q_e => q_e.get("query"))
+          val entries_ordered : List[String] = offsets.map(i => array(i))
+          Option { entries_ordered }
+        case None => None: Option[List[String]]
+      }
+
       val question_scored_terms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
         case Some(t) => Option {
           t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
@@ -176,6 +200,8 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
       val document : KBDocument = KBDocument(id = id, conversation = conversation,
         index_in_conversation = index_in_conversation, question = question,
+        question_positive = question_positive,
+        question_negative = question_negative,
         question_scored_terms = question_scored_terms,
         answer = answer, answer_scored_terms = answer_scored_terms,
         verified = verified, topics = topics, doctype = doctype,
@@ -208,6 +234,18 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     }
 
     builder.field("question", document.question)
+
+    val question_positive = builder.startArray("question_positive")
+    document.question_positive.foreach(q => {
+      question_positive.startObject().field("query", q).endObject()
+    })
+    question_positive.endArray()
+
+    val question_negative = builder.startArray("question_negative")
+    document.question_negative.foreach(q => {
+      question_negative.startObject().field("query", q).endObject()
+    })
+    question_negative.endArray()
 
     document.question_scored_terms match {
       case Some(t) =>
@@ -280,6 +318,28 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
     document.question match {
       case Some(t) => builder.field("question", t)
+      case None => ;
+    }
+
+    document.question_positive match {
+      case Some(t) =>
+
+        val array = builder.startArray("question_positive")
+        t.foreach(q => {
+          array.startObject().field("query", q).endObject()
+        })
+        array.endArray()
+      case None => ;
+    }
+
+    document.question_negative match {
+      case Some(t) =>
+
+        val array = builder.startArray("question_negative")
+        t.foreach(q => {
+          array.startObject().field("query", q).endObject()
+        })
+        array.endArray()
       case None => ;
     }
 
@@ -414,6 +474,22 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         case None => ""
       }
 
+      val question_positive : Option[List[String]] = source.get("question_positive") match {
+        case Some(t) =>
+          val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+          .asScala.map(_.getOrDefault("query", null)).filter(_ != null).toList
+          Option { res }
+        case None => None: Option[List[String]]
+      }
+
+      val question_negative : Option[List[String]] = source.get("question_negative") match {
+        case Some(t) =>
+          val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+          .asScala.map(_.getOrDefault("query", null)).filter(_ != null).toList
+          Option { res }
+        case None => None: Option[List[String]]
+      }
+
       val question_scored_terms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
         case Some(t) =>
           Option {
@@ -468,7 +544,10 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
       val document : KBDocument = KBDocument(id = id, conversation = conversation,
         index_in_conversation = index_in_conversation,
-        question = question, question_scored_terms = question_scored_terms,
+        question = question,
+        question_positive = question_positive,
+        question_negative = question_negative,
+        question_scored_terms = question_scored_terms,
         answer = answer, answer_scored_terms = answer_scored_terms,
         verified = verified, topics = topics, doctype = doctype,
         state = state, status = status)

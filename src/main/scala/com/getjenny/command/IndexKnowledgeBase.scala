@@ -130,6 +130,8 @@ object IndexKnowledgeBase extends JsonSupport {
         conversation = entry("conversation_id"),
         index_in_conversation =  Option { entry("position").toInt },
         question = entry("question"),
+        question_positive = None: Option[List[String]],
+        question_negative = None: Option[List[String]],
         question_scored_terms = None: Option[List[(String, Double)]],
         answer = entry("answer"),
         answer_scored_terms = None: Option[List[(String, Double)]],

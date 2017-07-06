@@ -76,6 +76,8 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
         conversation = "corpora",
         index_in_conversation = Option { -1 },
         question = document_string,
+        question_positive = None: Option[List[String]],
+        question_negative = None: Option[List[String]],
         question_scored_terms = None: Option[List[(String, Double)]],
         answer = document_string,
         answer_scored_terms = None: Option[List[(String, Double)]],
