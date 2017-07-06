@@ -66,7 +66,7 @@ object IndexKnowledgeBase extends JsonSupport {
       }
     }).filter(_._2).map(x => (x._3, x._4)).toMap
 
-    val answers_input_stream: Reader = new InputStreamReader(new FileInputStream(params.questions_path.get), "UTF-8")
+    val answers_input_stream: Reader = new InputStreamReader(new FileInputStream(params.answers_path.get), "UTF-8")
     lazy val answers_entries = CSVReader.read(input = answers_input_stream, separator = params.separator,
       quote = '"', skipLines = 0)
 
