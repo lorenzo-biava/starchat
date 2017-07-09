@@ -69,9 +69,8 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
       val question_positive_nested_query: QueryBuilder = QueryBuilders.nestedQuery(
         "question_positive",
-        QueryBuilders.boolQuery()
-          .must(QueryBuilders.matchQuery("question_positive.query.stop", documentSearch.question.get)
-          .minimumShouldMatch(elastic_client.question_positive_minimum_match)),
+        QueryBuilders.matchQuery("question_positive.query.stop", documentSearch.question.get)
+          .minimumShouldMatch(elastic_client.question_positive_minimum_match),
         ScoreMode.Total
       ).boost(elastic_client.question_positive_boost)
         .ignoreUnmapped(true)
@@ -80,9 +79,8 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
       val question_negative_nested_query: QueryBuilder = QueryBuilders.nestedQuery(
         "question_negative",
-        QueryBuilders.boolQuery()
-          .must(QueryBuilders.matchQuery("question_negative.query.stop", documentSearch.question.get)
-            .minimumShouldMatch(elastic_client.question_negative_minimum_match)),
+        QueryBuilders.matchQuery("question_negative.query.stop", documentSearch.question.get)
+            .minimumShouldMatch(elastic_client.question_negative_minimum_match),
         ScoreMode.Total
       ).boost(elastic_client.question_negative_boost)
         .ignoreUnmapped(true)

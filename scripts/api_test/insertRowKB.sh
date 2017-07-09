@@ -6,7 +6,7 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/knowle
 	"index_in_conversation": 1,
 	"question": "thank you",
         "question_positive": ["thanks a lot", "thanks for your help"],
-        "question_negative": ["ok, I will not talk with you anymore", "thanks anyway"],
+        "question_negative": ["ok, I will not talk with you anymore", "thank you anyway"],
 	"answer": "you are welcome!",
 	"question_scored_terms": [
 		[
