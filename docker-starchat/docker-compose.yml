@@ -2,7 +2,7 @@ version: "3.2"
 services:
 
   elasticsearch:
-    image: elasticsearch:5.4.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.5.0
     command: elasticsearch
     ports:
       - "0.0.0.0:9200:9200"
@@ -29,7 +29,7 @@ services:
       - "elasticsearch:getjenny-es"
 
   manaus:
-    image: elegansio/manaus:latest
+    image: elegansio/manaus:add18865dae58b8f90df0865eeb1e5942e83a772
     restart: unless-stopped
     volumes:
       - ./manaus/data:/manaus/data

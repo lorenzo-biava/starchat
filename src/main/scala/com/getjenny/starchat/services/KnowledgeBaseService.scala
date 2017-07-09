@@ -64,11 +64,33 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
     if (documentSearch.verified.isDefined)
       bool_query_builder.must(QueryBuilders.termQuery("verified", documentSearch.verified.get))
 
-    if(documentSearch.question.isDefined)
+    if(documentSearch.question.isDefined) {
       bool_query_builder.must(QueryBuilders.matchQuery("question.stem_bm25", documentSearch.question.get))
 
-    if(documentSearch.question_scored_terms.isDefined) {
+      val question_positive_nested_query: QueryBuilder = QueryBuilders.nestedQuery(
+        "question_positive",
+        QueryBuilders.boolQuery()
+          .must(QueryBuilders.matchQuery("question_positive.query.stop", documentSearch.question.get)
+          .minimumShouldMatch(elastic_client.question_positive_minimum_match)),
+        ScoreMode.Total
+      ).boost(elastic_client.question_positive_boost)
+        .ignoreUnmapped(true)
+        .innerHit(new InnerHitBuilder().setSize(10000))
+      bool_query_builder.should(question_positive_nested_query)
 
+      val question_negative_nested_query: QueryBuilder = QueryBuilders.nestedQuery(
+        "question_negative",
+        QueryBuilders.boolQuery()
+          .must(QueryBuilders.matchQuery("question_negative.query.stop", documentSearch.question.get)
+            .minimumShouldMatch(elastic_client.question_negative_minimum_match)),
+        ScoreMode.Total
+      ).boost(elastic_client.question_negative_boost)
+        .ignoreUnmapped(true)
+        .innerHit(new InnerHitBuilder().setSize(10000))
+      bool_query_builder.should(question_negative_nested_query)
+    }
+
+    if(documentSearch.question_scored_terms.isDefined) {
       val query_terms = QueryBuilders.boolQuery()
           .should(QueryBuilders.matchQuery("question_scored_terms.term", documentSearch.question_scored_terms.get))
       val script: Script = new Script("doc[\"question_scored_terms.score\"].value")
@@ -79,7 +101,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         "question_scored_terms",
         function_score_query,
         nested_score_mode.getOrElse(elastic_client.queries_score_mode, ScoreMode.Total)
-      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(10000), true)
+      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(10000))
 
       bool_query_builder.should(nested_query)
     }
@@ -124,25 +146,17 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
       val question_positive : Option[List[String]] = source.get("question_positive") match {
         case Some(t) =>
-          val offsets = e.getInnerHits.get("question_positive").getHits.toList.map(inner_hit => {
-            inner_hit.getNestedIdentity.getOffset
-          })
-          val array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
-            .map(q_e => q_e.get("query"))
-          val entries_ordered : List[String] = offsets.map(i => array(i))
-          Option { entries_ordered }
+          val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+          .asScala.map(_.getOrDefault("query", null)).filter(_ != null).toList
+          Option { res }
         case None => None: Option[List[String]]
       }
 
       val question_negative : Option[List[String]] = source.get("question_negative") match {
         case Some(t) =>
-          val offsets = e.getInnerHits.get("question_negative").getHits.toList.map(inner_hit => {
-            inner_hit.getNestedIdentity.getOffset
-          })
-          val array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
-            .map(q_e => q_e.get("query"))
-          val entries_ordered : List[String] = offsets.map(i => array(i))
-          Option { entries_ordered }
+          val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+          .asScala.map(_.getOrDefault("query", null)).filter(_ != null).toList
+          Option { res }
         case None => None: Option[List[String]]
       }
 
@@ -203,9 +217,13 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         question_positive = question_positive,
         question_negative = question_negative,
         question_scored_terms = question_scored_terms,
-        answer = answer, answer_scored_terms = answer_scored_terms,
-        verified = verified, topics = topics, doctype = doctype,
-        state = state, status = status)
+        answer = answer,
+        answer_scored_terms = answer_scored_terms,
+        verified = verified,
+        topics = topics,
+        doctype = doctype,
+        state = state,
+        status = status)
 
       val search_document : SearchKBDocument = SearchKBDocument(score = item.getScore, document = document)
       search_document
@@ -235,17 +253,25 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
     builder.field("question", document.question)
 
-    val question_positive = builder.startArray("question_positive")
-    document.question_positive.foreach(q => {
-      question_positive.startObject().field("query", q).endObject()
-    })
-    question_positive.endArray()
+    document.question_positive match {
+      case Some(t) =>
+        val array = builder.startArray("question_positive")
+        t.foreach(q => {
+          array.startObject().field("query", q).endObject()
+        })
+        array.endArray()
+      case None => ;
+    }
 
-    val question_negative = builder.startArray("question_negative")
-    document.question_negative.foreach(q => {
-      question_negative.startObject().field("query", q).endObject()
-    })
-    question_negative.endArray()
+    document.question_negative match {
+      case Some(t) =>
+        val array = builder.startArray("question_negative")
+        t.foreach(q => {
+          array.startObject().field("query", q).endObject()
+        })
+        array.endArray()
+      case None => ;
+    }
 
     document.question_scored_terms match {
       case Some(t) =>
@@ -264,7 +290,8 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       case Some(t) =>
         val array = builder.startArray("answer_scored_terms")
         t.foreach(q => {
-          array.startObject().field("term", q._1).field("score", q._2).endObject()
+          array.startObject().field("term", q._1)
+            .field("score", q._2).endObject()
         })
         array.endArray()
       case None => ;
@@ -323,7 +350,6 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
     document.question_positive match {
       case Some(t) =>
-
         val array = builder.startArray("question_positive")
         t.foreach(q => {
           array.startObject().field("query", q).endObject()
@@ -334,7 +360,6 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
     document.question_negative match {
       case Some(t) =>
-
         val array = builder.startArray("question_negative")
         t.foreach(q => {
           array.startObject().field("query", q).endObject()
@@ -548,9 +573,13 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         question_positive = question_positive,
         question_negative = question_negative,
         question_scored_terms = question_scored_terms,
-        answer = answer, answer_scored_terms = answer_scored_terms,
-        verified = verified, topics = topics, doctype = doctype,
-        state = state, status = status)
+        answer = answer,
+        answer_scored_terms = answer_scored_terms,
+        verified = verified,
+        topics = topics,
+        doctype = doctype,
+        state = state,
+        status = status)
 
       val search_document : SearchKBDocument = SearchKBDocument(score = .0f, document = document)
       search_document

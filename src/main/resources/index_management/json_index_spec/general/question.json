@@ -253,8 +253,14 @@
     "question_scored_terms": {
       "type": "nested",
       "properties": {
-        "term": { "type": "text" },
-        "score": { "type": "double" }
+        "term": {
+          "store": true,
+          "type": "text"
+        },
+        "score": {
+          "store": true,
+          "type": "double"
+        }
       }
     },
     "answer":
@@ -330,8 +336,14 @@
     "answer_scored_terms": {
       "type": "nested",
       "properties": {
-        "term": { "type": "text" },
-        "score": { "type": "double" }
+        "term": {
+          "store": true,
+          "type": "text"
+        },
+        "score": {
+          "store": true,
+          "type": "double"
+        }
       }
     },
     "status": {

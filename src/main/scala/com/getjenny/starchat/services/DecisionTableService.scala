@@ -78,7 +78,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
             .boost(1 + (min_score * boost_exact_match_factor))
           ),
         queries_score_mode.getOrElse(elastic_client.queries_score_mode, ScoreMode.Max)
-      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(10000), true)
+      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(10000))
       bool_query_builder.must(nested_query)
     }
 
