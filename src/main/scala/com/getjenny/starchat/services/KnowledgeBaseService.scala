@@ -65,27 +65,35 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       bool_query_builder.must(QueryBuilders.termQuery("verified", documentSearch.verified.get))
 
     if(documentSearch.question.isDefined) {
-      bool_query_builder.must(QueryBuilders.matchQuery("question.stem_bm25", documentSearch.question.get))
+      bool_query_builder.must(QueryBuilders.boolQuery()
+          .must(QueryBuilders.matchQuery("question.stem_bm25", documentSearch.question.get))
+          .should(QueryBuilders.matchPhraseQuery("question.raw", documentSearch.question.get)
+            .boost(elastic_client.question_positive_boost))
+      )
 
       val question_positive_nested_query: QueryBuilder = QueryBuilders.nestedQuery(
         "question_positive",
         QueryBuilders.matchQuery("question_positive.query.stop", documentSearch.question.get)
+          .boost(elastic_client.question_positive_boost)
           .minimumShouldMatch(elastic_client.question_positive_minimum_match),
         ScoreMode.Total
-      ).boost(elastic_client.question_positive_boost)
-        .ignoreUnmapped(true)
+      ).ignoreUnmapped(true)
         .innerHit(new InnerHitBuilder().setSize(10000))
-      bool_query_builder.should(question_positive_nested_query)
 
       val question_negative_nested_query: QueryBuilder = QueryBuilders.nestedQuery(
         "question_negative",
         QueryBuilders.matchQuery("question_negative.query.stop", documentSearch.question.get)
             .minimumShouldMatch(elastic_client.question_negative_minimum_match),
         ScoreMode.Total
-      ).boost(elastic_client.question_negative_boost)
-        .ignoreUnmapped(true)
+      ).ignoreUnmapped(true)
         .innerHit(new InnerHitBuilder().setSize(10000))
-      bool_query_builder.should(question_negative_nested_query)
+
+      bool_query_builder.should(
+        QueryBuilders.boostingQuery(
+          question_positive_nested_query,
+          question_negative_nested_query
+        ).negativeBoost(elastic_client.question_negative_boost)
+      )
     }
 
     if(documentSearch.question_scored_terms.isDefined) {
