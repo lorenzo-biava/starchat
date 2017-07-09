@@ -68,7 +68,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       bool_query_builder.must(QueryBuilders.boolQuery()
           .must(QueryBuilders.matchQuery("question.stem_bm25", documentSearch.question.get))
           .should(QueryBuilders.matchPhraseQuery("question.raw", documentSearch.question.get)
-            .boost(elastic_client.question_positive_boost))
+            .boost(elastic_client.question_exact_match_boost_factor * elastic_client.question_positive_boost))
       )
 
       val question_positive_nested_query: QueryBuilder = QueryBuilders.nestedQuery(

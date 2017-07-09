@@ -12,5 +12,6 @@ object KnowledgeBaseElasticClient extends ElasticClient {
   val question_negative_minimum_match: String = config.getString("es.kb_question_negative_minimum_match")
   val question_positive_boost : Float = config.getDouble("es.kb_question_positive_boost").toFloat
   val question_negative_boost: Float = config.getDouble("es.kb_question_negative_boost").toFloat
+  val question_exact_match_boost_factor: Float = config.getDouble("es.kb_question_exact_match_boost_factor").toFloat
 }
 
