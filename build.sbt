@@ -1,4 +1,5 @@
 import NativePackagerHelper._
+import com.typesafe.sbt.packager.docker._
 
 name := "StarChat"
 
@@ -46,10 +47,29 @@ scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
 enablePlugins(GitVersioning)
+enablePlugins(GitBranchPrompt)
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(UniversalPlugin)
 enablePlugins(DockerPlugin)
-enablePlugins(GitBranchPrompt)
+
+git.useGitDescribe := true
+
+//http://www.scala-sbt.org/sbt-native-packager/formats/docker.html
+dockerCommands := Seq(
+  Cmd("FROM", "java:8"),
+  Cmd("RUN", "apt", "update"),
+  Cmd("RUN", "apt", "install", "-y", "netcat"),
+  Cmd("LABEL", "maintainer=\"Angelo Leto <angelo@getjenny.com>\""),
+  Cmd("LABEL", "description=\"Docker container for Starchat\""),
+  Cmd("WORKDIR", "/"),
+  Cmd("ADD", "/opt/docker", "/starchat"),
+  Cmd("VOLUME", "/starchat/config"),
+  Cmd("VOLUME", "/starchat/log")
+)
+
+packageName in Docker := packageName.value
+version in Docker := version.value
+dockerRepository := Some("elegansio")
 
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")
