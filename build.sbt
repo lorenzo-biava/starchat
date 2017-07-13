@@ -1,4 +1,5 @@
 import NativePackagerHelper._
+import com.typesafe.sbt.packager.docker._
 
 name := "StarChat"
 
@@ -12,7 +13,7 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
 libraryDependencies ++= {
   val AkkaVersion       = "2.5.3"
   val AkkaHttpVersion   = "10.0.9"
-  val ESClientVersion   = "5.4.2"
+  val ESClientVersion   = "5.5.0"
   Seq(
     "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
@@ -31,8 +32,8 @@ libraryDependencies ++= {
     "org.elasticsearch.client" % "rest" % ESClientVersion,
     "org.scalanlp" %% "breeze" % "0.13",
     "org.scalanlp" %% "breeze-natives" % "0.13",
-    "org.apache.logging.log4j" % "log4j-api" % "2.7",
-    "org.apache.logging.log4j" % "log4j-core" % "2.7",
+    "org.apache.logging.log4j" % "log4j-api" % "2.8.2",
+    "org.apache.logging.log4j" % "log4j-core" % "2.8.2",
     "org.apache.tika" % "tika-core" % "1.14",
     "org.apache.tika" % "tika-parsers" % "1.14",
     "org.apache.tika" % "tika-app" % "1.14",
@@ -46,10 +47,29 @@ scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
 enablePlugins(GitVersioning)
+enablePlugins(GitBranchPrompt)
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(UniversalPlugin)
 enablePlugins(DockerPlugin)
-enablePlugins(GitBranchPrompt)
+
+git.useGitDescribe := true
+
+//http://www.scala-sbt.org/sbt-native-packager/formats/docker.html
+dockerCommands := Seq(
+  Cmd("FROM", "java:8"),
+  Cmd("RUN", "apt", "update"),
+  Cmd("RUN", "apt", "install", "-y", "netcat"),
+  Cmd("LABEL", "maintainer=\"Angelo Leto <angelo@getjenny.com>\""),
+  Cmd("LABEL", "description=\"Docker container for Starchat\""),
+  Cmd("WORKDIR", "/"),
+  Cmd("ADD", "/opt/docker", "/starchat"),
+  Cmd("VOLUME", "/starchat/config"),
+  Cmd("VOLUME", "/starchat/log")
+)
+
+packageName in Docker := packageName.value
+version in Docker := version.value
+dockerRepository := Some("elegansio")
 
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")
