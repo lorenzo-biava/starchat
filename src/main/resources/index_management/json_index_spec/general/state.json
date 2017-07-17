@@ -38,7 +38,8 @@
           "store": true,
           "fields": {
             "raw": {
-              "type": "keyword"
+              "type": "keyword",
+              "ignore_above": 1092232766
             },
             "base": {
               "type": "text",

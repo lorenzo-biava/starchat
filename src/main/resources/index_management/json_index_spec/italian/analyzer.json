@@ -51,6 +51,11 @@
 		},
 		"analyzer":
 		{
+			"jenny_raw_analyzer":
+			{
+				"tokenizer":    "keyword",
+				"filter":       [ "lowercase"]
+			},
 			"jenny_base_analyzer":
 			{
 				"tokenizer":    "standard",
