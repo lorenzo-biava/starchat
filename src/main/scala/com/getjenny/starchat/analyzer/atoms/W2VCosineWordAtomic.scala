@@ -26,7 +26,7 @@ class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
 
   val isEvaluateNormalized: Boolean = true
   private val word_vec = TextToVectorsTools.getSumOfVectorsFromText(word)
-  def evaluate(query: String): Result = {
+  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
     val text_vectors = termService.textToVectors(query)
     val distance: Double = if (text_vectors.nonEmpty && text_vectors.get.terms.nonEmpty) {
       val term_vector = text_vectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)

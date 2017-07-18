@@ -14,7 +14,7 @@ class MatchDateDDMMYYYYAtomic(val prefix: String) extends AbstractAtomic {
     """(?:(?:[^0-9]+|\A)(0[1-9]|[12][0-9]|3[01])(?:[- \/\.])(0[1-9]|1[012])(?:[- \/\.])((?:19|20)\d\d)(?:[^0-9]+|$))"""
   val regex_extractor = new PatternExtractionRegex(regex)
 
-  def evaluate(query: String): Result = {
+  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
     val res = try {
       val extracted_variables = regex_extractor.evaluate(query)
       Result(score=1.0, extracted_variables = extracted_variables)

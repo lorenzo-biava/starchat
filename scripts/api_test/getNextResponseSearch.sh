@@ -6,7 +6,7 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/get_ne
 	\"user_input\": { \"text\": \"${QUERY}\" },
 	\"values\": {
 		\"return_value\": \"\",
-		\"data\": {}
+		\"data\": {\"varname1\": \"value1\", \"varname2\": \"value2\"}
 	},
 	\"threshold\": 0.0,
 	\"max_results\": 4

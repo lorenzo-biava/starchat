@@ -13,7 +13,7 @@ class MatchPatternRegexAtomic(val regex: String) extends AbstractAtomic {
 
   val regex_extractor = new PatternExtractionRegex(regex)
 
-  def evaluate(query: String): Result = {
+  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
     val res = try {
       val extracted_variables = regex_extractor.evaluate(query)
       Result(score=1.0, extracted_variables=extracted_variables)

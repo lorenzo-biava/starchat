@@ -33,7 +33,8 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
 
   override def toString: String = "similar(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String): Result = {
+
+  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
     val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
     val distance = (1.0 - cosineDist(sentence_vector._1, query_vector._1)) *
       (sentence_vector._2 * query_vector._2)
