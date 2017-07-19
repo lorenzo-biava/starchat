@@ -13,6 +13,7 @@ case class KBDocumentUpdate(conversation: Option[String],
                             answer_scored_terms: Option[List[(String, Double)]],
                             verified: Option[Boolean],
                             topics: Option[String],
+                            dclass: Option[String],
                             doctype: Option[String],
                             state: Option[String],
                             status: Option[Int]

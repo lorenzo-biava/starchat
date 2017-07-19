@@ -14,5 +14,9 @@ case class KBDocumentSearch(from: Option[Int],
                             answer_scored_terms: Option[String],
                             verified: Option[Boolean],
                             doctype: Option[String],
-                            conversation: Option[String]
+                            conversation: Option[String],
+                            topics: Option[String],
+                            dclass: Option[String],
+                            state: Option[String],
+                            status: Option[Int]
                            )
