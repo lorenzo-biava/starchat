@@ -65,7 +65,7 @@ class FullTestKitExampleSpec extends WordSpec with Matchers with ScalatestRouteT
   it should {
     "return an HTTP code 400 updating a deleted index" in {
       Put(s"/index_management") ~> routes ~> check {
-        status shouldEqual StatusCodes.OK //BadRequest : temporarily set to a wrong value to test travis CI
+        status shouldEqual StatusCodes.BadRequest
         val response = responseAs[IndexManagementResponse]
       }
     }
