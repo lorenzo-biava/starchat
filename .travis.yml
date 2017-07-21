@@ -3,6 +3,8 @@ scala:
    - 2.12.2
 jdk:
    - oraclejdk8
+services:
+  - docker
 script:
    - sbt ++$TRAVIS_SCALA_VERSION dockerComposeUp
    - sbt ++$TRAVIS_SCALA_VERSION test
