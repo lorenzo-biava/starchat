@@ -13,3 +13,4 @@ from your fork of this repository!
 
 Our concise [contribution guideline](https://github.com/GetJenny/starchat/blob/master/CONTRIBUTING.md) contains the bare
 minumum requirements of the code contributions.
+
