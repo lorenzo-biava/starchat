@@ -72,7 +72,8 @@ packageName in Docker := packageName.value
 version in Docker := version.value
 dockerRepository := Some("elegansio")
 
-dockerImageCreationTask := (publishLocal in Docker).value
+//dockerImageCreationTask := (publishLocal in Docker).value
+composeNoBuild := true
 composeFile := "docker-starchat/docker-compose.test.yml" 
 
 // Assembly settings

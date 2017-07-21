@@ -20,18 +20,40 @@ import akka.stream.ActorMaterializer
 import com.typesafe.sslconfig.akka.AkkaSSLConfig
 import com.typesafe.config.ConfigFactory
 
-object Main extends App with RestInterface {
+case class Parameters(
+         http_enable: Boolean,
+         http_host: String,
+         http_port: Int,
+         https_enable: Boolean,
+         https_host: String,
+         https_port: Int,
+         https_certificate: String,
+         https_cert_pass: String)
+
+class StarChatService(parameters: Option[Parameters] = None) extends RestInterface {
   val config = ConfigFactory.load()
 
-  val http_enable = config.getBoolean("http.enable")
-  val http_host = config.getString("http.host")
-  val http_port = config.getInt("http.port")
+  val params: Option[Parameters] = if(parameters.nonEmpty) {
+    parameters
+  } else {
+    Option {
+     Parameters(
+        http_enable = config.getBoolean("http.enable"),
+        http_host = config.getString("http.host"),
+        http_port = config.getInt("http.port"),
+        https_enable = config.getBoolean("https.enable"),
+        https_host = config.getString("https.host"),
+        https_port = config.getInt("https.port"),
+        https_certificate = config.getString("https.certificate"),
+        https_cert_pass = config.getString("https.password")
+      )
+    }
+  }
 
-  val https_enable = config.getBoolean("https.enable")
-  val https_host = config.getString("https.host")
-  val https_port = config.getInt("https.port")
-  val https_certificate = config.getString("https.certificate")
-  val https_cert_pass = config.getString("https.password")
+  if(params.isEmpty) {
+    log.error("cannot read parameters")
+  }
+  assert(params.nonEmpty)
 
   /* creation of the akka actor system which handle concurrent requests */
   implicit val system = SCActorSystem.system
@@ -44,12 +66,12 @@ object Main extends App with RestInterface {
 
   val api = routes
 
-  if (https_enable) {
-    val password: Array[Char] = https_cert_pass.toCharArray
+  if (params.get.https_enable) {
+    val password: Array[Char] = params.get.https_cert_pass.toCharArray
 
     val ks: KeyStore = KeyStore.getInstance("PKCS12")
 
-    val keystore_path: String = "/tls/certs/" + https_certificate
+    val keystore_path: String = "/tls/certs/" + params.get.https_certificate
     val keystore: InputStream = getClass.getResourceAsStream(keystore_path)
     //val keystore: InputStream = getClass.getClassLoader.getResourceAsStream(keystore_path)
 
@@ -66,21 +88,29 @@ object Main extends App with RestInterface {
     sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
     val https: HttpsConnectionContext = ConnectionContext.https(sslContext)
 
-    Http().bindAndHandle(handler = api, interface = https_host, https_port, connectionContext = https) map { binding =>
-     system.log.info(s"REST (HTTPS) interface bound to ${binding.localAddress}")
+    Http().bindAndHandle(handler = api, interface = params.get.https_host, params.get.https_port,
+      connectionContext = https) map { binding =>
+      system.log.info(s"REST (HTTPS) interface bound to ${binding.localAddress}")
     } recover { case ex =>
-      system.log.error(s"REST (HTTPS) interface could not bind to $http_host:$http_port", ex.getMessage)
+      system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.http_host}:${params.get.http_port}",
+        ex.getMessage)
     }
   }
 
-  if((! https_enable) || http_enable) {
-     Http().bindAndHandle(handler = api, interface = http_host, port = http_port) map { binding =>
+  if((! params.get.https_enable) || params.get.http_enable) {
+     Http().bindAndHandle(handler = api, interface = params.get.http_host,
+       port = params.get.http_port) map { binding =>
       system.log.info(s"REST (HTTP) interface bound to ${binding.localAddress}")
     } recover { case ex =>
-      system.log.error(s"REST (HTTP) interface could not bind to $http_host:$http_port", ex.getMessage)
+      system.log.error(s"REST (HTTP) interface could not bind to ${params.get.http_host}:${params.get.http_port}",
+        ex.getMessage)
     }
   }
 
   /* try to initialize the analyzers, elasticsearch must be up and running */
   analyzerService.initializeAnalyzers()
+}
+
+object Main extends App {
+  val starchatService = new StarChatService
 }
