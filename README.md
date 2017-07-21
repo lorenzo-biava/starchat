@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/starchat/UtilityBehaviors.png)](https://travis-ci.org/starchat/UtilityBehaviors)
+
 # Welcome!
 
 This is the official repository for StarChat, a scalable conversational engine for B2B applications provided by [GetJenny](https://getjenny.com)
