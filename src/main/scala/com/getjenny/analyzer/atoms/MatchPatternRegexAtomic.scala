@@ -7,6 +7,16 @@ import com.getjenny.analyzer.utils._
   * Created by angelo on 27/06/17.
   */
 
+/** A generic pattern extraction analyzer, it extract named patterns matching a given regex
+  *   e.g. the following will match tree numbers separated by semicolumn:
+  *     [first,second,third](?:([0-9]+:[0-9]:[0-9]+)
+  *   if the regex matches it will create the entries into the dictionary e.g.:
+  *     10:11:12 will result in Map("first.0" -> "10", "second.0" -> "11", "third.0" -> "12")
+  *     the number at the end of the name is an index incremented for multiple occurrences of the pattern
+  *     in the query
+  *
+  * @param regex the regular expression in the form [<name0>,..,<nameN>](<regex>)
+  */
 class MatchPatternRegexAtomic(val regex: String) extends AbstractAtomic {
   override def toString: String = "matchPatternRegex(" + regex + ")"
   val isEvaluateNormalized: Boolean = true
