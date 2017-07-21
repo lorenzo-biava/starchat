@@ -5,12 +5,13 @@ import akka.http.scaladsl.server._
 import Directives._
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
+import com.typesafe.config.ConfigFactory
 import com.getjenny.starchat.StarChatService
+import com.getjenny.starchat.Parameters
 
 import scala.util.matching.Regex
 
 class FullTestKitExampleSpec extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
-
   val service = new StarChatService
   val routes = service.routes
 

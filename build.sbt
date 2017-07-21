@@ -79,6 +79,9 @@ composeFile := "docker-starchat/docker-compose.test.yml"
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")
 
+fork in Test := true
+javaOptions in Test ++= Seq("-Dconfig.file=./src/test/resources/application.conf")
+
 // do not buffer test output
 logBuffered in Test := false
 
