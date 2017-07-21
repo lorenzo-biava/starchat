@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/starchat/UtilityBehaviors.png)](https://travis-ci.org/starchat/UtilityBehaviors)
+[![Build Status](https://travis-ci.org/GetJenny/starchat/UtilityBehaviors.png)](https://travis-ci.org/GetJenny/starchat/UtilityBehaviors)
 
 # Welcome!
 
