@@ -17,27 +17,3 @@ services:
     environment:
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
 
-#  starchat:
-#    image: elegansio/starchat:latest<localBuild>
-#    restart: unless-stopped
-#    command: ["/starchat/scripts/utils/wait-for-it.sh", "getjenny-es", "9200", "10", "/starchat/bin/starchat"]
-#    volumes:
-#      - ./starchat_test/config:/starchat/config
-#      - ./starchat_test/log:/starchat/log
-#    ports:
-#      - "0.0.0.0:8888:8888"
-#      - "0.0.0.0:8443:8443"
-#    links:
-#      - "elasticsearch:getjenny-es"
-#
-#  manaus:
-#    image: elegansio/manaus:1.0.3
-#    restart: unless-stopped
-#    volumes:
-#      - ./manaus/data:/manaus/data
-#      - ./manaus/log:/manaus/log
-#    command: ["/manaus/scripts/wait-for-it.sh", "getjenny-es", "9300", "5", "/manaus/bin/continuous-keywords-update", "--temp_data_folder", "/manaus/data", "--host_map", "getjenny-es=9300", "--interval_sec", "14400", "--word_frequencies", "/manaus/statistics_data/english/word_frequency.tsv", "--cluster_name", "starchat", "--index_name", "jenny-en-0"]
-#    links:
-#      - "starchat:starchat"
-#      - "elasticsearch:getjenny-es"
-
