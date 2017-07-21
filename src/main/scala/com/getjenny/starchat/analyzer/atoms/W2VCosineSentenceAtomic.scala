@@ -36,8 +36,12 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
 
   def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
     val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
+
+    /** cosineDist returns 0.0 for the closest vector, we want 1.0 when the similarity is the highest
+      *   so we use 1.0 - ...
+      */
     val distance = (1.0 - cosineDist(sentence_vector._1, query_vector._1)) *
-      (sentence_vector._2 * query_vector._2)
+      (sentence_vector._2 * query_vector._2) /** <-- these terms are 1.0 when all vector for all terms of the sentence were found */
     Result(score=distance)
   }
 
