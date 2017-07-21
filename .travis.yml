@@ -3,6 +3,7 @@ scala:
    - 2.12.2
 jdk:
    - oraclejdk8
+sudo: required
 services:
   - docker
 script:
