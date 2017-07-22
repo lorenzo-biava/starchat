@@ -10,7 +10,7 @@ import com.getjenny.starchat.StarChatService
 
 import scala.util.matching.Regex
 
-class FullTestKitExampleSpec extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
+class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
   val service = new StarChatService
   val routes = service.routes
 
