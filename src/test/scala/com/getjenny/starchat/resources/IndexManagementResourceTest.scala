@@ -35,6 +35,14 @@ class FullTestKitExampleSpec extends WordSpec with Matchers with ScalatestRouteT
   }
 
   it should {
+    "return an HTTP code 200 when calling elasticsearch index refresh" in {
+      Post(s"/index_management/refresh") ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+      }
+    }
+  }
+
+  it should {
     "return an HTTP code 200 when getting informations from the index" in {
       Get(s"/index_management") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
