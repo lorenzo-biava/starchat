@@ -119,10 +119,11 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
           AnalyzerService.analyzer_map.filter(_._2.analyzer.build == true).filter(v => {
             val traversed_state_count = traversed_states_count.getOrElse(v._1, 0)
             val max_state_count = v._2.max_state_counter
-            max_state_count == 0 || traversed_state_count < max_state_count // skip states already evaluated too much times
+            max_state_count == 0 ||
+              traversed_state_count < max_state_count // skip states already evaluated too much times
           }).map(item => {
             val analyzer_evaluation = try {
-              val evaluation_res = item._2.analyzer.analyzer.evaluate(user_text)
+              val evaluation_res = item._2.analyzer.analyzer.evaluate(user_text, data = Option{data})
               log.debug("ResponseService: Evaluation of State(" +
                 item._1 + ") Query(" + user_text + ") Score(" + evaluation_res.toString + ")")
               evaluation_res

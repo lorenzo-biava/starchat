@@ -15,9 +15,10 @@ class MaxOperator(children: List[Expression]) extends AbstractOperator(children:
       case _ => throw OperatorException("Max: trying to add to smt else than an operator")
     }
   }
-  def evaluate(query: String): Result = {
+
+  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
     def compMax(l: List[Expression]): Result = {
-      val res = l.head.evaluate(query)
+      val res = l.head.evaluate(query, data)
       if (l.tail == Nil) Result(score=res.score, extracted_variables = res.extracted_variables)
       else {
         val val1 = l.head.evaluate(query)

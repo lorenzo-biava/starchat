@@ -49,7 +49,7 @@ class W2VEarthMoversCosineDistanceStateAtomic(val state: String) extends Abstrac
   val queries_vectors = queries_sentences.queries.map(item => Option{item})
 
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String): Result = {
+  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
     val query_vectors = termService.textToVectors(text = query)
     val emd_dist_queries = queries_vectors.map(q => {
       val dist = EmDistance.distanceCosine(q , query_vectors)

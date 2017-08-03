@@ -171,7 +171,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
         log.error("error during evaluation of analyzer: " + exception.getMessage)
         throw exception
       case Success(result) =>
-        val eval_res = result.evaluate(analyzer_request.query)
+        val eval_res = result.evaluate(analyzer_request.query, analyzer_request.variables)
         val analyzer_response = AnalyzerEvaluateResponse(build = true,
           value = eval_res.score, variables = eval_res.extracted_variables, build_message = "success")
         analyzer_response

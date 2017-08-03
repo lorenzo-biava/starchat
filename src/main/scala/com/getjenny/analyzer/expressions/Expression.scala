@@ -7,10 +7,10 @@ package com.getjenny.analyzer.expressions
 case class Result(score: Double, extracted_variables: Map[String, String] = Map.empty[String, String])
 
 abstract class Expression {
-  def evaluate(query: String): Result // read a sentence and produce a score (the higher, the more confident)
+  def evaluate(query: String, data: Option[Map[String, String]]=None): Result // read a sentence and produce a score (the higher, the more confident)
   val match_threshold = 0.0
-  def matches(query: String): Result = {
-    val res = this.evaluate(query)
+  def matches(query: String, data: Option[Map[String, String]]=None): Result = {
+    val res = this.evaluate(query, data)
     val bool = if(res.score > match_threshold) 1.0 else 0.0
     if (bool == 1) println("DEBUG: Expression: " + this + " matches " + query)
     Result(score = bool, extracted_variables = res.extracted_variables)

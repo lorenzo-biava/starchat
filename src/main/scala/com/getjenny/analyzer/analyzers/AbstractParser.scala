@@ -7,5 +7,5 @@ import com.getjenny.analyzer.expressions.Result
   */
 
 abstract class AbstractParser(command_string: String) {
-  def evaluate(sentence: String): Result
+  def evaluate(sentence: String, data: Option[Map[String, String]] = None): Result
 }

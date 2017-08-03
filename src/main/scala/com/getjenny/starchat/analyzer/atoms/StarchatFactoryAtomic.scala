@@ -14,7 +14,8 @@ class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
     "similar", "similarState",
     "similarEucEmd", "similarEucEmdState",
     "similarCosEmd", "similarCosEmdState",
-    "matchPatternRegex", "matchDateDDMMYYYY"
+    "matchPatternRegex", "matchDateDDMMYYYY",
+    "existsVariable"
   )
 
   override def get(name: String, argument: String):
@@ -31,6 +32,7 @@ class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
     case "similarCosEmdState" => new W2VEarthMoversCosineDistanceStateAtomic(argument)
     case "matchPatternRegex" => new MatchPatternRegexAtomic(argument)
     case "matchDateDDMMYYYY" => new MatchDateDDMMYYYYAtomic(argument)
+    case "existsVariable" => new ExistsVariable(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }
