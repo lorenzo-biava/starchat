@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/GetJenny/starchat.png)](https://travis-ci.org/GetJenny/starchat)
+
 # Welcome!
 
 This is the official repository for StarChat, a scalable conversational engine for B2B applications provided by [GetJenny](https://getjenny.com)
@@ -13,3 +15,4 @@ from your fork of this repository!
 
 Our concise [contribution guideline](https://github.com/GetJenny/starchat/blob/master/CONTRIBUTING.md) contains the bare
 minumum requirements of the code contributions.
+

@@ -23,6 +23,7 @@ case class KBDocument(id: String, /* unique id of the document */
                       answer_scored_terms: Option[List[(String, Double)]], /* terms list in form {"term": "<term>", "score": 0.2121} */
                       verified: Boolean = false, /* was the conversation verified by an operator? */
                       topics: Option[String], /* list of topics */
+                      dclass: Option[String], /* document classes e.g. group0 group1 etc.*/
                       doctype: String = doctypes.normal, /* document type */
                       state: Option[String], /* eventual link to any of the state machine states */
                       status: Int = 0 /* tell whether the document is locked for editing or not, useful for

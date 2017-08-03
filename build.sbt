@@ -51,6 +51,7 @@ enablePlugins(GitBranchPrompt)
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(UniversalPlugin)
 enablePlugins(DockerPlugin)
+enablePlugins(DockerComposePlugin)
 
 git.useGitDescribe := true
 
@@ -71,8 +72,15 @@ packageName in Docker := packageName.value
 version in Docker := version.value
 dockerRepository := Some("elegansio")
 
+//dockerImageCreationTask := (publishLocal in Docker).value
+composeNoBuild := true
+composeFile := "docker-starchat/docker-compose.test.yml" 
+
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")
+
+fork in Test := true
+javaOptions in Test ++= Seq("-Dconfig.file=./src/test/resources/application.conf")
 
 // do not buffer test output
 logBuffered in Test := false
