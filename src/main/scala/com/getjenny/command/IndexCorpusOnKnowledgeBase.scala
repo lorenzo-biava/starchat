@@ -82,6 +82,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
         answer_scored_terms = None: Option[List[(String, Double)]],
         verified = false,
         topics = None: Option[String],
+        dclass = None: Option[String],
         doctype = doctypes.hidden,
         state = None: Option[String],
         status = 0

@@ -32,7 +32,7 @@ class W2VEarthMoversCosineDistanceAtomic(val sentence: String) extends AbstractA
 
   override def toString: String = "similarCosEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String): Result = {
+  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
     val emd_dist = EmDistance.distanceCosine(query, sentence)
     Result(score=emd_dist)
   }

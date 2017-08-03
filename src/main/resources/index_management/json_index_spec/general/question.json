@@ -33,6 +33,13 @@
       "store": true,
       "null_value": -1
     },
+    "class":
+    {
+      "type": "text",
+      "index": true,
+      "store": true,
+      "analyzer": "jenny_base_analyzer"
+    },
     "topics":
     {
       "type": "text",

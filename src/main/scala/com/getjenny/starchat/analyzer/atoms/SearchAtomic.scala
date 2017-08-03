@@ -27,7 +27,7 @@ class SearchAtomic(state: String) extends AbstractAtomic {
 
   val decisionTableService = new DecisionTableService
 
-  def evaluate(query: String): Result = {
+  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
     val min_score = Option{decisionTableService.elastic_client.query_min_threshold}
     val boost_exact_match_factor = Option{decisionTableService.elastic_client.boost_exact_match_factor}
 

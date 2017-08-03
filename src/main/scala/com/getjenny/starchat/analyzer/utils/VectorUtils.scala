@@ -16,8 +16,18 @@ object VectorUtils {
     sum(matrix, Axis._0).t.toArray.toVector
   }
 
+  /** Calculate the cosine distance between vectors
+    *
+    * @param u first vector
+    * @param v second vector
+    * @return the distance in the range 0.0 - 1.0
+    */
   def cosineDist(u: scala.Vector[Double], v: scala.Vector[Double]): Double = {
     if (u.length != v.length) throw new IllegalArgumentException("Vectors have different length")
+
+    /** the range of the function cosineDistance (breeze package) goes from 2.0 (max distance) to 0.0 (min distance)
+      * we divide by 2.0 to normalize between 1.0 and 0.0
+      */
     cosineDistance(DenseVector(u.toArray), DenseVector(v.toArray)) / 2.0
   }
 

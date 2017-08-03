@@ -34,6 +34,7 @@ object SimilarityTest extends JsonSupport {
                             inputfile: String = "pairs.csv",
                             outputfile: String = "output.csv",
                             analyzer: String = "keyword(\"test\")",
+                            variables: Map[String, String] = Map.empty[String, String],
                             text1_index: Int = 3,
                             text2_index: Int = 4,
                             separator: Char = ',',
@@ -73,7 +74,8 @@ object SimilarityTest extends JsonSupport {
         params.analyzer.replace("%text1", escaped_text1).replace("%text2", escaped_text2)
       val evaluate_request = AnalyzerEvaluateRequest(
         analyzer = analyzer,
-        query = text2
+        query = text2,
+        variables = Option{ params.variables }
       )
 
       val entity_future = Marshal(evaluate_request).to[MessageEntity]
@@ -129,6 +131,10 @@ object SimilarityTest extends JsonSupport {
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")
         .action((x, c) => c.copy(path = x))
+      opt[Map[String, String]]("variables")
+        .text(s"set of variables to be used by the analyzers" +
+          s"  default: ${defaultParams.variables}")
+        .action((x, c) => c.copy(variables = x))
       opt[Int]("text1_index")
         .text(s"the index of the text1 element" +
           s"  default: ${defaultParams.text1_index}")

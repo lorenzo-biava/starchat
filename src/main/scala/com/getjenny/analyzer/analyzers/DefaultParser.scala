@@ -31,8 +31,8 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
   override def toString: String = operator.toString
   /** Read a sentence and produce a score (the higher, the more confident)
     */
-  def evaluate(sentence: String): Result = {
-    val res = operator.evaluate(sentence)
+  def evaluate(sentence: String, data: Option[Map[String, String]] = None): Result = {
+    val res = operator.evaluate(query = sentence, data = data)
     if (res.score > 0) println("DEBUG: DefaultParser: '" + this + "' evaluated to " + res)
     res
   }

@@ -59,10 +59,22 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
     if (documentSearch.doctype.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("doctype", documentSearch.doctype.get))
+      bool_query_builder.filter(QueryBuilders.termQuery("doctype", documentSearch.doctype.get))
 
     if (documentSearch.verified.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("verified", documentSearch.verified.get))
+      bool_query_builder.filter(QueryBuilders.termQuery("verified", documentSearch.verified.get))
+
+    if (documentSearch.topics.isDefined)
+      bool_query_builder.must(QueryBuilders.matchQuery("topics.base", documentSearch.topics.get))
+
+    if (documentSearch.dclass.isDefined)
+      bool_query_builder.filter(QueryBuilders.matchQuery("dclass", documentSearch.dclass.get))
+
+    if (documentSearch.state.isDefined)
+      bool_query_builder.filter(QueryBuilders.termQuery("state", documentSearch.state.get))
+
+    if (documentSearch.status.isDefined)
+      bool_query_builder.filter(QueryBuilders.termQuery("status", documentSearch.status.get))
 
     if(documentSearch.question.isDefined) {
       val question_query = documentSearch.question.get
@@ -186,6 +198,11 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         case None => None : Option[String]
       }
 
+      val dclass : Option[String] = source.get("dclass") match {
+        case Some(t) => Option { t.asInstanceOf[String] }
+        case None => None : Option[String]
+      }
+
       val doctype : String = source.get("doctype") match {
         case Some(t) => t.asInstanceOf[String]
         case None => doctypes.normal
@@ -209,6 +226,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         answer_scored_terms = answer_scored_terms,
         verified = verified,
         topics = topics,
+        dclass = dclass,
         doctype = doctype,
         state = state,
         status = status)
@@ -282,10 +300,16 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
       case None => ;
     }
     builder.field("doctype", document.doctype)
+
+    document.dclass match {
+      case Some(t) => builder.field("dclass", t)
+      case None => ;
+    }
     document.state match {
       case Some(t) => builder.field("state", t)
       case None => ;
     }
+
     builder.field("status", document.status)
 
     builder.endObject()
@@ -374,6 +398,11 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
 
     document.topics match {
       case Some(t) => builder.field("topics", t)
+      case None => ;
+    }
+
+    document.dclass match {
+      case Some(t) => builder.field("dclass", t)
       case None => ;
     }
 
@@ -512,6 +541,11 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         case None => None : Option[String]
       }
 
+      val dclass : Option[String] = source.get("dclass") match {
+        case Some(t) => Option { t.asInstanceOf[String] }
+        case None => None : Option[String]
+      }
+
       val doctype : String = source.get("doctype") match {
         case Some(t) => t.asInstanceOf[String]
         case None => doctypes.normal
@@ -536,6 +570,7 @@ class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
         answer_scored_terms = answer_scored_terms,
         verified = verified,
         topics = topics,
+        dclass = dclass,
         doctype = doctype,
         state = state,
         status = status)
