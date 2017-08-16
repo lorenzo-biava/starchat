@@ -24,7 +24,7 @@ class DisjunctionOperator(children: List[Expression]) extends AbstractOperator(c
         val comp_disj = compDisjunction(l.tail)
         Result(score = (1.0 - res.score) * comp_disj.score,
           Data(
-            item_list = res.data.item_list,
+            item_list = data.item_list,
             extracted_variables = comp_disj.data.extracted_variables ++ res.data.extracted_variables)
         )
       }

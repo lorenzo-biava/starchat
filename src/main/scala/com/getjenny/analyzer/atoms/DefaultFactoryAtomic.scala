@@ -16,7 +16,7 @@ class DefaultFactoryAtomic extends Factory[String, AbstractAtomic] {
     case "regex" => new RegularExpressionAtomic(argument)
     case "matchPatternRegex" => new MatchPatternRegexAtomic(argument)
     case "matchDateDDMMYYYY" => new MatchDateDDMMYYYYAtomic(argument)
-    case "existsVariable" => new ExistsVariable(argument)
+    case "existsVariable" => new ExistsVariableAtomic(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }

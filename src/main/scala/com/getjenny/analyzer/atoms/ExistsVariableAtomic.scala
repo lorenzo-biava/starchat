@@ -14,7 +14,7 @@ import com.getjenny.analyzer.expressions.Result
   *
   * @param varname name of the variable to be checked
   */
-class ExistsVariable(val varname: String) extends AbstractAtomic {
+class ExistsVariableAtomic(val varname: String) extends AbstractAtomic {
   override def toString: String = "existsVariable"
   val isEvaluateNormalized: Boolean = true
 
