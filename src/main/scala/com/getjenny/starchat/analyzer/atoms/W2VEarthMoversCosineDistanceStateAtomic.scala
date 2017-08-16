@@ -12,7 +12,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
 
 import ExecutionContext.Implicits.global
-import com.getjenny.analyzer.expressions.Result
+import com.getjenny.analyzer.expressions.{Data, Result}
 
 /**
   * Created by angelo on 11/04/17.
@@ -49,7 +49,7 @@ class W2VEarthMoversCosineDistanceStateAtomic(val state: String) extends Abstrac
   val queries_vectors = queries_sentences.queries.map(item => Option{item})
 
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
+  def evaluate(query: String, data: Data = Data()): Result = {
     val query_vectors = termService.textToVectors(text = query)
     val emd_dist_queries = queries_vectors.map(q => {
       val dist = EmDistance.distanceCosine(q , query_vectors)

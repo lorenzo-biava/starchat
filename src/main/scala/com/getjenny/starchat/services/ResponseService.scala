@@ -26,6 +26,7 @@ import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import com.getjenny.analyzer.analyzers._
 import com.getjenny.analyzer.expressions.Result
+import com.getjenny.analyzer.expressions.Data
 
 /**
   * Implements response functionalities
@@ -47,14 +48,16 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
 
     val conversation_id: String = request.conversation_id
 
-    val data: Map[String, String] = if (request.values.isDefined)
+    val variables: Map[String, String] = if (request.values.isDefined)
       request.values.get.data.getOrElse(Map[String, String]())
     else
-      Map[String, String]()
+      Map.empty[String, String]
 
     val traversed_states: List[String] = request.traversed_states.getOrElse(List.empty[String])
     val traversed_states_count: Map[String, Int] =
       traversed_states.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
+
+    val data: Data = Data(extracted_variables = variables, string_list = traversed_states)
 
     val return_value: String = if (request.values.isDefined)
       request.values.get.return_value.getOrElse("")
@@ -75,8 +78,8 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
           var bubble: String = doc.bubble
           var action_input: Map[String, String] = doc.action_input
           val state_data: Map[String, String] = doc.state_data
-          if (data.nonEmpty) {
-            for ((key, value) <- data) {
+          if (data.extracted_variables.nonEmpty) {
+            for ((key, value) <- data.extracted_variables) {
               bubble = bubble.replaceAll("%" + key + "%", value)
               action_input = doc.action_input map { case (ki, vi) =>
                 val new_value: String = vi.replaceAll("%" + key + "%", value)
@@ -93,7 +96,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
             analyzer = analyzer,
             bubble = bubble,
             action = doc.action,
-            data = data,
+            data = data.extracted_variables,
             action_input = action_input,
             state_data = state_data,
             success_value = doc.success_value,
@@ -123,7 +126,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
               traversed_state_count < max_state_count // skip states already evaluated too much times
           }).map(item => {
             val analyzer_evaluation = try {
-              val evaluation_res = item._2.analyzer.analyzer.evaluate(user_text, data = Option{data})
+              val evaluation_res = item._2.analyzer.analyzer.evaluate(user_text, data = data)
               log.debug("ResponseService: Evaluation of State(" +
                 item._1 + ") Query(" + user_text + ") Score(" + evaluation_res.toString + ")")
               evaluation_res
@@ -150,7 +153,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
             var action_input: Map[String, String] = doc.action_input
             val state_data: Map[String, String] = doc.state_data
 
-            for ((key, value) <- data) {
+            for ((key, value) <- data.extracted_variables) {
               bubble = bubble.replaceAll("%" + key + "%", value)
               action_input = doc.action_input map { case (ki, vi) =>
                 val new_value: String = vi.replaceAll("%" + key + "%", value)
@@ -158,7 +161,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
               }
             }
 
-            for ((key, value) <- evaluation_res.extracted_variables) {
+            for ((key, value) <- evaluation_res.data.extracted_variables) {
               bubble = bubble.replaceAll("%" + key + "%", value)
               action_input = doc.action_input map { case (ki, vi) =>
                 val new_value: String = vi.replaceAll("%" + key + "%", value)
@@ -167,7 +170,8 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
             }
 
             val cleaned_data =
-              data ++ evaluation_res.extracted_variables.filter(item => !(item._1 matches "\\A__temp__.*"))
+              data.extracted_variables ++
+                evaluation_res.data.extracted_variables.filter(item => !(item._1 matches "\\A__temp__.*"))
 
             val traversed_states_updated: List[String] = traversed_states ++ List(state)
             val response_item: ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,

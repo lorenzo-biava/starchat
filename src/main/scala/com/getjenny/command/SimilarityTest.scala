@@ -25,6 +25,7 @@ import scala.concurrent.Await
 import scala.collection.immutable
 import scala.collection.immutable.{List, Map}
 import java.io.{File, FileReader, FileWriter}
+import com.getjenny.analyzer.expressions.Data
 
 object SimilarityTest extends JsonSupport {
 
@@ -75,7 +76,7 @@ object SimilarityTest extends JsonSupport {
       val evaluate_request = AnalyzerEvaluateRequest(
         analyzer = analyzer,
         query = text2,
-        variables = Option{ params.variables }
+        data = Option{ Data(extracted_variables = params.variables) }
       )
 
       val entity_future = Marshal(evaluate_request).to[MessageEntity]

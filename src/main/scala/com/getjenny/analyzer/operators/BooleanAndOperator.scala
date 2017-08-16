@@ -16,18 +16,22 @@ class BooleanAndOperator(children: List[Expression]) extends AbstractOperator(ch
     }
   }
 
-  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
+  def evaluate(query: String, data: Data = Data()): Result = {
     def loop(l: List[Expression]): Result = {
       val first_res = l.head.matches(query, data)
       if (first_res.score != 1) {
-        Result(score=0, extracted_variables = first_res.extracted_variables)
+        Result(score=0, data = first_res.data)
       }
       else if (l.tail == Nil) {
-        Result(score=1, extracted_variables = first_res.extracted_variables)
+        Result(score=1, data = first_res.data)
       }
       else {
         val res = loop(l.tail)
-        Result(score = res.score, extracted_variables = res.extracted_variables ++ first_res.extracted_variables)
+        Result(score = res.score,
+          Data(
+            string_list = res.data.string_list,
+            extracted_variables = res.data.extracted_variables ++ first_res.data.extracted_variables)
+        )
       }
     }
 
