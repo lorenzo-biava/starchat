@@ -6,5 +6,5 @@ package com.getjenny.starchat.entities
 
 import com.getjenny.analyzer.expressions.Data
 
-case class AnalyzerEvaluateResponse(build: Boolean, value: Double, data: Data,
+case class AnalyzerEvaluateResponse(build: Boolean, value: Double, data: Option[Data],
                                     build_message: String)

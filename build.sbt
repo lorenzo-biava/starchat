@@ -37,7 +37,7 @@ libraryDependencies ++= {
     "org.apache.tika" % "tika-core" % "1.14",
     "org.apache.tika" % "tika-parsers" % "1.14",
     "org.apache.tika" % "tika-app" % "1.14",
-    "com.github.scopt" %% "scopt" % "3.5.0",
+    "com.github.scopt" %% "scopt" % "3.6.0",
     "com.roundeights" %% "hasher" % "1.2.0",
     "org.parboiled" %% "parboiled" % "2.1.4"
    )

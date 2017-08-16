@@ -31,7 +31,7 @@ class MatchDateDDMMYYYYAtomic(val prefix: String) extends AbstractAtomic {
     val res = try {
       Result(
         score = 1.0,
-        Data(string_list = data.string_list, extracted_variables = regex_extractor.evaluate(query))
+        Data(item_list = data.item_list, extracted_variables = regex_extractor.evaluate(query))
       )
     } catch {
       case e: PatternExtractionNoMatchException =>

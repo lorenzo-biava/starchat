@@ -22,7 +22,7 @@ class MaxOperator(children: List[Expression]) extends AbstractOperator(children:
       if (l.tail == Nil) {
         Result(score = res.score,
           Data(
-            string_list = res.data.string_list,
+            item_list = res.data.item_list,
             extracted_variables = res.data.extracted_variables)
         )
       } else {

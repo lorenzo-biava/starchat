@@ -177,8 +177,14 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
           Data()
         }
         val eval_res = result.evaluate(analyzer_request.query, data)
+        val return_data = if(eval_res.data.extracted_variables.nonEmpty || eval_res.data.item_list.nonEmpty) {
+          Option{eval_res.data}
+        } else {
+          None: Option[Data]
+        }
+
         val analyzer_response = AnalyzerEvaluateResponse(build = true,
-          value = eval_res.score, data = eval_res.data, build_message = "success")
+          value = eval_res.score, data = return_data, build_message = "success")
         analyzer_response
     }
 

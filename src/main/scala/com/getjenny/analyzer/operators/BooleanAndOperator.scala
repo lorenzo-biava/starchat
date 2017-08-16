@@ -29,7 +29,7 @@ class BooleanAndOperator(children: List[Expression]) extends AbstractOperator(ch
         val res = loop(l.tail)
         Result(score = res.score,
           Data(
-            string_list = res.data.string_list,
+            item_list = res.data.item_list,
             extracted_variables = res.data.extracted_variables ++ first_res.data.extracted_variables)
         )
       }

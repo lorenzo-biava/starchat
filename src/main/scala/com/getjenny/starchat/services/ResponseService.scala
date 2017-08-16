@@ -57,7 +57,7 @@ class ResponseService(implicit val executionContext: ExecutionContext) {
     val traversed_states_count: Map[String, Int] =
       traversed_states.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
 
-    val data: Data = Data(extracted_variables = variables, string_list = traversed_states)
+    val data: Data = Data(extracted_variables = variables, item_list = traversed_states)
 
     val return_value: String = if (request.values.isDefined)
       request.values.get.return_value.getOrElse("")
