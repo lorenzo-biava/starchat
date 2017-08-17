@@ -13,6 +13,7 @@ import scala.concurrent.duration._
 import scala.concurrent._
 import ExecutionContext.Implicits.global
 import com.getjenny.analyzer.expressions.Result
+import com.getjenny.analyzer.expressions.Data
 
 /**
   * Created by mal on 20/02/2017.
@@ -34,7 +35,7 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
   override def toString: String = "similar(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
 
-  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
+  def evaluate(query: String, data: Data = Data()): Result = {
     val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
 
     /** cosineDist returns 0.0 for the closest vector, we want 1.0 when the similarity is the highest

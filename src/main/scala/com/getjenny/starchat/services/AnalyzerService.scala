@@ -20,7 +20,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
 import com.getjenny.starchat.analyzer.analyzers._
-
+import com.getjenny.analyzer.expressions.Data
 import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
@@ -171,9 +171,20 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
         log.error("error during evaluation of analyzer: " + exception.getMessage)
         throw exception
       case Success(result) =>
-        val eval_res = result.evaluate(analyzer_request.query, analyzer_request.variables)
+        val data = if (analyzer_request.data.isDefined) {
+          analyzer_request.data.get
+        } else {
+          Data()
+        }
+        val eval_res = result.evaluate(analyzer_request.query, data)
+        val return_data = if(eval_res.data.extracted_variables.nonEmpty || eval_res.data.item_list.nonEmpty) {
+          Option{eval_res.data}
+        } else {
+          None: Option[Data]
+        }
+
         val analyzer_response = AnalyzerEvaluateResponse(build = true,
-          value = eval_res.score, variables = eval_res.extracted_variables, build_message = "success")
+          value = eval_res.score, data = return_data, build_message = "success")
         analyzer_response
     }
 

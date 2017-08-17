@@ -5,6 +5,7 @@ package com.getjenny.starchat.serializers
   */
 
 import com.getjenny.starchat.entities._
+import com.getjenny.analyzer.expressions.Data
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCode
 import spray.json._
@@ -33,7 +34,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val updateDocumentResultListFormat = jsonFormat1(UpdateDocumentListResult)
   implicit val deleteDocumentResultListFormat = jsonFormat1(DeleteDocumentListResult)
   implicit val listOfDocumentIdFormat = jsonFormat1(ListOfDocumentId)
-  implicit val dtAnalyzerItem = jsonFormat3(DTAnalyzerItem)
+  implicit val dtAnalyzerItemFormat = jsonFormat3(DTAnalyzerItem)
   implicit val dtAnalyzerMapFormat = jsonFormat1(DTAnalyzerMap)
   implicit val dtAnalyzerLoadFormat = jsonFormat1(DTAnalyzerLoad)
   implicit val indexManagementResponseFormat = jsonFormat1(IndexManagementResponse)
@@ -44,17 +45,18 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val termIdsRequestFormat = jsonFormat1(TermIdsRequest)
   implicit val termsFormat = jsonFormat1(Terms)
   implicit val termsResultsFormat = jsonFormat3(TermsResults)
-  implicit val textTerms = jsonFormat4(TextTerms)
-  implicit val failedShards = jsonFormat4(FailedShard)
-  implicit val refreshIndexResult = jsonFormat4(RefreshIndexResult)
-  implicit val analyzerQueryRequest = jsonFormat2(TokenizerQueryRequest)
-  implicit val analyzerResponseItem = jsonFormat5(TokenizerResponseItem)
-  implicit val analyzerResponse = jsonFormat1(TokenizerResponse)
-  implicit val analyzerEvaluateRequest = jsonFormat3(AnalyzerEvaluateRequest)
-  implicit val analyzerEvaluateResponse = jsonFormat4(AnalyzerEvaluateResponse)
-  implicit val spellcheckTokenSuggestions = jsonFormat3(SpellcheckTokenSuggestions)
-  implicit val spellcheckToken = jsonFormat4(SpellcheckToken)
-  implicit val spellcheckTermsResponse = jsonFormat1(SpellcheckTermsResponse)
-  implicit val spellcheckTermsRequest = jsonFormat3(SpellcheckTermsRequest)
-  implicit val responseRequestOutOperationResult = jsonFormat2(ResponseRequestOutOperationResult)
+  implicit val textTermsFormat = jsonFormat4(TextTerms)
+  implicit val failedShardsFormat = jsonFormat4(FailedShard)
+  implicit val refreshIndexResultFormat = jsonFormat4(RefreshIndexResult)
+  implicit val analyzerQueryRequestFormat = jsonFormat2(TokenizerQueryRequest)
+  implicit val analyzerResponseItemFormat = jsonFormat5(TokenizerResponseItem)
+  implicit val analyzerResponseFormat = jsonFormat1(TokenizerResponse)
+  implicit val analyzerDataFormat = jsonFormat2(Data)
+  implicit val analyzerEvaluateRequestFormat = jsonFormat3(AnalyzerEvaluateRequest)
+  implicit val analyzerEvaluateResponseFormat = jsonFormat4(AnalyzerEvaluateResponse)
+  implicit val spellcheckTokenSuggestionsFormat = jsonFormat3(SpellcheckTokenSuggestions)
+  implicit val spellcheckTokenFormat = jsonFormat4(SpellcheckToken)
+  implicit val spellcheckTermsResponseFormat = jsonFormat1(SpellcheckTermsResponse)
+  implicit val spellcheckTermsRequestFormat = jsonFormat3(SpellcheckTermsRequest)
+  implicit val responseRequestOutOperationResultFormat = jsonFormat2(ResponseRequestOutOperationResult)
 }

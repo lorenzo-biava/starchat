@@ -16,11 +16,16 @@ class MaxOperator(children: List[Expression]) extends AbstractOperator(children:
     }
   }
 
-  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
+  def evaluate(query: String, data: Data = new Data): Result = {
     def compMax(l: List[Expression]): Result = {
       val res = l.head.evaluate(query, data)
-      if (l.tail == Nil) Result(score=res.score, extracted_variables = res.extracted_variables)
-      else {
+      if (l.tail == Nil) {
+        Result(score = res.score,
+          Data(
+            item_list = data.item_list,
+            extracted_variables = res.data.extracted_variables)
+        )
+      } else {
         val val1 = l.head.evaluate(query)
         val val2 = compMax(l.tail)
         if(val1.score >= val2.score) val1 else val2

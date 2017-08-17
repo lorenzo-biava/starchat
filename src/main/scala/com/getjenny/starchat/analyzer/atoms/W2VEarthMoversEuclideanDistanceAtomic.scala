@@ -7,7 +7,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
 
 import ExecutionContext.Implicits.global
-import com.getjenny.analyzer.expressions.Result
+import com.getjenny.analyzer.expressions.{Data, Result}
 
 /**
   * Created by angelo on 04/04/17.
@@ -26,7 +26,7 @@ class W2VEarthMoversEuclideanDistanceAtomic(val sentence: String) extends Abstra
 
   override def toString: String = "similarEucEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
+  def evaluate(query: String, data: Data = Data()): Result = {
     val emd_dist = EmDistance.distanceEuclidean(query, sentence)
     Result(score=emd_dist)
   }

@@ -69,15 +69,6 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
       }
     }
   }
-
-  it should {
-    "return an HTTP code 400 updating a deleted index" in {
-      Put(s"/index_management") ~> routes ~> check {
-        status shouldEqual StatusCodes.BadRequest
-        val response = responseAs[IndexManagementResponse]
-      }
-    }
-  }
 }
 
 
