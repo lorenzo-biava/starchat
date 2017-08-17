@@ -78,6 +78,17 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
       }
     }
   }
+
+  it should {
+    "return an HTTP code 200 when creating again the index" in {
+      Post(s"/index_management/create") ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val response = responseAs[IndexManagementResponse]
+        response.message should fullyMatch regex "(create index: .+ create_index_ack\\(true\\))"
+      }
+    }
+  }
+
 }
 
 
