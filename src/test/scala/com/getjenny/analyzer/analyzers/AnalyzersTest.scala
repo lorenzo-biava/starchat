@@ -8,11 +8,11 @@ import org.scalatest._
 class AnalyzersTest extends FlatSpec with Matchers {
 
   "A DefaultAnalyzer" should "parse a rule and evaluate the operations on a provided input text" in {
-    val analBayes = new DefaultAnalyzer("""disjunction( keyword("clever"), keyword("gentleman") )""")
+    val analyzerBayes = new DefaultAnalyzer("""disjunction( keyword("clever"), keyword("gentleman") )""")
 
-    val gentleman = analBayes.evaluate("ciao nice gentleman fool")
-    val clever_gentleman_long = analBayes.evaluate("ciao clever fool gentleman")
-    val clever_gentleman_short = analBayes.evaluate("ciao clever gentleman")
+    val gentleman = analyzerBayes.evaluate("ciao nice gentleman fool")
+    val clever_gentleman_long = analyzerBayes.evaluate("ciao clever fool gentleman")
+    val clever_gentleman_short = analyzerBayes.evaluate("ciao clever gentleman")
 
     //two is better than one
     clever_gentleman_long.score should be > gentleman.score
