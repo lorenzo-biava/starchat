@@ -19,7 +19,10 @@ class KeywordAtomic(val keyword: String) extends AbstractAtomic {
     val query_length = """\S+""".r.findAllIn(query).toList.length
     if (freq > 0) println("DEBUG: KeywordAtomic: '" + keyword + "' found " + freq +
       " times in " + query + " (length=" + query_length + ").")
-    val score = freq.toDouble / query_length.toDouble
+    val score = if(query_length.toDouble > 0)
+      freq.toDouble / query_length.toDouble
+    else
+      0.0
     Result(score = score)
   }
 

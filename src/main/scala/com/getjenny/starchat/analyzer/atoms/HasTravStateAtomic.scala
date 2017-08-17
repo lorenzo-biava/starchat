@@ -13,7 +13,7 @@ import com.getjenny.analyzer.expressions.{Data, Result}
   */
 
 class HasTravStateAtomic(val name: String) extends AbstractAtomic {
-  override def toString: String = "existsVariable"
+  override def toString: String = "hasTravState"
   val isEvaluateNormalized: Boolean = true
 
   /** Check if the state <name> exists on the list of traversed states data.item_list

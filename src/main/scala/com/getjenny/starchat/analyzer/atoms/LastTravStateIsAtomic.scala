@@ -13,7 +13,7 @@ import com.getjenny.analyzer.expressions.{Data, Result}
   */
 
 class LastTravStateIsAtomic(val name: String) extends AbstractAtomic {
-  override def toString: String = "existsVariable"
+  override def toString: String = "lastTravStateIs"
   val isEvaluateNormalized: Boolean = true
 
   /** Check if the last state into data.item_list is <state>

@@ -46,7 +46,7 @@ class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
     case "existsVariable" => new ExistsVariableAtomic(argument)
     case "hasTravState" => new HasTravStateAtomic(argument)
     case "lastTravStateIs" => new LastTravStateIsAtomic(argument)
-    case "prevTravStateIs" => new PreviousStateIsAtomic(argument)
+    case "prevTravStateIs" => new PreviousTravStateIsAtomic(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }
