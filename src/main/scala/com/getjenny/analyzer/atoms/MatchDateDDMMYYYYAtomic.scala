@@ -1,6 +1,6 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.expressions.Result
+import com.getjenny.analyzer.expressions.{Data, Result}
 import com.getjenny.analyzer.utils._
 
 /**
@@ -27,10 +27,12 @@ class MatchDateDDMMYYYYAtomic(val prefix: String) extends AbstractAtomic {
     * @param data the dictionary of variables (not used in this analyzer)
     * @return Result with 1.0 the date on extracted_variables if the pattern matches, score = 0.0 otherwise
     */
-  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
+  def evaluate(query: String, data: Data = Data()): Result = {
     val res = try {
-      val extracted_variables = regex_extractor.evaluate(query)
-      Result(score=1.0, extracted_variables = extracted_variables)
+      Result(
+        score = 1.0,
+        Data(item_list = data.item_list, extracted_variables = regex_extractor.evaluate(query))
+      )
     } catch {
       case e: PatternExtractionNoMatchException =>
         Result(score=0)

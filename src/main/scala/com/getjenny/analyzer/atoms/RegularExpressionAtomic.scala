@@ -1,6 +1,6 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.expressions.Result
+import com.getjenny.analyzer.expressions.{Data, Result}
 
 /**
   * Created by mal on 20/02/2017.
@@ -18,7 +18,7 @@ class RegularExpressionAtomic(re: String) extends AbstractAtomic {
   val isEvaluateNormalized: Boolean = false
   private val rx = re.r
 
-  def evaluate(query: String, data: Option[Map[String, String]] = None): Result = {
+  def evaluate(query: String, data: Data = Data()): Result = {
     val score = rx.findAllIn(query).toList.length
     Result(score = score)
   }

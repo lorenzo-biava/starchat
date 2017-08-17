@@ -11,7 +11,7 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
                   Resolver.bintrayRepo("hseeberger", "maven"))
 
 libraryDependencies ++= {
-  val AkkaVersion       = "2.5.3"
+  val AkkaVersion       = "2.5.4"
   val AkkaHttpVersion   = "10.0.9"
   val ESClientVersion   = "5.5.0"
   Seq(
@@ -37,7 +37,7 @@ libraryDependencies ++= {
     "org.apache.tika" % "tika-core" % "1.14",
     "org.apache.tika" % "tika-parsers" % "1.14",
     "org.apache.tika" % "tika-app" % "1.14",
-    "com.github.scopt" %% "scopt" % "3.5.0",
+    "com.github.scopt" %% "scopt" % "3.6.0",
     "com.roundeights" %% "hasher" % "1.2.0",
     "org.parboiled" %% "parboiled" % "2.1.4"
    )
