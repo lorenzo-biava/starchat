@@ -47,7 +47,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
       Get(s"/index_management") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
-        response.message shouldEqual "settings index: jenny-en-0 dt_type_check(state:true) kb_type_check(question:true) term_type_name(term:true)"
+        response.message shouldEqual "settings index: jenny-en-0 sys_type_check(system:true) dt_type_check(state:true) kb_type_check(question:true) term_type_name(term:true)"
       }
     }
   }
