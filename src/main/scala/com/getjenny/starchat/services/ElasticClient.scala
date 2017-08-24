@@ -25,8 +25,8 @@ trait ElasticClient {
   val ignore_cluster_name: Boolean = config.getBoolean("es.ignore_cluster_name")
   val index_language: String = config.getString("es.index_language")
 
-  val host_map : Map[String, Int] = config.getAnyRef("es.host_map")
-    .asInstanceOf[java.util.Map[String, Int]].asScala.toMap
+  val host_map_str : String = config.getString("es.host_map")
+  val host_map : Map[String, Int] = host_map_str.split(";").map(x => x.split(",")).map(x => (x(0), (x(1)).toInt)).toMap
 
   val settings: Settings = Settings.builder()
     .put("cluster.name", cluster_name)
