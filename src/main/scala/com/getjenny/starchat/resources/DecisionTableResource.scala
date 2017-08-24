@@ -90,7 +90,7 @@ trait DecisionTableResource extends MyResource {
       } ~
         post {
           val result: Try[Option[DTAnalyzerLoad]] =
-            Await.ready(analyzerService.loadAnalyzer, 60.seconds).value.get
+            Await.ready(analyzerService.loadAnalyzer(propagate = true), 60.seconds).value.get
           result match {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})

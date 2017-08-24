@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 
-curl -v -H "Content-Type: application/json" -X GET "http://localhost:8888/decisiontable_analyzer"
+PORT=${1:-8888}
+curl -v -H "Content-Type: application/json" -X GET "http://localhost:${PORT}/decisiontable_analyzer"
 

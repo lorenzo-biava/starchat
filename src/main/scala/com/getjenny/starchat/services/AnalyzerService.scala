@@ -49,6 +49,7 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
   val elastic_client = DecisionTableElasticClient
   val termService = new TermService
   val decisionTableService = new DecisionTableService
+  val systemService = new SystemService
 
   def getAnalyzers: mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
     val client: TransportClient = elastic_client.get_client()
@@ -149,10 +150,24 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
     result
   }
 
-  def loadAnalyzer : Future[Option[DTAnalyzerLoad]] = Future {
+  def loadAnalyzer(propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
     AnalyzerService.analyzer_map = getAnalyzers
     AnalyzerService.analyzer_map = buildAnalyzers(AnalyzerService.analyzer_map)
     val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=AnalyzerService.analyzer_map.size)
+
+    if (propagate) {
+      val result: Try[Option[Long]] =
+        Await.ready(systemService.setDTReloadTimestamp(refresh = 1), 60.seconds).value.get
+      result match {
+        case Success(t) =>
+          val ts: Long = t.getOrElse(0)
+          log.debug("setting dt reload timestamp to: " + ts)
+          SystemService.dt_reload_timestamp = ts
+        case Failure(e) =>
+          log.error("unable to set dt reload timestamp" + e.getMessage)
+      }
+    }
+
     Option {dt_analyzer_load}
   }
 
@@ -194,10 +209,13 @@ class AnalyzerService(implicit val executionContext: ExecutionContext) {
   def initializeAnalyzers(): Unit = {
     if (AnalyzerService.analyzer_map == mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]) {
       val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzer, 60.seconds).value.get
+        Await.ready(loadAnalyzer(propagate = false), 60.seconds).value.get
       result match {
-        case Success(t) => log.info("analyzers loaded: " + t.get.num_of_entries)
-        case Failure(e) => log.error("can't load analyzers: " + e.toString)
+        case Success(t) =>
+          log.info("analyzers loaded: " + t.get.num_of_entries)
+          SystemService.dt_reload_timestamp = 0
+        case Failure(e) =>
+          log.error("can't load analyzers: " + e.toString)
       }
     } else {
       log.info("analyzers already loaded")
