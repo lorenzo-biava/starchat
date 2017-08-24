@@ -109,6 +109,9 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
 
   /* try to initialize the analyzers, elasticsearch must be up and running */
   analyzerService.initializeAnalyzers()
+
+  /* activate cron jobs for data synchronization */
+  cronJobService.reloadDecisionTable()
 }
 
 object Main extends App {
