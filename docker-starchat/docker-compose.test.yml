@@ -15,5 +15,5 @@ services:
       - ./elasticsearch/config:/usr/share/elasticsearch/config
       - ./elasticsearch_test/logs:/usr/share/elasticsearch/logs
     environment:
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - MAX_LOCKED_MEMORY=unlimited
 
