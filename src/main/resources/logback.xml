@@ -7,7 +7,7 @@
       <fileNamePattern>starchat/log/starchat.%d{dd-MM-yyyy}.%i.log.gz</fileNamePattern>
        <maxFileSize>100MB</maxFileSize>
        <maxHistory>30</maxHistory>
-       <totalSizeCap>1GB</totalSizeCap>
+       <totalSizeCap>8GB</totalSizeCap>
     </rollingPolicy>
 
     <encoder>
