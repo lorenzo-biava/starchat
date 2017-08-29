@@ -35,7 +35,7 @@ class CronJobService(implicit val executionContext: ExecutionContext) {
             }
             ts
           case Failure(e) =>
-            log.error("unable to load analyzers from the cron job" + e.getMessage)
+            log.error("unable to load analyzers from the cron job: " + e.getMessage)
             -1: Long
         }
 
