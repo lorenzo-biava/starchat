@@ -31,7 +31,7 @@ services:
       - "elasticsearch:getjenny-es"
 
   manaus:
-    image: elegansio/manaus:1.0.5
+    image: elegansio/manaus:1.0.6
     restart: unless-stopped
     volumes:
       - ./manaus/data:/manaus/data
