@@ -4,7 +4,7 @@
     <file>starchat/log/starchat.log</file>
 
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-      <fileNamePattern>manaus/log/manaus.%d{dd-MM-yyyy}.%i.log.gz</fileNamePattern>
+      <fileNamePattern>starchat/log/starchat.%d{dd-MM-yyyy}.%i.log.gz</fileNamePattern>
        <maxFileSize>100MB</maxFileSize>
        <maxHistory>30</maxHistory>
        <totalSizeCap>1GB</totalSizeCap>
