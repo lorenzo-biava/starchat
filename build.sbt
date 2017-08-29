@@ -25,7 +25,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
-    "ch.qos.logback"    %  "logback-classic" % "1.1.3",
+    "ch.qos.logback"    %  "logback-classic" % "1.2.3",
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "org.elasticsearch.client" % "transport" % ESClientVersion,

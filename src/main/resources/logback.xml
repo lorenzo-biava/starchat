@@ -3,9 +3,11 @@
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>starchat/log/starchat.log</file>
 
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>starchat/log/app.%d{dd-MM-yyyy}.log</fileNamePattern>
-      <maxHistory>512</maxHistory>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>starchat/log/starchat.%d{dd-MM-yyyy}.%i.log.gz</fileNamePattern>
+       <maxFileSize>100MB</maxFileSize>
+       <maxHistory>30</maxHistory>
+       <totalSizeCap>8GB</totalSizeCap>
     </rollingPolicy>
 
     <encoder>
@@ -13,7 +15,20 @@
     </encoder>
   </appender>
 
+<!--
+  <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
+    <syslogHost>localhost</syslogHost>
+    <facility>SYSLOG</facility>
+    <port>514</port>
+    <encoder>
+      <pattern>%date{ISO8601} >%X{akkaTimestamp} %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
+    </encoder>
+  </appender>
+-->
   <root level="DEBUG">
     <appender-ref ref="FILE"/>
+<!--
+    <appender-ref ref="SYSLOG"/>
+-->
   </root>
 </configuration>
