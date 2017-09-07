@@ -16,5 +16,10 @@ case class RootAPIsDescription(api : Map[String, String] = Map(
   "/index_management" -> "supported methods: GET, PUT, POST, DELETE",
   "/language_guesser" -> "supported methods: GET, POST",
   "/analyzers" -> "supported methods: GET, POST",
-  "/spellcheck/terms" -> "supported methods: POST"
+  "/spellcheck/terms" -> "supported methods: POST",
+  "/term/index" -> "POST",
+  "/term/get" -> "POST",
+  "/term" -> "PUT, DELETE",
+  "/term/term" -> "GET",
+  "/term/text" -> "GET"
 ))
