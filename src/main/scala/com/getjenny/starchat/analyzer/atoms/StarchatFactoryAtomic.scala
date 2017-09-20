@@ -27,7 +27,8 @@ class StarchatFactoryAtomic extends Factory[List[String], AbstractAtomic] {
     "hasTravState",
     "lastTravStateIs",
     "prevTravStateIs",
-    "cosDistanceKeywords"
+    "cosDistanceKeywords",
+    "eucDistanceKeywords"
   )
 
   override def get(name: String, argument: List[String]):
