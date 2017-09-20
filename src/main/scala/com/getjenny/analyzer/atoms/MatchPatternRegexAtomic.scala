@@ -15,9 +15,10 @@ import com.getjenny.analyzer.utils._
   *     the number at the end of the name is an index incremented for multiple occurrences of the pattern
   *     in the query
   *
-  * @param regex the regular expression in the form [<name0>,..,<nameN>](<regex>)
+  * @param arguments the regular expression in the form [<name0>,..,<nameN>](<regex>)
   */
-class MatchPatternRegexAtomic(val regex: String) extends AbstractAtomic {
+class MatchPatternRegexAtomic(val arguments: List[String]) extends AbstractAtomic {
+  val regex = arguments(0)
   override def toString: String = "matchPatternRegex(" + regex + ")"
   val isEvaluateNormalized: Boolean = true
 

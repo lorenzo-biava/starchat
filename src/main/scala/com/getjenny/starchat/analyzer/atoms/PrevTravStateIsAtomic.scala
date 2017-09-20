@@ -9,11 +9,12 @@ import com.getjenny.analyzer.expressions.{Data, Result}
 
 /** test the value of the penultimate traversed state
   *
-  * @param name of the state to be checked
+  * @param arguments of the state to be checked
   */
 
 
-class PreviousTravStateIsAtomic(val name: String) extends AbstractAtomic {
+class PreviousTravStateIsAtomic(val arguments: List[String]) extends AbstractAtomic {
+  val name = arguments(0)
   override def toString: String = "prevTravStateIs"
   val isEvaluateNormalized: Boolean = true
 

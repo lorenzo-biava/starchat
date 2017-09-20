@@ -9,10 +9,11 @@ import com.getjenny.analyzer.expressions.{Data, Result}
 
 /** test if the list of traversed states contains a state
   *
-  * @param name of the state to be checked
+  * @param arguments of the state to be checked
   */
 
-class HasTravStateAtomic(val name: String) extends AbstractAtomic {
+class HasTravStateAtomic(val arguments: List[String]) extends AbstractAtomic {
+  val name = arguments(0)
   override def toString: String = "hasTravState"
   val isEvaluateNormalized: Boolean = true
 

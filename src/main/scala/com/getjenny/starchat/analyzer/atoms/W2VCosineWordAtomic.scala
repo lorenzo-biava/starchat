@@ -15,11 +15,12 @@ import ExecutionContext.Implicits.global
   * Created by mal on 20/02/2017.
   */
 
-class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
+class W2VCosineWordAtomic(arguments: List[String]) extends AbstractAtomic {
   /**
     * Return the normalized w2vcosine similarity of the nearest word
     */
 
+  val word = arguments(0)
   override def toString: String = "similar(\"" + word + "\")"
 
   val termService = new TermService

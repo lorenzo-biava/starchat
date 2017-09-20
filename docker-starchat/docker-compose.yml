@@ -38,6 +38,11 @@ services:
   manaus:
     image: elegansio/manaus:1.0.7
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
     volumes:
       - ./manaus/data:/manaus/data
       - ./manaus/log:/manaus/log

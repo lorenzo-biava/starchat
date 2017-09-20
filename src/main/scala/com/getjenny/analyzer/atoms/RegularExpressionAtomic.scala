@@ -8,12 +8,13 @@ import com.getjenny.analyzer.expressions.{Data, Result}
 
 /** Counts the occurrences of a pattern into a string
   *
-  * @param re regular expression
+  * @param arguments regular expression
   */
-class RegularExpressionAtomic(re: String) extends AbstractAtomic {
+class RegularExpressionAtomic(arguments: List[String]) extends AbstractAtomic {
   /**
     * A Regex
     */
+  val re = arguments(0)
   override def toString: String = "regex(\"" + re + "\")"
   val isEvaluateNormalized: Boolean = false
   private val rx = re.r

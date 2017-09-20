@@ -7,7 +7,7 @@ package com.getjenny.starchat.analyzer.atoms
 import com.getjenny.analyzer.interfaces._
 import com.getjenny.analyzer.atoms._
 
-class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
+class StarchatFactoryAtomic extends Factory[List[String], AbstractAtomic] {
 
   override val operations = Set(
     "keyword",
@@ -26,10 +26,12 @@ class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
     "existsVariable",
     "hasTravState",
     "lastTravStateIs",
-    "prevTravStateIs"
+    "prevTravStateIs",
+    "eucDistanceKeywords",
+    "edistance"
   )
 
-  override def get(name: String, argument: String):
+  override def get(name: String, argument: List[String]):
                   AbstractAtomic = name.filter(c => !c.isWhitespace ) match {
     case "keyword" => new KeywordAtomic(argument)
     case "regex" => new RegularExpressionAtomic(argument)
@@ -47,6 +49,7 @@ class StarchatFactoryAtomic extends Factory[String, AbstractAtomic] {
     case "hasTravState" => new HasTravStateAtomic(argument)
     case "lastTravStateIs" => new LastTravStateIsAtomic(argument)
     case "prevTravStateIs" => new PreviousTravStateIsAtomic(argument)
+    case ("eucDistanceKeywords"|"edistance") => new EuclideanDistanceAnalyzer(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }

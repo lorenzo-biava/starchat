@@ -24,7 +24,7 @@ import com.getjenny.analyzer.expressions.Data
   */
 abstract class DefaultParser(command_string: String) extends AbstractParser(command_string: String) {
 
-  val atomicFactory: Factory[String, AbstractAtomic]
+  val atomicFactory: Factory[List[String], AbstractAtomic]
   val operatorFactory: Factory[List[Expression], AbstractOperator]
 
   private val operator = this.gobble_commands(command_string)
@@ -47,7 +47,6 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
     * will produce a boolean OR operator with inside a regex Expression (which can be evaluated),
     * a boolean AND etc
     *
-
     */
   def gobble_commands(commands_string: String): AbstractOperator = {
 
@@ -56,7 +55,17 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
     def escape_char(chars: List[Char], i: Int): Boolean = chars(i-1) == '\\' && chars(i-2) != '\\'
 
     def loop(chars: List[Char], indice: Int, parenthesis_balance: List[Int], quote_balance: Int,
-             command_buffer: String, argument_buffer: String, command_tree: AbstractOperator):  AbstractOperator = {
+             command_buffer: String, argument_buffer: String, arguments: List[String],
+             command_tree: AbstractOperator):  AbstractOperator = {
+
+      if(indice >= chars.length && chars.length != 0) {
+        if (quote_balance < 0)
+          throw AnalyzerParsingException("Parsing error: quotes are not balanced")
+        else if (parenthesis_balance.sum != 0)
+          throw AnalyzerParsingException("Parsing error: parenthesis are not balanced")
+        else
+          return command_tree
+      }
 
       val just_opened_parenthesis = chars(indice) == '(' && !escape_char(chars, indice) && quote_balance == 0
       val just_closed_parenthesis = chars(indice) == ')' && !escape_char(chars, indice) && quote_balance == 0
@@ -78,7 +87,7 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
       }
 
       if (new_parenthesis_balance.sum < 0 || new_quote_balance < 0)
-        throw AnalyzerParsingException("Parsing error: quotes do not match")
+        throw AnalyzerParsingException("Parsing error: quotes or parenthesis do not match")
 
       // Start reading the command
       // If not in quotation and have letter, add to command string accumulator
@@ -90,30 +99,41 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
 
       // Now read the argument of the command
       // If inside last parenthesis was opened and quotes add to argument
-      val argument_acc = if (new_parenthesis_balance.head == 1 && new_quote_balance == 1  && !just_opened_quote)
-        argument_buffer + chars(indice) else ""
+      val argument_acc =
+        if (new_parenthesis_balance.head == 1 && new_quote_balance == 1  && !just_opened_quote) {
+          argument_buffer + chars(indice)
+        } else {
+          ""
+        }
 
       if (just_opened_parenthesis && operatorFactory.operations(command_buffer)) {
         // We have just read an operator.
-        // println("DEBUG Adding the operator " + command_buffer)
+        //println("DEBUG Adding the operator " + command_buffer)
         val operator = operatorFactory.get(command_buffer, List())
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
+          arguments,
           command_tree.add(operator, new_parenthesis_balance.sum - 1))
       } else if (atomicFactory.operations(command_buffer) && new_parenthesis_balance.head == 1 && !just_closed_quote) {
         // We are reading an atomic's argument...
-        // println("DEBUG calling loop, without adding an atom, with this command buffer: " + command_buffer)
+        //println("DEBUG calling loop, without adding an atom, with this command buffer: " + command_buffer + " : " + argument_acc)
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
-          argument_acc, command_tree)
-      } else if (atomicFactory.operations(command_buffer) && just_closed_quote) {
-        // We have read atomic's argument, add the atomic to the tree
-        // println("DEBUG Calling loop, adding the atom " + AtomicFactory.get(command_buffer, argument_buffer))
-        loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer, argument_acc,
-          command_tree.add(atomicFactory.get(command_buffer, argument_buffer),
-            new_parenthesis_balance.sum - 1))
+          argument_acc, arguments, command_tree)
+      } else if (atomicFactory.operations(command_buffer) && just_closed_parenthesis) {
+        // We have read all the atomic's arguments, add the atomic to the tree
+        //println("DEBUG Calling loop, adding the atom: " + command_buffer + ", " + arguments)
+        loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
+          argument_acc, arguments,
+          command_tree.add(atomicFactory.get(command_buffer, arguments),
+            new_parenthesis_balance.sum))
+      } else if (atomicFactory.operations(command_buffer) && just_closed_quote && !just_closed_parenthesis) {
+        // We have read atomic's argument, add the argument to the list
+        //println("DEBUG Calling loop, adding argument: " + command_buffer + " <- " + argument_buffer)
+        loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
+          argument_acc, arguments ::: List(argument_buffer), command_tree)
       } else {
         // println("DEBUG going to return naked command tree... " + chars.length)
         if (indice < chars.length - 1) loop(chars, indice+1, new_parenthesis_balance, new_quote_balance,
-          new_command_buffer, argument_acc, command_tree)
+          new_command_buffer, argument_acc, arguments, command_tree)
         else {
           if (new_parenthesis_balance.sum == 0 && new_quote_balance == 0) command_tree
           else throw AnalyzerParsingException("gobble_commands: Parenthesis or quotes do not match")
@@ -121,7 +141,16 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
       }
     }
     //adding 2 trailing spaces because we always make a check on char(i -2 )
-    loop("  ".toList ::: commands_string.toList, 2, List(0), 0, "", "", new ConjunctionOperator(List()))
+    loop(chars = "  ".toList ::: commands_string.toList,
+      indice = 2,
+      parenthesis_balance = List(0),
+      quote_balance = 0,
+      command_buffer = "",
+      argument_buffer = "",
+      arguments = List.empty[String],
+      command_tree = new ConjunctionOperator(List.empty[Expression])
+    )
+
   }
 
 } //end class
