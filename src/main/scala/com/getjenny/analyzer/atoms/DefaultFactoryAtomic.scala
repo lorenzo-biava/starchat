@@ -9,7 +9,7 @@ import com.getjenny.analyzer.interfaces._
 class DefaultFactoryAtomic extends Factory[List[String], AbstractAtomic] {
 
   override val operations = Set("keyword" , "similar", "synonym", "regex",
-    "matchPatternRegex", "matchDateDDMMYYYY", "existsVariable", "eucDistanceKeywords", "edistance")
+    "matchPatternRegex", "matchDateDDMMYYYY", "existsVariable", "cosDistanceKeywords")
 
   override def get(name: String, argument: List[String]): AbstractAtomic = name.filter(c => !c.isWhitespace ) match {
     case "keyword" => new KeywordAtomic(argument)
@@ -17,7 +17,8 @@ class DefaultFactoryAtomic extends Factory[List[String], AbstractAtomic] {
     case "matchPatternRegex" => new MatchPatternRegexAtomic(argument)
     case "matchDateDDMMYYYY" => new MatchDateDDMMYYYYAtomic(argument)
     case "existsVariable" => new ExistsVariableAtomic(argument)
-    case ("eucDistanceKeywords"|"edistance") => new EuclideanDistanceAnalyzer(argument)
+    case "cosDistanceKeywords" => new CosineDistanceAnalyzer(argument)
+    case "eucDistanceKeywords" => new EucDistanceAnalyzer(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }

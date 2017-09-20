@@ -1,4 +1,4 @@
-package com.getjenny.starchat.analyzer.utils
+package com.getjenny.analyzer.util
 
 /**
   * Created by mal on 20/02/2017.

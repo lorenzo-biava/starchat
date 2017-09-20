@@ -27,8 +27,7 @@ class StarchatFactoryAtomic extends Factory[List[String], AbstractAtomic] {
     "hasTravState",
     "lastTravStateIs",
     "prevTravStateIs",
-    "eucDistanceKeywords",
-    "edistance"
+    "cosDistanceKeywords"
   )
 
   override def get(name: String, argument: List[String]):
@@ -49,7 +48,8 @@ class StarchatFactoryAtomic extends Factory[List[String], AbstractAtomic] {
     case "hasTravState" => new HasTravStateAtomic(argument)
     case "lastTravStateIs" => new LastTravStateIsAtomic(argument)
     case "prevTravStateIs" => new PreviousTravStateIsAtomic(argument)
-    case ("eucDistanceKeywords"|"edistance") => new EuclideanDistanceAnalyzer(argument)
+    case "cosDistanceKeywords" => new CosineDistanceAnalyzer(argument)
+    case "eucDistanceKeywords" => new EucDistanceAnalyzer(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }

@@ -1,7 +1,7 @@
 package com.getjenny.starchat.analyzer.atoms
 import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
-import com.getjenny.starchat.analyzer.utils.VectorUtils._
+import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
 
 import scala.concurrent.{Await, ExecutionContext, Future}

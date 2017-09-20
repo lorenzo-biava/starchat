@@ -1,7 +1,7 @@
 package com.getjenny.starchat.analyzer.utils
 
 import breeze.linalg.{DenseMatrix, Matrix}
-import com.getjenny.starchat.analyzer.utils.VectorUtils._
+import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.entities._
 

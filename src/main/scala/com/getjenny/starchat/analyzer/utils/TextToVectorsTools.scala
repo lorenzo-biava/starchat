@@ -4,7 +4,7 @@ package com.getjenny.starchat.analyzer.utils
   * Created by angelo on 11/04/17.
   */
 
-import com.getjenny.starchat.analyzer.utils.VectorUtils._
+import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.entities._
 

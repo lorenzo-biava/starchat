@@ -4,7 +4,7 @@ package com.getjenny.starchat.analyzer.atoms
   * Created by angelo on 11/04/17.
   */
 
-import com.getjenny.starchat.analyzer.utils.VectorUtils._
+import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 
