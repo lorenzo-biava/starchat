@@ -36,7 +36,7 @@ services:
       - "elasticsearch:getjenny-es"
 
   manaus:
-    image: elegansio/manaus:1.0.7
+    image: elegansio/manaus:1.0.8
     restart: unless-stopped
     logging:
       driver: "json-file"
