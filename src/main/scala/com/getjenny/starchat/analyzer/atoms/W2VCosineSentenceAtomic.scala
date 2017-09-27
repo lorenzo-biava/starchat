@@ -1,6 +1,6 @@
 package com.getjenny.starchat.analyzer.atoms
 
-import com.getjenny.starchat.analyzer.utils.VectorUtils._
+import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
 import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
@@ -19,7 +19,7 @@ import com.getjenny.analyzer.expressions.Data
   * Created by mal on 20/02/2017.
   */
 
-class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
+class W2VCosineSentenceAtomic(val arguments: List[String]) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -28,6 +28,7 @@ class W2VCosineSentenceAtomic(val sentence: String) extends AbstractAtomic  {
     *
     */
 
+  val sentence = arguments(0)
   val termService = new TermService
 
   val sentence_vector = TextToVectorsTools.getSumOfVectorsFromText(sentence)

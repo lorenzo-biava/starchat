@@ -18,7 +18,8 @@ import ExecutionContext.Implicits.global
 /**
   * Query ElasticSearch
   */
-class SearchAtomic(state: String) extends AbstractAtomic {
+class SearchAtomic(arguments: List[String]) extends AbstractAtomic {
+  val state = arguments(0)
   override def toString: String = "search(\"" + state + "\")"
   val isEvaluateNormalized: Boolean = false
   val ref_state: String = state

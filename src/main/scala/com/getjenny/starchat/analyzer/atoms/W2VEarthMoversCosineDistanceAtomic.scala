@@ -1,6 +1,6 @@
 package com.getjenny.starchat.analyzer.atoms
 
-import com.getjenny.starchat.analyzer.utils.VectorUtils._
+import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.EmDistance._
 import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.analyzer.utils.EmDistance
@@ -15,7 +15,7 @@ import ExecutionContext.Implicits.global
   * Created by angelo on 04/04/17.
   */
 
-class W2VEarthMoversCosineDistanceAtomic(val sentence: String) extends AbstractAtomic  {
+class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String]) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -24,6 +24,7 @@ class W2VEarthMoversCosineDistanceAtomic(val sentence: String) extends AbstractA
     *
     */
 
+  val sentence = arguments(0)
   val termService = new TermService
 
   implicit class Crosstable[X](xs: Traversable[X]) {

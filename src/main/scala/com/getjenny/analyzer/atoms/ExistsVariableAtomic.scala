@@ -12,9 +12,10 @@ import com.getjenny.analyzer.expressions.Result
 
 /** test if a variable exists on dictionary of variables
   *
-  * @param varname name of the variable to be checked
+  * @param arguments name of the variable to be checked
   */
-class ExistsVariableAtomic(val varname: String) extends AbstractAtomic {
+class ExistsVariableAtomic(val arguments: List[String]) extends AbstractAtomic {
+  val varname = arguments(0)
   override def toString: String = "existsVariable"
   val isEvaluateNormalized: Boolean = true
 
@@ -25,7 +26,7 @@ class ExistsVariableAtomic(val varname: String) extends AbstractAtomic {
     * @return Result with 1.0 if the variable exists score = 0.0 otherwise
     */
   def evaluate(query: String, data: Data = Data()): Result = {
-    if(data.extracted_variables.exists(_._1 == varname)) {
+    if(data.extracted_variables.exists(_._1 == varname(0))) {
       Result(score = 1.0)
     } else {
       Result(score = 0.0)

@@ -13,7 +13,7 @@ import com.getjenny.analyzer.expressions.{Data, Result}
   * Created by angelo on 04/04/17.
   */
 
-class W2VEarthMoversEuclideanDistanceAtomic(val sentence: String) extends AbstractAtomic  {
+class W2VEarthMoversEuclideanDistanceAtomic(val arguments: List[String]) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -22,6 +22,7 @@ class W2VEarthMoversEuclideanDistanceAtomic(val sentence: String) extends Abstra
     *
     */
 
+  val sentence = arguments(0)
   val termService = new TermService
 
   override def toString: String = "similarEucEmd(\"" + sentence + "\")"

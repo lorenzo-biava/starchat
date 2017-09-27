@@ -2,7 +2,7 @@ version: "3.2"
 services:
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:5.5.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.6.2
     restart: unless-stopped
     command: elasticsearch
     ports:
@@ -38,6 +38,11 @@ services:
   manaus:
     image: elegansio/manaus:1.0.7
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
     volumes:
       - ./manaus/data:/manaus/data
       - ./manaus/log:/manaus/log

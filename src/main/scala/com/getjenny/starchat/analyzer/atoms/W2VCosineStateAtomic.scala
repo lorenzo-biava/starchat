@@ -4,7 +4,7 @@ package com.getjenny.starchat.analyzer.atoms
   * Created by angelo on 11/04/17.
   */
 
-import com.getjenny.starchat.analyzer.utils.VectorUtils._
+import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.analyzer.atoms.AbstractAtomic
@@ -18,7 +18,7 @@ import scala.concurrent._
 import ExecutionContext.Implicits.global
 import com.getjenny.analyzer.expressions.{Data, Result}
 
-class W2VCosineStateAtomic(val state: String) extends AbstractAtomic  {
+class W2VCosineStateAtomic(val arguments: List[String]) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -27,6 +27,7 @@ class W2VCosineStateAtomic(val state: String) extends AbstractAtomic  {
     *
     */
 
+  val state = arguments(0)
   override def toString: String = "similarState(\"" + state + "\")"
 
   val analyzerService = new AnalyzerService

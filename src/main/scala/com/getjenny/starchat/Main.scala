@@ -88,8 +88,8 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
     sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
     val https: HttpsConnectionContext = ConnectionContext.https(sslContext)
 
-    Http().bindAndHandle(handler = api, interface = params.get.https_host, params.get.https_port,
-      connectionContext = https) map { binding =>
+    Http().bindAndHandle(handler = api, interface = params.get.https_host, port = params.get.https_port,
+      connectionContext = https, log = system.log) map { binding =>
       system.log.info(s"REST (HTTPS) interface bound to ${binding.localAddress}")
     } recover { case ex =>
       system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.http_host}:${params.get.http_port}",
@@ -99,7 +99,7 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
 
   if((! params.get.https_enable) || params.get.http_enable) {
      Http().bindAndHandle(handler = api, interface = params.get.http_host,
-       port = params.get.http_port) map { binding =>
+       port = params.get.http_port, log = system.log) map { binding =>
       system.log.info(s"REST (HTTP) interface bound to ${binding.localAddress}")
     } recover { case ex =>
       system.log.error(s"REST (HTTP) interface could not bind to ${params.get.http_host}:${params.get.http_port}",

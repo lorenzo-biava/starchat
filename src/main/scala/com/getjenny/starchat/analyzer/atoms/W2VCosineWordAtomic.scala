@@ -1,7 +1,7 @@
 package com.getjenny.starchat.analyzer.atoms
 import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
-import com.getjenny.starchat.analyzer.utils.VectorUtils._
+import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -15,11 +15,12 @@ import ExecutionContext.Implicits.global
   * Created by mal on 20/02/2017.
   */
 
-class W2VCosineWordAtomic(word: String) extends AbstractAtomic {
+class W2VCosineWordAtomic(arguments: List[String]) extends AbstractAtomic {
   /**
     * Return the normalized w2vcosine similarity of the nearest word
     */
 
+  val word = arguments(0)
   override def toString: String = "similar(\"" + word + "\")"
 
   val termService = new TermService
