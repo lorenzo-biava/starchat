@@ -404,7 +404,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         success_value = success_value, failure_value = failure_value)
 
       document
-    })
+    }).sortBy(_.state)
     Future{Option{decision_table_content }}
   }
 
