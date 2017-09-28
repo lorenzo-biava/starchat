@@ -37,9 +37,14 @@ trait DecisionTableResource extends MyResource {
         }
       } ~
         get {
-          parameters("ids".as[String].*) { ids =>
-            val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.read(ids.toList)
-            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+          parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
+            if(dump == false) {
+              val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.read(ids.toList)
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+            } else {
+              val result: Future[Option[List[DTDocument]]] = decisionTableService.dump()
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+            }
           }
         }
     } ~
@@ -160,6 +165,4 @@ trait DecisionTableResource extends MyResource {
     }
   }
 }
-
-
 
