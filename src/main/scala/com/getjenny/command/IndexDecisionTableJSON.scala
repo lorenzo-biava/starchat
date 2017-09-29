@@ -51,18 +51,21 @@ object IndexDecisionTableJSON extends JsonSupport {
     val stream = new FileInputStream(file)
     val json = scala.io.Source.fromInputStream(stream).mkString
 
-    val list_of_documents_res: Try[List[DTDocument]] =
-      Await.ready(Unmarshal(json).to[List[DTDocument]], 30.seconds).value.get
+    val list_of_documents_res: Try[SearchDTDocumentsResults] =
+      Await.ready(Unmarshal(json).to[SearchDTDocumentsResults], 30.seconds).value.get
 
     val list_of_documents = list_of_documents_res match {
       case Success(t) => t
-      case Failure(e) => List.empty[DTDocument]
+      case Failure(e) =>
+        println("Error: " + e)
+        SearchDTDocumentsResults(total = 0, max_score = .0f, hits = List.empty[SearchDTDocument])
     }
 
     val httpHeader: immutable.Seq[HttpHeader] = immutable.Seq(RawHeader("application", "json"))
     val timeout = Duration(params.timeout, "s")
 
-    list_of_documents.foreach(entry => {
+    list_of_documents.hits.foreach(item => {
+      val entry = item.document
       val state = DTDocument(state = entry.state,
         execution_order = entry.execution_order,
         max_state_count = entry.max_state_count,

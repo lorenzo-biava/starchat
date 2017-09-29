@@ -42,7 +42,7 @@ trait DecisionTableResource extends MyResource {
               val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.read(ids.toList)
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
             } else {
-              val result: Future[Option[List[DTDocument]]] = decisionTableService.dump()
+              val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.getDTDocuments()
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
             }
           }

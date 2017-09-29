@@ -330,7 +330,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     Option {doc_result}
   }
 
-  def dump(): Future[Option[List[DTDocument]]] = {
+  def getDTDocuments(): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
 
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
@@ -341,7 +341,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
       .setSize(1000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
-    val decision_table_content : List[DTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
+    val decision_table_content : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
       val source : Map[String, Any] = item.getSource.asScala.toMap
@@ -403,9 +403,16 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
         action = action, action_input = action_input, state_data = state_data,
         success_value = success_value, failure_value = failure_value)
 
-      document
-    }).sortBy(_.state)
-    Future{Option{decision_table_content }}
+      val search_document : SearchDTDocument = SearchDTDocument(score = .0f, document = document)
+      search_document
+    }).sortBy(_.document.state)
+
+    val max_score : Float = .0f
+    val total : Int = decision_table_content.length
+    val search_results : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = max_score,
+      hits = decision_table_content)
+
+    Future{Option{search_results}}
   }
 
   def read(ids: List[String]): Future[Option[SearchDTDocumentsResults]] = {
@@ -415,9 +422,8 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     if (ids.length > 0) {
       multiget_builder.add(elastic_client.index_name, elastic_client.type_name, ids:_*)
     } else {
-      val empty_response: Future[Option[SearchDTDocumentsResults]] = Future { Option {
-        SearchDTDocumentsResults(total = 0, max_score = 0.0f, hits = List.empty[SearchDTDocument]) } }
-      return empty_response
+      val all_documents = getDTDocuments()
+      return all_documents
     }
 
     val response: MultiGetResponse = multiget_builder.get()
