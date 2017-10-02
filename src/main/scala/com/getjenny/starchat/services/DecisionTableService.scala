@@ -35,13 +35,14 @@ import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import org.apache.lucene.search.join._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable
 
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
-class DecisionTableService(implicit val executionContext: ExecutionContext) {
+object DecisionTableService {
   val elastic_client = DecisionTableElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 

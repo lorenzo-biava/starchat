@@ -29,7 +29,7 @@ class W2VCosineSentenceAtomic(val arguments: List[String]) extends AbstractAtomi
     */
 
   val sentence = arguments(0)
-  val termService = new TermService
+  val termService = TermService
 
   val sentence_vector = TextToVectorsTools.getSumOfVectorsFromText(sentence)
 

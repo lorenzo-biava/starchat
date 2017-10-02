@@ -23,7 +23,7 @@ class W2VEarthMoversEuclideanDistanceAtomic(val arguments: List[String]) extends
     */
 
   val sentence = arguments(0)
-  val termService = new TermService
+  val termService = TermService
 
   override def toString: String = "similarEucEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true

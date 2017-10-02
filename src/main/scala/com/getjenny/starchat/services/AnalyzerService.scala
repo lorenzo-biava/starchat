@@ -27,6 +27,7 @@ import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import com.getjenny.analyzer.expressions.Result
+import scala.concurrent.ExecutionContext.Implicits.global
 
 case class AnalyzerItem(declaration: String,
                          analyzer: StarchatAnalyzer,
@@ -40,16 +41,15 @@ case class DecisionTableRuntimeItem(execution_order: Int,
                                    )
 
 object AnalyzerService {
+
   var analyzer_map : mutable.LinkedHashMap[String, DecisionTableRuntimeItem] =
     mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]
-}
 
-class AnalyzerService(implicit val executionContext: ExecutionContext) {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val elastic_client = DecisionTableElasticClient
-  val termService = new TermService
-  val decisionTableService = new DecisionTableService
-  val systemService = new SystemService
+  val termService = TermService
+  val decisionTableService = DecisionTableService
+  val systemService = SystemService
 
   def getAnalyzers: mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
     val client: TransportClient = elastic_client.get_client()

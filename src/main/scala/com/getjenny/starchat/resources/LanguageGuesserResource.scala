@@ -19,9 +19,8 @@ import scala.util.{Failure, Success, Try}
 
 trait LanguageGuesserResource extends MyResource {
 
-  val languageGuesserService: LanguageGuesserService
-
   def languageGuesserRoutes: Route = pathPrefix("language_guesser") {
+    val languageGuesserService = LanguageGuesserService
     pathEnd {
       post {
         entity(as[LanguageGuesserRequestIn]) { request_data =>

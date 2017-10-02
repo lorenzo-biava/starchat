@@ -22,15 +22,12 @@ import scala.util.{Failure, Success, Try}
 
 trait DecisionTableResource extends MyResource {
 
-  val decisionTableService: DecisionTableService
-  val responseService: ResponseService
-  val analyzerService: AnalyzerService
-
   def decisionTableRoutes: Route = pathPrefix("decisiontable") {
     pathEnd {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[DTDocument]) { document =>
+            val decisionTableService = DecisionTableService
             val result: Future[Option[IndexDocumentResult]] = decisionTableService.create(document, refresh)
             completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
           }
@@ -38,6 +35,7 @@ trait DecisionTableResource extends MyResource {
       } ~
         get {
           parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
+            val decisionTableService = DecisionTableService
             if(dump == false) {
               val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.read(ids.toList)
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
@@ -52,6 +50,7 @@ trait DecisionTableResource extends MyResource {
         put {
           entity(as[DTDocumentUpdate]) { update =>
             parameters("refresh".as[Int] ? 0) { refresh =>
+              val decisionTableService = DecisionTableService
               val result = Try(decisionTableService.update(id, update, refresh))
               result match {
                 case Success(t) =>
@@ -65,6 +64,7 @@ trait DecisionTableResource extends MyResource {
         } ~
           delete {
             parameters("refresh".as[Int] ? 0) { refresh =>
+              val decisionTableService = DecisionTableService
               val result: Future[Option[DeleteDocumentResult]] = decisionTableService.delete(id, refresh)
               onSuccess(result) {
                 case Some(t) =>
@@ -83,6 +83,7 @@ trait DecisionTableResource extends MyResource {
   def decisionTableAnalyzerRoutes: Route = pathPrefix("decisiontable_analyzer") {
     pathEnd {
       get {
+        val analyzerService = AnalyzerService
         val result = Await.ready(analyzerService.getDTAnalyzerMap, 60.seconds).value.get
         result match {
           case Success(t) =>
@@ -94,6 +95,7 @@ trait DecisionTableResource extends MyResource {
         }
       } ~
         post {
+          val analyzerService = AnalyzerService
           val result: Try[Option[DTAnalyzerLoad]] =
             Await.ready(analyzerService.loadAnalyzer(propagate = true), 60.seconds).value.get
           result match {
@@ -112,6 +114,7 @@ trait DecisionTableResource extends MyResource {
     pathEnd {
       post {
         entity(as[DTDocumentSearch]) { docsearch =>
+          val decisionTableService = DecisionTableService
           val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.search(docsearch)
           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
         }
@@ -125,6 +128,7 @@ trait DecisionTableResource extends MyResource {
         entity(as[ResponseRequestIn])
         {
           response_request =>
+            val responseService = ResponseService
             val response: Try[Option[ResponseRequestOutOperationResult]] =
               Await.ready(responseService.getNextResponse(response_request), 60.seconds).value.get
             response match {

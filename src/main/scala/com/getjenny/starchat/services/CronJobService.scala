@@ -15,10 +15,10 @@ import akka.actor.Actor
 import akka.actor.Props
 import scala.language.postfixOps
 
-class CronJobService(implicit val executionContext: ExecutionContext) {
+class CronJobService (implicit val executionContext: ExecutionContext) {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val analyzerService = new AnalyzerService
-  val systemService = new SystemService
+  val analyzerService = AnalyzerService
+  val systemService = SystemService
 
   val Tick = "tick"
 

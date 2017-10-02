@@ -39,8 +39,9 @@ import org.elasticsearch.common.lucene.search.function.ScriptScoreFunction
 import org.elasticsearch.index.query.ScriptQueryBuilder
 import org.elasticsearch.index.query.functionscore._
 import org.elasticsearch.script._
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class KnowledgeBaseService(implicit val executionContext: ExecutionContext) {
+object KnowledgeBaseService {
   val elastic_client = KnowledgeBaseElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 

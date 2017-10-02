@@ -23,7 +23,7 @@ class W2VCosineWordAtomic(arguments: List[String]) extends AbstractAtomic {
   val word = arguments(0)
   override def toString: String = "similar(\"" + word + "\")"
 
-  val termService = new TermService
+  val termService = TermService
 
   val isEvaluateNormalized: Boolean = true
   private val word_vec = TextToVectorsTools.getSumOfVectorsFromText(word)

@@ -21,7 +21,7 @@ import org.elasticsearch.common.xcontent.XContentType
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
-class IndexManagementService(implicit val executionContext: ExecutionContext) {
+object IndexManagementService {
   val elastic_client = IndexManagementClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 

@@ -16,7 +16,7 @@ import org.apache.tika.language.detect.LanguageResult
 /**
   * Implements functions, eventually used by LanguageGuesserResource
   */
-class LanguageGuesserService(implicit val executionContext: ExecutionContext) {
+object LanguageGuesserService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   def guess_language(request_data: LanguageGuesserRequestIn) : Option[LanguageGuesserRequestOut] = {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()
