@@ -17,12 +17,12 @@ import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
 trait AnalyzersPlaygroundResource extends MyResource {
-  val analyzerService: AnalyzerService
 
   def analyzersPlaygroundRoutes: Route = pathPrefix("analyzers_playground") {
     pathEnd {
       post {
        entity(as[AnalyzerEvaluateRequest]) { request =>
+         val analyzerService = AnalyzerService
          val result = Try(analyzerService.evaluateAnalyzer(request))
          result match {
            case Success(t) =>

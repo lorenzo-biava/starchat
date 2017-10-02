@@ -30,7 +30,7 @@ class W2VCosineStateAtomic(val arguments: List[String]) extends AbstractAtomic  
   val state = arguments(0)
   override def toString: String = "similarState(\"" + state + "\")"
 
-  val analyzerService = new AnalyzerService
+  val analyzerService = AnalyzerService
 
   val query_sentences = AnalyzerService.analyzer_map.getOrElse(state, null)
   if (query_sentences == null) {

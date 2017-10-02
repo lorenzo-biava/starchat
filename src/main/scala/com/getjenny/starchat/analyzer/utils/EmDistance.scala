@@ -17,7 +17,7 @@ import ExecutionContext.Implicits.global
   */
 
 object EmDistance {
-  val termService = new TermService
+  val termService = TermService
 
   val empty_vec = Vector.fill(300){0.0}
 

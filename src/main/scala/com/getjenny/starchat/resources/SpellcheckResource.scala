@@ -17,9 +17,9 @@ import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
 trait SpellcheckResource extends MyResource {
-  val spellcheckService: SpellcheckService
 
   def spellcheckRoutes: Route = pathPrefix("spellcheck") {
+    val spellcheckService = SpellcheckService
     pathPrefix("terms") {
       pathEnd {
         post {

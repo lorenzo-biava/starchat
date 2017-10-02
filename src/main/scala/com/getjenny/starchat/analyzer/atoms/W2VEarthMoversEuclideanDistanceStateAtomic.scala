@@ -27,7 +27,7 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String]) ex
     */
 
   val state = arguments(0)
-  val termService = new TermService
+  val termService = TermService
 
   implicit class Crosstable[X](xs: Traversable[X]) {
     def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
@@ -35,7 +35,7 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String]) ex
 
   override def toString: String = "similarEucEmdState(\"" + state + "\")"
 
-  val analyzerService = new AnalyzerService
+  val analyzerService = AnalyzerService
 
   val queries_sentences = AnalyzerService.analyzer_map.getOrElse(state, null)
   if (queries_sentences == null) {

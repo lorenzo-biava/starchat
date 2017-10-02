@@ -29,12 +29,12 @@ import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse.AnalyzeToken
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Implements functions, eventually used by TermResource
   */
-class TermService(implicit val executionContext: ExecutionContext) {
+object TermService {
   val elastic_client = IndexManagementClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 

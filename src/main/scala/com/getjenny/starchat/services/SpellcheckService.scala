@@ -16,8 +16,9 @@ import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.search.suggest.SuggestBuilder
 import org.elasticsearch.search.suggest.term.TermSuggestionBuilder
 import org.elasticsearch.search.suggest.term.TermSuggestion
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class SpellcheckService(implicit val executionContext: ExecutionContext) {
+object SpellcheckService {
   val elastic_client = KnowledgeBaseElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 

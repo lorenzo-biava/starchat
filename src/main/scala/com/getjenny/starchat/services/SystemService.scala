@@ -34,13 +34,10 @@ import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import org.apache.lucene.search.join._
-
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object SystemService {
   var dt_reload_timestamp : Long = -1
-}
-
-class SystemService(implicit val executionContext: ExecutionContext) {
   val elastic_client = SystemElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val dtReloadDocId: String = "dtts0"

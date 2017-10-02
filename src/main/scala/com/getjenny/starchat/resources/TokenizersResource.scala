@@ -16,12 +16,12 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 trait TokenizersResource extends MyResource {
-  val termService: TermService
   def esTokenizersRoutes: Route = pathPrefix("tokenizers") {
     pathEnd {
       post {
         entity(as[TokenizerQueryRequest]) { request_data =>
-            val result: Try[Option[TokenizerResponse]] =
+          val termService = TermService
+          val result: Try[Option[TokenizerResponse]] =
             Await.ready(Future { termService.esTokenizer(request_data)},
               60.seconds).value.get
           result match {

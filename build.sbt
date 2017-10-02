@@ -44,6 +44,7 @@ libraryDependencies ++= {
 
 scalacOptions += "-deprecation"
 scalacOptions += "-feature"
+//scalacOptions += "-Ylog-classpath"
 
 enablePlugins(GitVersioning)
 enablePlugins(GitBranchPrompt)

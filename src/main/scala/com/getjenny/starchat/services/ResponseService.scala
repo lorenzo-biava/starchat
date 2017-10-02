@@ -27,15 +27,16 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import com.getjenny.analyzer.analyzers._
 import com.getjenny.analyzer.expressions.Result
 import com.getjenny.analyzer.expressions.Data
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Implements response functionalities
   */
-class ResponseService(implicit val executionContext: ExecutionContext) {
+object ResponseService {
   val elastic_client = DecisionTableElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val termService = new TermService
-  val decisionTableService = new DecisionTableService
+  val termService = TermService
+  val decisionTableService = DecisionTableService
 
   def getNextResponse(request: ResponseRequestIn): Future[Option[ResponseRequestOutOperationResult]] = Future {
     // calculate and return the ResponseRequestOut

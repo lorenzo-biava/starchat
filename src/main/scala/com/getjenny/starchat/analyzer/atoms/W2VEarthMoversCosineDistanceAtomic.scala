@@ -25,7 +25,7 @@ class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String]) extends Ab
     */
 
   val sentence = arguments(0)
-  val termService = new TermService
+  val termService = TermService
 
   implicit class Crosstable[X](xs: Traversable[X]) {
     def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)

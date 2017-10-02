@@ -16,7 +16,7 @@ import scala.concurrent._
 import ExecutionContext.Implicits.global
 
 object TextToVectorsTools {
-  val termService = new TermService
+  val termService = TermService
   val empty_vec = Vector.fill(300){0.0}
 
   implicit class Crosstable[X](xs: Traversable[X]) {

@@ -18,13 +18,12 @@ import scala.util.{Failure, Success, Try}
 
 trait KnowledgeBaseResource extends MyResource {
 
-  val knowledgeBaseService: KnowledgeBaseService
-
   def knowledgeBaseRoutes: Route = pathPrefix("knowledgebase") {
     pathEnd {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[KBDocument]) { document =>
+            val knowledgeBaseService = KnowledgeBaseService
             val result: Future[Option[IndexDocumentResult]] = knowledgeBaseService.create(document, refresh)
             onSuccess(result) {
               case Some(v) =>
@@ -38,6 +37,7 @@ trait KnowledgeBaseResource extends MyResource {
       } ~
       get {
         parameters("ids".as[String].*) { ids =>
+          val knowledgeBaseService = KnowledgeBaseService
           val result: Future[Option[SearchKBDocumentsResults]] = knowledgeBaseService.read(ids.toList)
           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
         }
@@ -47,6 +47,7 @@ trait KnowledgeBaseResource extends MyResource {
         put {
           parameters("refresh".as[Int] ? 0) { refresh =>
             entity(as[KBDocumentUpdate]) { update =>
+              val knowledgeBaseService = KnowledgeBaseService
               val result: Future[Option[UpdateDocumentResult]] = knowledgeBaseService.update(id, update, refresh)
               val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 60.seconds).value.get
               result_try match {
@@ -61,6 +62,7 @@ trait KnowledgeBaseResource extends MyResource {
         } ~
         delete {
           parameters("refresh".as[Int] ? 0) { refresh =>
+            val knowledgeBaseService = KnowledgeBaseService
             val result: Future[Option[DeleteDocumentResult]] = knowledgeBaseService.delete(id, refresh)
             completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
           }
@@ -72,6 +74,7 @@ trait KnowledgeBaseResource extends MyResource {
     pathEnd {
       post {
         entity(as[KBDocumentSearch]) { docsearch =>
+          val knowledgeBaseService = KnowledgeBaseService
           val result: Future[Option[SearchKBDocumentsResults]] = knowledgeBaseService.search(docsearch)
           completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
         }

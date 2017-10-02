@@ -18,9 +18,8 @@ import scala.util.{Failure, Success, Try}
 
 trait IndexManagementResource extends MyResource {
 
-  val indexManagementService: IndexManagementService
-
   def indexManagementRoutes: Route = pathPrefix("index_management") {
+    val indexManagementService = IndexManagementService
     path(Segment) { operation: String =>
       post
       {
@@ -51,6 +50,7 @@ trait IndexManagementResource extends MyResource {
     } ~
     pathEnd {
       get {
+
         val result: Try[Option[IndexManagementResponse]] =
           Await.ready(Future{indexManagementService.check_index()}, 60.seconds).value.get
         result match {
