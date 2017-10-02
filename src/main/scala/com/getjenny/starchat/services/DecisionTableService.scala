@@ -19,7 +19,7 @@ import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders, InnerHitBuilder}
+import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.unit._
 
 import scala.collection.JavaConverters._
@@ -34,6 +34,8 @@ import akka.event.Logging._
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import org.apache.lucene.search.join._
+
+import scala.collection.mutable
 
 
 /**
@@ -328,10 +330,102 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
     Option {doc_result}
   }
 
+  def getDTDocuments(): Future[Option[SearchDTDocumentsResults]] = {
+    val client: TransportClient = elastic_client.get_client()
+
+    val qb : QueryBuilder = QueryBuilders.matchAllQuery()
+    val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
+      .setTypes(elastic_client.type_name)
+      .setQuery(qb)
+      .setScroll(new TimeValue(60000))
+      .setSize(1000).get()
+
+    //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
+    val decision_table_content : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
+      val item: SearchHit = e
+      val state : String = item.getId
+      val source : Map[String, Any] = item.getSource.asScala.toMap
+
+      val execution_order : Int = source.get("execution_order") match {
+        case Some(t) => t.asInstanceOf[Int]
+        case None => 0
+      }
+
+      val max_state_count : Int = source.get("max_state_count") match {
+        case Some(t) => t.asInstanceOf[Int]
+        case None => 0
+      }
+
+      val analyzer : String = source.get("analyzer") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val queries : List[String] = source.get("queries") match {
+        case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+          .asScala.map(_.getOrDefault("query", null)).filter(_ != null).toList
+        case None => List[String]()
+      }
+
+      val bubble : String = source.get("bubble") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val action : String = source.get("action") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val action_input : Map[String,String] = source.get("action_input") match {
+        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+        case None => Map[String,String]()
+      }
+
+      val state_data : Map[String,String] = source.get("state_data") match {
+        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+        case None => Map[String,String]()
+      }
+
+      val success_value : String = source.get("success_value") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val failure_value : String = source.get("failure_value") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
+        max_state_count = max_state_count,
+        analyzer = analyzer, queries = queries, bubble = bubble,
+        action = action, action_input = action_input, state_data = state_data,
+        success_value = success_value, failure_value = failure_value)
+
+      val search_document : SearchDTDocument = SearchDTDocument(score = .0f, document = document)
+      search_document
+    }).sortBy(_.document.state)
+
+    val max_score : Float = .0f
+    val total : Int = decision_table_content.length
+    val search_results : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = max_score,
+      hits = decision_table_content)
+
+    Future{Option{search_results}}
+  }
+
   def read(ids: List[String]): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multiget_builder.add(elastic_client.index_name, elastic_client.type_name, ids:_*)
+
+    if (ids.length > 0) {
+      multiget_builder.add(elastic_client.index_name, elastic_client.type_name, ids:_*)
+    } else {
+      val all_documents = getDTDocuments()
+      return all_documents
+    }
+
     val response: MultiGetResponse = multiget_builder.get()
 
     val documents : Option[List[SearchDTDocument]] = Option { response.getResponses
