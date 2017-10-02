@@ -100,7 +100,7 @@ class DecisionTableService(implicit val executionContext: ExecutionContext) {
 
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
-        val execution_order: Int = source.get("execution_order") match {
+      val execution_order: Int = source.get("execution_order") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
       }
