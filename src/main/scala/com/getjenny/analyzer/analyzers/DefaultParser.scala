@@ -6,10 +6,8 @@ package com.getjenny.analyzer.analyzers
 
 import com.getjenny.analyzer.operators._
 import com.getjenny.analyzer.atoms._
-import com.getjenny.analyzer.expressions.{Expression, Data, Result}
+import com.getjenny.analyzer.expressions.{Expression, AnalyzersData, Result}
 import com.getjenny.analyzer.interfaces.Factory
-import com.getjenny.analyzer.expressions.Data
-
 
 /**
   * All sentences with more than 22 characters and with keywords "password" and either "lost" or "forgot"
@@ -32,7 +30,7 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
   override def toString: String = operator.toString
   /** Read a sentence and produce a score (the higher, the more confident)
     */
-  def evaluate(sentence: String, data: Data = Data()): Result = {
+  def evaluate(sentence: String, data: AnalyzersData = AnalyzersData()): Result = {
     val res = operator.evaluate(query = sentence, data = data)
     if (res.score > 0) println("DEBUG: DefaultParser: '" + this + "' evaluated to " + res)
     res
@@ -108,8 +106,15 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
 
       if (just_opened_parenthesis && operatorFactory.operations(command_buffer)) {
         // We have just read an operator.
-        //println("DEBUG Adding the operator " + command_buffer)
-        val operator = operatorFactory.get(command_buffer, List())
+        println("DEBUG Adding the operator " + command_buffer)
+        val operator = try {
+          operatorFactory.get(command_buffer, List())
+        } catch {
+          case e: NoSuchElementException =>
+            throw AnalyzerCommandException("Operator does not exists(" + command_buffer + ")", e)
+          case e: Exception =>
+            throw AnalyzerCommandException("Unknown error with operator(" + command_buffer + ")", e)
+        }
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
           arguments,
           command_tree.add(operator, new_parenthesis_balance.sum - 1))
@@ -121,10 +126,16 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
       } else if (atomicFactory.operations(command_buffer) && just_closed_parenthesis) {
         // We have read all the atomic's arguments, add the atomic to the tree
         //println("DEBUG Calling loop, adding the atom: " + command_buffer + ", " + arguments)
+        val atomic = try {
+          atomicFactory.get(command_buffer, arguments)
+        } catch {
+          case e: NoSuchElementException =>
+            throw AnalyzerCommandException("Atomic does not exists(" + command_buffer + ")", e)
+          case e: Exception =>
+            throw AnalyzerCommandException("Unknown error with Atomic(" + command_buffer + ")", e)
+        }
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "",
-          "", List.empty[String],
-          command_tree.add(atomicFactory.get(command_buffer, arguments),
-            new_parenthesis_balance.sum))
+          "", List.empty[String], command_tree.add(atomic, new_parenthesis_balance.sum))
       } else if (atomicFactory.operations(command_buffer) && just_closed_quote && !just_closed_parenthesis) {
         // We have read atomic's argument, add the argument to the list
         //println("DEBUG Calling loop, adding argument: " + command_buffer + " <- " + argument_buffer)
@@ -132,9 +143,10 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
           argument_acc, arguments ::: List(argument_buffer), command_tree)
       } else {
         //println("DEBUG going to return naked command tree... " + chars.length)
-        if (indice < chars.length - 1) loop(chars, indice+1, new_parenthesis_balance, new_quote_balance,
-          new_command_buffer, argument_acc, arguments, command_tree)
-        else {
+        if (indice < chars.length - 1) {
+          loop(chars, indice+1, new_parenthesis_balance, new_quote_balance,
+            new_command_buffer, argument_acc, arguments, command_tree)
+        } else {
           if (new_parenthesis_balance.sum == 0 && new_quote_balance == 0) command_tree
           else throw AnalyzerParsingException("gobble_commands: Parenthesis or quotes do not match")
         }

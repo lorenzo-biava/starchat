@@ -22,8 +22,8 @@ trait MyResource extends Directives with JsonSupport {
       complete(status_code)
   }
 
-  def completeResponse[A: ToEntityMarshaller](status_code: StatusCode, data: Future[Option[A]]): Route = {
-    onSuccess(data) {
+  def completeResponse[A: ToEntityMarshaller](status_code: StatusCode, data: Option[A]): Route = {
+    data match {
       case Some(t) =>
         val blippy = RawHeader("application", "json")
         respondWithDefaultHeader(blippy) {
@@ -35,8 +35,8 @@ trait MyResource extends Directives with JsonSupport {
   }
 
   def completeResponse[A: ToEntityMarshaller](status_code_ok: StatusCode, status_code_failed: StatusCode,
-                                     data: Future[Option[A]]): Route = {
-    onSuccess(data) {
+                                     data: Option[A]): Route = {
+    data match {
       case Some(t) =>
         val blippy = RawHeader("application", "json")
         respondWithDefaultHeader(blippy) {

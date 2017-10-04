@@ -22,16 +22,14 @@ trait TokenizersResource extends MyResource {
         entity(as[TokenizerQueryRequest]) { request_data =>
           val termService = TermService
           val result: Try[Option[TokenizerResponse]] =
-            Await.ready(Future { termService.esTokenizer(request_data)},
-              60.seconds).value.get
+            Await.ready(Future{termService.esTokenizer(request_data)}, 10.seconds).value.get
           result match {
             case Success(t) =>
-              completeResponse(StatusCodes.OK, StatusCodes.BadRequest,
-                Future { Option { t } })
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
             case Failure(e) =>
-              log.error("route=esTokenizersRoutes method=POST data=(" + request_data +
-                ") : " + e.getMessage)
-              completeResponse(StatusCodes.BadRequest)
+              log.error("route=esTokenizersRoutes method=POST data=(" + request_data + ") : " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Option{ReturnMessageData(code = 100, message = e.getMessage)})
           }
         }
       } ~
@@ -41,8 +39,7 @@ trait TokenizersResource extends MyResource {
             TokenizersDescription.analyzers_map.map(e => {
               (e._1, e._2._2)
             })
-          val result: Future[Option[Map[String, String]]] =
-            Future(Option(analyzers_description))
+          val result: Option[Map[String, String]] = Option(analyzers_description)
           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
         }
       }

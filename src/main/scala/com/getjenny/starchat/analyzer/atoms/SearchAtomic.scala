@@ -5,7 +5,7 @@ package com.getjenny.starchat.analyzer.atoms
   */
 
 import com.getjenny.analyzer.atoms.AbstractAtomic
-import com.getjenny.analyzer.expressions.{Data, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.starchat.entities._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -28,7 +28,7 @@ class SearchAtomic(arguments: List[String]) extends AbstractAtomic {
 
   val decisionTableService = DecisionTableService
 
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val min_score = Option{decisionTableService.elastic_client.query_min_threshold}
     val boost_exact_match_factor = Option{decisionTableService.elastic_client.boost_exact_match_factor}
 

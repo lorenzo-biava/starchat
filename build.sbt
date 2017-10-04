@@ -45,6 +45,7 @@ libraryDependencies ++= {
 scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 //scalacOptions += "-Ylog-classpath"
+testOptions in Test += Tests.Argument("-oF")
 
 enablePlugins(GitVersioning)
 enablePlugins(GitBranchPrompt)

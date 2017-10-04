@@ -4,6 +4,7 @@
 
 import com.getjenny.analyzer.analyzers._
 import org.scalatest._
+import com.getjenny.analyzer.operators.OperatorException
 
 class AnalyzersTest extends FlatSpec with Matchers {
 
@@ -26,12 +27,10 @@ class AnalyzersTest extends FlatSpec with Matchers {
       new DefaultAnalyzer("""disjunction( keyword("clever")), keyword("gentleman") )""")
     }
   }
-  /*
-  //TODO: enable after changing the parser
-  it should "throw a AnalyzerCommandException if the command is not supported" in {
-    a [AnalyzerCommandException] should be thrownBy {
+  it should "throw a AnalyzerCommandException if the command does not exists or is mispelled" in {
+    a [OperatorException] should be thrownBy {
       new DefaultAnalyzer("""fakeDisjunction( keyword("clever"), keyword("gentleman") )""")
     }
-  }*/
+  }
 
 }

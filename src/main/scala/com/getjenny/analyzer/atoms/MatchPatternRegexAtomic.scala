@@ -1,6 +1,6 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.expressions.{Data, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.utils._
 
 /**
@@ -24,11 +24,11 @@ class MatchPatternRegexAtomic(val arguments: List[String]) extends AbstractAtomi
 
   val regex_extractor = new PatternExtractionRegex(regex)
 
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val res = try {
       Result(
         score = 1.0,
-        Data(item_list = data.item_list, extracted_variables = regex_extractor.evaluate(query))
+        AnalyzersData(item_list = data.item_list, extracted_variables = regex_extractor.evaluate(query))
       )
     } catch {
       case e: PatternExtractionNoMatchException =>

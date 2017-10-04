@@ -1,6 +1,6 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.expressions.{Data, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
 /**
   * Created by mal on 20/02/2017.
@@ -15,7 +15,7 @@ class KeywordAtomic(val arguments: List[String]) extends AbstractAtomic {
   override def toString: String = "keyword(\"" + keyword + "\")"
   val isEvaluateNormalized: Boolean = true
   private val rx = {"""\b""" + keyword + """\b"""}.r
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val freq = rx.findAllIn(query).toList.length
     val query_length = """\S+""".r.findAllIn(query).toList.length
     if (freq > 0) println("DEBUG: KeywordAtomic: '" + keyword + "' found " + freq +

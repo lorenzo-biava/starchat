@@ -27,23 +27,22 @@ trait IndexManagementResource extends MyResource {
           operation match {
             case "refresh" =>
               val result: Try[Option[RefreshIndexResult]] =
-                Await.ready(Future {indexManagementService.refresh_index()}, 60.seconds).value.get
+                Await.ready(Future {indexManagementService.refresh_index()}, 10.seconds).value.get
               result match {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {Option {t}})
+                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Future {Option { IndexManagementResponse(message = e.getMessage) } })
+                  Option { IndexManagementResponse(message = e.getMessage) } )
               }
             case "create" =>
               val result: Try[Option[IndexManagementResponse]] =
-                Await.ready(Future { indexManagementService.create_index() }, 60.seconds).value.get
+                Await.ready(Future { indexManagementService.create_index() }, 10.seconds).value.get
               result match {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {
-                  Option {t}})
+                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Future {Option { IndexManagementResponse(message = e.getMessage) }})
+                  Option { IndexManagementResponse(message = e.getMessage) })
               }
             case _ => completeResponse(StatusCodes.BadRequest,
-              Future{Option{IndexManagementResponse(message = "Operation not supported: " + operation)}})
+              Option{IndexManagementResponse(message = "Operation not supported: " + operation)})
           }
         }
       }
@@ -52,29 +51,29 @@ trait IndexManagementResource extends MyResource {
       get {
 
         val result: Try[Option[IndexManagementResponse]] =
-          Await.ready(Future{indexManagementService.check_index()}, 60.seconds).value.get
+          Await.ready(Future{indexManagementService.check_index()}, 10.seconds).value.get
         result match {
-          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
-            Future{Option{IndexManagementResponse(message = e.getMessage)}})
+            Option{IndexManagementResponse(message = e.getMessage)})
         }
       } ~
       delete {
         val result: Try[Option[IndexManagementResponse]] =
-          Await.ready(Future{indexManagementService.remove_index()}, 60.seconds).value.get
+          Await.ready(Future{indexManagementService.remove_index()}, 10.seconds).value.get
         result match {
-          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
-            Future{Option{IndexManagementResponse(message = e.getMessage)}})
+            Option{IndexManagementResponse(message = e.getMessage)})
         }
       } ~
       put {
         val result: Try[Option[IndexManagementResponse]] =
-          Await.ready(Future{indexManagementService.update_index()}, 60.seconds).value.get
+          Await.ready(Future{indexManagementService.update_index()}, 10.seconds).value.get
         result match {
-          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
-            Future{Option{IndexManagementResponse(message = e.getMessage)}})
+            Option{IndexManagementResponse(message = e.getMessage)})
         }
       }
     }

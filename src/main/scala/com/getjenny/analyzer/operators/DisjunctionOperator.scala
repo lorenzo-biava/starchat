@@ -16,16 +16,21 @@ class DisjunctionOperator(children: List[Expression]) extends AbstractOperator(c
     }
   }
 
-  def evaluate(query: String, data: Data = new Data): Result = {
+  def evaluate(query: String, data: AnalyzersData = new AnalyzersData): Result = {
     def compDisjunction(l: List[Expression]): Result = {
+      if(l.isEmpty) {
+        throw OperatorException("Disjuction argument list is empty")
+      }
       val res = l.head.evaluate(query, data)
       if (l.tail == Nil) Result(score = 1.0 - res.score, data = res.data)
       else {
         val comp_disj = compDisjunction(l.tail)
         Result(score = (1.0 - res.score) * comp_disj.score,
-          Data(
+          AnalyzersData(
             item_list = data.item_list,
-            extracted_variables = comp_disj.data.extracted_variables ++ res.data.extracted_variables)
+            extracted_variables = comp_disj.data.extracted_variables ++ res.data.extracted_variables,
+            data = comp_disj.data.data ++ res.data.data,
+          )
         )
       }
     }

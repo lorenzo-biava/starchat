@@ -21,26 +21,19 @@ trait AnalyzersPlaygroundResource extends MyResource {
   def analyzersPlaygroundRoutes: Route = pathPrefix("analyzers_playground") {
     pathEnd {
       post {
-       entity(as[AnalyzerEvaluateRequest]) { request =>
-         val analyzerService = AnalyzerService
-         val result = Try(analyzerService.evaluateAnalyzer(request))
-         result match {
-           case Success(t) =>
-             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {
-               Option {
-                 t
-               }
-             })
-           case Failure(e) =>
-             log.error("route=analyzersPlaygroundRoutes method=POST: " + e.getMessage)
-             completeResponse(StatusCodes.BadRequest,
-               Future {
-                 Option {
-                   ReturnMessageData(code=100, message = e.getMessage)
-                 }
-               })
-         }
-       }
+        entity(as[AnalyzerEvaluateRequest]) { request =>
+          val analyzerService = AnalyzerService
+          val result: Try[Option[AnalyzerEvaluateResponse]] =
+            Await.ready(analyzerService.evaluateAnalyzer(request), 10.seconds).value.get
+          result match {
+            case Success(t) =>
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
+            case Failure(e) =>
+              log.error("route=analyzersPlaygroundRoutes method=POST: " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Option{ReturnMessageData(code = 100, message = e.getMessage)})
+          }
+        }
       }
     }
   }

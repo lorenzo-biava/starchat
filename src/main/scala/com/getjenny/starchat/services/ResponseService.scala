@@ -26,7 +26,7 @@ import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import com.getjenny.analyzer.analyzers._
 import com.getjenny.analyzer.expressions.Result
-import com.getjenny.analyzer.expressions.Data
+import com.getjenny.analyzer.expressions.AnalyzersData
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
@@ -57,8 +57,9 @@ object ResponseService {
     val traversed_states: List[String] = request.traversed_states.getOrElse(List.empty[String])
     val traversed_states_count: Map[String, Int] =
       traversed_states.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
-
-    val data: Data = Data(extracted_variables = variables, item_list = traversed_states)
+    val analyzers_internal_data: Map[String, Any] = Map.empty[String, Any] //TODO: to be filled with query to decisiontable.queries
+    val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversed_states,
+      data = analyzers_internal_data)
 
     val return_value: String = if (request.values.isDefined)
       request.values.get.return_value.getOrElse("")

@@ -14,7 +14,7 @@ trait RootAPIResource extends MyResource {
   def rootAPIsRoutes: Route = pathPrefix("") {
     pathEnd {
       get {
-        val result: Future[Option[RootAPIsDescription]] = Future(Option(new RootAPIsDescription))
+        val result: Option[RootAPIsDescription] = Option(new RootAPIsDescription)
         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
       }
     }

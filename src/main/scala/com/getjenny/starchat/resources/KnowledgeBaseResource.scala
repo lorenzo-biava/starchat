@@ -24,26 +24,53 @@ trait KnowledgeBaseResource extends MyResource {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[KBDocument]) { document =>
-            val result: Future[Option[IndexDocumentResult]] = knowledgeBaseService.create(document, refresh)
-            onSuccess(result) {
-              case Some(v) =>
-                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{v}})
-              case None =>
-                completeResponse( StatusCodes.BadRequest,
-                  Future{Option{ReturnMessageData(code = 300, message = "Error indexing new document")}})
+            val result: Try[Option[IndexDocumentResult]] =
+              Await.ready(knowledgeBaseService.create(document, refresh), 10.seconds).value.get
+            result match {
+              case Success(t) =>
+                t match {
+                  case Some(v) =>
+                    completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {v})
+                  case None =>
+                    log.error("route=knowledgeBaseRoutes method=POST")
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 100, message = "Error indexing new document, empty response")
+                      })
+                }
+              case Failure(e) =>
+                log.error("route=knowledgeBaseRoutes method=POST: " + e.getMessage)
+                completeResponse(StatusCodes.BadRequest,
+                Option{ReturnMessageData(code = 101, message = "Error indexing new document")})
             }
-          }
+         }
         }
       } ~
         get {
           parameters("ids".as[String].*) { ids =>
-            val result: Future[Option[SearchKBDocumentsResults]] = knowledgeBaseService.read(ids.toList)
-            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+            val result: Try[Option[SearchKBDocumentsResults]] =
+              Await.ready(knowledgeBaseService.read(ids.toList), 10.seconds).value.get
+            result match {
+              case Success(t) =>
+                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
+              case Failure(e) =>
+                log.error("route=knowledgeBaseRoutes method=GET: " + e.getMessage)
+                completeResponse(StatusCodes.BadRequest,
+                  Option{ReturnMessageData(code = 102, message = e.getMessage)})
+            }
           }
         } ~
         delete {
-          val result: Future[Option[DeleteDocumentsResult]] = knowledgeBaseService.deleteAll()
-          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+          val result: Try[Option[DeleteDocumentsResult]] =
+            Await.ready(knowledgeBaseService.deleteAll(), 10.seconds).value.get
+          result match {
+            case Success(t) =>
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
+            case Failure(e) =>
+              log.error("route=knowledgeBaseRoutes method=DELETE: " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Option{ReturnMessageData(code = 103, message = e.getMessage)})
+          }
         }
     } ~
       path(Segment) { id =>
@@ -51,23 +78,32 @@ trait KnowledgeBaseResource extends MyResource {
           parameters("refresh".as[Int] ? 0) { refresh =>
             entity(as[KBDocumentUpdate]) { update =>
               val knowledgeBaseService = KnowledgeBaseService
-              val result: Future[Option[UpdateDocumentResult]] = knowledgeBaseService.update(id, update, refresh)
-              val result_try: Try[Option[UpdateDocumentResult]] = Await.ready(result, 60.seconds).value.get
-              result_try match {
+              val result: Try[Option[UpdateDocumentResult]] =
+                Await.ready(knowledgeBaseService.update(id, update, refresh), 10.seconds).value.get
+              result match {
                 case Success(t) =>
-                  completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})
+                  completeResponse(StatusCodes.Created, StatusCodes.BadRequest, t)
                 case Failure(e) =>
+                  log.error("route=knowledgeBaseRoutes method=PUT: " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
-                    Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})
+                    Option{ReturnMessageData(code = 104, message = e.getMessage)})
               }
-            }
+           }
           }
         } ~
           delete {
             parameters("refresh".as[Int] ? 0) { refresh =>
               val knowledgeBaseService = KnowledgeBaseService
-              val result: Future[Option[DeleteDocumentResult]] = knowledgeBaseService.delete(id, refresh)
-              completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
+              val result: Try[Option[DeleteDocumentResult]] =
+                Await.ready(knowledgeBaseService.delete(id, refresh), 10.seconds).value.get
+              result match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                case Failure(e) =>
+                  log.error("route=knowledgeBaseRoutes method=DELETE : " + e.getMessage)
+                  completeResponse(StatusCodes.BadRequest,
+                    Option{ReturnMessageData(code = 105, message = e.getMessage)})
+              }
             }
           }
       }
@@ -78,8 +114,17 @@ trait KnowledgeBaseResource extends MyResource {
       post {
         entity(as[KBDocumentSearch]) { docsearch =>
           val knowledgeBaseService = KnowledgeBaseService
-          val result: Future[Option[SearchKBDocumentsResults]] = knowledgeBaseService.search(docsearch)
-          completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
+
+          val result: Try[Option[SearchKBDocumentsResults]] =
+            Await.ready(knowledgeBaseService.search(docsearch), 10.seconds).value.get
+          result match {
+            case Success(t) =>
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
+            case Failure(e) =>
+              log.error("route=decisionTableSearchRoutes method=POST: " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Option{ReturnMessageData(code = 106, message = e.getMessage)})
+          }
         }
       }
     }

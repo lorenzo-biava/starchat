@@ -28,25 +28,57 @@ trait DecisionTableResource extends MyResource {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[DTDocument]) { document =>
-            val result: Future[Option[IndexDocumentResult]] = decisionTableService.create(document, refresh)
-            completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
+            val result: Try[Option[IndexDocumentResult]] =
+              Await.ready(decisionTableService.create(document, refresh), 10.seconds).value.get
+            result match {
+              case Success(t) =>
+                completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option{t})
+              case Failure(e) =>
+                log.error("route=decisionTableRoutes method=POST: " + e.getMessage)
+                completeResponse(StatusCodes.BadRequest,
+                  Option{ReturnMessageData(code = 100, message = e.getMessage)})
+            }
           }
         }
       } ~
         get {
           parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
             if(dump == false) {
-              val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.read(ids.toList)
-              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+              val result: Try[Option[SearchDTDocumentsResults]] =
+                Await.ready(decisionTableService.read(ids.toList), 10.seconds).value.get
+              result match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
+                case Failure(e) =>
+                  log.error("route=decisionTableRoutes method=GET: " + e.getMessage)
+                  completeResponse(StatusCodes.BadRequest,
+                    Option{ReturnMessageData(code = 101, message = e.getMessage)})
+              }
             } else {
-              val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.getDTDocuments()
-              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+              val result: Try[Option[SearchDTDocumentsResults]] =
+                Await.ready(decisionTableService.getDTDocuments(), 10.seconds).value.get
+              result match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
+                case Failure(e) =>
+                  log.error("route=decisionTableRoutes method=GET: " + e.getMessage)
+                  completeResponse(StatusCodes.BadRequest,
+                    Option{ReturnMessageData(code = 102, message = e.getMessage)})
+              }
             }
           }
         } ~
         delete {
-          val result: Future[Option[DeleteDocumentsResult]] = decisionTableService.deleteAll()
-          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+          val result: Try[Option[DeleteDocumentsResult]] =
+            Await.ready(decisionTableService.deleteAll(), 10.seconds).value.get
+          result match {
+            case Success(t) =>
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
+            case Failure(e) =>
+              log.error("route=decisionTableRoutes method=DELETE : " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Option{ReturnMessageData(code = 103, message = e.getMessage)})
+          }
         }
     } ~
       path(Segment) { id =>
@@ -54,13 +86,15 @@ trait DecisionTableResource extends MyResource {
           entity(as[DTDocumentUpdate]) { update =>
             parameters("refresh".as[Int] ? 0) { refresh =>
               val decisionTableService = DecisionTableService
-              val result = Try(decisionTableService.update(id, update, refresh))
+              val result: Try[Option[UpdateDocumentResult]] =
+                Await.ready(decisionTableService.update(id, update, refresh), 10.seconds).value.get
               result match {
                 case Success(t) =>
-                  completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Future{Option{t}})
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
                 case Failure(e) =>
+                  log.error("route=decisionTableRoutes method=PUT : " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
-                    Future{Option{ReturnMessageData(code = 101, message = e.getMessage)}})
+                    Option{ReturnMessageData(code = 104, message = e.getMessage)})
               }
             }
           }
@@ -68,15 +102,19 @@ trait DecisionTableResource extends MyResource {
           delete {
             parameters("refresh".as[Int] ? 0) { refresh =>
               val decisionTableService = DecisionTableService
-              val result: Future[Option[DeleteDocumentResult]] = decisionTableService.delete(id, refresh)
-              onSuccess(result) {
-                case Some(t) =>
-                  if(t.found) {
-                    completeResponse(StatusCodes.OK, result)
+              val result: Try[Option[DeleteDocumentResult]] =
+                Await.ready(decisionTableService.delete(id, refresh), 10.seconds).value.get
+              result match {
+                case Success(t) =>
+                  if(t.isDefined) {
+                    completeResponse(StatusCodes.OK, t)
                   } else {
-                    completeResponse(StatusCodes.BadRequest, result)
+                    completeResponse(StatusCodes.BadRequest, t)
                   }
-                case None => completeResponse(StatusCodes.BadRequest)
+                case Failure(e) =>
+                  log.error("route=decisionTableRoutes method=DELETE : " + e.getMessage)
+                  completeResponse(StatusCodes.BadRequest,
+                    Option{ReturnMessageData(code = 105, message = e.getMessage)})
               }
             }
           }
@@ -87,27 +125,26 @@ trait DecisionTableResource extends MyResource {
     pathEnd {
       get {
         val analyzerService = AnalyzerService
-        val result = Await.ready(analyzerService.getDTAnalyzerMap, 60.seconds).value.get
+        val result = Await.ready(analyzerService.getDTAnalyzerMap, 10.seconds).value.get
         result match {
           case Success(t) =>
-            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) =>
             log.error("route=decisionTableAnalyzerRoutes method=GET: " + e.getMessage)
             completeResponse(StatusCodes.BadRequest,
-              Future{Option{IndexManagementResponse(message = e.getMessage)}})
+              Option{ReturnMessageData(code = 106, message = e.getMessage)})
         }
       } ~
         post {
           val analyzerService = AnalyzerService
-          val result: Try[Option[DTAnalyzerLoad]] =
-            Await.ready(analyzerService.loadAnalyzer(propagate = true), 60.seconds).value.get
+          val result: Try[Option[DTAnalyzerLoad]] = Await.ready(analyzerService.loadAnalyzer(propagate = true), 10.seconds).value.get
           result match {
             case Success(t) =>
-              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
               log.error("route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
-                Future{Option{IndexManagementResponse(message = e.getMessage)}})
+                Option{ReturnMessageData(code = 107, message = e.getMessage)})
           }
         }
     }
@@ -118,8 +155,15 @@ trait DecisionTableResource extends MyResource {
       post {
         entity(as[DTDocumentSearch]) { docsearch =>
           val decisionTableService = DecisionTableService
-          val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.search(docsearch)
-          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+          val result: Try[Option[SearchDTDocumentsResults]] = Await.ready(decisionTableService.search(docsearch), 10.seconds).value.get
+          result match {
+            case Success(t) =>
+              completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option{t})
+            case Failure(e) =>
+              log.error("route=decisionTableSearchRoutes method=POST: " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Option{ReturnMessageData(code = 108, message = e.getMessage)})
+          }
         }
       }
     }
@@ -138,31 +182,27 @@ trait DecisionTableResource extends MyResource {
               case Failure(e) =>
                 log.error("DecisionTableResource: Unable to complete the request: " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest,
-                  Future {
-                    Option {
-                      ResponseRequestOutOperationResult(
-                        ReturnMessageData(code = 102, message = e.getMessage),
-                        Option{ List.empty[ResponseRequestOut] })
-                    }
+                  Option {
+                    ResponseRequestOutOperationResult(
+                      ReturnMessageData(code = 109, message = e.getMessage),
+                      Option{ List.empty[ResponseRequestOut] })
                   }
                 )
               case Success(response_value) =>
                 response_value match {
                   case Some(t) =>
                     if (t.status.code == 200) {
-                      completeResponse(StatusCodes.OK, StatusCodes.Gone, Future{t.response_request_out})
+                      completeResponse(StatusCodes.OK, StatusCodes.Gone, t.response_request_out)
                     }  else {
                       completeResponse(StatusCodes.NoContent) // no response found
                     }
                   case None =>
                     log.error("DecisionTableResource: Unable to complete the request")
                     completeResponse(StatusCodes.BadRequest,
-                      Future {
-                        Option {
-                          ResponseRequestOutOperationResult(
-                            ReturnMessageData(code = 101, message = "unable to complete the response"),
-                            Option{ List.empty[ResponseRequestOut] })
-                        }
+                      Option {
+                        ResponseRequestOutOperationResult(
+                          ReturnMessageData(code = 110, message = "unable to complete the response"),
+                          Option{ List.empty[ResponseRequestOut] })
                       }
                     )
                 }

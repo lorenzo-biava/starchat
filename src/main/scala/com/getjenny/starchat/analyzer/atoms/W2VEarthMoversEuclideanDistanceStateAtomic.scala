@@ -14,7 +14,7 @@ import com.getjenny.starchat.analyzer.utils.EmDistance
 import scala.concurrent.{ExecutionContext, Await, Future}
 import com.getjenny.starchat.services._
 
-import com.getjenny.analyzer.expressions.{Data, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import ExecutionContext.Implicits.global
 
 class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String]) extends AbstractAtomic  {
@@ -47,7 +47,7 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String]) ex
   val queries_vectors = queries_sentences.queries.map(item => Option{item})
 
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val query_vectors = termService.textToVectors(text = query)
     val emd_dist_queries = queries_vectors.map(q => {
       val dist = EmDistance.distanceEuclidean(q , query_vectors)

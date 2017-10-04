@@ -25,23 +25,14 @@ trait SpellcheckResource extends MyResource {
         post {
           entity(as[SpellcheckTermsRequest]) { request =>
             val result: Try[Option[SpellcheckTermsResponse]] =
-              Await.ready(Future{spellcheckService.termsSuggester(request)},
-                60.seconds).value.get
+              Await.ready(Future{spellcheckService.termsSuggester(request)}, 10.seconds).value.get
             result match {
               case Success(t) =>
-                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future {
-                  Option {
-                    t
-                  }
-                })
+                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
               case Failure(e) =>
                 log.error("route=spellcheckRoutes method=POST: " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest,
-                  Future {
-                    Option {
-                      IndexManagementResponse(message = e.getMessage)
-                    }
-                  })
+                  Option{ReturnMessageData(code = 100, message = e.getMessage)})
             }
           }
         }
