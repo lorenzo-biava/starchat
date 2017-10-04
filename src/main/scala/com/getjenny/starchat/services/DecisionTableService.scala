@@ -16,9 +16,10 @@ import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.action.index.IndexResponse
 import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.DeleteResponse
+import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
+import org.elasticsearch.index.reindex.{DeleteByQueryAction, BulkByScrollResponse}
 import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.unit._
 
@@ -310,6 +311,22 @@ object DecisionTableService {
     Option {doc_result}
   }
 
+  def deleteAll(): Future[Option[DeleteDocumentsResult]] = Future {
+    val client: TransportClient = elastic_client.get_client()
+    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    val response: BulkByScrollResponse =
+      DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
+        .source(elastic_client.index_name)
+        .filter(qb)
+        .filter(QueryBuilders.typeQuery(elastic_client.type_name))
+        .get()
+
+    val deleted: Long = response.getDeleted()
+
+    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
+    Option {result}
+  }
+
   def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val response: DeleteResponse = client.prepareDelete(elastic_client.index_name, elastic_client.type_name, id).get()
@@ -339,7 +356,7 @@ object DecisionTableService {
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
       .setScroll(new TimeValue(60000))
-      .setSize(1000).get()
+      .setSize(10000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
     val decision_table_content : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>

@@ -38,7 +38,9 @@ import org.apache.lucene.search.join._
 import org.elasticsearch.common.lucene.search.function.ScriptScoreFunction
 import org.elasticsearch.index.query.ScriptQueryBuilder
 import org.elasticsearch.index.query.functionscore._
+import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.script._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object KnowledgeBaseService {
@@ -444,6 +446,22 @@ object KnowledgeBaseService {
     )
 
     Option {doc_result}
+  }
+
+  def deleteAll(): Future[Option[DeleteDocumentsResult]] = Future {
+    val client: TransportClient = elastic_client.get_client()
+    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    val response: BulkByScrollResponse =
+      DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
+        .source(elastic_client.index_name)
+        .filter(qb)
+        .filter(QueryBuilders.typeQuery(elastic_client.type_name))
+        .get()
+
+    val deleted: Long = response.getDeleted()
+
+    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
+    Option {result}
   }
 
   def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {

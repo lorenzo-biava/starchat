@@ -24,10 +24,10 @@ trait DecisionTableResource extends MyResource {
 
   def decisionTableRoutes: Route = pathPrefix("decisiontable") {
     pathEnd {
+      val decisionTableService = DecisionTableService
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[DTDocument]) { document =>
-            val decisionTableService = DecisionTableService
             val result: Future[Option[IndexDocumentResult]] = decisionTableService.create(document, refresh)
             completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
           }
@@ -35,7 +35,6 @@ trait DecisionTableResource extends MyResource {
       } ~
         get {
           parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
-            val decisionTableService = DecisionTableService
             if(dump == false) {
               val result: Future[Option[SearchDTDocumentsResults]] = decisionTableService.read(ids.toList)
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
@@ -44,6 +43,10 @@ trait DecisionTableResource extends MyResource {
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
             }
           }
+        } ~
+        delete {
+          val result: Future[Option[DeleteDocumentsResult]] = decisionTableService.deleteAll()
+          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
         }
     } ~
       path(Segment) { id =>

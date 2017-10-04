@@ -19,11 +19,11 @@ import scala.util.{Failure, Success, Try}
 trait KnowledgeBaseResource extends MyResource {
 
   def knowledgeBaseRoutes: Route = pathPrefix("knowledgebase") {
+    val knowledgeBaseService = KnowledgeBaseService
     pathEnd {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[KBDocument]) { document =>
-            val knowledgeBaseService = KnowledgeBaseService
             val result: Future[Option[IndexDocumentResult]] = knowledgeBaseService.create(document, refresh)
             onSuccess(result) {
               case Some(v) =>
@@ -35,13 +35,16 @@ trait KnowledgeBaseResource extends MyResource {
           }
         }
       } ~
-      get {
-        parameters("ids".as[String].*) { ids =>
-          val knowledgeBaseService = KnowledgeBaseService
-          val result: Future[Option[SearchKBDocumentsResults]] = knowledgeBaseService.read(ids.toList)
+        get {
+          parameters("ids".as[String].*) { ids =>
+            val result: Future[Option[SearchKBDocumentsResults]] = knowledgeBaseService.read(ids.toList)
+            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
+          }
+        } ~
+        delete {
+          val result: Future[Option[DeleteDocumentsResult]] = knowledgeBaseService.deleteAll()
           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
         }
-      }
     } ~
       path(Segment) { id =>
         put {
@@ -60,13 +63,13 @@ trait KnowledgeBaseResource extends MyResource {
             }
           }
         } ~
-        delete {
-          parameters("refresh".as[Int] ? 0) { refresh =>
-            val knowledgeBaseService = KnowledgeBaseService
-            val result: Future[Option[DeleteDocumentResult]] = knowledgeBaseService.delete(id, refresh)
-            completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
+          delete {
+            parameters("refresh".as[Int] ? 0) { refresh =>
+              val knowledgeBaseService = KnowledgeBaseService
+              val result: Future[Option[DeleteDocumentResult]] = knowledgeBaseService.delete(id, refresh)
+              completeResponse(StatusCodes.Created, StatusCodes.BadRequest, result)
+            }
           }
-        }
       }
   }
 
@@ -83,6 +86,3 @@ trait KnowledgeBaseResource extends MyResource {
   }
 
 }
-
-
-

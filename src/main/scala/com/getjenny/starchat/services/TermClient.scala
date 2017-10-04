@@ -5,5 +5,5 @@ package com.getjenny.starchat.services
   */
 
 object TermClient extends ElasticClient {
-  val term_type_name: String = config.getString("es.term_type_name")
+  val type_name: String = config.getString("es.term_type_name")
 }

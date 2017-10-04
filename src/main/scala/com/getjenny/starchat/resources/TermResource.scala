@@ -18,13 +18,13 @@ import scala.util.{Failure, Success, Try}
 trait TermResource extends MyResource {
 
   def termRoutes: Route = pathPrefix("term") {
+    val termService = TermService
     path(Segment) { operation: String =>
       post {
         operation match {
           case "index" =>
             parameters("refresh".as[Int] ? 0) { refresh =>
               entity(as[Terms]) { request_data =>
-                val termService = TermService
                 val result: Try[Option[IndexDocumentListResult]] =
                   Await.ready(Future{termService.index_term(request_data, refresh)}, 60.seconds).value.get
                 result match {
@@ -39,7 +39,6 @@ trait TermResource extends MyResource {
             }
           case "get" =>
             entity(as[TermIdsRequest]) { request_data =>
-              val termService = TermService
               val result: Try[Option[Terms]] =
                 Await.ready(Future{termService.get_term(request_data)}, 60.seconds).value.get
               result match {
@@ -60,16 +59,21 @@ trait TermResource extends MyResource {
       delete {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[TermIdsRequest]) { request_data =>
-            val termService = TermService
-            val result: Try[Option[DeleteDocumentListResult]] =
-              Await.ready(Future{termService.delete(request_data, refresh)}, 60.seconds).value.get
-            result match {
-              case Success(t) =>
-                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
-              case Failure(e) =>
-                log.error("route=termRoutes method=DELETE : " + e.getMessage)
-                completeResponse(StatusCodes.BadRequest,
-                  Future{Option{IndexManagementResponse(message = e.getMessage)}})
+            if(request_data.ids.nonEmpty) {
+              val termService = TermService
+              val result: Try[Option[DeleteDocumentListResult]] =
+                Await.ready(Future{termService.delete(request_data, refresh)}, 60.seconds).value.get
+              result match {
+                case Success(t) =>
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Future{Option{t}})
+                case Failure(e) =>
+                  log.error("route=termRoutes method=DELETE : " + e.getMessage)
+                  completeResponse(StatusCodes.BadRequest,
+                    Future{Option{IndexManagementResponse(message = e.getMessage)}})
+              }
+            } else {
+              val result: Future[Option[DeleteDocumentsResult]] = termService.deleteAll()
+              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
             }
           }
         }

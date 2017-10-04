@@ -15,7 +15,7 @@ import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
 
 import scala.collection.JavaConverters._
 import org.elasticsearch.rest.RestStatus
@@ -29,13 +29,15 @@ import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse.AnalyzeToken
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
+import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Implements functions, eventually used by TermResource
   */
 object TermService {
-  val elastic_client = IndexManagementClient
+  val elastic_client = TermClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def payloadVectorToString[T](vector: Vector[T]): String = {
@@ -124,7 +126,7 @@ object TermService {
       }
       builder.endObject()
 
-      bulkRequest.add(client.prepareIndex(elastic_client.index_name, elastic_client.term_type_name, term.term)
+      bulkRequest.add(client.prepareIndex(elastic_client.index_name, elastic_client.type_name, term.term)
         .setSource(builder))
     })
 
@@ -145,7 +147,7 @@ object TermService {
   def get_term(terms_request: TermIdsRequest) : Option[Terms] = {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multiget_builder.add(elastic_client.index_name, elastic_client.term_type_name, terms_request.ids:_*)
+    multiget_builder.add(elastic_client.index_name, elastic_client.type_name, terms_request.ids:_*)
     val response: MultiGetResponse = multiget_builder.get()
     val documents : List[Term] = response.getResponses.toList
         .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case(e) =>
@@ -260,7 +262,7 @@ object TermService {
       }
       builder.endObject()
 
-      bulkRequest.add(client.prepareUpdate(elastic_client.index_name, elastic_client.term_type_name, term.term)
+      bulkRequest.add(client.prepareUpdate(elastic_client.index_name, elastic_client.type_name, term.term)
           .setDoc(builder))
     })
 
@@ -285,13 +287,29 @@ object TermService {
     }
   }
 
+  def deleteAll(): Future[Option[DeleteDocumentsResult]] = Future {
+    val client: TransportClient = elastic_client.get_client()
+    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    val response: BulkByScrollResponse =
+      DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
+        .source(elastic_client.index_name)
+        .filter(qb)
+        .filter(QueryBuilders.typeQuery(elastic_client.type_name))
+        .get()
+
+    val deleted: Long = response.getDeleted()
+
+    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
+    Option {result}
+  }
+
   def delete(termGetRequest: TermIdsRequest, refresh: Int) : Option[DeleteDocumentListResult] = {
     val client: TransportClient = elastic_client.get_client()
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
     termGetRequest.ids.foreach( id => {
       val delete_request: DeleteRequestBuilder = client.prepareDelete(elastic_client.index_name,
-        elastic_client.term_type_name, id)
+        elastic_client.type_name, id)
       bulkRequest.add(delete_request)
     })
     val bulkResponse: BulkResponse = bulkRequest.get()
@@ -319,7 +337,7 @@ object TermService {
     val client: TransportClient = elastic_client.get_client()
 
     val search_builder : SearchRequestBuilder = client.prepareSearch(elastic_client.index_name)
-      .setTypes(elastic_client.term_type_name)
+      .setTypes(elastic_client.type_name)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
@@ -430,7 +448,7 @@ object TermService {
     val client: TransportClient = elastic_client.get_client()
 
     val search_builder : SearchRequestBuilder = client.prepareSearch(elastic_client.index_name)
-      .setTypes(elastic_client.term_type_name)
+      .setTypes(elastic_client.type_name)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
