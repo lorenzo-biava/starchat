@@ -28,7 +28,7 @@ class BooleanNotOperator(child: List[Expression]) extends AbstractOperator(child
     }
   }
 
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val res = child.head.matches(query, data)
     Result(score=1 - res.score, data = res.data)
   }

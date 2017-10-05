@@ -17,6 +17,7 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.common.xcontent.XContentType
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
@@ -32,7 +33,7 @@ object IndexManagementService {
   val question_json_path: String = "/index_management/json_index_spec/general/question.json"
   val term_json_path: String = "/index_management/json_index_spec/general/term.json"
 
-  def create_index() : Option[IndexManagementResponse] = {
+  def create_index() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
@@ -72,7 +73,7 @@ object IndexManagementService {
     indexManagementResponse
   }
   
-  def remove_index() : Option[IndexManagementResponse] = {
+  def remove_index() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     if (! elastic_client.enable_delete_index) {
@@ -88,7 +89,7 @@ object IndexManagementService {
     }
   }
 
-  def check_index() : Option[IndexManagementResponse] = {
+  def check_index() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val get_mappings_req = client.admin.indices.prepareGetMappings(elastic_client.index_name).get()
@@ -112,7 +113,7 @@ object IndexManagementService {
     }
   }
 
-  def update_index() : Option[IndexManagementResponse] = {
+  def update_index() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val system_json_is: InputStream = getClass.getResourceAsStream(system_json_path)
@@ -160,7 +161,7 @@ object IndexManagementService {
     indexManagementResponse
   }
 
-  def refresh_index() : Option[RefreshIndexResult] = {
+  def refresh_index() : Future[Option[RefreshIndexResult]] = Future {
     val refresh_index: RefreshIndexResult = elastic_client.refresh_index()
     if (refresh_index.failed_shards_n > 0) {
       throw new Exception("IndexManagement : index refresh failed: (" + elastic_client.index_name + ")")

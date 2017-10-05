@@ -16,7 +16,7 @@ import com.getjenny.starchat.services._
 import scala.concurrent.duration._
 import scala.concurrent._
 import ExecutionContext.Implicits.global
-import com.getjenny.analyzer.expressions.{Data, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
 class W2VCosineStateAtomic(val arguments: List[String]) extends AbstractAtomic  {
   /**
@@ -46,7 +46,7 @@ class W2VCosineStateAtomic(val arguments: List[String]) extends AbstractAtomic  
   })
 
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val distance = query_vectors.map(q_item => {
       val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
       val dist = (1.0 - cosineDist(q_item._1, query_vector._1)) *

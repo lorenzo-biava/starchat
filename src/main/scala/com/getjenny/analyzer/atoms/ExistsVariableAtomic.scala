@@ -2,7 +2,7 @@ package com.getjenny.analyzer.atoms
 
 import com.getjenny.analyzer.expressions.Result
 import com.getjenny.analyzer.utils._
-import com.getjenny.analyzer.expressions.Data
+import com.getjenny.analyzer.expressions.AnalyzersData
 import com.getjenny.analyzer.expressions.Result
 
 
@@ -25,7 +25,7 @@ class ExistsVariableAtomic(val arguments: List[String]) extends AbstractAtomic {
     * @param data the dictionary of variables (not used in this analyzer)
     * @return Result with 1.0 if the variable exists score = 0.0 otherwise
     */
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     if(data.extracted_variables.exists(_._1 == varname(0))) {
       Result(score = 1.0)
     } else {

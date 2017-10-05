@@ -16,7 +16,7 @@ class BooleanAndOperator(children: List[Expression]) extends AbstractOperator(ch
     }
   }
 
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     def loop(l: List[Expression]): Result = {
       val first_res = l.head.matches(query, data)
       if (first_res.score != 1) {
@@ -28,9 +28,11 @@ class BooleanAndOperator(children: List[Expression]) extends AbstractOperator(ch
       else {
         val res = loop(l.tail)
         Result(score = res.score,
-          Data(
+          AnalyzersData(
             item_list = data.item_list,
-            extracted_variables = res.data.extracted_variables ++ first_res.data.extracted_variables)
+            extracted_variables = res.data.extracted_variables ++ first_res.data.extracted_variables,
+            data = res.data.data ++ first_res.data.data
+          )
         )
       }
     }

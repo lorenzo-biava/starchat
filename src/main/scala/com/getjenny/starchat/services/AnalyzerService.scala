@@ -20,7 +20,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
 import com.getjenny.starchat.analyzer.analyzers._
-import com.getjenny.analyzer.expressions.Data
+import com.getjenny.analyzer.expressions.{Data, AnalyzersData}
 import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
@@ -181,19 +181,28 @@ object AnalyzerService {
 
   def evaluateAnalyzer(analyzer_request: AnalyzerEvaluateRequest): Future[Option[AnalyzerEvaluateResponse]] = {
     val analyzer = Try(new StarchatAnalyzer(analyzer_request.analyzer))
-    lazy val response = analyzer match {
+    val response = analyzer match {
       case Failure(exception) =>
         log.error("error during evaluation of analyzer: " + exception.getMessage)
         throw exception
       case Success(result) =>
-        val data = if (analyzer_request.data.isDefined) {
-          analyzer_request.data.get
+        val data_internal = if (analyzer_request.data.isDefined) {
+          val data = analyzer_request.data.get
+
+          // prepare search result for search analyzer
+          val analyzers_internal_data =
+            decisionTableService.resultsToMap(decisionTableService.search_dt_queries(analyzer_request.query))
+
+          AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
+            data = analyzers_internal_data)
         } else {
-          Data()
+          AnalyzersData()
         }
-        val eval_res = result.evaluate(analyzer_request.query, data)
+
+        val eval_res = result.evaluate(analyzer_request.query, data_internal)
         val return_data = if(eval_res.data.extracted_variables.nonEmpty || eval_res.data.item_list.nonEmpty) {
-          Option{eval_res.data}
+          val data_internal = eval_res.data
+          Option { Data(item_list = data_internal.item_list, extracted_variables = data_internal.extracted_variables) }
         } else {
           None: Option[Data]
         }
@@ -209,7 +218,7 @@ object AnalyzerService {
   def initializeAnalyzers(): Unit = {
     if (AnalyzerService.analyzer_map == mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]) {
       val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzer(propagate = false), 60.seconds).value.get
+        Await.ready(loadAnalyzer(), 60.seconds).value.get
       result match {
         case Success(t) =>
           log.info("analyzers loaded: " + t.get.num_of_entries)

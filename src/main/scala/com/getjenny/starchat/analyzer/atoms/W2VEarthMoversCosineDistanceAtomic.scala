@@ -7,7 +7,7 @@ import com.getjenny.starchat.analyzer.utils.EmDistance
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
-import com.getjenny.analyzer.expressions.{Data, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
 import ExecutionContext.Implicits.global
 
@@ -33,7 +33,7 @@ class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String]) extends Ab
 
   override def toString: String = "similarCosEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val emd_dist = EmDistance.distanceCosine(query, sentence)
     Result(score=emd_dist)
   }

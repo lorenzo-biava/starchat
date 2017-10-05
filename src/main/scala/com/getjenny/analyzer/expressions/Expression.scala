@@ -5,9 +5,9 @@ package com.getjenny.analyzer.expressions
   */
 
 abstract class Expression {
-  def evaluate(query: String, data: Data = Data()): Result // read a sentence and produce a score (the higher, the more confident)
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result // read a sentence and produce a score (the higher, the more confident)
   val match_threshold = 0.0
-  def matches(query: String, data: Data = Data()): Result = {
+  def matches(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val res = this.evaluate(query, data)
     val bool = if(res.score > match_threshold) 1.0 else 0.0
     if (bool == 1) println("DEBUG: Expression: " + this + " matches " + query)

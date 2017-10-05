@@ -12,6 +12,9 @@ import org.elasticsearch.action.search.SearchResponse
 import scala.collection.JavaConverters._
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
+import akka.http.scaladsl.model.StatusCodes
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
 
 import org.elasticsearch.search.suggest.SuggestBuilder
 import org.elasticsearch.search.suggest.term.TermSuggestionBuilder
@@ -22,7 +25,7 @@ object SpellcheckService {
   val elastic_client = KnowledgeBaseElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def termsSuggester(request: SpellcheckTermsRequest) : Option[SpellcheckTermsResponse] = {
+  def termsSuggester(request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val suggestion_builder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")

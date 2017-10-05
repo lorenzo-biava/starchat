@@ -6,7 +6,7 @@ import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
-import com.getjenny.analyzer.expressions.{Data, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
 import ExecutionContext.Implicits.global
 
@@ -27,7 +27,7 @@ class W2VCosineWordAtomic(arguments: List[String]) extends AbstractAtomic {
 
   val isEvaluateNormalized: Boolean = true
   private val word_vec = TextToVectorsTools.getSumOfVectorsFromText(word)
-  def evaluate(query: String, data: Data = Data()): Result = {
+  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val text_vectors = termService.textToVectors(query)
     val distance: Double = if (text_vectors.nonEmpty && text_vectors.get.terms.nonEmpty) {
       val term_vector = text_vectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)
