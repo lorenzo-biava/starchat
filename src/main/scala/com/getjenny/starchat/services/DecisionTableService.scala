@@ -180,6 +180,49 @@ object DecisionTableService {
     search_results_option
   }
 
+  def search_dt_queries(user_text: String): Option[SearchDTDocumentsResults] = {
+    val dtDocumentSearch: DTDocumentSearch =
+      DTDocumentSearch(from = Option {
+        0
+      }, size = Option {
+        10000
+      },
+        min_score = Option {
+          elastic_client.query_min_threshold
+        },
+        execution_order = None: Option[Int],
+        boost_exact_match_factor = Option {
+          elastic_client.boost_exact_match_factor
+        },
+        state = None: Option[String], queries = Option {
+          user_text
+        })
+
+    val search_result: Try[Option[SearchDTDocumentsResults]] =
+      Await.ready(this.search(dtDocumentSearch), 10.seconds).value.get
+    val found_documents = search_result match {
+      case Success(t) =>
+        t
+      case Failure(e) =>
+        val message = "ResponseService search"
+        log.error(message + " : " + e.getMessage)
+        throw new Exception(message, e)
+    }
+    found_documents
+  }
+
+  def resultsToMap(results: Option[SearchDTDocumentsResults]): Map[String, Any] = {
+    val search_results_map: Map[String, Any] = if (results.isEmpty || results.get.hits.isEmpty) {
+      Map.empty[String, Any]
+    } else {
+      val m: Map[String, (Float, SearchDTDocument)] = results.get.hits.map(doc => {
+        (doc.document.state, (doc.score, doc))
+      }).toMap
+      Map("dt_queries_search_result" -> Option{m})
+    }
+    search_results_map
+  }
+
   def create(document: DTDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 

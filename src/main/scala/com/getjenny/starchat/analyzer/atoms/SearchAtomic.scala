@@ -29,30 +29,17 @@ class SearchAtomic(arguments: List[String]) extends AbstractAtomic {
   val decisionTableService = DecisionTableService
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val min_score = Option{decisionTableService.elastic_client.query_min_threshold}
-    val boost_exact_match_factor = Option{decisionTableService.elastic_client.boost_exact_match_factor}
 
-    val dtDocumentSearch : DTDocumentSearch =
-      DTDocumentSearch(from = Option{0}, size = Option{10}, min_score = min_score,
-        execution_order = None: Option[Int],
-        boost_exact_match_factor = boost_exact_match_factor, state = Option{ref_state}, queries = Option{query})
+    val search_res = data.data.getOrElse("dt_queries_search_result", None)
+        .asInstanceOf[Option[Map[String, (Float, SearchDTDocument)]]]
 
-    val state: Future[Option[SearchDTDocumentsResults]] = decisionTableService.search(dtDocumentSearch)
-    //search the state with the closest query value, then return that state
-    val res : Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
-
-    val res_count = if (res.isEmpty) 0 else res.get.total
-
-    val score : Double = res_count match {
-      case 0 => 0.0f
-      case _ =>
-        val doc : DTDocument = res.get.hits.head.document
-        val state : String = doc.state
-        val max_score : Double = res.get.max_score
-        val sum_of_scores : Double = res.get.hits.map(x => x.score).sum
-        val norm_score = max_score / (sum_of_scores + 1)
-        norm_score
+    val score = if(search_res.nonEmpty && search_res.get.contains(ref_state)) {
+      val doc = search_res.get.get(ref_state)
+      doc.get._1 / (search_res.get.map(x => x._2._1).sum + 1)
+    } else {
+      0.0f
     }
+
     Result(score=score)
   } // returns elasticsearch score of the highest query in queries
 

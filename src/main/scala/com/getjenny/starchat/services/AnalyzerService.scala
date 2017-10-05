@@ -188,10 +188,13 @@ object AnalyzerService {
       case Success(result) =>
         val data_internal = if (analyzer_request.data.isDefined) {
           val data = analyzer_request.data.get
-          //TODO: here query to decisiontable.queries field
+
+          // prepare search result for search analyzer
+          val analyzers_internal_data =
+            decisionTableService.resultsToMap(decisionTableService.search_dt_queries(analyzer_request.query))
+
           AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
-            data = Map.empty[String, Any] //TODO: replace with queries data
-          )
+            data = analyzers_internal_data)
         } else {
           AnalyzersData()
         }

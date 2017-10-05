@@ -106,7 +106,7 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
 
       if (just_opened_parenthesis && operatorFactory.operations(command_buffer)) {
         // We have just read an operator.
-        println("DEBUG Adding the operator " + command_buffer)
+        //println("DEBUG Adding the operator " + command_buffer)
         val operator = try {
           operatorFactory.get(command_buffer, List())
         } catch {

@@ -57,7 +57,11 @@ object ResponseService {
     val traversed_states: List[String] = request.traversed_states.getOrElse(List.empty[String])
     val traversed_states_count: Map[String, Int] =
       traversed_states.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
-    val analyzers_internal_data: Map[String, Any] = Map.empty[String, Any] //TODO: to be filled with query to decisiontable.queries
+
+    // prepare search result for search analyzer
+    val analyzers_internal_data =
+      decisionTableService.resultsToMap(decisionTableService.search_dt_queries(user_text))
+
     val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversed_states,
       data = analyzers_internal_data)
 
