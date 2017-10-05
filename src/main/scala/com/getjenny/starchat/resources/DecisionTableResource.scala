@@ -7,14 +7,14 @@ package com.getjenny.starchat.resources
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.routing.MyResource
+import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.DecisionTableService
 import com.getjenny.starchat.services.ResponseService
 import com.getjenny.starchat.services.AnalyzerService
 import akka.http.scaladsl.model.StatusCodes
+import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.analyzer.analyzers._
-
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -28,9 +28,8 @@ trait DecisionTableResource extends MyResource {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[DTDocument]) { document =>
-            val result: Try[Option[IndexDocumentResult]] =
-              Await.ready(decisionTableService.create(document, refresh), 10.seconds).value.get
-            result match {
+            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+            onCompleteWithBreaker(breaker)(decisionTableService.create(document, refresh)) {
               case Success(t) =>
                 completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option{t})
               case Failure(e) =>
@@ -44,9 +43,8 @@ trait DecisionTableResource extends MyResource {
         get {
           parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
             if(dump == false) {
-              val result: Try[Option[SearchDTDocumentsResults]] =
-                Await.ready(decisionTableService.read(ids.toList), 10.seconds).value.get
-              result match {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(decisionTableService.read(ids.toList)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
                 case Failure(e) =>
@@ -55,9 +53,8 @@ trait DecisionTableResource extends MyResource {
                     Option{ReturnMessageData(code = 101, message = e.getMessage)})
               }
             } else {
-              val result: Try[Option[SearchDTDocumentsResults]] =
-                Await.ready(decisionTableService.getDTDocuments(), 10.seconds).value.get
-              result match {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(decisionTableService.getDTDocuments()) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
                 case Failure(e) =>
@@ -69,9 +66,8 @@ trait DecisionTableResource extends MyResource {
           }
         } ~
         delete {
-          val result: Try[Option[DeleteDocumentsResult]] =
-            Await.ready(decisionTableService.deleteAll(), 10.seconds).value.get
-          result match {
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+          onCompleteWithBreaker(breaker)(decisionTableService.deleteAll()) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
@@ -86,9 +82,8 @@ trait DecisionTableResource extends MyResource {
           entity(as[DTDocumentUpdate]) { update =>
             parameters("refresh".as[Int] ? 0) { refresh =>
               val decisionTableService = DecisionTableService
-              val result: Try[Option[UpdateDocumentResult]] =
-                Await.ready(decisionTableService.update(id, update, refresh), 10.seconds).value.get
-              result match {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(decisionTableService.update(id, update, refresh)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
                 case Failure(e) =>
@@ -102,9 +97,8 @@ trait DecisionTableResource extends MyResource {
           delete {
             parameters("refresh".as[Int] ? 0) { refresh =>
               val decisionTableService = DecisionTableService
-              val result: Try[Option[DeleteDocumentResult]] =
-                Await.ready(decisionTableService.delete(id, refresh), 10.seconds).value.get
-              result match {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(decisionTableService.delete(id, refresh)) {
                 case Success(t) =>
                   if(t.isDefined) {
                     completeResponse(StatusCodes.OK, t)
@@ -125,8 +119,8 @@ trait DecisionTableResource extends MyResource {
     pathEnd {
       get {
         val analyzerService = AnalyzerService
-        val result = Await.ready(analyzerService.getDTAnalyzerMap, 10.seconds).value.get
-        result match {
+        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+        onCompleteWithBreaker(breaker)(analyzerService.getDTAnalyzerMap) {
           case Success(t) =>
             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) =>
@@ -137,8 +131,8 @@ trait DecisionTableResource extends MyResource {
       } ~
         post {
           val analyzerService = AnalyzerService
-          val result: Try[Option[DTAnalyzerLoad]] = Await.ready(analyzerService.loadAnalyzer(propagate = true), 10.seconds).value.get
-          result match {
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+          onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzer(propagate = true)) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
@@ -155,8 +149,8 @@ trait DecisionTableResource extends MyResource {
       post {
         entity(as[DTDocumentSearch]) { docsearch =>
           val decisionTableService = DecisionTableService
-          val result: Try[Option[SearchDTDocumentsResults]] = Await.ready(decisionTableService.search(docsearch), 10.seconds).value.get
-          result match {
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+          onCompleteWithBreaker(breaker)(decisionTableService.search(docsearch)) {
             case Success(t) =>
               completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
@@ -176,9 +170,8 @@ trait DecisionTableResource extends MyResource {
         {
           response_request =>
             val responseService = ResponseService
-            val response: Try[Option[ResponseRequestOutOperationResult]] =
-              Await.ready(responseService.getNextResponse(response_request), 60.seconds).value.get
-            response match {
+            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+            onCompleteWithBreaker(breaker)(responseService.getNextResponse(response_request)) {
               case Failure(e) =>
                 log.error("DecisionTableResource: Unable to complete the request: " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest,

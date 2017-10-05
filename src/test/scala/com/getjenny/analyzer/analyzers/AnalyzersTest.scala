@@ -28,7 +28,7 @@ class AnalyzersTest extends FlatSpec with Matchers {
     }
   }
   it should "throw a AnalyzerCommandException if the command does not exists or is mispelled" in {
-    a [OperatorException] should be thrownBy {
+    a [AnalyzerCommandException] should be thrownBy {
       new DefaultAnalyzer("""fakeDisjunction( keyword("clever"), keyword("gentleman") )""")
     }
   }

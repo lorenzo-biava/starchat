@@ -7,7 +7,7 @@ package com.getjenny.starchat.resources
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.routing.MyResource
+import com.getjenny.starchat.routing._
 
 import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
@@ -15,6 +15,7 @@ import com.getjenny.starchat.services.IndexManagementService
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
+import akka.pattern.CircuitBreaker
 
 trait IndexManagementResource extends MyResource {
 
@@ -26,17 +27,15 @@ trait IndexManagementResource extends MyResource {
         {
           operation match {
             case "refresh" =>
-              val result: Try[Option[RefreshIndexResult]] =
-                Await.ready(Future {indexManagementService.refresh_index()}, 10.seconds).value.get
-              result match {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(indexManagementService.refresh_index()) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
                   Option { IndexManagementResponse(message = e.getMessage) } )
               }
             case "create" =>
-              val result: Try[Option[IndexManagementResponse]] =
-                Await.ready(Future { indexManagementService.create_index() }, 10.seconds).value.get
-              result match {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(indexManagementService.create_index()) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
                   Option { IndexManagementResponse(message = e.getMessage) })
@@ -49,28 +48,24 @@ trait IndexManagementResource extends MyResource {
     } ~
     pathEnd {
       get {
-
-        val result: Try[Option[IndexManagementResponse]] =
-          Await.ready(Future{indexManagementService.check_index()}, 10.seconds).value.get
-        result match {
+        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+        onCompleteWithBreaker(breaker)(indexManagementService.check_index()) {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Option{IndexManagementResponse(message = e.getMessage)})
         }
       } ~
       delete {
-        val result: Try[Option[IndexManagementResponse]] =
-          Await.ready(Future{indexManagementService.remove_index()}, 10.seconds).value.get
-        result match {
+        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+        onCompleteWithBreaker(breaker)(indexManagementService.remove_index()) {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Option{IndexManagementResponse(message = e.getMessage)})
         }
       } ~
       put {
-        val result: Try[Option[IndexManagementResponse]] =
-          Await.ready(Future{indexManagementService.update_index()}, 10.seconds).value.get
-        result match {
+        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+        onCompleteWithBreaker(breaker)(indexManagementService.update_index()) {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Option{IndexManagementResponse(message = e.getMessage)})

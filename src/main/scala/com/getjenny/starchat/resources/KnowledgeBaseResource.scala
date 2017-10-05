@@ -7,10 +7,11 @@ package com.getjenny.starchat.resources
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.routing.MyResource
+import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.KnowledgeBaseService
 import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.SCActorSystem
+import akka.pattern.CircuitBreaker
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -24,9 +25,8 @@ trait KnowledgeBaseResource extends MyResource {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[KBDocument]) { document =>
-            val result: Try[Option[IndexDocumentResult]] =
-              Await.ready(knowledgeBaseService.create(document, refresh), 10.seconds).value.get
-            result match {
+            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+            onCompleteWithBreaker(breaker)(knowledgeBaseService.create(document, refresh)) {
               case Success(t) =>
                 t match {
                   case Some(v) =>
@@ -48,9 +48,8 @@ trait KnowledgeBaseResource extends MyResource {
       } ~
         get {
           parameters("ids".as[String].*) { ids =>
-            val result: Try[Option[SearchKBDocumentsResults]] =
-              Await.ready(knowledgeBaseService.read(ids.toList), 10.seconds).value.get
-            result match {
+            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+            onCompleteWithBreaker(breaker)(knowledgeBaseService.read(ids.toList)) {
               case Success(t) =>
                 completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
               case Failure(e) =>
@@ -61,9 +60,8 @@ trait KnowledgeBaseResource extends MyResource {
           }
         } ~
         delete {
-          val result: Try[Option[DeleteDocumentsResult]] =
-            Await.ready(knowledgeBaseService.deleteAll(), 10.seconds).value.get
-          result match {
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+          onCompleteWithBreaker(breaker)(knowledgeBaseService.deleteAll()) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
@@ -78,9 +76,8 @@ trait KnowledgeBaseResource extends MyResource {
           parameters("refresh".as[Int] ? 0) { refresh =>
             entity(as[KBDocumentUpdate]) { update =>
               val knowledgeBaseService = KnowledgeBaseService
-              val result: Try[Option[UpdateDocumentResult]] =
-                Await.ready(knowledgeBaseService.update(id, update, refresh), 10.seconds).value.get
-              result match {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(knowledgeBaseService.update(id, update, refresh)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.Created, StatusCodes.BadRequest, t)
                 case Failure(e) =>
@@ -94,9 +91,8 @@ trait KnowledgeBaseResource extends MyResource {
           delete {
             parameters("refresh".as[Int] ? 0) { refresh =>
               val knowledgeBaseService = KnowledgeBaseService
-              val result: Try[Option[DeleteDocumentResult]] =
-                Await.ready(knowledgeBaseService.delete(id, refresh), 10.seconds).value.get
-              result match {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(knowledgeBaseService.delete(id, refresh)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                 case Failure(e) =>
@@ -114,10 +110,8 @@ trait KnowledgeBaseResource extends MyResource {
       post {
         entity(as[KBDocumentSearch]) { docsearch =>
           val knowledgeBaseService = KnowledgeBaseService
-
-          val result: Try[Option[SearchKBDocumentsResults]] =
-            Await.ready(knowledgeBaseService.search(docsearch), 10.seconds).value.get
-          result match {
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+          onCompleteWithBreaker(breaker)(knowledgeBaseService.search(docsearch)) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>

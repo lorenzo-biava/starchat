@@ -6,11 +6,12 @@ package com.getjenny.starchat.resources
 
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.routing.MyResource
+import com.getjenny.starchat.routing._
 
 import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.services.TermService
+import akka.pattern.CircuitBreaker
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
@@ -21,9 +22,8 @@ trait TokenizersResource extends MyResource {
       post {
         entity(as[TokenizerQueryRequest]) { request_data =>
           val termService = TermService
-          val result: Try[Option[TokenizerResponse]] =
-            Await.ready(Future{termService.esTokenizer(request_data)}, 10.seconds).value.get
-          result match {
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+          onCompleteWithBreaker(breaker)(Future{termService.esTokenizer(request_data)}) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
             case Failure(e) =>

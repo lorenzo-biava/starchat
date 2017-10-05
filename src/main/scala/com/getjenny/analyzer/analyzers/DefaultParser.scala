@@ -118,6 +118,9 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
           arguments,
           command_tree.add(operator, new_parenthesis_balance.sum - 1))
+      } else if (!atomicFactory.operations(command_buffer) && !operatorFactory.operations(command_buffer) &&
+        new_parenthesis_balance.head ==1 && just_opened_parenthesis) {
+        throw AnalyzerCommandException("Atomic or Operator does not exists(" + command_buffer + ")")
       } else if (atomicFactory.operations(command_buffer) && new_parenthesis_balance.head == 1 && !just_closed_quote) {
         // We are reading an atomic's argument...
         //println("DEBUG calling loop, without adding an atom, with this command buffer: " + command_buffer + " : " + argument_acc)
@@ -142,7 +145,7 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
         loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
           argument_acc, arguments ::: List(argument_buffer), command_tree)
       } else {
-        //println("DEBUG going to return naked command tree... " + chars.length)
+        //println("DEBUG going to return naked command tree... " + chars.length + " : " + command_buffer)
         if (indice < chars.length - 1) {
           loop(chars, indice+1, new_parenthesis_balance, new_quote_balance,
             new_command_buffer, argument_acc, arguments, command_tree)
