@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 
-curl -v -H "Content-Type: application/json" -X DELETE http://localhost:8888/decisiontable/further_details_access_question
+PORT=${1:-8888}
+curl -v -H "Content-Type: application/json" -X DELETE http://localhost:${PORT}/decisiontable/further_details_access_question
 
