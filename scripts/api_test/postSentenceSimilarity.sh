@@ -2,7 +2,8 @@
 
 QUERY1=${1:-"this is a test"}
 QUERY2=${2:-"I'm trying this function"}
-curl -s -H "Content-Type: application/json" -X POST "http://localhost:8888/analyzers_playground" -d"
+PORT=${3:-8888}
+curl -s -H "Content-Type: application/json" -X POST "http://localhost:${PORT}/analyzers_playground" -d"
 {
 
 	\"analyzer\": \"conjunction(similar(\\\"${QUERY2}\\\"), similarCosEmd(\\\"${QUERY2}\\\"))\", 

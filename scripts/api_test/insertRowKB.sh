@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/knowledgebase -d '{
+PORT=${1:-8888}
+curl -v -H "Content-Type: application/json" -X POST http://localhost:${PORT}/knowledgebase -d '{
 	"id": "0",
 	"conversation": "id:1000",
 	"index_in_conversation": 1,
@@ -44,7 +45,7 @@ curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/knowle
 	"status": 0
 }' 
 
-curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/knowledgebase -d '{
+curl -v -H "Content-Type: application/json" -X POST http://localhost:${PORT}/knowledgebase -d '{
 	"id": "1",
 	"conversation": "id:1000",
 	"index_in_conversation": 1,

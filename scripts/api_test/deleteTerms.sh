@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-curl -v -H "Content-Type: application/json" -X DELETE http://localhost:8888/term -d '{
+PORT=${1:-8888}
+curl -v -H "Content-Type: application/json" -X DELETE http://localhost:${PORT}/term -d '{
 	"ids": ["मराठी", "term2"]
 }'
 
