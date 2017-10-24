@@ -25,7 +25,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val searchDTDocumentFormat = jsonFormat2(SearchDTDocument)
   implicit val searchKBResultsFormat = jsonFormat3(SearchKBDocumentsResults)
   implicit val searchDTResultsFormat = jsonFormat3(SearchDTDocumentsResults)
-  implicit val kbDocumentSearchFormat = jsonFormat15(KBDocumentSearch)
+  implicit val kbDocumentSearchFormat = jsonFormat16(KBDocumentSearch)
   implicit val dtDocumentSearchFormat = jsonFormat7(DTDocumentSearch)
   implicit val indexDocumentResultFormat = jsonFormat5(IndexDocumentResult)
   implicit val updateDocumentResultFormat = jsonFormat5(UpdateDocumentResult)

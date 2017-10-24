@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
+PORT=${1:-8888}
 # state is also used as ID (see updateRowDT.sh)
-curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/decisiontable -d '{
+curl -v -H "Content-Type: application/json" -X POST http://localhost:${PORT}/decisiontable -d '{
 	"state": "further_details_access_question",
         "max_state_count": 0,
         "execution_order": 0,

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-curl -v -H "Content-Type: application/json" -X POST http://localhost:8888/term/index -d '{
+PORT=${1:-8888}
+curl -v -H "Content-Type: application/json" -X POST http://localhost:${PORT}/term/index -d '{
 	"terms": [
 	    {
             "term": "मराठी",
