@@ -18,5 +18,6 @@ case class KBDocumentSearch(from: Option[Int],
                             topics: Option[String],
                             dclass: Option[String],
                             state: Option[String],
-                            status: Option[Int]
+                            status: Option[Int],
+                            random: Option[Boolean]
                            )

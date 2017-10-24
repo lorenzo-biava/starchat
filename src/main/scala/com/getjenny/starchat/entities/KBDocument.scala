@@ -7,6 +7,7 @@ package com.getjenny.starchat.entities
 
 object doctypes {
   val normal: String = "normal" /* normal document, can be returned to the user as response */
+  val canned: String = "canned" /* canned document, indexed but retrieved only under particular circumstances*/
   val hidden: String = "hidden" /* hidden document, these are indexed but must not be retrieved,
                                       use this type for data used just to improve statistic for data retrieval */
   val decisiontable: String = "decisiontable" /* does not contains conversation data, used to redirect the

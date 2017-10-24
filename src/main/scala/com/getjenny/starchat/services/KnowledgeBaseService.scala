@@ -22,6 +22,7 @@ import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, Se
 import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
 import java.net.InetAddress
 import java.util
+import com.getjenny.analyzer.util.RandomNumbers
 
 import org.elasticsearch.common.xcontent.XContentType
 
@@ -99,6 +100,12 @@ object KnowledgeBaseService {
       bool_query_builder.should(
           question_negative_nested_query
       )
+    }
+
+    if(documentSearch.random.isDefined && documentSearch.random.get) {
+      val random_builder = new RandomScoreFunctionBuilder().seed(RandomNumbers.getInt())
+      val function_score_query: QueryBuilder = QueryBuilders.functionScoreQuery(random_builder)
+      bool_query_builder.must(function_score_query)
     }
 
     if(documentSearch.question_scored_terms.isDefined) {
