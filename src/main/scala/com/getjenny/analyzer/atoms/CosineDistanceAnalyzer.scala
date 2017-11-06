@@ -28,7 +28,7 @@ class CosineDistanceAnalyzer(val arguments: List[String]) extends AbstractAtomic
 
     val keyword_groups = match_list.groupBy(_._1).map(x => {
       (x._1, x._2.map(c => c._2).toSet.toList, x._2.map(c => c._3).sum)
-    }).filter(_._3 < 1).toList // remove keywords with matches
+    }).filter(_._3 < 1).map(x => (x._1, x._2, 1)).toList // remove keywords with matches
     val token_groups = match_list.groupBy(_._2).map(x => {
       (x._1, x._2.map(c => c._1).toSet.toList, x._2.map(c => c._3).sum)
     }).toList
