@@ -35,7 +35,8 @@ object IndexDecisionTable extends JsonSupport {
                              separator: Char = ',',
                              skiplines: Int = 1,
                              timeout: Int = 60,
-                             numcols: Int = 11
+                             numcols: Int = 11,
+                             header_kv: Seq[String] = Seq.empty[String]
                            )
 
   private def doIndexDecisionTable(params: Params) {
@@ -52,7 +53,18 @@ object IndexDecisionTable extends JsonSupport {
     lazy val file_entries = CSVReader.read(input=file_reader, separator=params.separator,
       quote = '"', skipLines=skiplines)
 
-    val httpHeader: immutable.Seq[HttpHeader] = immutable.Seq(RawHeader("application", "json"))
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
+      val headers: Seq[RawHeader] = params.header_kv.map(x => {
+        val header_opt = x.split(":")
+        val key = header_opt(0)
+        val value = header_opt(1)
+        RawHeader(key, value)
+      }) ++ Seq(RawHeader("application", "json"))
+      headers.to[immutable.Seq]
+    } else {
+      immutable.Seq(RawHeader("application", "json"))
+    }
+
     val timeout = Duration(params.timeout, "s")
     val refnumcol = params.numcols
 
@@ -141,6 +153,10 @@ object IndexDecisionTable extends JsonSupport {
         .text(s"skip the first N lines from vector file" +
           s"  default: ${defaultParams.skiplines}")
         .action((x, c) => c.copy(skiplines = x))
+      opt[Seq[String]]("header_kv")
+        .text(s"header key-value pair, as key1:value1,key2:value2" +
+          s"  default: ${defaultParams.header_kv}")
+        .action((x, c) => c.copy(header_kv = x))
     }
 
     parser.parse(args, defaultParams) match {
