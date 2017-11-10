@@ -95,9 +95,10 @@ object ResponseService {
           }
 
           /* we do not update the traversed_states list, if the state is requested we just return it */
+          val traversed_states_updated: List[String] = traversed_states ++ List(state)
           val response_data: ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
             state = state,
-            traversed_states = traversed_states,
+            traversed_states = traversed_states_updated,
             max_state_count = max_state_count,
             analyzer = analyzer,
             bubble = bubble,

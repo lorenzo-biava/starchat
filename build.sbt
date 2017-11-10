@@ -5,7 +5,7 @@ name := "StarChat"
 
 organization := "com.getjenny"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.3"
 
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
                   Resolver.bintrayRepo("hseeberger", "maven"))
