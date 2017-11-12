@@ -8,8 +8,14 @@ import com.getjenny.starchat.StarChatService
 import akka.http.scaladsl.model.Multipart
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.ContentTypes
+import akka.actor.ActorSystem
+import akka.http.scaladsl.testkit.RouteTestTimeout
+import scala.concurrent.duration._
+import akka.testkit._
 
 class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds.dilated(system))
+
   val service = new StarChatService
   val routes = service.routes
 
