@@ -8,9 +8,14 @@ import com.getjenny.starchat.serializers.JsonSupport
 import com.typesafe.config.ConfigFactory
 import com.getjenny.starchat.StarChatService
 
+import akka.actor.ActorSystem
+import akka.http.scaladsl.testkit.RouteTestTimeout
+import scala.concurrent.duration._
+import akka.testkit._
 import scala.util.matching.Regex
 
 class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds.dilated(system))
   val service = new StarChatService
   val routes = service.routes
 
