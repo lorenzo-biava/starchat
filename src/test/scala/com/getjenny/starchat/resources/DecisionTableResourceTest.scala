@@ -1,18 +1,13 @@
-import java.io.{File, FileInputStream}
 import org.scalatest.{Matchers, WordSpec}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.server._
-import Directives._
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
-import com.typesafe.config.ConfigFactory
 import com.getjenny.starchat.StarChatService
 import akka.http.scaladsl.model.Multipart
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.ContentTypes
-
-import scala.util.matching.Regex
 
 class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
   val service = new StarChatService
