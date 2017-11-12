@@ -29,7 +29,6 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
       val input_file = getClass.getResourceAsStream("/doc/decision_table_starchat_doc.csv")
       val input_data = scala.io.Source.fromInputStream(input_file).mkString
 
-      // tests:
       val multipartForm =
         Multipart.FormData(
           Multipart.FormData.BodyPart.Strict(
