@@ -18,13 +18,15 @@ import scala.concurrent.{Await, Future}
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
-
 import breeze.io.CSVReader
 
 import scala.concurrent.Await
 import scala.collection.immutable
 import scala.collection.immutable.{List, Map}
 import java.io.{File, FileReader}
+import akka.event.{Logging, LoggingAdapter}
+
+import com.getjenny.starchat.services.FileToDTDocuments
 
 object IndexDecisionTable extends JsonSupport {
 
@@ -49,9 +51,6 @@ object IndexDecisionTable extends JsonSupport {
 
     val base_url = params.host + params.path
     val file = new File(params.inputfile)
-    val file_reader = new FileReader(file)
-    lazy val file_entries = CSVReader.read(input=file_reader, separator=params.separator,
-      quote = '"', skipLines=skiplines)
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
       val headers: Seq[RawHeader] = params.header_kv.map(x => {
@@ -68,47 +67,8 @@ object IndexDecisionTable extends JsonSupport {
     val timeout = Duration(params.timeout, "s")
     val refnumcol = params.numcols
 
-    file_entries.foreach(entry => {
-      if (entry.length != refnumcol) {
-        println("Error: file row is not consistent  Row(" + entry.toString + ")")
-      } else {
-
-        val queries_csv_string = entry(4)
-        val action_input_csv_string = entry(7)
-        val state_data_csv_string = entry(8)
-
-        val queries_future: Future[List[String]] = queries_csv_string match {
-          case "" => Future { List.empty[String] }
-          case _ => Unmarshal(queries_csv_string).to[List[String]]
-        }
-
-        val action_input_future: Future[Map[String, String]] = action_input_csv_string match {
-          case "" => Future { Map.empty[String, String] }
-          case _ => Unmarshal(action_input_csv_string).to[Map[String, String]]
-        }
-
-        val state_data_future: Future[Map[String, String]] = state_data_csv_string match {
-          case "" => Future { Map.empty[String, String] }
-          case _ => Unmarshal(state_data_csv_string).to[Map[String, String]]
-        }
-
-        val queries = Await.result(queries_future, 10.second)
-        val action_input = Await.result(action_input_future, 10.second)
-        val state_data = Await.result(state_data_future, 10.second)
-
-        val state = DTDocument(state = entry(0),
-          execution_order = entry(1).toInt,
-          max_state_count = entry(2).toInt,
-          analyzer = entry(3),
-          queries = queries,
-          bubble = entry(5),
-          action = entry(6),
-          action_input = action_input,
-          state_data = state_data,
-          success_value = entry(9),
-          failure_value = entry(10)
-        )
-
+    FileToDTDocuments.getDTDocumentsFromCSV(log = system.log, file = file, separator = params.separator)
+      .foreach(state => {
         val entity_future = Marshal(state).to[MessageEntity]
         val entity = Await.result(entity_future, 10.second)
         val responseFuture: Future[HttpResponse] =
@@ -121,10 +81,11 @@ object IndexDecisionTable extends JsonSupport {
         result.status match {
           case StatusCodes.Created | StatusCodes.OK => println("indexed: " + state.state)
           case _ =>
-            println("failed indexing state(" + state.state + ") Row(" + entry.toList + ") Message(" + result.toString() + ")")
+            system.log.error("failed indexing state(" + state.state + ") Message(" + result.toString() + ")")
         }
       }
-    })
+    )
+
     Await.ready(system.terminate(), Duration.Inf)
   }
 
@@ -162,6 +123,7 @@ object IndexDecisionTable extends JsonSupport {
     parser.parse(args, defaultParams) match {
       case Some(params) =>
         doIndexDecisionTable(params)
+        sys.exit(0)
       case _ =>
         sys.exit(1)
     }

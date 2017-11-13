@@ -29,6 +29,7 @@ import org.elasticsearch.search.SearchHit
 import org.elasticsearch.rest.RestStatus
 import com.getjenny.starchat.analyzer.analyzers._
 
+import java.io.{File, FileReader}
 import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
 import akka.event.Logging._
@@ -569,4 +570,48 @@ object DecisionTableService {
     val search_results_option : Future[Option[SearchDTDocumentsResults]] = Future { Option { search_results } }
     search_results_option
   }
+
+
+  def indexCSVFileIntoDecisionTable(file: File, skiplines: Int = 1, separator: Char = ','):
+  Future[Option[IndexDocumentListResult]] = {
+    val documents: Try[Option[List[DTDocument]]] =
+      Await.ready(
+        Future{
+          Option{
+            FileToDTDocuments.getDTDocumentsFromCSV(log = log, file = file, skiplines = skiplines, separator = separator)
+          }
+        },
+        10.seconds).value.get
+
+    val document_list = documents match {
+      case Success(t) =>
+        t
+      case Failure(e) =>
+        val message = "error indexing CSV file, check syntax"
+        log.error(message + " : " + e.getMessage)
+        throw new Exception(message, e)
+    }
+
+    val index_document_list_result = if (document_list.isDefined) {
+      val values = document_list.get.map(d => {
+        val indexing_result: Try[Option[IndexDocumentResult]] = Await.ready(create(d, 1), 5.seconds).value.get
+        indexing_result match {
+          case Success(t) =>
+            t.get
+          case Failure(e) =>
+            val message = "Cannot index document: " + d.state
+            log.error(message + " : " + e.getMessage)
+            throw new Exception(message, e)
+        }
+      })
+      Option { IndexDocumentListResult(data = values) }
+    } else {
+      val message = "I could not index any document"
+      log.error(message)
+      throw new Exception(message)
+    }
+
+    Future { index_document_list_result }
+  }
+
 }
