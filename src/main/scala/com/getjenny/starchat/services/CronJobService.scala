@@ -26,7 +26,7 @@ class CronJobService (implicit val executionContext: ExecutionContext) {
     def receive = {
       case Tick =>
         val timestamp_result: Try[Option[Long]] =
-          Await.ready(systemService.getDTReloadTimestamp, 10.seconds).value.get
+          Await.ready(systemService.getDTReloadTimestamp(index_name), 10.seconds).value.get
         val remote_ts: Long = timestamp_result match {
           case Success(t) =>
             val ts: Long = t.getOrElse(-1)
@@ -42,7 +42,7 @@ class CronJobService (implicit val executionContext: ExecutionContext) {
         if(remote_ts > 0 &&
           SystemService.dt_reload_timestamp < remote_ts) {
           val reload_result: Try[Option[DTAnalyzerLoad]] =
-            Await.ready(analyzerService.loadAnalyzer(propagate = false), 60.seconds).value.get
+            Await.ready(analyzerService.loadAnalyzer(index_name, propagate = false), 60.seconds).value.get
           reload_result match {
             case Success(t) =>
               log.info("Analyzer loaded, remote ts: " + remote_ts)

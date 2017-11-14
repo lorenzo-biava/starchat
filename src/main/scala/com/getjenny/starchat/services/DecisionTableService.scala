@@ -51,9 +51,9 @@ object DecisionTableService {
   val queries_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
             "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
-  def search(documentSearch: DTDocumentSearch): Future[Option[SearchDTDocumentsResults]] = {
+  def search(index_name: String, documentSearch: DTDocumentSearch): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
-    val search_builder : SearchRequestBuilder = client.prepareSearch(elastic_client.index_name)
+    val search_builder : SearchRequestBuilder = client.prepareSearch(index_name)
       .setTypes(elastic_client.type_name)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
@@ -181,7 +181,7 @@ object DecisionTableService {
     search_results_option
   }
 
-  def search_dt_queries(user_text: String): Option[SearchDTDocumentsResults] = {
+  def search_dt_queries(index_name: String, user_text: String): Option[SearchDTDocumentsResults] = {
     val dtDocumentSearch: DTDocumentSearch =
       DTDocumentSearch(from = Option {
         0
@@ -200,7 +200,7 @@ object DecisionTableService {
         })
 
     val search_result: Try[Option[SearchDTDocumentsResults]] =
-      Await.ready(this.search(dtDocumentSearch), 10.seconds).value.get
+      Await.ready(this.search(index_name, dtDocumentSearch), 10.seconds).value.get
     val found_documents = search_result match {
       case Success(t) =>
         t
@@ -212,7 +212,7 @@ object DecisionTableService {
     found_documents
   }
 
-  def resultsToMap(results: Option[SearchDTDocumentsResults]): Map[String, Any] = {
+  def resultsToMap(index_name: String, results: Option[SearchDTDocumentsResults]): Map[String, Any] = {
     val search_results_map: Map[String, Any] = if (results.isEmpty || results.get.hits.isEmpty) {
       Map.empty[String, Any]
     } else {
@@ -224,7 +224,7 @@ object DecisionTableService {
     search_results_map
   }
 
-  def create(document: DTDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(index_name: String, document: DTDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     builder.field("state", document.state)
@@ -255,13 +255,13 @@ object DecisionTableService {
     builder.endObject()
 
     val client: TransportClient = elastic_client.get_client()
-    val response = client.prepareIndex(elastic_client.index_name,
+    val response = client.prepareIndex(index_name,
       elastic_client.type_name, document.state).setSource(builder).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index()
+      val refresh_index = elastic_client.refresh_index(index_name)
       if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
+        throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
       }
     }
 
@@ -275,7 +275,8 @@ object DecisionTableService {
     Option {doc_result}
   }
 
-  def update(id: String, document: DTDocumentUpdate, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
+  def update(index_name: String, id: String, document: DTDocumentUpdate, refresh: Int):
+    Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.analyzer match {
@@ -334,14 +335,14 @@ object DecisionTableService {
     builder.endObject()
 
     val client: TransportClient = elastic_client.get_client()
-    val response: UpdateResponse = client.prepareUpdate(elastic_client.index_name, elastic_client.type_name, id)
+    val response: UpdateResponse = client.prepareUpdate(index_name, elastic_client.type_name, id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index()
+      val refresh_index = elastic_client.refresh_index(index_name)
       if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
+        throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
       }
     }
 
@@ -355,30 +356,30 @@ object DecisionTableService {
     Option {doc_result}
   }
 
-  def deleteAll(): Future[Option[DeleteDocumentsResult]] = Future {
+  def deleteAll(index_name: String): Future[Option[DeleteDocumentsResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(elastic_client.index_name)
+        .source(index_name)
         .filter(qb)
         .filter(QueryBuilders.typeQuery(elastic_client.type_name))
         .get()
 
-    val deleted: Long = response.getDeleted()
+    val deleted: Long = response.getDeleted
 
     val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
     Option {result}
   }
 
-  def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
+  def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
-    val response: DeleteResponse = client.prepareDelete(elastic_client.index_name, elastic_client.type_name, id).get()
+    val response: DeleteResponse = client.prepareDelete(index_name, elastic_client.type_name, id).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index()
+      val refresh_index = elastic_client.refresh_index(index_name)
       if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
+        throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
       }
     }
 
@@ -392,11 +393,11 @@ object DecisionTableService {
     Option {doc_result}
   }
 
-  def getDTDocuments(): Future[Option[SearchDTDocumentsResults]] = {
+  def getDTDocuments(index_name: String): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
 
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
-    val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
+    val scroll_resp : SearchResponse = client.prepareSearch(index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
       .setScroll(new TimeValue(60000))
@@ -477,14 +478,14 @@ object DecisionTableService {
     Future{Option{search_results}}
   }
 
-  def read(ids: List[String]): Future[Option[SearchDTDocumentsResults]] = {
+  def read(index_name: String, ids: List[String]): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
-    if (ids.length > 0) {
-      multiget_builder.add(elastic_client.index_name, elastic_client.type_name, ids:_*)
+    if (ids.nonEmpty) {
+      multiget_builder.add(index_name, elastic_client.type_name, ids:_*)
     } else {
-      val all_documents = getDTDocuments()
+      val all_documents = getDTDocuments(index_name)
       return all_documents
     }
 
@@ -572,7 +573,7 @@ object DecisionTableService {
   }
 
 
-  def indexCSVFileIntoDecisionTable(file: File, skiplines: Int = 1, separator: Char = ','):
+  def indexCSVFileIntoDecisionTable(index_name: String, file: File, skiplines: Int = 1, separator: Char = ','):
   Future[Option[IndexDocumentListResult]] = {
     val documents: Try[Option[List[DTDocument]]] =
       Await.ready(
@@ -594,7 +595,8 @@ object DecisionTableService {
 
     val index_document_list_result = if (document_list.isDefined) {
       val values = document_list.get.map(d => {
-        val indexing_result: Try[Option[IndexDocumentResult]] = Await.ready(create(d, 1), 5.seconds).value.get
+        val indexing_result: Try[Option[IndexDocumentResult]] =
+          Await.ready(create(index_name, d, 1), 5.seconds).value.get
         indexing_result match {
           case Success(t) =>
             t.get

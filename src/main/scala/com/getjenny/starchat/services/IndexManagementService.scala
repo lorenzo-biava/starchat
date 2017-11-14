@@ -33,7 +33,7 @@ object IndexManagementService {
   val question_json_path: String = "/index_management/json_index_spec/general/question.json"
   val term_json_path: String = "/index_management/json_index_spec/general/term.json"
 
-  def create_index() : Future[Option[IndexManagementResponse]] = Future {
+  def create_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
@@ -51,7 +51,7 @@ object IndexManagementService {
       val term_json: String = Source.fromInputStream(term_json_is, "utf-8").mkString
 
       val create_index_res: CreateIndexResponse =
-        client.admin().indices().prepareCreate(elastic_client.index_name)
+        client.admin().indices().prepareCreate(index_name)
           .setSettings(Settings.builder().loadFromSource(analyzer_json, XContentType.JSON))
           .addMapping(elastic_client.sys_type_name, system_json, XContentType.JSON)
           .addMapping(elastic_client.dt_type_name, state_json, XContentType.JSON)
@@ -60,7 +60,7 @@ object IndexManagementService {
           .get()
 
       Option {
-        IndexManagementResponse("create index: " + elastic_client.index_name
+        IndexManagementResponse("create index: " + index_name
           + " create_index_ack(" + create_index_res.isAcknowledged.toString + ")"
         )
       }
@@ -73,7 +73,7 @@ object IndexManagementService {
     indexManagementResponse
   }
   
-  def remove_index() : Future[Option[IndexManagementResponse]] = Future {
+  def remove_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     if (! elastic_client.enable_delete_index) {
@@ -81,30 +81,30 @@ object IndexManagementService {
       throw new Exception(message)
     }
     
-    val delete_index_req = client.admin().indices().prepareDelete(elastic_client.index_name).get()
+    val delete_index_req = client.admin().indices().prepareDelete(index_name).get()
     Option {
-      IndexManagementResponse("removed index: " + elastic_client.index_name
+      IndexManagementResponse("removed index: " + index_name
         + " index_ack(" + delete_index_req.isAcknowledged.toString + ")"
       )
     }
   }
 
-  def check_index() : Future[Option[IndexManagementResponse]] = Future {
+  def check_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
-    val get_mappings_req = client.admin.indices.prepareGetMappings(elastic_client.index_name).get()
+    val get_mappings_req = client.admin.indices.prepareGetMappings(index_name).get()
 
-    val sys_type_check = get_mappings_req.mappings.get(elastic_client.index_name)
+    val sys_type_check = get_mappings_req.mappings.get(index_name)
       .containsKey(elastic_client.sys_type_name)
-    val dt_type_check = get_mappings_req.mappings.get(elastic_client.index_name)
+    val dt_type_check = get_mappings_req.mappings.get(index_name)
       .containsKey(elastic_client.dt_type_name)
-    val kb_type_check = get_mappings_req.mappings.get(elastic_client.index_name)
+    val kb_type_check = get_mappings_req.mappings.get(index_name)
       .containsKey(elastic_client.kb_type_name)
-    val term_type_check = get_mappings_req.mappings.get(elastic_client.index_name)
+    val term_type_check = get_mappings_req.mappings.get(index_name)
       .containsKey(elastic_client.kb_type_name)
 
     Option {
-      IndexManagementResponse("settings index: " + elastic_client.index_name
+      IndexManagementResponse("settings index: " + index_name
         + " sys_type_check(" + elastic_client.sys_type_name + ":" + sys_type_check + ")"
         + " dt_type_check(" + elastic_client.dt_type_name + ":" + dt_type_check + ")"
         + " kb_type_check(" + elastic_client.kb_type_name + ":" + kb_type_check + ")"
@@ -113,7 +113,7 @@ object IndexManagementService {
     }
   }
 
-  def update_index() : Future[Option[IndexManagementResponse]] = Future {
+  def update_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val system_json_is: InputStream = getClass.getResourceAsStream(system_json_path)
@@ -130,23 +130,23 @@ object IndexManagementService {
       val term_json: String = Source.fromInputStream(term_json_is, "utf-8").mkString
 
       val update_sys_type_res  =
-        client.admin().indices().preparePutMapping(elastic_client.index_name)
+        client.admin().indices().preparePutMapping(index_name)
           .setType(elastic_client.sys_type_name).setSource(system_json, XContentType.JSON).get()
 
       val update_dt_type_res  =
-        client.admin().indices().preparePutMapping(elastic_client.index_name)
+        client.admin().indices().preparePutMapping(index_name)
           .setType(elastic_client.dt_type_name).setSource(state_json, XContentType.JSON).get()
 
       val update_kb_type_res  =
-        client.admin().indices().preparePutMapping(elastic_client.index_name)
+        client.admin().indices().preparePutMapping(index_name)
           .setType(elastic_client.kb_type_name).setSource(question_json, XContentType.JSON).get()
 
       val update_term_type_res  =
-        client.admin().indices().preparePutMapping(elastic_client.index_name)
+        client.admin().indices().preparePutMapping(index_name)
           .setType(elastic_client.kb_type_name).setSource(term_json, XContentType.JSON).get()
 
       Option {
-        IndexManagementResponse("updated index: " + elastic_client.index_name
+        IndexManagementResponse("updated index: " + index_name
           + " sys_type_ack(" + update_sys_type_res.isAcknowledged.toString + ")"
           + " dt_type_ack(" + update_dt_type_res.isAcknowledged.toString + ")"
           + " kb_type_ack(" + update_kb_type_res.isAcknowledged.toString + ")"
@@ -161,10 +161,10 @@ object IndexManagementService {
     indexManagementResponse
   }
 
-  def refresh_index() : Future[Option[RefreshIndexResult]] = Future {
+  def refresh_index(index_name: String) : Future[Option[RefreshIndexResult]] = Future {
     val refresh_index: RefreshIndexResult = elastic_client.refresh_index()
     if (refresh_index.failed_shards_n > 0) {
-      throw new Exception("IndexManagement : index refresh failed: (" + elastic_client.index_name + ")")
+      throw new Exception("IndexManagement : index refresh failed: (" + index_name + ")")
     }
     Option { refresh_index }
   }

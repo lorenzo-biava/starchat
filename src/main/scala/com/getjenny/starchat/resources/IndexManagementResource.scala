@@ -19,7 +19,8 @@ import akka.pattern.CircuitBreaker
 
 trait IndexManagementResource extends MyResource {
 
-  def indexManagementRoutes: Route = pathPrefix("index_management") {
+  def indexManagementRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "index_management") { index_name =>
     val indexManagementService = IndexManagementService
     path(Segment) { operation: String =>
       post
@@ -28,20 +29,20 @@ trait IndexManagementResource extends MyResource {
           operation match {
             case "refresh" =>
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.refresh_index()) {
+              onCompleteWithBreaker(breaker)(indexManagementService.refresh_index(index_name)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
                   Option { IndexManagementResponse(message = e.getMessage) } )
               }
             case "create" =>
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.create_index()) {
+              onCompleteWithBreaker(breaker)(indexManagementService.create_index(index_name)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
                   Option { IndexManagementResponse(message = e.getMessage) })
               }
             case _ => completeResponse(StatusCodes.BadRequest,
-              Option{IndexManagementResponse(message = "Operation not supported: " + operation)})
+              Option{IndexManagementResponse(message = "index(" + index_name + ") Operation not supported: " + operation)})
           }
         }
       }
@@ -49,7 +50,7 @@ trait IndexManagementResource extends MyResource {
     pathEnd {
       get {
         val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-        onCompleteWithBreaker(breaker)(indexManagementService.check_index()) {
+        onCompleteWithBreaker(breaker)(indexManagementService.check_index(index_name)) {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Option{IndexManagementResponse(message = e.getMessage)})
@@ -57,7 +58,7 @@ trait IndexManagementResource extends MyResource {
       } ~
       delete {
         val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-        onCompleteWithBreaker(breaker)(indexManagementService.remove_index()) {
+        onCompleteWithBreaker(breaker)(indexManagementService.remove_index(index_name)) {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Option{IndexManagementResponse(message = e.getMessage)})
@@ -65,7 +66,7 @@ trait IndexManagementResource extends MyResource {
       } ~
       put {
         val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-        onCompleteWithBreaker(breaker)(indexManagementService.update_index()) {
+        onCompleteWithBreaker(breaker)(indexManagementService.update_index(index_name)) {
           case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) => completeResponse(StatusCodes.BadRequest,
             Option{IndexManagementResponse(message = e.getMessage)})

@@ -14,7 +14,7 @@ import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
 trait RootAPIResource extends MyResource {
-  def rootAPIsRoutes: Route = pathPrefix("") {
+  def rootAPIsRoutes: Route = pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r) { index_name =>
     pathEnd {
       get {
         val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -22,7 +22,7 @@ trait RootAPIResource extends MyResource {
           case Success(t) =>
             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) =>
-            log.error("route=RootRoutes method=GET: " + e.getMessage)
+            log.error("index(" + index_name + ") route=RootRoutes method=GET: " + e.getMessage)
             completeResponse(StatusCodes.BadRequest,
               Option{ReturnMessageData(code = 100, message = e.getMessage)})
         }

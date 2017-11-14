@@ -20,17 +20,18 @@ import scala.util.{Failure, Success, Try}
 
 trait LanguageGuesserResource extends MyResource {
 
-  def languageGuesserRoutes: Route = pathPrefix("language_guesser") {
+  def languageGuesserRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "language_guesser") { index_name =>
     val languageGuesserService = LanguageGuesserService
     pathEnd {
       post {
         entity(as[LanguageGuesserRequestIn]) { request_data =>
           val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(languageGuesserService.guess_language(request_data)) {
+          onCompleteWithBreaker(breaker)(languageGuesserService.guess_language(index_name, request_data)) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
-              log.error("route=languageGuesserRoutes method=POST: " + e.getMessage)
+              log.error("index(" + index_name + ") route=languageGuesserRoutes method=POST: " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 100, message = e.getMessage)})
           }
@@ -40,11 +41,11 @@ trait LanguageGuesserResource extends MyResource {
     path(Segment) { language: String =>
       get {
         val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-        onCompleteWithBreaker(breaker)(languageGuesserService.get_languages(language)) {
+        onCompleteWithBreaker(breaker)(languageGuesserService.get_languages(index_name, language)) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
-              log.error("route=languageGuesserRoutes method=GET: " + e.getMessage)
+              log.error("index(" + index_name + ") route=languageGuesserRoutes method=GET: " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 101, message = e.getMessage)})
           }

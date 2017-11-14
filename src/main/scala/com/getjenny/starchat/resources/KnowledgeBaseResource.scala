@@ -19,27 +19,28 @@ import scala.util.{Failure, Success, Try}
 
 trait KnowledgeBaseResource extends MyResource {
 
-  def knowledgeBaseRoutes: Route = pathPrefix("knowledgebase") {
+  def knowledgeBaseRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "knowledgebase") { index_name =>
     val knowledgeBaseService = KnowledgeBaseService
     pathEnd {
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[KBDocument]) { document =>
             val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(knowledgeBaseService.create(document, refresh)) {
+            onCompleteWithBreaker(breaker)(knowledgeBaseService.create(index_name, document, refresh)) {
               case Success(t) =>
                 t match {
                   case Some(v) =>
                     completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {v})
                   case None =>
-                    log.error("route=knowledgeBaseRoutes method=POST")
+                    log.error("index(" + index_name + ") route=knowledgeBaseRoutes method=POST")
                     completeResponse(StatusCodes.BadRequest,
                       Option {
                         ReturnMessageData(code = 100, message = "Error indexing new document, empty response")
                       })
                 }
               case Failure(e) =>
-                log.error("route=knowledgeBaseRoutes method=POST: " + e.getMessage)
+                log.error("index(" + index_name + ") route=knowledgeBaseRoutes method=POST: " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 101, message = "Error indexing new document")})
             }
@@ -49,11 +50,11 @@ trait KnowledgeBaseResource extends MyResource {
         get {
           parameters("ids".as[String].*) { ids =>
             val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(knowledgeBaseService.read(ids.toList)) {
+            onCompleteWithBreaker(breaker)(knowledgeBaseService.read(index_name, ids.toList)) {
               case Success(t) =>
                 completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
               case Failure(e) =>
-                log.error("route=knowledgeBaseRoutes method=GET: " + e.getMessage)
+                log.error("index(" + index_name + ") route=knowledgeBaseRoutes method=GET: " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest,
                   Option{ReturnMessageData(code = 102, message = e.getMessage)})
             }
@@ -61,11 +62,11 @@ trait KnowledgeBaseResource extends MyResource {
         } ~
         delete {
           val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(knowledgeBaseService.deleteAll()) {
+          onCompleteWithBreaker(breaker)(knowledgeBaseService.deleteAll(index_name)) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
-              log.error("route=knowledgeBaseRoutes method=DELETE: " + e.getMessage)
+              log.error("index(" + index_name + ") route=knowledgeBaseRoutes method=DELETE: " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 103, message = e.getMessage)})
           }
@@ -77,11 +78,11 @@ trait KnowledgeBaseResource extends MyResource {
             entity(as[KBDocumentUpdate]) { update =>
               val knowledgeBaseService = KnowledgeBaseService
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(knowledgeBaseService.update(id, update, refresh)) {
+              onCompleteWithBreaker(breaker)(knowledgeBaseService.update(index_name, id, update, refresh)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.Created, StatusCodes.BadRequest, t)
                 case Failure(e) =>
-                  log.error("route=knowledgeBaseRoutes method=PUT: " + e.getMessage)
+                  log.error("index(" + index_name + ") route=knowledgeBaseRoutes method=PUT: " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{ReturnMessageData(code = 104, message = e.getMessage)})
               }
@@ -92,11 +93,11 @@ trait KnowledgeBaseResource extends MyResource {
             parameters("refresh".as[Int] ? 0) { refresh =>
               val knowledgeBaseService = KnowledgeBaseService
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(knowledgeBaseService.delete(id, refresh)) {
+              onCompleteWithBreaker(breaker)(knowledgeBaseService.delete(index_name, id, refresh)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                 case Failure(e) =>
-                  log.error("route=knowledgeBaseRoutes method=DELETE : " + e.getMessage)
+                  log.error("index(" + index_name + ") route=knowledgeBaseRoutes method=DELETE : " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{ReturnMessageData(code = 105, message = e.getMessage)})
               }
@@ -105,17 +106,18 @@ trait KnowledgeBaseResource extends MyResource {
       }
   }
 
-  def knowledgeBaseSearchRoutes: Route = pathPrefix("knowledgebase_search") {
+  def knowledgeBaseSearchRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "knowledgebase_search") { index_name =>
     pathEnd {
       post {
         entity(as[KBDocumentSearch]) { docsearch =>
           val knowledgeBaseService = KnowledgeBaseService
           val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(knowledgeBaseService.search(docsearch)) {
+          onCompleteWithBreaker(breaker)(knowledgeBaseService.search(index_name, docsearch)) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
-              log.error("route=decisionTableSearchRoutes method=POST: " + e.getMessage)
+              log.error("index(" + index_name + ") route=decisionTableSearchRoutes method=POST: " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 106, message = e.getMessage)})
           }

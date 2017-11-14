@@ -17,17 +17,18 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 trait TokenizersResource extends MyResource {
-  def esTokenizersRoutes: Route = pathPrefix("tokenizers") {
+  def esTokenizersRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "tokenizers") { index_name =>
     pathEnd {
       post {
         entity(as[TokenizerQueryRequest]) { request_data =>
           val termService = TermService
           val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(Future{termService.esTokenizer(request_data)}) {
+          onCompleteWithBreaker(breaker)(Future{termService.esTokenizer(index_name, request_data)}) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
             case Failure(e) =>
-              log.error("route=esTokenizersRoutes method=POST data=(" + request_data + ") : " + e.getMessage)
+              log.error("index(" + index_name + ") route=esTokenizersRoutes method=POST data=(" + request_data + ") : " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 100, message = e.getMessage)})
           }

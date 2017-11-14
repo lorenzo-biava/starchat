@@ -22,18 +22,19 @@ import scala.util.{Failure, Success, Try}
 
 trait DecisionTableResource extends MyResource {
 
-  def decisionTableRoutes: Route = pathPrefix("decisiontable") {
+  def decisionTableRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable") { index_name =>
     pathEnd {
       val decisionTableService = DecisionTableService
       post {
         parameters("refresh".as[Int] ? 0) { refresh =>
           entity(as[DTDocument]) { document =>
             val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(decisionTableService.create(document, refresh)) {
+            onCompleteWithBreaker(breaker)(decisionTableService.create(index_name, document, refresh)) {
               case Success(t) =>
                 completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option{t})
               case Failure(e) =>
-                log.error("route=decisionTableRoutes method=POST: " + e.getMessage)
+                log.error("index(" + index_name + ") route=decisionTableRoutes method=POST: " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest,
                   Option{ReturnMessageData(code = 100, message = e.getMessage)})
             }
@@ -42,23 +43,23 @@ trait DecisionTableResource extends MyResource {
       } ~
         get {
           parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
-            if(dump == false) {
+            if(!dump) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(decisionTableService.read(ids.toList)) {
+              onCompleteWithBreaker(breaker)(decisionTableService.read(index_name, ids.toList)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
                 case Failure(e) =>
-                  log.error("route=decisionTableRoutes method=GET: " + e.getMessage)
+                  log.error("index(" + index_name + ") route=decisionTableRoutes method=GET: " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{ReturnMessageData(code = 101, message = e.getMessage)})
               }
             } else {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(decisionTableService.getDTDocuments()) {
+              onCompleteWithBreaker(breaker)(decisionTableService.getDTDocuments(index_name)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
                 case Failure(e) =>
-                  log.error("route=decisionTableRoutes method=GET: " + e.getMessage)
+                  log.error("index(" + index_name + ") route=decisionTableRoutes method=GET: " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{ReturnMessageData(code = 102, message = e.getMessage)})
               }
@@ -67,11 +68,11 @@ trait DecisionTableResource extends MyResource {
         } ~
         delete {
           val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(decisionTableService.deleteAll()) {
+          onCompleteWithBreaker(breaker)(decisionTableService.deleteAll(index_name)) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
-              log.error("route=decisionTableRoutes method=DELETE : " + e.getMessage)
+              log.error("index(" + index_name + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 103, message = e.getMessage)})
           }
@@ -83,11 +84,11 @@ trait DecisionTableResource extends MyResource {
             parameters("refresh".as[Int] ? 0) { refresh =>
               val decisionTableService = DecisionTableService
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(decisionTableService.update(id, update, refresh)) {
+              onCompleteWithBreaker(breaker)(decisionTableService.update(index_name, id, update, refresh)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
                 case Failure(e) =>
-                  log.error("route=decisionTableRoutes method=PUT : " + e.getMessage)
+                  log.error("index(" + index_name + ") route=decisionTableRoutes method=PUT : " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{ReturnMessageData(code = 104, message = e.getMessage)})
               }
@@ -98,7 +99,7 @@ trait DecisionTableResource extends MyResource {
             parameters("refresh".as[Int] ? 0) { refresh =>
               val decisionTableService = DecisionTableService
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(decisionTableService.delete(id, refresh)) {
+              onCompleteWithBreaker(breaker)(decisionTableService.delete(index_name, id, refresh)) {
                 case Success(t) =>
                   if(t.isDefined) {
                     completeResponse(StatusCodes.OK, t)
@@ -106,7 +107,7 @@ trait DecisionTableResource extends MyResource {
                     completeResponse(StatusCodes.BadRequest, t)
                   }
                 case Failure(e) =>
-                  log.error("route=decisionTableRoutes method=DELETE : " + e.getMessage)
+                  log.error("index(" + index_name + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{ReturnMessageData(code = 105, message = e.getMessage)})
               }
@@ -115,20 +116,21 @@ trait DecisionTableResource extends MyResource {
       }
   }
 
-  def decisionTableUploadCSVRoutes: Route = pathPrefix("decisiontable_upload_csv") {
+  def decisionTableUploadCSVRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decision_table_upload_csv") { index_name =>
     pathEnd {
         uploadedFile("csv") {
           case (metadata, file) =>
             val decisionTableService = DecisionTableService
             val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 10.seconds)
-            onCompleteWithBreaker(breaker)(decisionTableService.indexCSVFileIntoDecisionTable(file)) {
+            onCompleteWithBreaker(breaker)(decisionTableService.indexCSVFileIntoDecisionTable(index_name, file)) {
               case Success(t) =>
                 file.delete()
                 completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                   t
                 })
               case Failure(e) =>
-                log.error("route=decisionTableUploadCSVRoutes method=POST: " + e.getMessage)
+                log.error("index(" + index_name + ") route=decisionTableUploadCSVRoutes method=POST: " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest,
                   Option {
                     ReturnMessageData(code = 107, message = e.getMessage)
@@ -138,16 +140,17 @@ trait DecisionTableResource extends MyResource {
     }
   }
 
-  def decisionTableAnalyzerRoutes: Route = pathPrefix("decisiontable_analyzer") {
+  def decisionTableAnalyzerRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_analyzer") { index_name =>
     pathEnd {
       get {
         val analyzerService = AnalyzerService
         val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-        onCompleteWithBreaker(breaker)(analyzerService.getDTAnalyzerMap) {
+        onCompleteWithBreaker(breaker)(analyzerService.getDTAnalyzerMap(index_name)) {
           case Success(t) =>
             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
           case Failure(e) =>
-            log.error("route=decisionTableAnalyzerRoutes method=GET: " + e.getMessage)
+            log.error("index(" + index_name + ") route=decisionTableAnalyzerRoutes method=GET: " + e.getMessage)
             completeResponse(StatusCodes.BadRequest,
               Option{ReturnMessageData(code = 106, message = e.getMessage)})
         }
@@ -155,11 +158,11 @@ trait DecisionTableResource extends MyResource {
         post {
           val analyzerService = AnalyzerService
           val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzer(propagate = true)) {
+          onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzer(index_name, propagate = true)) {
             case Success(t) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
-              log.error("route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
+              log.error("index(" + index_name + ") route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 107, message = e.getMessage)})
           }
@@ -167,17 +170,18 @@ trait DecisionTableResource extends MyResource {
     }
   }
 
-  def decisionTableSearchRoutes: Route = pathPrefix("decisiontable_search") {
+  def decisionTableSearchRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_search") { index_name =>
     pathEnd {
       post {
         entity(as[DTDocumentSearch]) { docsearch =>
           val decisionTableService = DecisionTableService
           val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(decisionTableService.search(docsearch)) {
+          onCompleteWithBreaker(breaker)(decisionTableService.search(index_name, docsearch)) {
             case Success(t) =>
               completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option{t})
             case Failure(e) =>
-              log.error("route=decisionTableSearchRoutes method=POST: " + e.getMessage)
+              log.error("index(" + index_name + ") route=decisionTableSearchRoutes method=POST: " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 108, message = e.getMessage)})
           }
@@ -186,7 +190,8 @@ trait DecisionTableResource extends MyResource {
     }
   }
 
-  def decisionTableResponseRequestRoutes: Route = pathPrefix("get_next_response") {
+  def decisionTableResponseRequestRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "get_next_response") { index_name =>
     pathEnd {
       post {
         entity(as[ResponseRequestIn])
@@ -194,9 +199,9 @@ trait DecisionTableResource extends MyResource {
           response_request =>
             val responseService = ResponseService
             val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(responseService.getNextResponse(response_request)) {
+            onCompleteWithBreaker(breaker)(responseService.getNextResponse(index_name, response_request)) {
               case Failure(e) =>
-                log.error("DecisionTableResource: Unable to complete the request: " + e.getMessage)
+                log.error("index(" + index_name + ") DecisionTableResource: Unable to complete the request: " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest,
                   Option {
                     ResponseRequestOutOperationResult(
@@ -213,7 +218,7 @@ trait DecisionTableResource extends MyResource {
                       completeResponse(StatusCodes.NoContent) // no response found
                     }
                   case None =>
-                    log.error("DecisionTableResource: Unable to complete the request")
+                    log.error("index(" + index_name + ") DecisionTableResource: Unable to complete the request")
                     completeResponse(StatusCodes.BadRequest,
                       Option {
                         ResponseRequestOutOperationResult(

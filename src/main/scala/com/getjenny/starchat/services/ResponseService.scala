@@ -38,7 +38,8 @@ object ResponseService {
   val termService = TermService
   val decisionTableService = DecisionTableService
 
-  def getNextResponse(request: ResponseRequestIn): Future[Option[ResponseRequestOutOperationResult]] = Future {
+  def getNextResponse(index_name: String, request: ResponseRequestIn):
+  Future[Option[ResponseRequestOutOperationResult]] = Future {
     // calculate and return the ResponseRequestOut
 
     val user_text: String = if (request.user_input.isDefined) {
@@ -60,7 +61,7 @@ object ResponseService {
 
     // prepare search result for search analyzer
     val analyzers_internal_data =
-      decisionTableService.resultsToMap(decisionTableService.search_dt_queries(user_text))
+      decisionTableService.resultsToMap(index_name, decisionTableService.search_dt_queries(index_name, user_text))
 
     val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversed_states,
       data = analyzers_internal_data)
@@ -74,7 +75,7 @@ object ResponseService {
       if (!return_value.isEmpty) {
         // there is a state in return_value (eg the client asked for a state), no analyzers evaluation
         val state: Future[Option[SearchDTDocumentsResults]] =
-          decisionTableService.read(List[String](return_value))
+          decisionTableService.read(index_name, List[String](return_value))
         val res: Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
         if (res.get.total > 0) {
           val doc: DTDocument = res.get.hits.head.document
@@ -148,7 +149,7 @@ object ResponseService {
 
         if(analyzer_values.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] =
-            decisionTableService.read(analyzer_values.keys.toList)
+            decisionTableService.read(index_name, analyzer_values.keys.toList)
           val res : Option[SearchDTDocumentsResults] = Await.result(items, 30.seconds)
           val docs = res.get.hits.par.map(item => {
             val doc: DTDocument = item.document

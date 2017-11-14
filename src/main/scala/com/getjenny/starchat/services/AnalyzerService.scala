@@ -51,16 +51,16 @@ object AnalyzerService {
   val decisionTableService = DecisionTableService
   val systemService = SystemService
 
-  def getAnalyzers: mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
+  def getAnalyzers(index_name: String): mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
     val client: TransportClient = elastic_client.get_client()
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
 
-    val refresh_index = elastic_client.refresh_index()
+    val refresh_index = elastic_client.refresh_index(index_name)
     if(refresh_index.failed_shards_n > 0) {
-      throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
+      throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
     }
 
-    val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
+    val scroll_resp : SearchResponse = client.prepareSearch(index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
       .setFetchSource(Array("state", "execution_order", "max_state_counter",
@@ -150,14 +150,14 @@ object AnalyzerService {
     result
   }
 
-  def loadAnalyzer(propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
-    AnalyzerService.analyzer_map = getAnalyzers
+  def loadAnalyzer(index_name: String, propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
+    AnalyzerService.analyzer_map = getAnalyzers(index_name)
     AnalyzerService.analyzer_map = buildAnalyzers(AnalyzerService.analyzer_map)
     val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=AnalyzerService.analyzer_map.size)
 
     if (propagate) {
       val result: Try[Option[Long]] =
-        Await.ready(systemService.setDTReloadTimestamp(refresh = 1), 60.seconds).value.get
+        Await.ready(systemService.setDTReloadTimestamp(index_name, refresh = 1), 60.seconds).value.get
       result match {
         case Success(t) =>
           val ts: Long = t.getOrElse(0)
@@ -171,7 +171,7 @@ object AnalyzerService {
     Option {dt_analyzer_load}
   }
 
-  def getDTAnalyzerMap : Future[Option[DTAnalyzerMap]] = {
+  def getDTAnalyzerMap(index_name: String) : Future[Option[DTAnalyzerMap]] = {
     val analyzers = Future(Option(DTAnalyzerMap(AnalyzerService.analyzer_map.map(x => {
       val dt_analyzer = DTAnalyzerItem(x._2.analyzer.declaration, x._2.analyzer.build, x._2.execution_order)
       (x._1, dt_analyzer)
@@ -179,7 +179,7 @@ object AnalyzerService {
     analyzers
   }
 
-  def evaluateAnalyzer(analyzer_request: AnalyzerEvaluateRequest): Future[Option[AnalyzerEvaluateResponse]] = {
+  def evaluateAnalyzer(index_name: String, analyzer_request: AnalyzerEvaluateRequest): Future[Option[AnalyzerEvaluateResponse]] = {
     val analyzer = Try(new StarchatAnalyzer(analyzer_request.analyzer))
     val response = analyzer match {
       case Failure(exception) =>
@@ -191,7 +191,8 @@ object AnalyzerService {
 
           // prepare search result for search analyzer
           val analyzers_internal_data =
-            decisionTableService.resultsToMap(decisionTableService.search_dt_queries(analyzer_request.query))
+            decisionTableService.resultsToMap(index_name,
+              decisionTableService.search_dt_queries(index_name, analyzer_request.query))
 
           AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
             data = analyzers_internal_data)
@@ -215,10 +216,10 @@ object AnalyzerService {
     Future { Option { response } }
   }
 
-  def initializeAnalyzers(): Unit = {
+  def initializeAnalyzers(index_name: String): Unit = {
     if (AnalyzerService.analyzer_map == mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]) {
       val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzer(), 60.seconds).value.get
+        Await.ready(loadAnalyzer(index_name), 60.seconds).value.get
       result match {
         case Success(t) =>
           log.info("analyzers loaded: " + t.get.num_of_entries)

@@ -18,18 +18,19 @@ import scala.util.{Failure, Success, Try}
 
 trait SpellcheckResource extends MyResource {
 
-  def spellcheckRoutes: Route = pathPrefix("spellcheck") {
+  def spellcheckRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "spellcheck") { index_name =>
     val spellcheckService = SpellcheckService
     pathPrefix("terms") {
       pathEnd {
         post {
           entity(as[SpellcheckTermsRequest]) { request =>
             val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(spellcheckService.termsSuggester(request)) {
+            onCompleteWithBreaker(breaker)(spellcheckService.termsSuggester(index_name, request)) {
               case Success(t) =>
                 completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
               case Failure(e) =>
-                log.error("route=spellcheckRoutes method=POST: " + e.getMessage)
+                log.error("index(" + index_name + ") route=spellcheckRoutes method=POST: " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest,
                   Option{ReturnMessageData(code = 100, message = e.getMessage)})
             }

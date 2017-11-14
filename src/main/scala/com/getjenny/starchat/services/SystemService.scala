@@ -42,8 +42,9 @@ object SystemService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val dtReloadDocId: String = "dtts0"
 
-  def setDTReloadTimestamp(refresh: Int = 0):
+  def setDTReloadTimestamp(index_name: String, refresh: Int = 0):
       Future[Option[Long]] = Future {
+    val dt_reload_doc_id: String = index_name + "_" + dtReloadDocId
     val timestamp: Long = System.currentTimeMillis
 
     val builder : XContentBuilder = jsonBuilder().startObject()
@@ -52,7 +53,7 @@ object SystemService {
 
     val client: TransportClient = elastic_client.get_client()
     val response: UpdateResponse =
-      client.prepareUpdate(elastic_client.index_name, elastic_client.type_name, dtReloadDocId)
+      client.prepareUpdate(index_name, elastic_client.type_name, dt_reload_doc_id)
       .setDocAsUpsert(true)
       .setDoc(builder)
       .get()
@@ -60,19 +61,20 @@ object SystemService {
     log.debug("dt reload timestamp response status: " + response.status())
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index()
+      val refresh_index = elastic_client.refresh_index(index_name)
       if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("System: index refresh failed: (" + elastic_client.index_name + ")")
+        throw new Exception("System: index refresh failed: (" + index_name + ")")
       }
     }
 
     Option {timestamp}
   }
 
-  def getDTReloadTimestamp() : Future[Option[Long]] = Future {
+  def getDTReloadTimestamp(index_name: String) : Future[Option[Long]] = Future {
+    val dt_reload_doc_id: String = index_name + "_" + dtReloadDocId
     val client: TransportClient = elastic_client.get_client()
     val get_builder: GetRequestBuilder = client.prepareGet()
-    get_builder.setIndex(elastic_client.index_name).setType(elastic_client.type_name).setId(dtReloadDocId)
+    get_builder.setIndex(index_name).setType(elastic_client.type_name).setId(dt_reload_doc_id)
     val response: GetResponse = get_builder.get()
 
     val timestamp = if(! response.isExists || response.isSourceEmpty) {

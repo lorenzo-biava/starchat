@@ -19,17 +19,18 @@ import scala.util.{Failure, Success, Try}
 
 trait AnalyzersPlaygroundResource extends MyResource {
 
-  def analyzersPlaygroundRoutes: Route = pathPrefix("analyzers_playground") {
+  def analyzersPlaygroundRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "analyzers_playground") { index_name =>
     pathEnd {
       post {
         entity(as[AnalyzerEvaluateRequest]) { request =>
           val analyzerService = AnalyzerService
           val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(analyzerService.evaluateAnalyzer(request)) {
+          onCompleteWithBreaker(breaker)(analyzerService.evaluateAnalyzer(index_name, request)) {
             case Success(value) =>
               completeResponse(StatusCodes.OK, StatusCodes.BadRequest, value)
             case Failure(e) =>
-              log.error("route=analyzersPlaygroundRoutes method=POST: " + e.getMessage)
+              log.error("index(" + index_name + ") route=analyzersPlaygroundRoutes method=POST: " + e.getMessage)
               completeResponse(StatusCodes.BadRequest,
                 Option{ReturnMessageData(code = 100, message = e.getMessage)})
           }

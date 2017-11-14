@@ -18,7 +18,8 @@ import scala.util.{Failure, Success, Try}
 
 trait TermResource extends MyResource {
 
-  def termRoutes: Route = pathPrefix("term") {
+  def termRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "term") { index_name =>
     val termService = TermService
     path(Segment) { operation: String =>
       post {
@@ -27,11 +28,11 @@ trait TermResource extends MyResource {
             parameters("refresh".as[Int] ? 0) { refresh =>
               entity(as[Terms]) { request_data =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(termService.index_term(request_data, refresh)) {
+                onCompleteWithBreaker(breaker)(termService.index_term(index_name, request_data, refresh)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                   case Failure(e) =>
-                    log.error("route=termRoutes method=POST function=index : " + e.getMessage)
+                    log.error("index(" + index_name + ") route=termRoutes method=POST function=index : " + e.getMessage)
                     completeResponse(StatusCodes.BadRequest,
                       Option{ReturnMessageData(code = 100, message = e.getMessage)})
                 }
@@ -40,17 +41,17 @@ trait TermResource extends MyResource {
           case "get" =>
             entity(as[TermIdsRequest]) { request_data =>
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(Future{termService.get_term(request_data)}) {
+              onCompleteWithBreaker(breaker)(Future{termService.get_term(index_name, request_data)}) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                 case Failure(e) =>
-                  log.error("route=termRoutes method=POST function=get : " + e.getMessage)
+                  log.error("index(" + index_name + ") route=termRoutes method=POST function=get : " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{ReturnMessageData(code = 101, message = e.getMessage)})
               }
             }
           case _ => completeResponse(StatusCodes.BadRequest,
-            Option{IndexManagementResponse(message = "Operation not supported: " + operation)})
+            Option{IndexManagementResponse(message = "index(" + index_name + ") Operation not supported: " + operation)})
         }
       }
     } ~
@@ -61,21 +62,21 @@ trait TermResource extends MyResource {
             val termService = TermService
             if(request_data.ids.nonEmpty) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(termService.delete(request_data, refresh)) {
+              onCompleteWithBreaker(breaker)(termService.delete(index_name, request_data, refresh)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                 case Failure(e) =>
-                  log.error("route=termRoutes method=DELETE : " + e.getMessage)
+                  log.error("index(" + index_name + ") route=termRoutes method=DELETE : " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{ReturnMessageData(code = 102, message = e.getMessage)})
               }
             } else {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(termService.deleteAll()) {
+              onCompleteWithBreaker(breaker)(termService.deleteAll(index_name)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                 case Failure(e) =>
-                  log.error("route=termRoutes method=DELETE : " + e.getMessage)
+                  log.error("index(" + index_name + ") route=termRoutes method=DELETE : " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{ReturnMessageData(code = 103, message = e.getMessage)})
               }
@@ -88,11 +89,11 @@ trait TermResource extends MyResource {
           entity(as[Terms]) { request_data =>
             val termService = TermService
             val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(termService.update_term(request_data, refresh)) {
+            onCompleteWithBreaker(breaker)(termService.update_term(index_name, request_data, refresh)) {
               case Success(t) =>
                 completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
               case Failure(e) =>
-                log.error("route=termRoutes method=PUT : " + e.getMessage)
+                log.error("index(" + index_name + ") route=termRoutes method=PUT : " + e.getMessage)
                 completeResponse(StatusCodes.BadRequest, Option { IndexManagementResponse(message = e.getMessage) })
             }
           }
@@ -106,11 +107,11 @@ trait TermResource extends MyResource {
             entity(as[Term]) { request_data =>
               val termService = TermService
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(termService.search_term(request_data)) {
+              onCompleteWithBreaker(breaker)(termService.search_term(index_name, request_data)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                 case Failure(e) =>
-                  log.error("route=termRoutes method=GET function=term : " + e.getMessage)
+                  log.error("index(" + index_name + ") route=termRoutes method=GET function=term : " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{IndexManagementResponse(message = e.getMessage)})
               }
@@ -119,11 +120,11 @@ trait TermResource extends MyResource {
             entity(as[String]) { request_data =>
               val termService = TermService
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(termService.search(request_data)) {
+              onCompleteWithBreaker(breaker)(termService.search(index_name, request_data)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                 case Failure(e) =>
-                  log.error("route=termRoutes method=GET function=text : " + e.getMessage)
+                  log.error("index(" + index_name + ") route=termRoutes method=GET function=text : " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option{IndexManagementResponse(message = e.getMessage)})
               }

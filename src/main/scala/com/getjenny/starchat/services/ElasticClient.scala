@@ -20,7 +20,7 @@ import com.getjenny.starchat.entities._
 
 trait ElasticClient {
   val config: Config = ConfigFactory.load()
-  val index_name: String = config.getString("es.index_name")
+//  val index_name: String = config.getString("es.index_name")
   val cluster_name: String = config.getString("es.cluster_name")
   val ignore_cluster_name: Boolean = config.getBoolean("es.ignore_cluster_name")
   val index_language: String = config.getString("es.index_language")
@@ -44,7 +44,7 @@ trait ElasticClient {
     client
   }
 
-  def refresh_index(): RefreshIndexResult = {
+  def refresh_index(index_name: String): RefreshIndexResult = {
     val refresh_res: RefreshResponse =
       client.admin().indices().prepareRefresh(index_name).get()
 
