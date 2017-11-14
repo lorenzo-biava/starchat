@@ -31,13 +31,13 @@ class W2VCosineSentenceAtomic(val arguments: List[String]) extends AbstractAtomi
   val sentence = arguments(0)
   val termService = TermService
 
-  val sentence_vector = TextToVectorsTools.getSumOfVectorsFromText(sentence)
-
   override def toString: String = "similar(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
+    val index_name = data.private_data("index_name")
+    val sentence_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, sentence)
+    val query_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, query)
 
     /** cosineDist returns 0.0 for the closest vector, we want 1.0 when the similarity is the highest
       *   so we use 1.0 - ...

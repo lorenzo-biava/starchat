@@ -47,8 +47,9 @@ class W2VCosineStateAtomic(val arguments: List[String]) extends AbstractAtomic  
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+    val index_name = data.private_data("index_name")
     val distance = query_vectors.map(q_item => {
-      val query_vector = TextToVectorsTools.getSumOfVectorsFromText(query)
+      val query_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, query)
       val dist = (1.0 - cosineDist(q_item._1, query_vector._1)) *
         (q_item._2 * query_vector._2)
       dist

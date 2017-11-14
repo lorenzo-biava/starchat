@@ -91,21 +91,21 @@ object EmDistance {
   }
 
   //reduced EMD
-  def distanceText(text1: String, text2: String,
+  def distanceText(index_name: String, text1: String, text2: String,
                    dist_f: (Vector[Double], Vector[Double]) => Double): (Double, Double, Double) = {
-    val text_vectors1 = termService.textToVectors(text = text1)
-    val text_vectors2 = termService.textToVectors(text = text2)
+    val text_vectors1 = termService.textToVectors(index_name, text = text1)
+    val text_vectors2 = termService.textToVectors(index_name, text = text2)
     distance(text_vectors1, text_vectors2, dist_f)
   }
 
-  def distanceEuclidean(text1: String, text2: String): Double = {
-    val emd_dist = distanceText(text1 = text1, text2 = text2, euclideanDist)
+  def distanceEuclidean(index_name: String, text1: String, text2: String): Double = {
+    val emd_dist = distanceText(index_name =  index_name, text1 = text1, text2 = text2, euclideanDist)
     val score = (1.0 / (1 + emd_dist._1)) * (emd_dist._2 * emd_dist._3)
     score
   }
 
-  def distanceCosine(text1: String, text2: String): Double = {
-    val emd_dist = distanceText(text1 = text1, text2 = text2, cosineDist)
+  def distanceCosine(index_name: String, text1: String, text2: String): Double = {
+    val emd_dist = distanceText(index_name = index_name, text1 = text1, text2 = text2, cosineDist)
     val score = (1.0 / (1 + emd_dist._1)) * (emd_dist._2 * emd_dist._3)
     score
   }

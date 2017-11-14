@@ -99,7 +99,7 @@ object AnalyzerService {
       }
 
       val queries_terms: List[TextTerms] = queries.map(q => {
-        val query_terms = termService.textToVectors(q)
+        val query_terms = termService.textToVectors(index_name, q)
         query_terms
       }).filter(_.nonEmpty).map(x => x.get)
 

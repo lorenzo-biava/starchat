@@ -162,7 +162,7 @@ object IndexManagementService {
   }
 
   def refresh_index(index_name: String) : Future[Option[RefreshIndexResult]] = Future {
-    val refresh_index: RefreshIndexResult = elastic_client.refresh_index()
+    val refresh_index: RefreshIndexResult = elastic_client.refresh_index(index_name)
     if (refresh_index.failed_shards_n > 0) {
       throw new Exception("IndexManagement : index refresh failed: (" + index_name + ")")
     }

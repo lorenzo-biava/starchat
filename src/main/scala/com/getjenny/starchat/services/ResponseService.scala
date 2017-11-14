@@ -64,7 +64,7 @@ object ResponseService {
       decisionTableService.resultsToMap(index_name, decisionTableService.search_dt_queries(index_name, user_text))
 
     val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversed_states,
-      data = analyzers_internal_data)
+      data = analyzers_internal_data, private_data = Map("index_name" -> index_name))
 
     val return_value: String = if (request.values.isDefined)
       request.values.get.return_value.getOrElse("")
