@@ -7,8 +7,8 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
   */
 
 /** Basically a word separated from the others. E.g.:
-  * "pippo" matches "pippo and pluto" but not "pippone and pluto"
-  * "pippo.*" matches "pippo and pluto" and "pippone and pluto"
+  * "foo" matches "foo and bar" but not "fooish and bar"
+  * "foo.*" matches "pippo and pluto" and "fooish and bar"
   */
 class KeywordAtomic(val arguments: List[String]) extends AbstractAtomic {
   val keyword = arguments(0)

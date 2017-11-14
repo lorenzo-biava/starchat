@@ -1,6 +1,10 @@
 package com.getjenny.analyzer.expressions
 
 /**
+  * This the basic structure of StarChat Domain Specific Language.
+  *
+  *
+  *
   * Created by mal on 20/02/2017.
   */
 

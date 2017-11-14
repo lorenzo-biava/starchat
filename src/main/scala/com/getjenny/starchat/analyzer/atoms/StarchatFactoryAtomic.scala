@@ -49,7 +49,7 @@ class StarchatFactoryAtomic extends Factory[List[String], AbstractAtomic] {
     case "hasTravState" => new HasTravStateAtomic(argument)
     case "lastTravStateIs" => new LastTravStateIsAtomic(argument)
     case "prevTravStateIs" => new PreviousTravStateIsAtomic(argument)
-    case ("distance" | "cosDistanceKeywords") => new CosineDistanceAnalyzer(argument)
+    case ("distance" | "cosDistanceKeywords") => new CosineDistanceAtomic(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }
