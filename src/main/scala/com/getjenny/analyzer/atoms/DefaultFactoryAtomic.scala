@@ -17,7 +17,7 @@ class DefaultFactoryAtomic extends Factory[List[String], AbstractAtomic] {
     case "matchPatternRegex" => new MatchPatternRegexAtomic(argument)
     case "matchDateDDMMYYYY" => new MatchDateDDMMYYYYAtomic(argument)
     case "existsVariable" => new ExistsVariableAtomic(argument)
-    case ("distance" | "cosDistanceKeywords") => new CosineDistanceAnalyzer(argument)
+    case ("distance" | "cosDistanceKeywords") => new CosineDistanceAtomic(argument)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }

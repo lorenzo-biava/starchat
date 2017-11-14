@@ -581,7 +581,7 @@ object DecisionTableService {
             FileToDTDocuments.getDTDocumentsFromCSV(log = log, file = file, skiplines = skiplines, separator = separator)
           }
         },
-        10.seconds).value.get
+        30.seconds).value.get
 
     val document_list = documents match {
       case Success(t) =>
@@ -594,7 +594,7 @@ object DecisionTableService {
 
     val index_document_list_result = if (document_list.isDefined) {
       val values = document_list.get.map(d => {
-        val indexing_result: Try[Option[IndexDocumentResult]] = Await.ready(create(d, 1), 5.seconds).value.get
+        val indexing_result: Try[Option[IndexDocumentResult]] = Await.ready(create(d, 1), 30.seconds).value.get
         indexing_result match {
           case Success(t) =>
             t.get

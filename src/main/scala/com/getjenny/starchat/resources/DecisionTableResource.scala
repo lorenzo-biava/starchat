@@ -120,7 +120,7 @@ trait DecisionTableResource extends MyResource {
         uploadedFile("csv") {
           case (metadata, file) =>
             val decisionTableService = DecisionTableService
-            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 10.seconds)
+            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
             onCompleteWithBreaker(breaker)(decisionTableService.indexCSVFileIntoDecisionTable(file)) {
               case Success(t) =>
                 file.delete()
