@@ -12,7 +12,6 @@ import scala.collection.immutable.{List, Map}
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import org.elasticsearch.action.index.IndexResponse
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.action.delete.DeleteResponse
@@ -146,7 +145,7 @@ object KnowledgeBaseService {
       val id : String = item.getId
 
       // val score : Float = fields.get("_score").asInstanceOf[Float]
-      val source : Map[String, Any] = item.getSource.asScala.toMap
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.asInstanceOf[Map[String, Any]]
 
       val conversation : String = source.get("conversation") match {
         case Some(t) => t.asInstanceOf[String]

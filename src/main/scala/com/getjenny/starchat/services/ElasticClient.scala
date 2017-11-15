@@ -12,11 +12,15 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.transport.client.PreBuiltTransportClient
 import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
+import java.net.InetAddress
+
+import org.elasticsearch.common.transport.TransportAddress
 import org.elasticsearch.rest.RestStatus
+
 import scala.collection.immutable.{List, Map}
 import scala.collection.JavaConverters._
 import com.getjenny.starchat.entities._
+import org.apache.http.HttpHost
 
 trait ElasticClient {
   val config: Config = ConfigFactory.load()
@@ -32,7 +36,7 @@ trait ElasticClient {
     .put("client.transport.sniff", false).build()
 
   val inet_addresses: List[TransportAddress] =
-    host_map.map{ case(k,v) => new InetSocketTransportAddress(InetAddress.getByName(k), v) }.toList
+    host_map.map{ case(k,v) => new TransportAddress(InetAddress.getByName(k), v) }.toList
 
   var client : TransportClient = open_client()
 

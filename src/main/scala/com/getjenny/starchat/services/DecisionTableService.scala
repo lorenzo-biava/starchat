@@ -101,7 +101,7 @@ object DecisionTableService {
 
       val state : String = item.getId
 
-      val source : Map[String, Any] = item.getSource.asScala.toMap
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.asInstanceOf[Map[String, Any]]
 
       val execution_order: Int = source.get("execution_order") match {
         case Some(t) => t.asInstanceOf[Int]
@@ -407,7 +407,7 @@ object DecisionTableService {
     val decision_table_content : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
-      val source : Map[String, Any] = item.getSource.asScala.toMap
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.asInstanceOf[Map[String, Any]]
 
       val execution_order : Int = source.get("execution_order") match {
         case Some(t) => t.asInstanceOf[Int]

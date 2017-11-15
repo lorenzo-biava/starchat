@@ -76,7 +76,7 @@ object AnalyzerService {
     val analyzers_data : List[(String, DecisionTableRuntimeItem)] = scroll_resp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
-      val source : Map[String, Any] = item.getSource.asScala.toMap
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.asInstanceOf[Map[String, Any]]
 
       val analyzer_declaration : String = source.get("analyzer") match {
         case Some(t) => t.asInstanceOf[String]

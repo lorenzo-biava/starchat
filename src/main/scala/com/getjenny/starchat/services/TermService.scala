@@ -373,9 +373,7 @@ object TermService {
 
     val documents : List[Term] = search_response.getHits.getHits.toList.map({ case(e) =>
       val item: SearchHit = e
-
-      val source : Map[String, Any] = item.getSource.asScala.toMap
-
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.asInstanceOf[Map[String, Any]]
       val term : String = source.get("term") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
@@ -465,8 +463,7 @@ object TermService {
 
     val documents : List[Term] = search_response.getHits.getHits.toList.map({ case(e) =>
       val item: SearchHit = e
-
-      val source : Map[String, Any] = item.getSource.asScala.toMap
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.asInstanceOf[Map[String, Any]]
 
       val term : String = source.get("term") match {
         case Some(t) => t.asInstanceOf[String]
