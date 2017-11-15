@@ -40,11 +40,10 @@ object SystemService {
   var dt_reload_timestamp : Long = -1
   val elastic_client = SystemElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val dtReloadDocId: String = "dtts0"
 
   def setDTReloadTimestamp(index_name: String, refresh: Int = 0):
       Future[Option[Long]] = Future {
-    val dt_reload_doc_id: String = index_name + "_" + dtReloadDocId
+    val dt_reload_doc_id: String = index_name
     val timestamp: Long = System.currentTimeMillis
 
     val builder : XContentBuilder = jsonBuilder().startObject()
@@ -53,7 +52,7 @@ object SystemService {
 
     val client: TransportClient = elastic_client.get_client()
     val response: UpdateResponse =
-      client.prepareUpdate(index_name, elastic_client.type_name, dt_reload_doc_id)
+      client.prepareUpdate(index_name, elastic_client.dt_reload_timestamp_field_name, dt_reload_doc_id)
       .setDocAsUpsert(true)
       .setDoc(builder)
       .get()
@@ -71,10 +70,10 @@ object SystemService {
   }
 
   def getDTReloadTimestamp(index_name: String) : Future[Option[Long]] = Future {
-    val dt_reload_doc_id: String = index_name + "_" + dtReloadDocId
+    val dt_reload_doc_id: String = index_name
     val client: TransportClient = elastic_client.get_client()
     val get_builder: GetRequestBuilder = client.prepareGet()
-    get_builder.setIndex(index_name).setType(elastic_client.type_name).setId(dt_reload_doc_id)
+    get_builder.setIndex(index_name).setType(elastic_client.dt_reload_timestamp_field_name).setId(dt_reload_doc_id)
     val response: GetResponse = get_builder.get()
 
     val timestamp = if(! response.isExists || response.isSourceEmpty) {

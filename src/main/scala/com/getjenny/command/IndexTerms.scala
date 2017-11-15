@@ -23,6 +23,7 @@ object IndexTerms extends JsonSupport {
 
   private case class Params(
     host: String = "http://localhost:8888",
+    index_name: String = "index_0",
     path: String = "/term/index",
     inputfile: String = "vectors.txt",
     skiplines: Int = 0,
@@ -39,7 +40,7 @@ object IndexTerms extends JsonSupport {
     val vecsize = params.vecsize
     val skiplines = params.skiplines
 
-    val base_url = params.host + params.path
+    val base_url = params.host + "/" + params.index_name + params.path
     lazy val term_text_entries = Source.fromFile(params.inputfile).getLines
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
@@ -117,6 +118,10 @@ object IndexTerms extends JsonSupport {
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")
         .action((x, c) => c.copy(path = x))
+      opt[String]("index_name")
+        .text(s"the index_name, e.g. index_XXX" +
+          s"  default: ${defaultParams.index_name}")
+        .action((x, c) => c.copy(index_name = x))
       opt[Int]("vecsize")
         .text(s"the vector size" +
           s"  default: ${defaultParams.vecsize}")

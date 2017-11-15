@@ -6,8 +6,8 @@ package com.getjenny.analyzer.analyzers
 
 import com.getjenny.analyzer.operators._
 import com.getjenny.analyzer.atoms._
-import com.getjenny.analyzer.expressions.{Expression, AnalyzersData, Result}
-import com.getjenny.analyzer.interfaces.Factory
+import com.getjenny.analyzer.expressions.{AnalyzersData, Expression, Result}
+import com.getjenny.analyzer.interfaces.{AtomicFactoryTrait, OperatorFactoryTrait}
 
 /**
   * All sentences with more than 22 characters and with keywords "password" and either "lost" or "forgot"
@@ -20,10 +20,10 @@ import com.getjenny.analyzer.interfaces.Factory
   *
   * In the latter case "or" is treated as disjunction of probabilities
   */
-abstract class DefaultParser(command_string: String) extends AbstractParser(command_string: String) {
+abstract class DefaultParser(command_string: String, restricted_args: Map[String, String]) extends AbstractParser(command_string: String) {
 
-  val atomicFactory: Factory[List[String], AbstractAtomic]
-  val operatorFactory: Factory[List[Expression], AbstractOperator]
+  val atomicFactory: AtomicFactoryTrait[List[String], AbstractAtomic, Map[String, String]]
+  val operatorFactory: OperatorFactoryTrait[List[Expression], AbstractOperator]
 
   private val operator = this.gobble_commands(command_string)
 
@@ -130,7 +130,7 @@ abstract class DefaultParser(command_string: String) extends AbstractParser(comm
         // We have read all the atomic's arguments, add the atomic to the tree
         //println("DEBUG Calling loop, adding the atom: " + command_buffer + ", " + arguments)
         val atomic = try {
-          atomicFactory.get(command_buffer, arguments)
+          atomicFactory.get(command_buffer, arguments, restricted_args)
         } catch {
           case e: NoSuchElementException =>
             throw AnalyzerCommandException("Atomic does not exists(" + command_buffer + ")", e)

@@ -33,15 +33,19 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Implements response functionalities
   */
 object ResponseService {
-  val elastic_client = DecisionTableElasticClient
+  val elastic_client: DecisionTableElasticClient.type = DecisionTableElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val termService = TermService
-  val decisionTableService = DecisionTableService
+  val termService: TermService.type = TermService
+  val decisionTableService: DecisionTableService.type = DecisionTableService
 
   def getNextResponse(index_name: String, request: ResponseRequestIn):
   Future[Option[ResponseRequestOutOperationResult]] = Future {
-    // calculate and return the ResponseRequestOut
 
+    if(! AnalyzerService.analyzers_map.contains(index_name)) {
+      AnalyzerService.initializeAnalyzers(index_name)
+    }
+
+    // calculate and return the ResponseRequestOut
     val user_text: String = if (request.user_input.isDefined) {
       request.user_input.get.text.getOrElse("")
     } else {
@@ -64,7 +68,7 @@ object ResponseService {
       decisionTableService.resultsToMap(index_name, decisionTableService.search_dt_queries(index_name, user_text))
 
     val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversed_states,
-      data = analyzers_internal_data, private_data = Map("index_name" -> index_name))
+      data = analyzers_internal_data)
 
     val return_value: String = if (request.values.isDefined)
       request.values.get.return_value.getOrElse("")
@@ -127,7 +131,7 @@ object ResponseService {
         val max_results: Int = request.max_results.getOrElse(2)
         val threshold: Double = request.threshold.getOrElse(0.0d)
         val analyzer_values: Map[String, Result] =
-          AnalyzerService.analyzer_map.filter(_._2.analyzer.build == true).filter(v => {
+          AnalyzerService.analyzers_map(index_name).analyzer_map.filter(_._2.analyzer.build == true).filter(v => {
             val traversed_state_count = traversed_states_count.getOrElse(v._1, 0)
             val max_state_count = v._2.max_state_counter
             max_state_count == 0 ||

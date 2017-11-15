@@ -15,7 +15,8 @@ import ExecutionContext.Implicits.global
   * Created by angelo on 04/04/17.
   */
 
-class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String]) extends AbstractAtomic  {
+class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String], restricted_args: Map[String, String])
+  extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -24,8 +25,8 @@ class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String]) extends Ab
     *
     */
 
-  val sentence = arguments(0)
-  val termService = TermService
+  val sentence: String = arguments.head
+  val termService: TermService.type = TermService
 
   implicit class Crosstable[X](xs: Traversable[X]) {
     def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
@@ -33,8 +34,10 @@ class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String]) extends Ab
 
   override def toString: String = "similarCosEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
+
+  val index_name = restricted_args("index_name")
+
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val index_name = data.private_data("index_name")
     val emd_dist = EmDistance.distanceCosine(index_name, query, sentence)
     Result(score=emd_dist)
   }

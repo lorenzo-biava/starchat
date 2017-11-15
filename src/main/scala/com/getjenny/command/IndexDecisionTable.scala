@@ -32,6 +32,7 @@ object IndexDecisionTable extends JsonSupport {
 
   private case class Params(
                              host: String = "http://localhost:8888",
+                             index_name: String = "index_0",
                              path: String = "/decisiontable",
                              inputfile: String = "decision_table.csv",
                              separator: Char = ',',
@@ -49,7 +50,7 @@ object IndexDecisionTable extends JsonSupport {
     val vecsize = 0
     val skiplines = params.skiplines
 
-    val base_url = params.host + params.path
+    val base_url = params.host + "/" + params.index_name + params.path
     val file = new File(params.inputfile)
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
@@ -102,6 +103,10 @@ object IndexDecisionTable extends JsonSupport {
         .text(s"*Chat base url" +
           s"  default: ${defaultParams.host}")
         .action((x, c) => c.copy(host = x))
+      opt[String]("index_name")
+        .text(s"the index_name, e.g. index_XXX" +
+          s"  default: ${defaultParams.index_name}")
+        .action((x, c) => c.copy(index_name = x))
       opt[String]("path")
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")

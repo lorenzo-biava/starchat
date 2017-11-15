@@ -15,20 +15,21 @@ import ExecutionContext.Implicits.global
   * Created by mal on 20/02/2017.
   */
 
-class W2VCosineWordAtomic(arguments: List[String]) extends AbstractAtomic {
+class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
   /**
     * Return the normalized w2vcosine similarity of the nearest word
     */
 
-  val word = arguments(0)
+  val word: String = arguments.head
   override def toString: String = "similar(\"" + word + "\")"
 
-  val termService = TermService
+  val termService: TermService.type = TermService
+
+  val index_name: String = restricted_args("index_name")
+  val word_vec: (Vector[Double], Double) = TextToVectorsTools.getSumOfVectorsFromText(index_name, word)
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val index_name = data.private_data("index_name")
-    val word_vec = TextToVectorsTools.getSumOfVectorsFromText(index_name, word)
     val text_vectors = termService.textToVectors(index_name, query)
     val distance: Double = if (text_vectors.nonEmpty && text_vectors.get.terms.nonEmpty) {
       val term_vector = text_vectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)

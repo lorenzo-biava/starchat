@@ -7,8 +7,8 @@ package com.getjenny.analyzer.analyzers
 import com.getjenny.analyzer.operators._
 import com.getjenny.analyzer.atoms._
 
-class DefaultAnalyzer(command_string: String)
+class DefaultAnalyzer(command_string: String, restricted_args: Map[String, String])
   extends {
     override val atomicFactory = new DefaultFactoryAtomic
     override val operatorFactory = new DefaultFactoryOperator
-  } with DefaultParser(command_string: String)
+  } with DefaultParser(command_string: String, restricted_args: Map[String, String])

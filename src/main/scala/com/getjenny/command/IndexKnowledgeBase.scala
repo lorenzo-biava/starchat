@@ -34,6 +34,7 @@ import java.util.Base64
 object IndexKnowledgeBase extends JsonSupport {
   private case class Params(
                              host: String = "http://localhost:8888",
+                             index_name: String = "index_0",
                              path: String = "/knowledgebase",
                              questions_path: Option[String] = None: Option[String],
                              answers_path: Option[String] = None: Option[String],
@@ -112,7 +113,7 @@ object IndexKnowledgeBase extends JsonSupport {
 
     val vecsize = 0
 
-    val base_url = params.host + params.path
+    val base_url = params.host + "/" + params.index_name + params.path
 
     val conv_items = if (params.base64) {
       load_data(params, decodeBase64)
@@ -198,6 +199,10 @@ object IndexKnowledgeBase extends JsonSupport {
         .text(s"*Chat base url" +
           s"  default: ${defaultParams.host}")
         .action((x, c) => c.copy(host = x))
+      opt[String]("index_name")
+        .text(s"the index_name, e.g. index_XXX" +
+          s"  default: ${defaultParams.index_name}")
+        .action((x, c) => c.copy(index_name = x))
       opt[String]("path")
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")

@@ -10,7 +10,7 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
   * "pippo" matches "pippo and pluto" but not "pippone and pluto"
   * "pippo.*" matches "pippo and pluto" and "pippone and pluto"
   */
-class KeywordAtomic(val arguments: List[String]) extends AbstractAtomic {
+class KeywordAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
   val keyword = arguments(0)
   override def toString: String = "keyword(\"" + keyword + "\")"
   val isEvaluateNormalized: Boolean = true

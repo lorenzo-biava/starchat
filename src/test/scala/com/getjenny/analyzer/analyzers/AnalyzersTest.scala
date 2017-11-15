@@ -8,8 +8,9 @@ import com.getjenny.analyzer.operators.OperatorException
 
 class AnalyzersTest extends FlatSpec with Matchers {
 
+  val restricted_args = Map.empty[String, String]
   "A DefaultAnalyzer" should "parse a rule and evaluate the operations on a provided input text" in {
-    val analyzerBayes = new DefaultAnalyzer("""disjunction( keyword("clever"), keyword("gentleman") )""")
+    val analyzerBayes = new DefaultAnalyzer("""disjunction( keyword("clever"), keyword("gentleman") )""", restricted_args)
 
     val gentleman = analyzerBayes.evaluate("ciao nice gentleman fool")
     val clever_gentleman_long = analyzerBayes.evaluate("ciao clever fool gentleman")
@@ -24,12 +25,12 @@ class AnalyzersTest extends FlatSpec with Matchers {
   }
   it should "throw a AnalyzerParsingException if parenthesis are not balanced" in {
     a [AnalyzerParsingException] should be thrownBy {
-      new DefaultAnalyzer("""disjunction( keyword("clever")), keyword("gentleman") )""")
+      new DefaultAnalyzer("""disjunction( keyword("clever")), keyword("gentleman") )""", restricted_args)
     }
   }
   it should "throw a AnalyzerCommandException if the command does not exists or is mispelled" in {
     a [AnalyzerCommandException] should be thrownBy {
-      new DefaultAnalyzer("""fakeDisjunction( keyword("clever"), keyword("gentleman") )""")
+      new DefaultAnalyzer("""fakeDisjunction( keyword("clever"), keyword("gentleman") )""", restricted_args)
     }
   }
 

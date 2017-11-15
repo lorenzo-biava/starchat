@@ -19,7 +19,7 @@ import com.getjenny.analyzer.expressions.AnalyzersData
   * Created by mal on 20/02/2017.
   */
 
-class W2VCosineSentenceAtomic(val arguments: List[String]) extends AbstractAtomic  {
+class W2VCosineSentenceAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -28,15 +28,17 @@ class W2VCosineSentenceAtomic(val arguments: List[String]) extends AbstractAtomi
     *
     */
 
-  val sentence = arguments(0)
-  val termService = TermService
+  val sentence: String = arguments.head
+  val termService: TermService.type = TermService
 
   override def toString: String = "similar(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
 
+
+  val index_name = restricted_args("index_name")
+  val sentence_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, sentence)
+
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val index_name = data.private_data("index_name")
-    val sentence_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, sentence)
     val query_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, query)
 
     /** cosineDist returns 0.0 for the closest vector, we want 1.0 when the similarity is the highest

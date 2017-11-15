@@ -2,7 +2,8 @@
 
 QUERY=${1:-"\"term\""}
 PORT=${2:-8888}
-curl -v -H "Content-Type: application/json" -X POST http://localhost:${PORT}/term/get -d "{
+INDEX_NAME=${3:-index_0}
+curl -v -H "Content-Type: application/json" -X POST http://localhost:${PORT}/${INDEX_NAME}/term/get -d "{
 	\"ids\": [${QUERY}]
 }"
 

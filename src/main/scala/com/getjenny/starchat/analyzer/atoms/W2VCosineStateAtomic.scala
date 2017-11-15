@@ -18,7 +18,7 @@ import scala.concurrent._
 import ExecutionContext.Implicits.global
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
-class W2VCosineStateAtomic(val arguments: List[String]) extends AbstractAtomic  {
+class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -27,27 +27,27 @@ class W2VCosineStateAtomic(val arguments: List[String]) extends AbstractAtomic  
     *
     */
 
-  val state = arguments(0)
+  val state: String = arguments.head
   override def toString: String = "similarState(\"" + state + "\")"
 
-  val analyzerService = AnalyzerService
+  val analyzerService: AnalyzerService.type = AnalyzerService
 
-  val query_sentences = AnalyzerService.analyzer_map.getOrElse(state, null)
+  val index_name = restricted_args("index_name")
+  val query_sentences: DecisionTableRuntimeItem = AnalyzerService.analyzers_map(index_name).analyzer_map.getOrElse(state, null)
   if (query_sentences == null) {
     analyzerService.log.error(toString + " : state is null")
   } else {
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val query_terms = query_sentences.queries
-  val query_vectors = query_terms.map(item => {
+  val query_terms: List[TextTerms] = query_sentences.queries
+  val query_vectors: List[(Vector[Double], Double)] = query_terms.map(item => {
     val query_vector = TextToVectorsTools.getSumOfTermsVectors(Option{item})
     query_vector
   })
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val index_name = data.private_data("index_name")
     val distance = query_vectors.map(q_item => {
       val query_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, query)
       val dist = (1.0 - cosineDist(q_item._1, query_vector._1)) *

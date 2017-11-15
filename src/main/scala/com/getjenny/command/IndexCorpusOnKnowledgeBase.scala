@@ -33,6 +33,7 @@ import scala.io.Source
 object IndexCorpusOnKnowledgeBase extends JsonSupport {
   private case class Params(
                              host: String = "http://localhost:8888",
+                             index_name: String = "index_0",
                              path: String = "/knowledgebase",
                              inputfile: Option[String] = None: Option[String],
                              base64: Boolean = false,
@@ -56,7 +57,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
     val vecsize = 0
     val skiplines = params.skiplines
 
-    val base_url = params.host + params.path
+    val base_url = params.host + "/" + params.index_name + params.path
     val lines = Source.fromFile(name=params.inputfile.get).getLines.toList
 
     val conv_items: String => String = if (params.base64) {
@@ -132,6 +133,10 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
         .text(s"*Chat base url" +
           s"  default: ${defaultParams.host}")
         .action((x, c) => c.copy(host = x))
+      opt[String]("index_name")
+        .text(s"the index_name, e.g. index_XXX" +
+          s"  default: ${defaultParams.index_name}")
+        .action((x, c) => c.copy(index_name = x))
       opt[String]("path")
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")

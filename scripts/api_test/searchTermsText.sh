@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 
 PORT=${1:-8888}
-curl -v -H "Content-Type: application/json" -X GET http://localhost:${PORT}/term/text -d 'term2 मराठी'
+INDEX_NAME=${2:-index_0}
+curl -v -H "Content-Type: application/json" -X GET http://localhost:${PORT}/${INDEX_NAME}/term/text -d 'term2 मराठी'

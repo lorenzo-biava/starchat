@@ -18,7 +18,7 @@ import ExecutionContext.Implicits.global
 /**
   * Query ElasticSearch
   */
-class SearchAtomic(arguments: List[String]) extends AbstractAtomic {
+class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
   val state = arguments(0)
   override def toString: String = "search(\"" + state + "\")"
   val isEvaluateNormalized: Boolean = false
@@ -26,7 +26,7 @@ class SearchAtomic(arguments: List[String]) extends AbstractAtomic {
 
   override val match_threshold: Double = 0.65
 
-  val decisionTableService = DecisionTableService
+  val decisionTableService: DecisionTableService.type = DecisionTableService
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
 

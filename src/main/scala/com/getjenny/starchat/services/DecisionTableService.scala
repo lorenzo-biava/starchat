@@ -45,7 +45,7 @@ import scala.collection.mutable
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
 object DecisionTableService {
-  val elastic_client = DecisionTableElasticClient
+  val elastic_client: DecisionTableElasticClient.type = DecisionTableElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   val queries_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,

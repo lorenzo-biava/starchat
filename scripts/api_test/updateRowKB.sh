@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 PORT=${1:-8888}
-curl -v -H "Content-Type: application/json" -X PUT http://localhost:${PORT}/knowledgebase/0 -d '{
+INDEX_NAME=${2:-index_0}
+curl -v -H "Content-Type: application/json" -X PUT http://localhost:${PORT}/${INDEX_NAME}/knowledgebase/0 -d '{
 	"conversation": "id:1001",
 	"question": "thank you",
 	"answer": "you are welcome!",

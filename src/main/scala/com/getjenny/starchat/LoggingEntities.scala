@@ -15,18 +15,17 @@ import java.util.Base64
 
 object LoggingEntities {
   val config: Config = ConfigFactory.load()
-  val index_name: String = config.getString("es.index_name")
 
   def requestMethodAndResponseStatusReduced(req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("Index(" + index_name + ") ReqUri(" + req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
+      Some(LogEntry("ReqUri(" + req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
         Logging.InfoLevel))
     case _ ⇒ None
   }
 
   def requestMethodAndResponseStatus(req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("Index(" + index_name + ") ReqUri(" + req.uri + ")" +
+      Some(LogEntry("ReqUri(" + req.uri + ")" +
         " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
         " ReqEntity(" + req.entity.httpEntity + ") ResEntity(" + res.entity + ") "
         , Logging.InfoLevel))
@@ -35,7 +34,7 @@ object LoggingEntities {
 
   def requestMethodAndResponseStatusB64(req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("Index(" + index_name + ") ReqUri(" + req.uri + ")" +
+      Some(LogEntry("ReqUri(" + req.uri + ")" +
         " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
         " ReqEntity(" + req.entity + ")" +
         " ReqB64Entity(" + Base64.getEncoder.encodeToString(req.entity.toString.getBytes) + ")" +

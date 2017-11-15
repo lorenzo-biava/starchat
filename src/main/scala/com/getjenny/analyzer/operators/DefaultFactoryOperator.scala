@@ -7,7 +7,7 @@ package com.getjenny.analyzer.operators
 import com.getjenny.analyzer.expressions.Expression
 import com.getjenny.analyzer.interfaces._
 
-class DefaultFactoryOperator extends Factory[List[Expression], AbstractOperator] {
+class DefaultFactoryOperator extends OperatorFactoryTrait[List[Expression], AbstractOperator] {
 
   override val operations = Set("or" , "and", "conjunction", "disjunction", "bor", "band", "booleanor", "booleanand",
     "booleanOr", "booleanAnd", "booleanNot", "booleannot", "bnot", "maximum", "max")

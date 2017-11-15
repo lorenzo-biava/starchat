@@ -10,7 +10,7 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
   *
   * @param arguments regular expression
   */
-class RegularExpressionAtomic(arguments: List[String]) extends AbstractAtomic {
+class RegularExpressionAtomic(arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
   /**
     * A Regex
     */

@@ -12,7 +12,7 @@ import com.getjenny.starchat.resources._
 import com.getjenny.starchat.services._
 
 trait Resources extends KnowledgeBaseResource with DecisionTableResource
-  with RootAPIResource with IndexManagementResource with LanguageGuesserResource
+  with RootAPIResource with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
   with TermResource with TokenizersResource with AnalyzersPlaygroundResource
   with SpellcheckResource
 
@@ -22,6 +22,7 @@ trait RestInterface extends Resources {
   lazy val knowledgeBaseService = KnowledgeBaseService
   lazy val decisionTableService = DecisionTableService
   lazy val indexManagementService = IndexManagementService
+  lazy val systemIndexManagementService = SystemIndexManagementService
   lazy val languageGuesserService = LanguageGuesserService
   lazy val termService = TermService
   lazy val responseService = ResponseService
@@ -38,7 +39,9 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResultB64(decisionTableSearchRoutes) ~
     LoggingEntities.logRequestAndResultB64(decisionTableResponseRequestRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableAnalyzerRoutes) ~
+    LoggingEntities.logRequestAndResult(postIndexManagementRoutes) ~
     LoggingEntities.logRequestAndResult(indexManagementRoutes) ~
+    LoggingEntities.logRequestAndResult(systemIndexManagementRoutes) ~
     LoggingEntities.logRequestAndResult(languageGuesserRoutes) ~
     LoggingEntities.logRequestAndResultReduced(termRoutes) ~
     LoggingEntities.logRequestAndResult(esTokenizersRoutes) ~

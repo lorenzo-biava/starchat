@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
 PORT=${1:-8888}
-curl -v -H "Content-Type: application/json" -X GET http://localhost:${PORT}/decisiontable?dump=true
+INDEX_NAME=${2:-index_0}
+curl -v -H "Content-Type: application/json" -X GET http://localhost:${PORT}/${INDEX_NAME}/decisiontable?dump=true
 

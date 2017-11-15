@@ -17,7 +17,7 @@ import com.getjenny.analyzer.utils._
   *
   * @param arguments the regular expression in the form [<name0>,..,<nameN>](<regex>)
   */
-class MatchPatternRegexAtomic(val arguments: List[String]) extends AbstractAtomic {
+class MatchPatternRegexAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
   val regex = arguments(0)
   override def toString: String = "matchPatternRegex(" + regex + ")"
   val isEvaluateNormalized: Boolean = true

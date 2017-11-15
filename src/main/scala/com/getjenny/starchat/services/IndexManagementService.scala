@@ -28,7 +28,6 @@ object IndexManagementService {
 
   val lang: String = elastic_client.index_language
   val analyzer_json_path: String = "/index_management/json_index_spec/" + lang + "/analyzer.json"
-  val system_json_path: String = "/index_management/json_index_spec/general/system.json"
   val state_json_path: String = "/index_management/json_index_spec/general/state.json"
   val question_json_path: String = "/index_management/json_index_spec/general/question.json"
   val term_json_path: String = "/index_management/json_index_spec/general/term.json"
@@ -37,7 +36,6 @@ object IndexManagementService {
     val client: TransportClient = elastic_client.get_client()
 
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
-    val system_json_is: InputStream = getClass.getResourceAsStream(system_json_path)
     val state_json_is: InputStream = getClass.getResourceAsStream(state_json_path)
     val question_json_is: InputStream = getClass.getResourceAsStream(question_json_path)
     val term_json_is: InputStream = getClass.getResourceAsStream(term_json_path)
@@ -45,7 +43,6 @@ object IndexManagementService {
     val indexManagementResponse = if(analyzer_json_is != null &&
       state_json_is != null && question_json_is != null && term_json_is != null) {
       val analyzer_json: String = Source.fromInputStream(analyzer_json_is, "utf-8").mkString
-      val system_json: String = Source.fromInputStream(system_json_is, "utf-8").mkString
       val state_json: String = Source.fromInputStream(state_json_is, "utf-8").mkString
       val question_json: String = Source.fromInputStream(question_json_is, "utf-8").mkString
       val term_json: String = Source.fromInputStream(term_json_is, "utf-8").mkString
@@ -53,7 +50,6 @@ object IndexManagementService {
       val create_index_res: CreateIndexResponse =
         client.admin().indices().prepareCreate(index_name)
           .setSettings(Settings.builder().loadFromSource(analyzer_json, XContentType.JSON))
-          .addMapping(elastic_client.sys_type_name, system_json, XContentType.JSON)
           .addMapping(elastic_client.dt_type_name, state_json, XContentType.JSON)
           .addMapping(elastic_client.kb_type_name, question_json, XContentType.JSON)
           .addMapping(elastic_client.term_type_name, term_json, XContentType.JSON)
@@ -66,7 +62,7 @@ object IndexManagementService {
       }
     } else {
       val message: String = "Check one of these files: (" +
-        system_json_path + ", " + analyzer_json_path +
+        analyzer_json_path +
           ", " + state_json_path + ", " + question_json_path + ", " + term_json_path + ")"
       throw new FileNotFoundException(message)
     }
@@ -94,8 +90,6 @@ object IndexManagementService {
 
     val get_mappings_req = client.admin.indices.prepareGetMappings(index_name).get()
 
-    val sys_type_check = get_mappings_req.mappings.get(index_name)
-      .containsKey(elastic_client.sys_type_name)
     val dt_type_check = get_mappings_req.mappings.get(index_name)
       .containsKey(elastic_client.dt_type_name)
     val kb_type_check = get_mappings_req.mappings.get(index_name)
@@ -105,7 +99,6 @@ object IndexManagementService {
 
     Option {
       IndexManagementResponse("settings index: " + index_name
-        + " sys_type_check(" + elastic_client.sys_type_name + ":" + sys_type_check + ")"
         + " dt_type_check(" + elastic_client.dt_type_name + ":" + dt_type_check + ")"
         + " kb_type_check(" + elastic_client.kb_type_name + ":" + kb_type_check + ")"
         + " term_type_name(" + elastic_client.term_type_name + ":" + term_type_check + ")"
@@ -116,22 +109,16 @@ object IndexManagementService {
   def update_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
-    val system_json_is: InputStream = getClass.getResourceAsStream(system_json_path)
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
     val state_json_is: InputStream = getClass.getResourceAsStream(state_json_path)
     val question_json_is: InputStream = getClass.getResourceAsStream(question_json_path)
     val term_json_is: InputStream = getClass.getResourceAsStream(term_json_path)
 
-    val indexManagementResponse = if(system_json_is != null && analyzer_json_is != null &&
+    val indexManagementResponse = if(analyzer_json_is != null &&
       state_json_is != null && question_json_is != null && term_json_is != null) {
-      val system_json: String = Source.fromInputStream(system_json_is, "utf-8").mkString
       val state_json: String = Source.fromInputStream(state_json_is, "utf-8").mkString
       val question_json: String = Source.fromInputStream(question_json_is, "utf-8").mkString
       val term_json: String = Source.fromInputStream(term_json_is, "utf-8").mkString
-
-      val update_sys_type_res  =
-        client.admin().indices().preparePutMapping(index_name)
-          .setType(elastic_client.sys_type_name).setSource(system_json, XContentType.JSON).get()
 
       val update_dt_type_res  =
         client.admin().indices().preparePutMapping(index_name)
@@ -147,7 +134,6 @@ object IndexManagementService {
 
       Option {
         IndexManagementResponse("updated index: " + index_name
-          + " sys_type_ack(" + update_sys_type_res.isAcknowledged.toString + ")"
           + " dt_type_ack(" + update_dt_type_res.isAcknowledged.toString + ")"
           + " kb_type_ack(" + update_kb_type_res.isAcknowledged.toString + ")"
           + " kb_type_ack(" + update_term_type_res.isAcknowledged.toString + ")"

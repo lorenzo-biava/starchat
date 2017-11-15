@@ -13,8 +13,9 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
   */
 
 
-class PreviousTravStateIsAtomic(val arguments: List[String]) extends AbstractAtomic {
-  val name = arguments(0)
+class PreviousTravStateIsAtomic(val arguments: List[String], restricted_args: Map[String, String])
+  extends AbstractAtomic {
+  val name: String = arguments.head
   override def toString: String = "prevTravStateIs"
   val isEvaluateNormalized: Boolean = true
 

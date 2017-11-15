@@ -10,7 +10,7 @@ import com.getjenny.analyzer.utils._
 /** Analyzer for the extraction of dates from queries
   * @param arguments
   */
-class MatchDateDDMMYYYYAtomic(val arguments: List[String]) extends AbstractAtomic {
+class MatchDateDDMMYYYYAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
   val prefix = arguments(0)
   override def toString: String = "matchDateDDMMYYYY(" + prefix + ")"
   val isEvaluateNormalized: Boolean = true

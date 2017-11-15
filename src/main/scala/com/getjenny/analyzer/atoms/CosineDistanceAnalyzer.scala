@@ -9,7 +9,7 @@ import com.getjenny.analyzer.util._
 
 /** calculate the cosine distance between vectors of keywords
   */
-class CosineDistanceAnalyzer(val arguments: List[String]) extends AbstractAtomic {
+class CosineDistanceAnalyzer(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
   override def toString: String = "cosDistanceKeywords(\"" + arguments + "\")"
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
