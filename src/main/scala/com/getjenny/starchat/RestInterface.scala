@@ -39,7 +39,9 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResultB64(decisionTableSearchRoutes) ~
     LoggingEntities.logRequestAndResultB64(decisionTableResponseRequestRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableAnalyzerRoutes) ~
-    LoggingEntities.logRequestAndResult(postIndexManagementRoutes) ~
+    LoggingEntities.logRequestAndResult(postIndexManagementCreateRoutes) ~
+    LoggingEntities.logRequestAndResult(postIndexManagementRefreshRoutes) ~
+    LoggingEntities.logRequestAndResult(putIndexManagementRoutes) ~
     LoggingEntities.logRequestAndResult(indexManagementRoutes) ~
     LoggingEntities.logRequestAndResult(systemIndexManagementRoutes) ~
     LoggingEntities.logRequestAndResult(languageGuesserRoutes) ~

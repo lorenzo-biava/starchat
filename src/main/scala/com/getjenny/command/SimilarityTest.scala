@@ -126,23 +126,23 @@ object SimilarityTest extends JsonSupport {
       head("Execute similarity test over a map of similar sentences." +
         " The text1 and text2 can be defined as a templates")
       help("help").text("prints this usage text")
-      opt[String]("inputfile").optional()
+      opt[String]("inputfile")
         .text(s"the path of the csv file with sentences" +
           s"  default: ${defaultParams.inputfile}")
         .action((x, c) => c.copy(inputfile = x))
-      opt[String]("outputfile").optional()
+      opt[String]("outputfile")
         .text(s"the path of the output csv file" +
           s"  default: ${defaultParams.outputfile}")
         .action((x, c) => c.copy(outputfile = x))
-      opt[String]("host").optional()
+      opt[String]("host")
         .text(s"*Chat base url" +
           s"  default: ${defaultParams.host}")
         .action((x, c) => c.copy(host = x))
-      opt[String]("analyzer").optional()
+      opt[String]("analyzer")
         .text(s"the analyzer" +
           s"  default: ${defaultParams.analyzer}")
         .action((x, c) => c.copy(analyzer = x))
-      opt[String]("path").optional()
+      opt[String]("path")
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")
         .action((x, c) => c.copy(path = x))
@@ -150,31 +150,31 @@ object SimilarityTest extends JsonSupport {
         .text(s"the index_name, e.g. index_XXX" +
           s"  default: ${defaultParams.index_name}")
         .action((x, c) => c.copy(index_name = x))
-      opt[Seq[String]]("item_list").optional()
+      opt[Seq[String]]("item_list")
         .text(s"list of string representing the traversed states" +
           s"  default: ${defaultParams.item_list}")
         .action((x, c) => c.copy(item_list = x))
-      opt[Map[String, String]]("variables").optional()
+      opt[Map[String, String]]("variables")
         .text(s"set of variables to be used by the analyzers" +
           s"  default: ${defaultParams.variables}")
         .action((x, c) => c.copy(variables = x))
-      opt[Int]("text1_index").optional()
+      opt[Int]("text1_index")
         .text(s"the index of the text1 element" +
           s"  default: ${defaultParams.text1_index}")
         .action((x, c) => c.copy(text1_index = x))
-       opt[Int]("text2_index").optional()
+       opt[Int]("text2_index")
         .text(s"the index of the text2 element" +
           s"  default: ${defaultParams.text2_index}")
         .action((x, c) => c.copy(text2_index = x))
-      opt[Int]("timeout").optional()
+      opt[Int]("timeout")
         .text(s"the timeout in seconds of each insert operation" +
           s"  default: ${defaultParams.timeout}")
         .action((x, c) => c.copy(timeout = x))
-      opt[Int]("skiplines").optional()
+      opt[Int]("skiplines")
         .text(s"skip the first N lines from vector file" +
           s"  default: ${defaultParams.skiplines}")
         .action((x, c) => c.copy(skiplines = x))
-      opt[Seq[String]]("header_kv").optional()
+      opt[Seq[String]]("header_kv")
         .text(s"header key-value pair, as key1:value1,key2:value2" +
           s"  default: ${defaultParams.header_kv}")
         .action((x, c) => c.copy(header_kv = x))

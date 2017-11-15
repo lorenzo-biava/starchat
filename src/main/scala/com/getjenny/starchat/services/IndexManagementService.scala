@@ -26,14 +26,14 @@ object IndexManagementService {
   val elastic_client = IndexManagementClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  val lang: String = elastic_client.index_language
-  val analyzer_json_path: String = "/index_management/json_index_spec/" + lang + "/analyzer.json"
   val state_json_path: String = "/index_management/json_index_spec/general/state.json"
   val question_json_path: String = "/index_management/json_index_spec/general/question.json"
   val term_json_path: String = "/index_management/json_index_spec/general/term.json"
 
-  def create_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
+  def create_index(index_name: String, language: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
+
+    val analyzer_json_path: String = "/index_management/json_index_spec/" + language + "/analyzer.json"
 
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
     val state_json_is: InputStream = getClass.getResourceAsStream(state_json_path)
@@ -106,9 +106,10 @@ object IndexManagementService {
     }
   }
 
-  def update_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
+  def update_index(index_name: String, language: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
+    val analyzer_json_path: String = "/index_management/json_index_spec/" + language + "/analyzer.json"
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
     val state_json_is: InputStream = getClass.getResourceAsStream(state_json_path)
     val question_json_is: InputStream = getClass.getResourceAsStream(question_json_path)

@@ -115,7 +115,7 @@ object IndexDecisionTableJSON extends JsonSupport {
     val parser = new OptionParser[Params]("IndexDecisionTable") {
       head("Index data into DecisionTable from a JSON file")
       help("help").text("prints this usage text")
-      opt[String]("inputfile").optional
+      opt[String]("inputfile")
         .text(s"the path of the file with the vectors" +
           s"  default: ${defaultParams.inputfile}")
         .action((x, c) => c.copy(inputfile = x))

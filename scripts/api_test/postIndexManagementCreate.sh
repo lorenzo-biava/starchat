@@ -2,5 +2,6 @@
 
 PORT=${1:-8888}
 INDEX_NAME=${2:-index_0}
-curl -v -H "Content-Type: application/json" -X POST "http://localhost:${PORT}/${INDEX_NAME}/index_management/create"
+LANGUAGE=${3:-english}
+curl -v -H "Content-Type: application/json" -X POST "http://localhost:${PORT}/${INDEX_NAME}/${LANGUAGE}/index_management/create"
 

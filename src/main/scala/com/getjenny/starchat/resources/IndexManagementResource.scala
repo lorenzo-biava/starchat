@@ -19,41 +19,65 @@ import akka.pattern.CircuitBreaker
 
 trait IndexManagementResource extends MyResource {
 
-  def postIndexManagementRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "index_management" ~ Slash ~ """(create|refresh)""".r) {
-      (index_name, operation) =>
+  def postIndexManagementCreateRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~
+      """([A-Za-z0-9_]+)""".r ~ Slash ~ "index_management" ~ Slash ~ """create""") {
+      (index_name, language) =>
         val indexManagementService = IndexManagementService
         post {
-          operation match {
-            case "refresh" =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.refresh_index(index_name)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                  t
-                })
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Option {
-                    IndexManagementResponse(message = e.getMessage)
-                  })
-              }
-            case "create" =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.create_index(index_name)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                  t
-                })
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Option {
-                    IndexManagementResponse(message = e.getMessage)
-                  })
-              }
-            case _ => completeResponse(StatusCodes.BadRequest,
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+          onCompleteWithBreaker(breaker)(indexManagementService.create_index(index_name, language)) {
+            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+              t
+            })
+            case Failure(e) => completeResponse(StatusCodes.BadRequest,
               Option {
-                IndexManagementResponse(message = "index(" + index_name + ") Operation not supported: " + operation)
+                IndexManagementResponse(message = e.getMessage)
               })
           }
         }
     }
+
+  def postIndexManagementRefreshRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~
+      Slash ~ "index_management" ~ Slash ~ """refresh""") {
+      (index_name) =>
+        val indexManagementService = IndexManagementService
+        post {
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+          onCompleteWithBreaker(breaker)(indexManagementService.refresh_index(index_name)) {
+            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+              t
+            })
+            case Failure(e) => completeResponse(StatusCodes.BadRequest,
+              Option {
+                IndexManagementResponse(message = e.getMessage)
+              })
+          }
+        }
+    }
+
+  def putIndexManagementRoutes: Route = {
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~
+      Slash ~ """([A-Za-z0-9_]+)""".r ~ Slash ~ "index_management") {
+      (index_name, language) =>
+        val indexManagementService = IndexManagementService
+        pathEnd {
+          put {
+            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+            onCompleteWithBreaker(breaker)(indexManagementService.update_index(index_name, language)) {
+              case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                t
+              })
+              case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                Option {
+                  IndexManagementResponse(message = e.getMessage)
+                })
+            }
+          }
+        }
+    }
+  }
 
   def indexManagementRoutes: Route = {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "index_management") {
@@ -75,18 +99,6 @@ trait IndexManagementResource extends MyResource {
             delete {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(indexManagementService.remove_index(index_name)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                  t
-                })
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Option {
-                    IndexManagementResponse(message = e.getMessage)
-                  })
-              }
-            } ~
-            put {
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.update_index(index_name)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                   t
                 })

@@ -20,10 +20,8 @@ import com.getjenny.starchat.entities._
 
 trait ElasticClient {
   val config: Config = ConfigFactory.load()
-//  val index_name: String = config.getString("es.index_name")
   val cluster_name: String = config.getString("es.cluster_name")
   val ignore_cluster_name: Boolean = config.getBoolean("es.ignore_cluster_name")
-  val index_language: String = config.getString("es.index_language")
 
   val host_map_str : String = config.getString("es.host_map")
   val host_map : Map[String, Int] = host_map_str.split(";").map(x => x.split("=")).map(x => (x(0), (x(1)).toInt)).toMap
