@@ -33,9 +33,9 @@ libraryDependencies ++= {
     "org.scalanlp" %% "breeze-natives" % "0.13",
     "org.apache.logging.log4j" % "log4j-api" % "2.9.1",
     "org.apache.logging.log4j" % "log4j-core" % "2.9.1",
-    "org.apache.tika" % "tika-core" % "1.14",
-    "org.apache.tika" % "tika-parsers" % "1.14",
-    "org.apache.tika" % "tika-app" % "1.14",
+    "org.apache.tika" % "tika-core" % "1.16",
+    "org.apache.tika" % "tika-parsers" % "1.16",
+    "org.apache.tika" % "tika-app" % "1.16",
     "com.github.scopt" %% "scopt" % "3.6.0",
     "com.roundeights" %% "hasher" % "1.2.0",
     "org.parboiled" %% "parboiled" % "2.1.4"
