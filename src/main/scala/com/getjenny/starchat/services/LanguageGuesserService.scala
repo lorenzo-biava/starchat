@@ -20,7 +20,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 object LanguageGuesserService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  def guess_language(index_name: String, request_data: LanguageGuesserRequestIn): Future[Option[LanguageGuesserRequestOut]] = Future {
+  def guess_language(index_name: String, request_data: LanguageGuesserRequestIn):
+  Future[Option[LanguageGuesserRequestOut]] = Future {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()
     val result: LanguageResult = detector.detect(request_data.input_text)
 

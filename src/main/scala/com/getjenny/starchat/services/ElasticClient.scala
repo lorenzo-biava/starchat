@@ -60,7 +60,8 @@ trait ElasticClient {
     }).toList
 
     val refresh_index_result =
-      RefreshIndexResult(failed_shards_n = refresh_res.getFailedShards,
+      RefreshIndexResult(index_name = index_name,
+        failed_shards_n = refresh_res.getFailedShards,
         successful_shards_n = refresh_res.getSuccessfulShards,
         total_shards_n = refresh_res.getTotalShards,
         failed_shards = failed_shards

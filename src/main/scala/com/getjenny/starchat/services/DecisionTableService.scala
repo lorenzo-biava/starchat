@@ -51,10 +51,14 @@ object DecisionTableService {
   val queries_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
             "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
+  def getIndexName(index_name: String, suffix: Option[String] = None): String = {
+    index_name + "." + suffix.getOrElse(elastic_client.dt_index_suffix)
+  }
+
   def search(index_name: String, documentSearch: DTDocumentSearch): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elastic_client.get_client()
-    val search_builder : SearchRequestBuilder = client.prepareSearch(index_name)
-      .setTypes(elastic_client.type_name)
+    val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
+      .setTypes(elastic_client.dt_index_suffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val min_score = documentSearch.min_score.getOrElse(
@@ -83,7 +87,7 @@ object DecisionTableService {
             .boost(1 + (min_score * boost_exact_match_factor))
           ),
         queries_score_mode.getOrElse(elastic_client.queries_score_mode, ScoreMode.Max)
-      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(10000))
+      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100))
       bool_query_builder.must(nested_query)
     }
 
@@ -101,7 +105,7 @@ object DecisionTableService {
 
       val state : String = item.getId
 
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.asInstanceOf[Map[String, Any]]
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
       val execution_order: Int = source.get("execution_order") match {
         case Some(t) => t.asInstanceOf[Int]
@@ -255,11 +259,13 @@ object DecisionTableService {
     builder.endObject()
 
     val client: TransportClient = elastic_client.get_client()
-    val response = client.prepareIndex(index_name,
-      elastic_client.type_name, document.state).setSource(builder).get()
+    val response = client.prepareIndex().setIndex(getIndexName(index_name))
+      .setType(elastic_client.dt_index_suffix)
+      .setId(document.state)
+      .setSource(builder).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(index_name)
+      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
       }
@@ -335,12 +341,13 @@ object DecisionTableService {
     builder.endObject()
 
     val client: TransportClient = elastic_client.get_client()
-    val response: UpdateResponse = client.prepareUpdate(index_name, elastic_client.type_name, id)
+    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(index_name))
+      .setType(elastic_client.dt_index_suffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(index_name)
+      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
       }
@@ -361,9 +368,8 @@ object DecisionTableService {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(index_name)
+        .source(getIndexName(index_name))
         .filter(qb)
-        .filter(QueryBuilders.typeQuery(elastic_client.type_name))
         .get()
 
     val deleted: Long = response.getDeleted
@@ -374,10 +380,11 @@ object DecisionTableService {
 
   def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
-    val response: DeleteResponse = client.prepareDelete(index_name, elastic_client.type_name, id).get()
+    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(index_name))
+      .setType(elastic_client.dt_index_suffix).setId(id).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(index_name)
+      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
       }
@@ -397,8 +404,8 @@ object DecisionTableService {
     val client: TransportClient = elastic_client.get_client()
 
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
-    val scroll_resp : SearchResponse = client.prepareSearch(index_name)
-      .setTypes(elastic_client.type_name)
+    val scroll_resp : SearchResponse = client.prepareSearch(getIndexName(index_name))
+      .setTypes(elastic_client.dt_index_suffix)
       .setQuery(qb)
       .setScroll(new TimeValue(60000))
       .setSize(10000).get()
@@ -407,7 +414,7 @@ object DecisionTableService {
     val decision_table_content : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.asInstanceOf[Map[String, Any]]
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
       val execution_order : Int = source.get("execution_order") match {
         case Some(t) => t.asInstanceOf[Int]
@@ -483,7 +490,7 @@ object DecisionTableService {
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multiget_builder.add(index_name, elastic_client.type_name, ids:_*)
+      multiget_builder.add(getIndexName(index_name), elastic_client.dt_index_suffix, ids:_*)
     } else {
       val all_documents = getDTDocuments(index_name)
       return all_documents
@@ -596,7 +603,7 @@ object DecisionTableService {
     val index_document_list_result = if (document_list.isDefined) {
       val values = document_list.get.map(d => {
         val indexing_result: Try[Option[IndexDocumentResult]] =
-          Await.ready(create(index_name, d, 1), 5.seconds).value.get
+          Await.ready(create(index_name, d, 1), 10.seconds).value.get
         indexing_result match {
           case Success(t) =>
             t.get

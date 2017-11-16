@@ -27,16 +27,16 @@ class CronJobService (implicit val executionContext: ExecutionContext) {
       case Tick =>
         analyzerService.analyzers_map.foreach(item => {
           val timestamp_result: Try[Option[Long]] =
-            Await.ready(systemService.getDTReloadTimestamp(index_name = item._1), 10.seconds).value.get
+            Await.ready(systemService.getDTReloadTimestamp(index_name = item._1), 20.seconds).value.get
           val remote_ts: Long = timestamp_result match {
             case Success(t) =>
               val ts: Long = t.getOrElse(-1)
               if (ts > 0) {
-                log.info("dt reload timestamp: " + ts)
+                log.info("dt reload timestamp for index(" + item._1 + "): " + ts)
               }
               ts
             case Failure(e) =>
-              log.error("unable to load analyzers from the cron job: " + e.getMessage)
+              log.debug("timestamp for index(" + item._1 + ") not found " + e.getMessage)
               -1: Long
           }
 
@@ -46,14 +46,19 @@ class CronJobService (implicit val executionContext: ExecutionContext) {
               Await.ready(analyzerService.loadAnalyzer(index_name = item._1), 60.seconds).value.get
             reload_result match {
               case Success(t) =>
-                log.info("Analyzer loaded, remote ts: " + remote_ts)
+                log.info("Analyzer loaded for index(" + item._1 + "), remote ts: " + remote_ts)
                 SystemService.dt_reload_timestamp = remote_ts
               case Failure(e) =>
-                log.error("unable to load analyzers from the cron job" + e.getMessage)
+                log.error("unable to load analyzers for index(" + item._1 + ") from the cron job" + e.getMessage)
             }
           } else {
-            log.debug("local dt reload: no update, timestamp(" +
-              SystemService.dt_reload_timestamp + ") Remote(" + remote_ts + ")")
+            analyzerService.analyzers_map.remove(item._1) match {
+              case Some(t) =>
+                log.info("index_key (" + item._1 + ") last_evaluation_timestamp(" + t.last_evaluation_timestamp +
+                  ") was removed")
+              case None =>
+                log.error("index_key (" + item._1 + ") not found")
+            }
           }
         })
       case _ =>
@@ -77,8 +82,6 @@ class CronJobService (implicit val executionContext: ExecutionContext) {
         systemService.elastic_client.dt_reload_check_frequency seconds,
         reloadDecisionTableActorRef,
         Tick)
-    } else {
-      log.info("reloading DT disabled")
     }
   }
 }

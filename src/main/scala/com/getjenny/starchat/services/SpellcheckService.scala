@@ -38,6 +38,7 @@ object SpellcheckService {
       .addSuggestion("suggestions", suggestion_builder)
 
     val search_builder = client.prepareSearch(index_name)
+      .setTypes(elastic_client.kb_index_suffix)
       .suggest(suggest_builder)
 
     val search_response : SearchResponse = search_builder

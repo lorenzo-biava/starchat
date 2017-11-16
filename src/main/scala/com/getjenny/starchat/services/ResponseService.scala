@@ -9,11 +9,6 @@ import com.getjenny.starchat.entities._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.collection.immutable.{List, Map}
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.common.unit._
-
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
@@ -42,6 +37,7 @@ object ResponseService {
   Future[Option[ResponseRequestOutOperationResult]] = Future {
 
     if(! AnalyzerService.analyzers_map.contains(index_name)) {
+      log.debug("Analyzers map for index(" + index_name + ") is not present, fetching and building")
       AnalyzerService.initializeAnalyzers(index_name)
     }
 

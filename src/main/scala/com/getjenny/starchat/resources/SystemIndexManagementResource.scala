@@ -28,7 +28,7 @@ trait SystemIndexManagementResource extends MyResource {
           operation match {
             case "refresh" =>
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.refresh_index()) {
+              onCompleteWithBreaker(breaker)(indexManagementService.refresh_indexes()) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
                   Option { IndexManagementResponse(message = e.getMessage) } )

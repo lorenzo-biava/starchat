@@ -1,7 +1,11 @@
 {
-  "properties": {
-    "state_refresh_ts": {
-      "type": "long"
+  "mappings": {
+    "system": {
+      "properties": {
+        "state_refresh_ts": {
+          "type": "long"
+        }
+      }
     }
   }
 }

@@ -41,6 +41,11 @@ object SystemService {
   val elastic_client = SystemElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
+
+  def getIndexName(index_name: String, suffix: Option[String] = None): String = {
+    index_name + "." + suffix.getOrElse(elastic_client.system_refresh_dt_index_suffix)
+  }
+
   def setDTReloadTimestamp(index_name: String, refresh: Int = 0):
       Future[Option[Long]] = Future {
     val dt_reload_doc_id: String = index_name
@@ -52,15 +57,17 @@ object SystemService {
 
     val client: TransportClient = elastic_client.get_client()
     val response: UpdateResponse =
-      client.prepareUpdate(index_name, elastic_client.dt_reload_timestamp_field_name, dt_reload_doc_id)
-      .setDocAsUpsert(true)
-      .setDoc(builder)
-      .get()
+      client.prepareUpdate().setIndex(getIndexName(index_name))
+        .setType(elastic_client.system_refresh_dt_index_suffix)
+        .setId(dt_reload_doc_id)
+        .setDocAsUpsert(true)
+        .setDoc(builder)
+        .get()
 
     log.debug("dt reload timestamp response status: " + response.status())
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(index_name)
+      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("System: index refresh failed: (" + index_name + ")")
       }
@@ -73,7 +80,9 @@ object SystemService {
     val dt_reload_doc_id: String = index_name
     val client: TransportClient = elastic_client.get_client()
     val get_builder: GetRequestBuilder = client.prepareGet()
-    get_builder.setIndex(index_name).setType(elastic_client.dt_reload_timestamp_field_name).setId(dt_reload_doc_id)
+      .setIndex(getIndexName(index_name))
+      .setType(elastic_client.system_refresh_dt_index_suffix)
+      .setId(dt_reload_doc_id)
     val response: GetResponse = get_builder.get()
 
     val timestamp = if(! response.isExists || response.isSourceEmpty) {
