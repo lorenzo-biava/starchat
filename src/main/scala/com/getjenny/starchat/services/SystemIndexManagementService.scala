@@ -83,7 +83,7 @@ object SystemIndexManagementService {
       .mappings.containsKey(system_refresh_dt_index_name)
 
     Option {
-      IndexManagementResponse("settings index: " + elastic_client.index_name
+      IndexManagementResponse("check index: " + elastic_client.index_name
         + " system(" +system_refresh_dt_index_name + ":" + system_refresh_dt_check + ")"
       )
     }
@@ -91,8 +91,9 @@ object SystemIndexManagementService {
 
   def update_index() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
+    val system_refresh_dt_json_path_update: String = "/index_management/json_index_spec/system/update/refresh_decisiontable.json"
 
-    val system_refresh_dt_json_is: InputStream = getClass.getResourceAsStream(system_refresh_dt_json_path)
+    val system_refresh_dt_json_is: InputStream = getClass.getResourceAsStream(system_refresh_dt_json_path_update)
 
     val indexManagementResponse = if(system_refresh_dt_json_is != null) {
       val system_refresh_dt_json: String = Source.fromInputStream(system_refresh_dt_json_is, "utf-8").mkString
@@ -101,6 +102,7 @@ object SystemIndexManagementService {
 
       val update_system_refresh_dt_index_res  =
         client.admin().indices().preparePutMapping(system_refresh_dt_index_name)
+          .setType(elastic_client.system_refresh_dt_index_suffix)
           .setSource(system_refresh_dt_json, XContentType.JSON).get()
 
       Option {
@@ -109,7 +111,7 @@ object SystemIndexManagementService {
         )
       }
     } else {
-      val message: String = "Check one of these files: (" + system_refresh_dt_json_path + ")"
+      val message: String = "Check one of these files: (" + system_refresh_dt_json_path_update + ")"
       throw new FileNotFoundException(message)
     }
     indexManagementResponse

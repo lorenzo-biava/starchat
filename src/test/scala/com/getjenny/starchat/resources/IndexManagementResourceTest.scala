@@ -20,18 +20,32 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
   val routes = service.routes
 
   "StarChat" should {
-    "return an HTTP code 200 when creating a new index" in {
-      Post(s"/index_management/create") ~> routes ~> check {
+    "return an HTTP code 200 when creating a new system index" in {
+      Post(s"/system_index_management/create") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
-        response.message should fullyMatch regex "(create index: .+ create_index_ack\\(true\\))"
+        response.message should be ("IndexCreation: system(starchat_system_0.refresh_decisiontable,true)")
+      }
+    }
+  }
+
+  it should {
+    "return an HTTP code 200 when creating a new index" in {
+      Post(s"/index_0/english/index_management/create") ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
+        val response = responseAs[IndexManagementResponse]
+        response.message should fullyMatch regex "IndexCreation: " +
+          "decisiontable\\(" + index_name_regex + "\\.state,true\\) " +
+          "knowledgebase\\(" + index_name_regex + "\\.question,true\\) " +
+          "term\\(" + index_name_regex + "\\.term,true\\)".r
       }
     }
   }
 
   it should {
     "return an HTTP code 400 when trying to create again the same index" in {
-      Post(s"/index_management/create") ~> routes ~> check {
+      Post(s"/index_0/english/index_management/create") ~> routes ~> check {
         status shouldEqual StatusCodes.BadRequest
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "index \\[.*\\] already exists"
@@ -41,7 +55,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when calling elasticsearch index refresh" in {
-      Post(s"/index_management/refresh") ~> routes ~> check {
+      Post(s"/index_0/index_management/refresh") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
       }
     }
@@ -49,17 +63,32 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when getting informations from the index" in {
-      Get(s"/index_management") ~> routes ~> check {
+      Get(s"/index_0/index_management") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
+        val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
-        response.message shouldEqual "settings index: jenny-en-0 sys_type_check(system:true) dt_type_check(state:true) kb_type_check(question:true) term_type_name(term:true)"
+        response.message should fullyMatch regex "check index: " + index_name_regex + " " +
+          "decisiontable\\(" + index_name_regex + "\\.state,true\\) " +
+          "knowledgebase\\(" + index_name_regex + "\\.question,true\\) " +
+          "term\\(" + index_name_regex + "\\.term,true\\)".r
       }
     }
   }
 
+  /*
   it should {
     "return an HTTP code 200 updating the index" in {
-      Put(s"/index_management") ~> routes ~> check {
+      Put(s"/index_0/english/index_management") ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val response = responseAs[IndexManagementResponse]
+      }
+    }
+  }
+  */
+
+  it should {
+    "return an HTTP code 200 when deleting an existing index" in {
+      Delete(s"/index_0/index_management") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }
@@ -67,13 +96,23 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
   }
 
   it should {
-    "return an HTTP code 400 when deleting an index" in {
-      Delete(s"/index_management") ~> routes ~> check {
+    "return an HTTP code 400 when deleting a non existing index" in {
+      Delete(s"/index_0/index_management") ~> routes ~> check {
+        status shouldEqual StatusCodes.BadRequest
+        val response = responseAs[IndexManagementResponse]
+      }
+    }
+  }
+
+  it should {
+    "return an HTTP code 200 when deleting an existing system index" in {
+      Delete(s"/system_index_management") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }
     }
   }
+
 }
 
 

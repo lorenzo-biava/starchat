@@ -117,7 +117,7 @@ trait DecisionTableResource extends MyResource {
   }
 
   def decisionTableUploadCSVRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decision_table_upload_csv") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_upload_csv") { index_name =>
     pathEnd {
         uploadedFile("csv") {
           case (metadata, file) =>

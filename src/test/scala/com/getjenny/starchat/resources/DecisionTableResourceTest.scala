@@ -20,11 +20,26 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
   val routes = service.routes
 
   "StarChat" should {
-    "return an HTTP code 200 when creating a new index" in {
-      Post(s"/index_management/create") ~> routes ~> check {
+    "return an HTTP code 200 when creating a new system index" in {
+      Post(s"/system_index_management/create") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
-        response.message should fullyMatch regex "(create index: .+ create_index_ack\\(true\\))"
+        response.message should be ("IndexCreation: system(starchat_system_0.refresh_decisiontable,true)")
+      }
+    }
+  }
+
+
+  it should {
+    "return an HTTP code 200 when creating a new index" in {
+      Post(s"/index_0/english/index_management/create") ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
+        val response = responseAs[IndexManagementResponse]
+        response.message should fullyMatch regex "IndexCreation: " +
+          "decisiontable\\(" + index_name_regex + "\\.state,true\\) " +
+          "knowledgebase\\(" + index_name_regex + "\\.question,true\\) " +
+          "term\\(" + index_name_regex + "\\.term,true\\)".r
       }
     }
   }
@@ -42,15 +57,24 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
             HttpEntity(ContentTypes.`text/plain(UTF-8)`, input_data),
             Map("filename" -> "data.csv")))
 
-      Post(s"/decisiontable_upload_csv", multipartForm) ~> routes ~> check {
+      Post(s"/index_0/decisiontable_upload_csv", multipartForm) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
       }
     }
   }
 
   it should {
-    "return an HTTP code 400 when deleting an index" in {
-      Delete(s"/index_management") ~> routes ~> check {
+    "return an HTTP code 200 when deleting an index" in {
+      Delete(s"/index_0/index_management") ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val response = responseAs[IndexManagementResponse]
+      }
+    }
+  }
+
+  it should {
+    "return an HTTP code 200 when deleting an existing system index" in {
+      Delete(s"/system_index_management") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }

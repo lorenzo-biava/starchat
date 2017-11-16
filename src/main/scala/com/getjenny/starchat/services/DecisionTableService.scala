@@ -411,7 +411,7 @@ object DecisionTableService {
       .setSize(10000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
-    val decision_table_content : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
+    val decisiontable_content : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
       val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
@@ -478,9 +478,9 @@ object DecisionTableService {
     }).sortBy(_.document.state)
 
     val max_score : Float = .0f
-    val total : Int = decision_table_content.length
+    val total : Int = decisiontable_content.length
     val search_results : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = max_score,
-      hits = decision_table_content)
+      hits = decisiontable_content)
 
     Future{Option{search_results}}
   }
