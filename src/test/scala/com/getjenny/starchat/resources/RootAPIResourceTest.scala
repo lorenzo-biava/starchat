@@ -12,11 +12,12 @@ import akka.http.scaladsl.testkit.RouteTestTimeout
 import scala.concurrent.duration._
 import akka.testkit._
 import scala.util.matching.Regex
+import akka.http.scaladsl.model.HttpMethods._
 
 class RootAPIResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds.dilated(system))
   val service = new StarChatService
-  val routes = service.routes
+  val routes: Route = service.routes
 
   "StarChat" should {
     "return an map with endpoints and supported methods" in {

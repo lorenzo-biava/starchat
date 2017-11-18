@@ -70,7 +70,7 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
 
   it should {
     "return an HTTP code 200 when deleting an index" in {
-      Delete(s"/index_0/index_management") ~> routes ~> check {
+      Delete(s"/index_0/index_management") ~>  addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }
@@ -79,7 +79,7 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
 
   it should {
     "return an HTTP code 200 when deleting an existing system index" in {
-      Delete(s"/system_index_management") ~> routes ~> check {
+      Delete(s"/system_index_management") ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }
