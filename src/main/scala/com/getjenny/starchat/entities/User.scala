@@ -12,7 +12,7 @@ object Permissions extends Enumeration {
 case class User(
                  id: String, /** user id */
                  password: String, /** user password */
-                 salt: Long, /** salt for password hashing */
+                 salt: String, /** salt for password hashing */
                  permissions: Map[
                    String, /** index name */
                    Set[Permissions.Value] /** permissions granted for the index */

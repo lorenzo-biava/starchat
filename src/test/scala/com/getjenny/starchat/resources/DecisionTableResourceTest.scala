@@ -12,12 +12,17 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import scala.concurrent.duration._
 import akka.testkit._
+import akka.http.scaladsl.model.headers.BasicHttpCredentials
+import akka.http.scaladsl.model.headers.Authorization
 
 class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds.dilated(system))
 
   val service = new StarChatService
   val routes = service.routes
+
+  val testUserCredentials= BasicHttpCredentials("test_user", "p4ssw0rd")
+  val authorization = Authorization(testUserCredentials)
 
   "StarChat" should {
     "return an HTTP code 200 when creating a new system index" in {
@@ -57,7 +62,7 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
             HttpEntity(ContentTypes.`text/plain(UTF-8)`, input_data),
             Map("filename" -> "data.csv")))
 
-      Post(s"/index_0/decisiontable_upload_csv", multipartForm) ~> routes ~> check {
+      Post(s"/index_0/decisiontable_upload_csv", multipartForm) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
       }
     }
