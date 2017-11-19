@@ -28,7 +28,7 @@ trait IndexManagementResource extends MyResource {
           authenticateBasicPFAsync(realm = "starchat",
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              authenticator.hasPermissions(user, index_name, Permissions.admin)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(indexManagementService.create_index(index_name, language)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
@@ -79,7 +79,7 @@ trait IndexManagementResource extends MyResource {
             authenticateBasicPFAsync(realm = "starchat",
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(indexManagementService.update_index(index_name, language)) {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
@@ -124,7 +124,7 @@ trait IndexManagementResource extends MyResource {
               authenticateBasicPFAsync(realm = "starchat",
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(indexManagementService.remove_index(index_name)) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {

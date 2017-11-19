@@ -29,7 +29,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
       Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
-        response.message should be ("IndexCreation: system(starchat_system_0.refresh_decisiontable,true)")
+        response.message should be ("IndexCreation: system(starchat_system_0.refresh_decisiontable,true) user(starchat_system_0.user, true)")
       }
     }
   }
