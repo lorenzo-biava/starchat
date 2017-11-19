@@ -1,6 +1,4 @@
-package com.getjenny.starchat.routing
-
-import com.getjenny.starchat.services.BasicHttpStarchatAuthenticatorElasticSearch
+package com.getjenny.starchat.routing.auth
 
 
 case class AuthenticatorClassNotFoundException(message: String = "", cause: Throwable = null)
@@ -13,7 +11,7 @@ object AuthenticatorFactory {
       case "basic_http_es" =>
         new BasicHttpStarchatAuthenticatorElasticSearch
       case _ =>
-        throw new AuthenticatorClassNotFoundException("Authenticator not supported: " + auth_method)
+        throw AuthenticatorClassNotFoundException("Authenticator not supported: " + auth_method)
     }
   }
 }

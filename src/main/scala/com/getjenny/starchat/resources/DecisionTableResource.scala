@@ -28,7 +28,7 @@ trait DecisionTableResource extends MyResource {
           authenticateBasicPFAsync(realm = "starchat",
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.create)) {
+              authenticator.hasPermissions(user, index_name, Permissions.write)) {
               parameters("refresh".as[Int] ? 0) { refresh =>
                 entity(as[DTDocument]) { document =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -92,7 +92,7 @@ trait DecisionTableResource extends MyResource {
             authenticateBasicPFAsync(realm = "starchat",
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.delete)) {
+                authenticator.hasPermissions(user, index_name, Permissions.write)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(decisionTableService.deleteAll(index_name)) {
                   case Success(t) =>
@@ -115,7 +115,7 @@ trait DecisionTableResource extends MyResource {
             authenticateBasicPFAsync(realm = "starchat",
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.update)) {
+                authenticator.hasPermissions(user, index_name, Permissions.write)) {
                 entity(as[DTDocumentUpdate]) { update =>
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     val decisionTableService = DecisionTableService
@@ -172,7 +172,7 @@ trait DecisionTableResource extends MyResource {
         authenticateBasicPFAsync(realm = "starchat",
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
-            authenticator.hasPermissions(user, index_name, Permissions.create)) {
+            authenticator.hasPermissions(user, index_name, Permissions.write)) {
             uploadedFile("csv") {
               case (metadata, file) =>
                 val decisionTableService = DecisionTableService
@@ -283,7 +283,7 @@ trait DecisionTableResource extends MyResource {
           authenticateBasicPFAsync(realm = "starchat",
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.create)) {
+              authenticator.hasPermissions(user, index_name, Permissions.write)) {
               entity(as[ResponseRequestIn]) {
                 response_request =>
                   val responseService = ResponseService

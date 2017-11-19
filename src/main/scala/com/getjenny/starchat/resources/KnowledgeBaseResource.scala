@@ -8,7 +8,7 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
-import com.getjenny.starchat.services.{BasicHttpStarchatAuthenticatorElasticSearch, KnowledgeBaseService}
+import com.getjenny.starchat.services.KnowledgeBaseService
 import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.SCActorSystem
 import akka.pattern.CircuitBreaker
@@ -27,7 +27,7 @@ trait KnowledgeBaseResource extends MyResource {
           authenticateBasicPFAsync(realm = "starchat",
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.create)) {
+              authenticator.hasPermissions(user, index_name, Permissions.write)) {
               parameters("refresh".as[Int] ? 0) { refresh =>
                 entity(as[KBDocument]) { document =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -84,7 +84,7 @@ trait KnowledgeBaseResource extends MyResource {
             authenticateBasicPFAsync(realm = "starchat",
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.delete)) {
+                authenticator.hasPermissions(user, index_name, Permissions.write)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(knowledgeBaseService.deleteAll(index_name)) {
                   case Success(t) =>
@@ -107,7 +107,7 @@ trait KnowledgeBaseResource extends MyResource {
             authenticateBasicPFAsync(realm = "starchat",
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.update)) {
+                authenticator.hasPermissions(user, index_name, Permissions.write)) {
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[KBDocumentUpdate]) { update =>
                     val knowledgeBaseService = KnowledgeBaseService
@@ -131,7 +131,7 @@ trait KnowledgeBaseResource extends MyResource {
               authenticateBasicPFAsync(realm = "starchat",
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.delete)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.write)) {
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     val knowledgeBaseService = KnowledgeBaseService
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -159,7 +159,7 @@ trait KnowledgeBaseResource extends MyResource {
           authenticateBasicPFAsync(realm = "starchat",
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.create)) {
+              authenticator.hasPermissions(user, index_name, Permissions.write)) {
               entity(as[KBDocumentSearch]) { docsearch =>
                 val knowledgeBaseService = KnowledgeBaseService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()

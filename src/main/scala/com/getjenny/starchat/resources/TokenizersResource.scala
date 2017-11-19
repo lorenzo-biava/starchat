@@ -10,7 +10,7 @@ import com.getjenny.starchat.routing._
 
 import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
-import com.getjenny.starchat.services.{BasicHttpStarchatAuthenticatorElasticSearch, TermService}
+import com.getjenny.starchat.services.TermService
 import akka.pattern.CircuitBreaker
 
 import scala.concurrent.duration._

@@ -20,12 +20,9 @@ class RootAPIResourceTest extends WordSpec with Matchers with ScalatestRouteTest
   val routes: Route = service.routes
 
   "StarChat" should {
-    "return an map with endpoints and supported methods" in {
+    "return a 200 if the service responds (Health Check)" in {
       Get(s"/") ~> routes ~> check {
         status shouldEqual StatusCodes.OK
-        val response = responseAs[RootAPIsDescription]
-        val api_description = new RootAPIsDescription
-        api_description shouldEqual response
       }
     }
   }

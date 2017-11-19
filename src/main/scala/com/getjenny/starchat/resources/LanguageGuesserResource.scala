@@ -12,7 +12,7 @@ import com.getjenny.starchat.routing._
 import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.services.{BasicHttpStarchatAuthenticatorElasticSearch, LanguageGuesserService}
+import com.getjenny.starchat.services.LanguageGuesserService
 import akka.pattern.CircuitBreaker
 
 import scala.concurrent.duration._
@@ -53,7 +53,7 @@ trait LanguageGuesserResource extends MyResource {
             authenticateBasicPFAsync(realm = "starchat",
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.create)) {
+                authenticator.hasPermissions(user, index_name, Permissions.write)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(languageGuesserService.get_languages(index_name, language)) {
                   case Success(t) =>

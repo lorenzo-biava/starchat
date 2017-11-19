@@ -6,7 +6,7 @@ package com.getjenny.starchat.entities
 
 object Permissions extends Enumeration {
   type Permission = Value
-  val create, read, update, delete = Value
+  val read, write = Value
 }
 
 case class User(

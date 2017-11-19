@@ -18,9 +18,9 @@ trait RootAPIResource extends MyResource {
     pathEnd {
       get {
         val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-        onCompleteWithBreaker(breaker)(Future{Option(new RootAPIsDescription)}) {
-          case Success(t) =>
-            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
+        onCompleteWithBreaker(breaker)(Future{None}) {
+          case Success(v) =>
+            completeResponse(StatusCodes.OK)
           case Failure(e) =>
             log.error("route=RootRoutes method=GET: " + e.getMessage)
             completeResponse(StatusCodes.BadRequest,

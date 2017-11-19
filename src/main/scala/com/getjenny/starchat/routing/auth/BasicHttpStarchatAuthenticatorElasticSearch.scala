@@ -1,19 +1,19 @@
-package com.getjenny.starchat.services
+package com.getjenny.starchat.routing.auth
 
 import akka.http.scaladsl.server.directives.Credentials
 import akka.http.scaladsl.server.directives.SecurityDirectives._
-
-import scala.concurrent.{Await, Future}
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.routing.{AuthenticatorException, StarchatAuthenticator}
-
-import scala.util.{Failure, Success, Try}
-import scala.concurrent.duration._
+import com.getjenny.starchat.services.SystemIndexManagementService
 import com.roundeights.hasher.Implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success}
 
 class BasicHttpStarchatAuthenticatorElasticSearch extends StarchatAuthenticator {
+
+  val systemAuthService: SystemIndexManagementService.type = SystemIndexManagementService
 
   def secret(password: String, salt: String): String = {
     password + "#" + salt
@@ -25,7 +25,7 @@ class BasicHttpStarchatAuthenticatorElasticSearch extends StarchatAuthenticator 
         id = "test_user", /** user id */
         password = "3c98bf19cb962ac4cd0227142b3495ab1be46534061919f792254b80c0f3e566f7819cae73bdc616af0ff555f7460ac96d88d56338d659ebd93e2be858ce1cf9", /** user password */
         salt = "salt", /** salt for password hashing */
-        permissions = Map("index_0" -> Set(Permissions.read, Permissions.delete, Permissions.update, Permissions.create))
+        permissions = Map("index_0" -> Set(Permissions.read, Permissions.write, Permissions.write, Permissions.write))
       )
     }
   }

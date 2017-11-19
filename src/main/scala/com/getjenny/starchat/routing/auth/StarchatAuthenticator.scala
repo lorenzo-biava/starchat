@@ -1,4 +1,4 @@
-package com.getjenny.starchat.routing
+package com.getjenny.starchat.routing.auth
 
 import akka.http.scaladsl.server.directives.SecurityDirectives._
 import com.getjenny.starchat.entities._
