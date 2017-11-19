@@ -25,15 +25,21 @@ trait IndexManagementResource extends MyResource {
       (index_name, language) =>
         val indexManagementService = IndexManagementService
         post {
-          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(indexManagementService.create_index(index_name, language)) {
-            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-              t
-            })
-            case Failure(e) => completeResponse(StatusCodes.BadRequest,
-              Option {
-                IndexManagementResponse(message = e.getMessage)
-              })
+          authenticateBasicPFAsync(realm = "starchat",
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(indexManagementService.create_index(index_name, language)) {
+                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                  t
+                })
+                case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                  Option {
+                    IndexManagementResponse(message = e.getMessage)
+                  })
+              }
+            }
           }
         }
     }
@@ -44,15 +50,21 @@ trait IndexManagementResource extends MyResource {
       (index_name) =>
         val indexManagementService = IndexManagementService
         post {
-          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(indexManagementService.refresh_indexes(index_name)) {
-            case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-              t
-            })
-            case Failure(e) => completeResponse(StatusCodes.BadRequest,
-              Option {
-                IndexManagementResponse(message = e.getMessage)
-              })
+          authenticateBasicPFAsync(realm = "starchat",
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, index_name, Permissions.write)) {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(indexManagementService.refresh_indexes(index_name)) {
+                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                  t
+                })
+                case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                  Option {
+                    IndexManagementResponse(message = e.getMessage)
+                  })
+              }
+            }
           }
         }
     }
@@ -64,15 +76,21 @@ trait IndexManagementResource extends MyResource {
         val indexManagementService = IndexManagementService
         pathEnd {
           put {
-            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(indexManagementService.update_index(index_name, language)) {
-              case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                t
-              })
-              case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                Option {
-                  IndexManagementResponse(message = e.getMessage)
-                })
+            authenticateBasicPFAsync(realm = "starchat",
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(indexManagementService.update_index(index_name, language)) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
+                  })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    })
+                }
+              }
             }
           }
         }
@@ -85,30 +103,43 @@ trait IndexManagementResource extends MyResource {
         val indexManagementService = IndexManagementService
         pathEnd {
           get {
-            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(indexManagementService.check_index(index_name)) {
-              case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                t
-              })
-              case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                Option {
-                  IndexManagementResponse(message = e.getMessage)
-                })
+            authenticateBasicPFAsync(realm = "starchat",
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(indexManagementService.check_index(index_name)) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
+                  })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    })
+                }
+              }
             }
           } ~
             delete {
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.remove_index(index_name)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                  t
-                })
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Option {
-                    IndexManagementResponse(message = e.getMessage)
-                  })
+              authenticateBasicPFAsync(realm = "starchat",
+                authenticator = authenticator.authenticator) { user =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(indexManagementService.remove_index(index_name)) {
+                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        IndexManagementResponse(message = e.getMessage)
+                      })
+                  }
+                }
               }
             }
         }
     }
   }
 }
+

@@ -21,12 +21,12 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
   val service = new StarChatService
   val routes = service.routes
 
-  val testUserCredentials= BasicHttpCredentials("test_user", "p4ssw0rd")
-  val authorization = Authorization(testUserCredentials)
+  val testAdminCredentials = BasicHttpCredentials("admin", "adminp4ssw0rd")
+  val testUserCredentials = BasicHttpCredentials("test_user", "p4ssw0rd")
 
   "StarChat" should {
     "return an HTTP code 200 when creating a new system index" in {
-      Post(s"/system_index_management/create") ~> routes ~> check {
+      Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
         response.message should be ("IndexCreation: system(starchat_system_0.refresh_decisiontable,true)")
@@ -36,7 +36,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when creating a new index" in {
-      Post(s"/index_0/english/index_management/create") ~> routes ~> check {
+      Post(s"/index_0/english/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
@@ -50,7 +50,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 400 when trying to create again the same index" in {
-      Post(s"/index_0/english/index_management/create") ~> routes ~> check {
+      Post(s"/index_0/english/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.BadRequest
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "index \\[.*\\] already exists"
@@ -60,7 +60,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when calling elasticsearch index refresh" in {
-      Post(s"/index_0/index_management/refresh") ~> routes ~> check {
+      Post(s"/index_0/index_management/refresh") ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
       }
     }
@@ -68,7 +68,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when getting informations from the index" in {
-      Get(s"/index_0/index_management") ~> routes ~> check {
+      Get(s"/index_0/index_management") ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
@@ -93,7 +93,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when deleting an existing index" in {
-      Delete(s"/index_0/index_management") ~> routes ~> check {
+      Delete(s"/index_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }
@@ -102,7 +102,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 400 when deleting a non existing index" in {
-      Delete(s"/index_0/index_management") ~> routes ~> check {
+      Delete(s"/index_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.BadRequest
         val response = responseAs[IndexManagementResponse]
       }
@@ -111,7 +111,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when deleting an existing system index" in {
-      Delete(s"/system_index_management") ~> routes ~> check {
+      Delete(s"/system_index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }

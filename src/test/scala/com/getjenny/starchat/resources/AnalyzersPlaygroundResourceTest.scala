@@ -21,12 +21,12 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
   val service = new StarChatService
   val routes = service.routes
 
-  val testUserCredentials= BasicHttpCredentials("test_user", "p4ssw0rd")
-  val authorization = Authorization(testUserCredentials)
+  val testAdminCredentials = BasicHttpCredentials("admin", "adminp4ssw0rd")
+  val testUserCredentials = BasicHttpCredentials("test_user", "p4ssw0rd")
 
   "StarChat" should {
      "return an HTTP code 200 when creating a new system index" in {
-      Post(s"/system_index_management/create") ~> routes ~> check {
+      Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
         response.message should be ("IndexCreation: system(starchat_system_0.refresh_decisiontable,true)")
@@ -36,7 +36,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
 
   it should {
     "return an HTTP code 200 when creating a new index" in {
-      Post(s"/index_0/english/index_management/create") ~> routes ~> check {
+      Post(s"/index_0/english/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
@@ -182,7 +182,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
 
   it should {
     "return an HTTP code 200 when deleting an index" in {
-      Delete(s"/index_0/index_management") ~> routes ~> check {
+      Delete(s"/index_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }
@@ -191,7 +191,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
 
   it should {
     "return an HTTP code 200 when deleting an existing system index" in {
-      Delete(s"/system_index_management") ~> routes ~> check {
+      Delete(s"/system_index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }

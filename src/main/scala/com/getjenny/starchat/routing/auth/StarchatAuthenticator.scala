@@ -14,8 +14,6 @@ trait StarchatAuthenticator {
 
   val authenticator: AsyncAuthenticatorPF[User]
 
-  def hasPermissions(user: User, index: String, permission: Permissions.Value): Future[Boolean] = {
-    val user_permissions = user.permissions.getOrElse(index, Set.empty[Permissions.Value])
-    Future.successful(user_permissions.contains(permission))
-  }
+  def hasPermissions(user: User, index: String, permission: Permissions.Value): Future[Boolean]
+
 }
