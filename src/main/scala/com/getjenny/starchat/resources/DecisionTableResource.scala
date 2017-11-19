@@ -8,7 +8,7 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
-import com.getjenny.starchat.services.{AnalyzerService, BasicHttpAuthenticatorElasticSearch, DecisionTableService, ResponseService}
+import com.getjenny.starchat.services.{AnalyzerService, DecisionTableService, ResponseService}
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.SCActorSystem
@@ -26,9 +26,9 @@ trait DecisionTableResource extends MyResource {
         val decisionTableService = DecisionTableService
         post {
           authenticateBasicPFAsync(realm = "starchat",
-            authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.create)) {
+              authenticator.hasPermissions(user, index_name, Permissions.create)) {
               parameters("refresh".as[Int] ? 0) { refresh =>
                 entity(as[DTDocument]) { document =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -51,9 +51,9 @@ trait DecisionTableResource extends MyResource {
         } ~
           get {
             authenticateBasicPFAsync(realm = "starchat",
-              authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
                   if (!dump) {
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -90,9 +90,9 @@ trait DecisionTableResource extends MyResource {
           } ~
           delete {
             authenticateBasicPFAsync(realm = "starchat",
-              authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.delete)) {
+                authenticator.hasPermissions(user, index_name, Permissions.delete)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(decisionTableService.deleteAll(index_name)) {
                   case Success(t) =>
@@ -113,9 +113,9 @@ trait DecisionTableResource extends MyResource {
         path(Segment) { id =>
           put {
             authenticateBasicPFAsync(realm = "starchat",
-              authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.update)) {
+                authenticator.hasPermissions(user, index_name, Permissions.update)) {
                 entity(as[DTDocumentUpdate]) { update =>
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     val decisionTableService = DecisionTableService
@@ -139,9 +139,9 @@ trait DecisionTableResource extends MyResource {
           } ~
             delete {
               authenticateBasicPFAsync(realm = "starchat",
-                authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.read)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.read)) {
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     val decisionTableService = DecisionTableService
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -170,9 +170,9 @@ trait DecisionTableResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_upload_csv") { index_name =>
       pathEnd {
         authenticateBasicPFAsync(realm = "starchat",
-          authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+          authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
-            BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.create)) {
+            authenticator.hasPermissions(user, index_name, Permissions.create)) {
             uploadedFile("csv") {
               case (metadata, file) =>
                 val decisionTableService = DecisionTableService
@@ -201,9 +201,9 @@ trait DecisionTableResource extends MyResource {
       pathEnd {
         get {
           authenticateBasicPFAsync(realm = "starchat",
-            authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.read)) {
+              authenticator.hasPermissions(user, index_name, Permissions.read)) {
               val analyzerService = AnalyzerService
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(analyzerService.getDTAnalyzerMap(index_name)) {
@@ -223,9 +223,9 @@ trait DecisionTableResource extends MyResource {
         } ~
           post {
             authenticateBasicPFAsync(realm = "starchat",
-              authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 val analyzerService = AnalyzerService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzer(index_name, propagate = true)) {
@@ -251,9 +251,9 @@ trait DecisionTableResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicPFAsync(realm = "starchat",
-            authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.read)) {
+              authenticator.hasPermissions(user, index_name, Permissions.read)) {
               entity(as[DTDocumentSearch]) { docsearch =>
                 val decisionTableService = DecisionTableService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -281,9 +281,9 @@ trait DecisionTableResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicPFAsync(realm = "starchat",
-            authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.create)) {
+              authenticator.hasPermissions(user, index_name, Permissions.create)) {
               entity(as[ResponseRequestIn]) {
                 response_request =>
                   val responseService = ResponseService

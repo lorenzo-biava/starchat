@@ -10,7 +10,7 @@ import com.getjenny.starchat.routing._
 
 import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
-import com.getjenny.starchat.services.{BasicHttpAuthenticatorElasticSearch, TermService}
+import com.getjenny.starchat.services.{BasicHttpStarchatAuthenticatorElasticSearch, TermService}
 import akka.pattern.CircuitBreaker
 
 import scala.concurrent.duration._
@@ -26,9 +26,9 @@ trait TermResource extends MyResource {
           operation match {
             case "index" =>
               authenticateBasicPFAsync(realm = "starchat",
-                authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.create)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.create)) {
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     entity(as[Terms]) { request_data =>
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -49,9 +49,9 @@ trait TermResource extends MyResource {
               }
             case "get" =>
               authenticateBasicPFAsync(realm = "starchat",
-                authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.create)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.create)) {
                   entity(as[TermIdsRequest]) { request_data =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(Future {
@@ -79,9 +79,9 @@ trait TermResource extends MyResource {
         pathEnd {
           delete {
             authenticateBasicPFAsync(realm = "starchat",
-              authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.delete)) {
+                authenticator.hasPermissions(user, index_name, Permissions.delete)) {
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[TermIdsRequest]) { request_data =>
                     val termService = TermService
@@ -117,9 +117,9 @@ trait TermResource extends MyResource {
           } ~
             put {
               authenticateBasicPFAsync(realm = "starchat",
-                authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.update)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.update)) {
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     entity(as[Terms]) { request_data =>
                       val termService = TermService
@@ -142,9 +142,9 @@ trait TermResource extends MyResource {
         path(Segment) { operation: String =>
           get {
             authenticateBasicPFAsync(realm = "starchat",
-              authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 operation match {
                   case "term" =>
                     entity(as[Term]) { request_data =>

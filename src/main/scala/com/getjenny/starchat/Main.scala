@@ -31,8 +31,6 @@ case class Parameters(
          https_cert_pass: String)
 
 class StarChatService(parameters: Option[Parameters] = None) extends RestInterface {
-  val config = ConfigFactory.load()
-
   val params: Option[Parameters] = if(parameters.nonEmpty) {
     parameters
   } else {
@@ -108,7 +106,7 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
   }
 
   /* activate cron jobs for data synchronization */
-  cronJobService.reloadDecisionTable()
+  cronJobService.reloadAnalyzers()
 }
 
 object Main extends App {

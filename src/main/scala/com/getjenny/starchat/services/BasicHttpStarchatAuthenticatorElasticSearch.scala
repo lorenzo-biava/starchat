@@ -2,15 +2,18 @@ package com.getjenny.starchat.services
 
 import akka.http.scaladsl.server.directives.Credentials
 import akka.http.scaladsl.server.directives.SecurityDirectives._
+
 import scala.concurrent.{Await, Future}
 import com.getjenny.starchat.entities._
+import com.getjenny.starchat.routing.{AuthenticatorException, StarchatAuthenticator}
+
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.duration._
 import com.roundeights.hasher.Implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object BasicHttpAuthenticatorElasticSearch extends AbstractAuthenticator {
+class BasicHttpStarchatAuthenticatorElasticSearch extends StarchatAuthenticator {
 
   def secret(password: String, salt: String): String = {
     password + "#" + salt

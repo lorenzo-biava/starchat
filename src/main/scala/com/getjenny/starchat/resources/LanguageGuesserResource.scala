@@ -12,7 +12,7 @@ import com.getjenny.starchat.routing._
 import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.services.{BasicHttpAuthenticatorElasticSearch, LanguageGuesserService}
+import com.getjenny.starchat.services.{BasicHttpStarchatAuthenticatorElasticSearch, LanguageGuesserService}
 import akka.pattern.CircuitBreaker
 
 import scala.concurrent.duration._
@@ -26,9 +26,9 @@ trait LanguageGuesserResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicPFAsync(realm = "starchat",
-            authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.read)) {
+              authenticator.hasPermissions(user, index_name, Permissions.read)) {
               entity(as[LanguageGuesserRequestIn]) { request_data =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(languageGuesserService.guess_language(index_name, request_data)) {
@@ -51,9 +51,9 @@ trait LanguageGuesserResource extends MyResource {
         path(Segment) { language: String =>
           get {
             authenticateBasicPFAsync(realm = "starchat",
-              authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.create)) {
+                authenticator.hasPermissions(user, index_name, Permissions.create)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(languageGuesserService.get_languages(index_name, language)) {
                   case Success(t) =>

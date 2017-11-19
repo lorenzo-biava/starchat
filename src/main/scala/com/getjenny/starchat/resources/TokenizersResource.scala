@@ -10,7 +10,7 @@ import com.getjenny.starchat.routing._
 
 import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
-import com.getjenny.starchat.services.{BasicHttpAuthenticatorElasticSearch, TermService}
+import com.getjenny.starchat.services.{BasicHttpStarchatAuthenticatorElasticSearch, TermService}
 import akka.pattern.CircuitBreaker
 
 import scala.concurrent.duration._
@@ -22,9 +22,9 @@ trait TokenizersResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicPFAsync(realm = "starchat",
-            authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.read)) {
+              authenticator.hasPermissions(user, index_name, Permissions.read)) {
               entity(as[TokenizerQueryRequest]) { request_data =>
                 val termService = TermService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -47,9 +47,9 @@ trait TokenizersResource extends MyResource {
         } ~ {
           get {
             authenticateBasicPFAsync(realm = "starchat",
-              authenticator = BasicHttpAuthenticatorElasticSearch.authenticator) { user =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                BasicHttpAuthenticatorElasticSearch.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 val analyzers_description: Map[String, String] =
                   TokenizersDescription.analyzers_map.map(e => {
                     (e._1, e._2._2)

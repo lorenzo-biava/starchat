@@ -66,7 +66,7 @@ class CronJobService (implicit val executionContext: ExecutionContext) {
     }
   }
 
-  def reloadDecisionTable(): Unit = {
+  def reloadAnalyzers(): Unit = {
     if (systemService.elastic_client.dt_reload_check_frequency > 0) {
       val reloadDecisionTableActorRef = SCActorSystem.system.actorOf(Props(classOf[ReloadAnalyzersTickActor], this))
       val delay: Int = if(systemService.elastic_client.dt_reload_check_delay >= 0) {

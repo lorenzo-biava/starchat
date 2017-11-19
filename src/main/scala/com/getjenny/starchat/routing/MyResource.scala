@@ -12,10 +12,18 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.{Route, ValidationRejection}
 import com.getjenny.starchat.SCActorSystem
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 
 trait MyResource extends Directives with JsonSupport {
 
   implicit def executionContext: ExecutionContext
+
+  val config: Config = ConfigFactory.load()
+  val auth_method: String = config.getString("starchat.auth_method")
+
+  val authenticator: StarchatAuthenticator = AuthenticatorFactory.apply(auth_method = auth_method)
+
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def completeResponse(status_code: StatusCode): Route = {
