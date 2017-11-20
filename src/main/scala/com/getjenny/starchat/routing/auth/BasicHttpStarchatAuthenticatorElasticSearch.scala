@@ -3,7 +3,6 @@ package com.getjenny.starchat.routing.auth
 import akka.http.scaladsl.server.directives.Credentials
 import akka.http.scaladsl.server.directives.SecurityDirectives._
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.services.SystemIndexManagementService
 import com.roundeights.hasher.Implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -19,7 +18,7 @@ class BasicHttpStarchatAuthenticatorElasticSearch extends StarchatAuthenticator 
   val password: String = config.getString("starchat.basic_http_es.password")
   val salt: String = config.getString("starchat.basic_http_es.salt")
 
-  val systemAuthService: SystemIndexManagementService.type = SystemIndexManagementService
+  val userService: UserService = UserFactory.apply(SupportedAuthImpl.basic_http_es)
 
   def secret(password: String, salt: String): String = {
     password + "#" + salt
@@ -31,18 +30,8 @@ class BasicHttpStarchatAuthenticatorElasticSearch extends StarchatAuthenticator 
     }
   }
 
-  def fetchUser(id: String): Future[User] = Future {
-    id match {
-      case `admin` =>
-        User(id = admin, password = password, salt = salt, permissions = Map("admin" -> Set(Permissions.admin)))
-      case _ =>
-        User(
-          id = "test_user", /** user id */
-          password = "3c98bf19cb962ac4cd0227142b3495ab1be46534061919f792254b80c0f3e566f7819cae73bdc616af0ff555f7460ac96d88d56338d659ebd93e2be858ce1cf9", /** user password */
-          salt = "salt", /** salt for password hashing */
-          permissions = Map("index_0" -> Set(Permissions.read, Permissions.write))
-        )
-    }
+  def fetchUser(id: String): Future[User] = {
+    userService.get_user(id)
   }
 
   val authenticator: AsyncAuthenticatorPF[User] = {

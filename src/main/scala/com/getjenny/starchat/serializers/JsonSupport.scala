@@ -60,4 +60,13 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val spellcheckTermsResponseFormat = jsonFormat1(SpellcheckTermsResponse)
   implicit val spellcheckTermsRequestFormat = jsonFormat3(SpellcheckTermsRequest)
   implicit val responseRequestOutOperationResultFormat = jsonFormat2(ResponseRequestOutOperationResult)
+
+  implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
+    def write(obj: Permissions.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): Permissions.Value = json match {
+        case JsString(str) => Permissions.withName(str)
+        case _ => throw DeserializationException("Permission string expected")
+      }
+  }
+  implicit val userFormat = jsonFormat4(User)
 }

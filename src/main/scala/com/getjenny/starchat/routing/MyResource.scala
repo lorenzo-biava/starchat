@@ -12,7 +12,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.{Route, ValidationRejection}
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.routing.auth.{AuthenticatorFactory, StarchatAuthenticator}
+import com.getjenny.starchat.routing.auth.{AuthenticatorFactory, StarchatAuthenticator, SupportedAuthImpl}
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
@@ -23,7 +23,9 @@ trait MyResource extends Directives with JsonSupport {
   val config: Config = ConfigFactory.load()
   val auth_method: String = config.getString("starchat.auth_method")
 
-  val authenticator: StarchatAuthenticator = AuthenticatorFactory.apply(auth_method = auth_method)
+  val authenticator: StarchatAuthenticator = AuthenticatorFactory.apply(auth_method =
+    SupportedAuthImpl.getValue(auth_method)
+  )
 
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 

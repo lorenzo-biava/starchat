@@ -14,6 +14,7 @@ import java.io._
 
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
+import com.getjenny.starchat.routing.auth.{UserFactory, UserService}
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import org.elasticsearch.common.xcontent.XContentType
@@ -166,5 +167,4 @@ object SystemIndexManagementService {
       RefreshIndexResults(results = List(system_refresh_dt_index, user_index))
     }
   }
-
 }

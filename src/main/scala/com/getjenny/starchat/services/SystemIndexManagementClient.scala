@@ -9,4 +9,5 @@ object SystemIndexManagementClient extends ElasticClient {
   val user_index_suffix: String = config.getString("es.user_index_suffix")
   val system_refresh_dt_index_suffix: String = config.getString("es.system_refresh_dt_index_suffix")
   val enable_delete_index: Boolean = config.getBoolean("es.enable_delete_system_index")
+  val auth_method: String = config.getString("starchat.auth_method")
 }
