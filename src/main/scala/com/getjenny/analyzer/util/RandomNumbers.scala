@@ -27,4 +27,11 @@ object RandomNumbers {
     random.nextDouble
   }
 
+  def getLong(): Long = {
+    random.nextLong()
+  }
+
+  def getString(size: Int): String = {
+    random.alphanumeric.take(size).mkString
+  }
 }

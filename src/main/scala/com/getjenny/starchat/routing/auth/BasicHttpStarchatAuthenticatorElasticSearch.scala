@@ -24,6 +24,10 @@ class BasicHttpStarchatAuthenticatorElasticSearch extends StarchatAuthenticator 
     password + "#" + salt
   }
 
+  def hashed_secret(password: String, salt: String): String = {
+    secret(password, salt).sha512
+  }
+
   class Hasher(salt: String) {
     def hasher(password: String): String = {
       secret(password, salt).sha512
@@ -31,7 +35,7 @@ class BasicHttpStarchatAuthenticatorElasticSearch extends StarchatAuthenticator 
   }
 
   def fetchUser(id: String): Future[User] = {
-    userService.get_user(id)
+    userService.read(id)
   }
 
   val authenticator: AsyncAuthenticatorPF[User] = {

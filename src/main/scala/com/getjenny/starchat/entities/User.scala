@@ -6,7 +6,8 @@ package com.getjenny.starchat.entities
 
 object Permissions extends Enumeration {
   type Permission = Value
-  val read, write, admin = Value
+  val read, write, admin, unknown = Value
+  def getValue(permission: String) = values.find(_.toString == permission).getOrElse(unknown)
 }
 
 case class User(

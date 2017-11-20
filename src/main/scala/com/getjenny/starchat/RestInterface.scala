@@ -14,7 +14,7 @@ import com.getjenny.starchat.services._
 trait Resources extends KnowledgeBaseResource with DecisionTableResource
   with RootAPIResource with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
   with TermResource with TokenizersResource with AnalyzersPlaygroundResource
-  with SpellcheckResource
+  with SpellcheckResource with UserResource
 
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
@@ -48,5 +48,10 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResultReduced(termRoutes) ~
     LoggingEntities.logRequestAndResult(esTokenizersRoutes) ~
     LoggingEntities.logRequestAndResult(analyzersPlaygroundRoutes) ~
-    LoggingEntities.logRequestAndResult(spellcheckRoutes)
+    LoggingEntities.logRequestAndResult(spellcheckRoutes) ~
+    LoggingEntities.logRequestAndResult(postUserRoutes) ~
+    LoggingEntities.logRequestAndResult(putUserRoutes) ~
+    LoggingEntities.logRequestAndResult(getUserRoutes) ~
+    LoggingEntities.logRequestAndResult(deleteUserRoutes) ~
+    LoggingEntities.logRequestAndResult(genUserRoutes)
 }

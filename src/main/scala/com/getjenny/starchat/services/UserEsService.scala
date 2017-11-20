@@ -3,25 +3,38 @@ package com.getjenny.starchat.services
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 19/11/17.
   */
-import com.getjenny.starchat.entities.{IndexManagementResponse, _}
-
-import scala.concurrent.{ExecutionContext, Future}
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings._
-
-import scala.io.Source
-import java.io._
 
 import akka.event.{Logging, LoggingAdapter}
+import com.getjenny.analyzer.util.RandomNumbers
+import com.getjenny.starchat.entities._
+import com.getjenny.starchat.routing.auth.{AuthenticatorException, StarchatAuthenticator, UserService}
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.routing.auth.UserService
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
-import org.elasticsearch.common.xcontent.XContentType
-
+import com.roundeights.hasher.Implicits._
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
+import java.io._
+import javax.naming.AuthenticationException
+
+import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
+import org.elasticsearch.action.get.GetRequestBuilder
+import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
+import org.elasticsearch.action.update.UpdateResponse
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.settings._
+import org.elasticsearch.common.unit._
+import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.XContentFactory._
+import org.elasticsearch.common.xcontent.XContentType
+import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
+import org.elasticsearch.rest.RestStatus
+import org.elasticsearch.search.SearchHit
+
+import scala.collection.JavaConverters._
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.io.Source
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
@@ -30,53 +43,205 @@ class UserEsService extends UserService {
   val config: Config = ConfigFactory.load()
   val elastic_client: SystemIndexManagementClient.type = SystemIndexManagementClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val user_index_name: String = elastic_client.index_name + "." + elastic_client.user_index_suffix
+  val index_name: String = elastic_client.index_name + "." + elastic_client.user_index_suffix
 
   val admin: String = config.getString("starchat.basic_http_es.admin")
   val password: String = config.getString("starchat.basic_http_es.password")
   val salt: String = config.getString("starchat.basic_http_es.salt")
+  val admin_user = User(id = admin, password = password, salt = salt,
+    permissions = Map("admin" -> Set(Permissions.admin)))
 
-  //TODO: transform to read/write on ES
-  val users = Map("admin" -> User(id = admin, password = password, salt = salt,
-    permissions = Map("admin" -> Set(Permissions.admin))),
-    "test_user" ->
-        User(
-          id = "test_user", /** user id */
-          password = "3c98bf19cb962ac4cd0227142b3495ab1be46534061919f792254b80c0f3e566f7819cae73bdc616af0ff555f7460ac96d88d56338d659ebd93e2be858ce1cf9", /** user password */
-          salt = "salt", /** salt for password hashing */
-          permissions = Map("index_0" -> Set(Permissions.read, Permissions.write))
-        )
-  )
+  def create(user: User): Future[IndexDocumentResult] = Future {
 
-  def create_user(user: User): Future[IndexDocumentResult] = {
-    Future {
-      IndexDocumentResult(user_index_name, elastic_client.user_index_suffix, user.id, 1, true)
+    if(user.id == "admin") {
+      throw new AuthenticationException("admin user cannot be changed")
+    }
+
+    val builder : XContentBuilder = jsonBuilder().startObject()
+
+    builder.field("id", user.id)
+    builder.field("password", user.password)
+    builder.field("salt", user.salt)
+
+    val permissions = builder.startObject("permissions")
+    user.permissions.foreach(x => {
+      val array = permissions.field(x._1).startArray()
+      x._2.foreach(p => { array.value(p)})
+      array.endArray()
+    })
+    permissions.endObject()
+
+    builder.endObject()
+
+    val client: TransportClient = elastic_client.get_client()
+    val response = client.prepareIndex().setIndex(index_name)
+      .setCreate(true)
+      .setType(elastic_client.user_index_suffix)
+      .setId(user.id)
+      .setSource(builder).get()
+
+    val refresh_index = elastic_client.refresh_index(index_name)
+    if(refresh_index.failed_shards_n > 0) {
+      throw new Exception("User : index refresh failed: (" + index_name + ")")
+    }
+
+    val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
+      dtype = response.getType,
+      id = response.getId,
+      version = response.getVersion,
+      created = response.status == RestStatus.CREATED
+    )
+
+    doc_result
+  }
+
+  def update(id: String, user: UserUpdate):
+  Future[UpdateDocumentResult] = Future {
+
+    if(id == "admin") {
+      throw new AuthenticationException("admin user cannot be changed")
+    }
+
+    val builder : XContentBuilder = jsonBuilder().startObject()
+
+    user.password match {
+      case Some(t) => builder.field("password", t)
+      case None => ;
+    }
+
+    user.salt match {
+      case Some(t) => builder.field("salt", t)
+      case None => ;
+    }
+
+    user.permissions match {
+      case Some(t) =>
+        val permissions = builder.startObject("permissions")
+        user.permissions.getOrElse(Map.empty).foreach(x => {
+          val array = permissions.field(x._1).startArray()
+          x._2.foreach(p => { array.value(p)})
+          array.endArray()
+        })
+        permissions.endObject()
+      case None => ;
+    }
+
+    builder.endObject()
+
+    val client: TransportClient = elastic_client.get_client()
+    val response: UpdateResponse = client.prepareUpdate().setIndex(index_name)
+      .setType(elastic_client.user_index_suffix).setId(id)
+      .setDoc(builder)
+      .get()
+
+    val refresh_index = elastic_client.refresh_index(index_name)
+    if(refresh_index.failed_shards_n > 0) {
+      throw new Exception("User : index refresh failed: (" + index_name + ")")
+    }
+
+    val doc_result: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
+      dtype = response.getType,
+      id = response.getId,
+      version = response.getVersion,
+      created = response.status == RestStatus.CREATED
+    )
+
+    doc_result
+  }
+
+  def delete(id: String): Future[DeleteDocumentResult] = Future {
+
+    if(id == "admin") {
+      throw new AuthenticationException("admin user cannot be changed")
+    }
+
+    val client: TransportClient = elastic_client.get_client()
+    val response: DeleteResponse = client.prepareDelete().setIndex(index_name)
+      .setType(elastic_client.user_index_suffix).setId(id).get()
+
+    val refresh_index = elastic_client.refresh_index(index_name)
+    if(refresh_index.failed_shards_n > 0) {
+      throw new Exception("User: index refresh failed: (" + index_name + ")")
+    }
+
+    val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
+      dtype = response.getType,
+      id = response.getId,
+      version = response.getVersion,
+      found = response.status != RestStatus.NOT_FOUND
+    )
+
+    doc_result
+  }
+
+  def read(id: String): Future[User] = Future {
+    if(id == "admin") {
+      admin_user
+    } else {
+
+      val client: TransportClient = elastic_client.get_client()
+      val get_builder: GetRequestBuilder = client.prepareGet(index_name, elastic_client.user_index_suffix, id)
+
+      val response: GetResponse = get_builder.get()
+      val source = response.getSource.asScala.toMap
+
+      val user_id: String = source.get("id") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val password: String = source.get("password") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val salt: String = source.get("salt") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val permissions: Map[String, Set[Permissions.Value]] = source.get("permissions") match {
+        case Some(t) => t.asInstanceOf[java.util.HashMap[String, java.util.List[String]]].asScala.map(x => {
+          (x._1, x._2.asScala.map(p => Permissions.getValue(p)).toSet)
+        }).toMap
+        case None => Map.empty[String, Set[Permissions.Value]]
+      }
+
+      User(id = user_id, password = password, salt = salt, permissions = permissions)
     }
   }
 
-  def update_user(user: User): Future[UpdateDocumentResult] = {
-    Future {
-      UpdateDocumentResult(user_index_name, elastic_client.user_index_suffix, user.id, 1, true)
+  /** given id and optionally password and permissions, generate a new user */
+  def genUser(id: String, user: UserUpdate, authenticator: StarchatAuthenticator): Future[User] = Future {
+
+    val password_plain = user.password match {
+      case Some(t) => t
+      case None =>
+        generate_password()
     }
+
+    val salt = user.salt match {
+      case Some(t) => t
+      case None =>
+        generate_salt()
+    }
+
+    val password = authenticator.hashed_secret(password = password_plain, salt = salt)
+
+    val permissions = user.permissions match {
+      case Some(t) => t
+      case None =>
+        Map.empty[String, Set[Permissions.Value]]
+    }
+
+    User(id = id, password = password, salt = salt, permissions = permissions)
   }
 
-  def delete_user(id: String): Future[DeleteDocumentResult] = {
-    Future {
-      DeleteDocumentResult(user_index_name, elastic_client.user_index_suffix, id, 1, true)
-    }
+  def generate_password(size: Int = 16): String = {
+    RandomNumbers.getString(size)
   }
 
-  def get_user(id: String): Future[User] = {
-    Future {
-      users(id)
-    }
+  def generate_salt(): String = {
+    RandomNumbers.getString(16)
   }
-
-  def generate_salt(): Future[String] = {
-    val salt = "salt"
-    Future {
-      salt
-    }
-  }
-
 }

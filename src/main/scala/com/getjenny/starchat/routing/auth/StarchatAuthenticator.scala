@@ -16,4 +16,7 @@ trait StarchatAuthenticator {
 
   def hasPermissions(user: User, index: String, permission: Permissions.Value): Future[Boolean]
 
+  def secret(password: String, salt: String): String
+
+  def hashed_secret(password: String, salt: String): String
 }

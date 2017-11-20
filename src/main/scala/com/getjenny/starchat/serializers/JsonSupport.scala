@@ -69,4 +69,5 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       }
   }
   implicit val userFormat = jsonFormat4(User)
+  implicit val userUpdateFormat = jsonFormat3(UserUpdate)
 }

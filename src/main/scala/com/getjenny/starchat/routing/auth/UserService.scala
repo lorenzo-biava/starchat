@@ -4,14 +4,14 @@ package com.getjenny.starchat.routing.auth
   * Created by Angelo Leto <angelo@getjenny.com> on 19/11/17.
   */
 
-import com.getjenny.starchat.entities.{DeleteDocumentResult, IndexDocumentResult, UpdateDocumentResult, User}
+import com.getjenny.starchat.entities._
 
 import scala.concurrent.Future
 
 trait UserService {
-  def create_user(user: User): Future[IndexDocumentResult]
-  def update_user(user: User): Future[UpdateDocumentResult]
-  def delete_user(id: String): Future[DeleteDocumentResult]
-  def get_user(id: String): Future[User]
-  def generate_salt(): Future[String]
+  def create(user: User): Future[IndexDocumentResult]
+  def update(id: String, user: UserUpdate): Future[UpdateDocumentResult]
+  def delete(id: String): Future[DeleteDocumentResult]
+  def read(id: String): Future[User]
+  def genUser(id: String, user: UserUpdate, authenticator: StarchatAuthenticator): Future[User]
 }
