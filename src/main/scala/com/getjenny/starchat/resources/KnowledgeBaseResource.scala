@@ -24,7 +24,7 @@ trait KnowledgeBaseResource extends MyResource {
       val knowledgeBaseService = KnowledgeBaseService
       pathEnd {
         post {
-          authenticateBasicPFAsync(realm = "starchat",
+          authenticateBasicPFAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -58,7 +58,7 @@ trait KnowledgeBaseResource extends MyResource {
           }
         } ~
           get {
-            authenticateBasicPFAsync(realm = "starchat",
+            authenticateBasicPFAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -81,7 +81,7 @@ trait KnowledgeBaseResource extends MyResource {
             }
           } ~
           delete {
-            authenticateBasicPFAsync(realm = "starchat",
+            authenticateBasicPFAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -104,7 +104,7 @@ trait KnowledgeBaseResource extends MyResource {
       } ~
         path(Segment) { id =>
           put {
-            authenticateBasicPFAsync(realm = "starchat",
+            authenticateBasicPFAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -128,7 +128,7 @@ trait KnowledgeBaseResource extends MyResource {
             }
           } ~
             delete {
-              authenticateBasicPFAsync(realm = "starchat",
+              authenticateBasicPFAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -156,7 +156,7 @@ trait KnowledgeBaseResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "knowledgebase_search") { index_name =>
       pathEnd {
         post {
-          authenticateBasicPFAsync(realm = "starchat",
+          authenticateBasicPFAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.write)) {

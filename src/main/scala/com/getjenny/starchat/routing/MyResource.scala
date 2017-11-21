@@ -21,6 +21,7 @@ trait MyResource extends Directives with JsonSupport {
   implicit def executionContext: ExecutionContext
 
   val config: Config = ConfigFactory.load()
+  val auth_realm: String = config.getString("starchat.auth_realm")
   val auth_method_string: String = config.getString("starchat.auth_method")
   val auth_method: SupportedAuthImpl.Value = SupportedAuthImpl.getValue(auth_method_string)
   val authenticator: StarchatAuthenticator = AuthenticatorFactory.apply(auth_method = auth_method)

@@ -22,7 +22,7 @@ trait AnalyzersPlaygroundResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "analyzers_playground") { index_name =>
       pathEnd {
         post {
-          authenticateBasicPFAsync(realm = "starchat",
+          authenticateBasicPFAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.read)) {

@@ -25,7 +25,7 @@ trait LanguageGuesserResource extends MyResource {
       val languageGuesserService = LanguageGuesserService
       pathEnd {
         post {
-          authenticateBasicPFAsync(realm = "starchat",
+          authenticateBasicPFAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -50,7 +50,7 @@ trait LanguageGuesserResource extends MyResource {
       } ~
         path(Segment) { language: String =>
           get {
-            authenticateBasicPFAsync(realm = "starchat",
+            authenticateBasicPFAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.write)) {
