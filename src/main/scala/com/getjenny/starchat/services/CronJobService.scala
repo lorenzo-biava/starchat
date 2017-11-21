@@ -54,8 +54,8 @@ class CronJobService (implicit val executionContext: ExecutionContext) {
           } else {
             analyzerService.analyzers_map.remove(item._1) match {
               case Some(t) =>
-                log.info("index_key (" + item._1 + ") last_evaluation_timestamp(" + t.last_evaluation_timestamp +
-                  ") was removed")
+                log.info("index_key (" + item._1 + ") last_evaluation_timestamp(" +
+                  t.last_evaluation_timestamp + ") was removed")
               case None =>
                 log.error("index_key (" + item._1 + ") not found")
             }

@@ -2,7 +2,8 @@
 
 PORT=${1:-8888}
 INDEX_NAME=${2:-index_0}
-curl -v -H "Content-Type: application/json" -X POST http://localhost:${PORT}/${INDEX_NAME}/knowledgebase -d '{
+curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
+  -H "Content-Type: application/json" -X POST http://localhost:${PORT}/${INDEX_NAME}/knowledgebase -d '{
 	"id": "0",
 	"conversation": "id:1000",
 	"index_in_conversation": 1,

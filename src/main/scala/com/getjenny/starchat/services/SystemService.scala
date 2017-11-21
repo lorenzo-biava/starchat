@@ -15,6 +15,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.action.index.IndexResponse
+import org.elasticsearch.cluster.metadata.IndexMetaData
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, GetRequestBuilder, MultiGetRequestBuilder, MultiGetResponse}
@@ -101,5 +102,4 @@ object SystemService {
 
     Option {timestamp}
   }
-
 }

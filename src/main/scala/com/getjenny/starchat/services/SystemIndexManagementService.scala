@@ -8,6 +8,7 @@ import com.getjenny.starchat.entities.{IndexManagementResponse, _}
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings._
+import scala.collection.JavaConverters._
 
 import scala.io.Source
 import java.io._
@@ -167,4 +168,12 @@ object SystemIndexManagementService {
       RefreshIndexResults(results = List(system_refresh_dt_index, user_index))
     }
   }
+
+  def get_indices: Future[List[String]] = Future {
+    val indices_res = elastic_client.get_client
+      .admin.cluster.prepareState.get.getState.getMetaData.getIndices.asScala
+    indices_res.map(x => x.key).toList
+  }
+
+
 }

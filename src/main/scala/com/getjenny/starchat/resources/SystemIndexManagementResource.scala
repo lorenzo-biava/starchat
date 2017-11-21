@@ -19,6 +19,31 @@ import akka.pattern.CircuitBreaker
 
 trait SystemIndexManagementResource extends MyResource {
 
+
+  def systemGetIndexesRoutes: Route =
+    pathPrefix("system_indices") {
+      val systemIndexManagementService = SystemIndexManagementService
+      pathEnd {
+        get {
+          authenticateBasicPFAsync(realm = "starchat",
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.read)) {
+              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(systemIndexManagementService.get_indices) {
+                case Success(t) =>
+                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
+                case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                  Option {
+                    ReturnMessageData(code = 100, message = e.getMessage)
+                  })
+              }
+            }
+          }
+        }
+      }
+    }
+
   def systemIndexManagementRoutes: Route = pathPrefix("system_index_management") {
     val indexManagementService = SystemIndexManagementService
     path(Segment) { operation: String =>
