@@ -77,7 +77,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when calling elasticsearch index refresh" in {
-      Post(s"/index_0/index_management/refresh") ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_0/index_management/refresh") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
       }
     }
@@ -85,7 +85,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when getting informations from the index" in {
-      Get(s"/index_0/index_management") ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Get(s"/index_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
