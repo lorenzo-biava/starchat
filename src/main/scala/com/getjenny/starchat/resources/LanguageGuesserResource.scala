@@ -53,7 +53,7 @@ trait LanguageGuesserResource extends MyResource {
             authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.write)) {
+                authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(languageGuesserService.get_languages(index_name, language)) {
                   case Success(t) =>

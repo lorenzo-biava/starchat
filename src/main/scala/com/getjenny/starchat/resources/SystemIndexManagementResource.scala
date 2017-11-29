@@ -28,7 +28,7 @@ trait SystemIndexManagementResource extends MyResource {
           authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.read)) {
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(systemIndexManagementService.get_indices) {
                 case Success(t) =>

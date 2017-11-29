@@ -24,7 +24,7 @@ trait TokenizersResource extends MyResource {
           authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.read)) {
+              authenticator.hasPermissions(user, index_name, Permissions.write)) {
               entity(as[TokenizerQueryRequest]) { request_data =>
                 val termService = TermService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()

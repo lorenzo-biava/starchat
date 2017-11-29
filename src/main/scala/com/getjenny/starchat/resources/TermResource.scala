@@ -51,7 +51,7 @@ trait TermResource extends MyResource {
               authenticateBasicAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.write)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.read)) {
                   entity(as[TermIdsRequest]) { request_data =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(Future {

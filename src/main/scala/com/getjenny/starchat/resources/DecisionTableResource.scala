@@ -139,7 +139,7 @@ trait DecisionTableResource extends MyResource {
               authenticateBasicAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.write)) {
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     val decisionTableService = DecisionTableService
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -223,7 +223,7 @@ trait DecisionTableResource extends MyResource {
             authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.write)) {
                 val analyzerService = AnalyzerService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzer(index_name, propagate = true)) {
@@ -281,7 +281,7 @@ trait DecisionTableResource extends MyResource {
           authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.write)) {
+              authenticator.hasPermissions(user, index_name, Permissions.read)) {
               entity(as[ResponseRequestIn]) {
                 response_request =>
                   val responseService = ResponseService
