@@ -4,8 +4,6 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-import java.net.InetAddress
-
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse

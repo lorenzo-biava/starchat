@@ -28,8 +28,11 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
     "return an HTTP code 200 when creating a new system index" in {
       Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
+        val index_name_regex = "(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
-        response.message should be ("IndexCreation: system(starchat_system_0.refresh_decisiontable,true) user(starchat_system_0.user, true)")
+        response.message should fullyMatch regex "IndexCreation: " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
@@ -55,9 +58,9 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
         val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
-          "decisiontable\\(" + index_name_regex + "\\.state,true\\) " +
-          "knowledgebase\\(" + index_name_regex + "\\.question,true\\) " +
-          "term\\(" + index_name_regex + "\\.term,true\\)".r
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }

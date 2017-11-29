@@ -1,18 +1,18 @@
 package com.getjenny.starchat.routing.auth
 
-import akka.http.scaladsl.server.directives.SecurityDirectives._
-import com.getjenny.starchat.entities._
+import akka.http.scaladsl.server.directives.Credentials
 
 import scala.concurrent.Future
+import com.getjenny.starchat.entities.{Permissions, User}
 
 case class AuthenticatorException(message: String = "", cause: Throwable = null)
   extends Exception(message, cause)
 
-trait StarchatAuthenticator {
+trait StarChatAuthenticator {
 
   def fetchUser(id: String): Future[User]
 
-  val authenticator: AsyncAuthenticatorPF[User]
+  def authenticator(credentials: Credentials): Future[Option[User]]
 
   def hasPermissions(user: User, index: String, permission: Permissions.Value): Future[Boolean]
 

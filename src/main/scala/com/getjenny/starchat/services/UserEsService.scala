@@ -1,18 +1,15 @@
 package com.getjenny.starchat.services
 
 /**
-  * Created by Angelo Leto <angelo@getjenny.com> on 19/11/17.
+  * Created by Angelo Leto <angelo@getjenny.com> on 22/11/17.
   */
 
 import akka.event.{Logging, LoggingAdapter}
-import com.getjenny.analyzer.util.RandomNumbers
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.routing.auth.{AuthenticatorException, StarchatAuthenticator, UserService}
+import com.getjenny.starchat.routing.auth.{UserService, StarChatAuthenticator}
 import com.getjenny.starchat.SCActorSystem
-import com.roundeights.hasher.Implicits._
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import java.io._
 import javax.naming.AuthenticationException
 
 import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
@@ -20,28 +17,20 @@ import org.elasticsearch.action.get.GetRequestBuilder
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings._
-import org.elasticsearch.common.unit._
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.common.xcontent.XContentType
-import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.rest.RestStatus
-import org.elasticsearch.search.SearchHit
-
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.Source
+import com.getjenny.analyzer.util.RandomNumbers
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
 class UserEsService extends UserService {
   val config: Config = ConfigFactory.load()
-  val elastic_client: SystemIndexManagementClient.type = SystemIndexManagementClient
+  val elastic_client: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val index_name: String = elastic_client.index_name + "." + elastic_client.user_index_suffix
 
@@ -85,8 +74,8 @@ class UserEsService extends UserService {
       throw new Exception("User : index refresh failed: (" + index_name + ")")
     }
 
-    val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
-      dtype = response.getType,
+    val doc_result: IndexDocumentResult = IndexDocumentResult(index = index_name,
+      dtype = elastic_client.user_index_suffix,
       id = response.getId,
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
@@ -164,8 +153,8 @@ class UserEsService extends UserService {
       throw new Exception("User: index refresh failed: (" + index_name + ")")
     }
 
-    val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
-      dtype = response.getType,
+    val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = index_name,
+      dtype = elastic_client.user_index_suffix,
       id = response.getId,
       version = response.getVersion,
       found = response.status != RestStatus.NOT_FOUND
@@ -212,7 +201,7 @@ class UserEsService extends UserService {
   }
 
   /** given id and optionally password and permissions, generate a new user */
-  def genUser(id: String, user: UserUpdate, authenticator: StarchatAuthenticator): Future[User] = Future {
+  def genUser(id: String, user: UserUpdate, authenticator: StarChatAuthenticator): Future[User] = Future {
 
     val password_plain = user.password match {
       case Some(t) => t

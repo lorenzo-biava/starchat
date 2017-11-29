@@ -25,17 +25,20 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
   val testUserCredentials = BasicHttpCredentials("test_user", "p4ssw0rd")
 
   "StarChat" should {
-     "return an HTTP code 200 when creating a new system index" in {
+    "return an HTTP code 200 when creating a new system index" in {
       Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
+        val index_name_regex = "(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
-        response.message should be ("IndexCreation: system(starchat_system_0.refresh_decisiontable,true) user(starchat_system_0.user, true)")
+        response.message should fullyMatch regex "IndexCreation: " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
 
   it should {
-  "return an HTTP code 200 when creating a new user" in {
+    "return an HTTP code 200 when creating a new user" in {
       val user = User(
         id = "test_user",
         password = "3c98bf19cb962ac4cd0227142b3495ab1be46534061919f792254b80c0f3e566f7819cae73bdc616af0ff555f7460ac96d88d56338d659ebd93e2be858ce1cf9",
@@ -48,7 +51,6 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
     }
   }
 
-
   it should {
     "return an HTTP code 200 when creating a new index" in {
       Post(s"/index_0/english/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
@@ -56,9 +58,9 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
-          "decisiontable\\(" + index_name_regex + "\\.state,true\\) " +
-          "knowledgebase\\(" + index_name_regex + "\\.question,true\\) " +
-          "term\\(" + index_name_regex + "\\.term,true\\)".r
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }

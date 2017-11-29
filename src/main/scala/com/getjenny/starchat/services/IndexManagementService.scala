@@ -4,9 +4,9 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/17.
   */
 
-import com.getjenny.starchat.entities.{IndexManagementResponse, _}
+import com.getjenny.starchat.entities._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings._
 
@@ -28,61 +28,53 @@ object IndexManagementService {
   val elastic_client: IndexManagementClient.type = IndexManagementClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  val state_json_path: String = "/index_management/json_index_spec/general/state.json"
-  val question_json_path: String = "/index_management/json_index_spec/general/question.json"
-  val term_json_path: String = "/index_management/json_index_spec/general/term.json"
+  val schemaFiles: List[JsonIndexFiles] = List[JsonIndexFiles](
+    JsonIndexFiles(path = "/index_management/json_index_spec/general/state.json",
+      update_path = "/index_management/json_index_spec/general/update/state.json",
+      index_suffix = elastic_client.dt_index_suffix),
+    JsonIndexFiles(path = "/index_management/json_index_spec/general/question.json",
+      update_path = "/index_management/json_index_spec/general/update/question.json",
+      index_suffix = elastic_client.kb_index_suffix),
+    JsonIndexFiles(path = "/index_management/json_index_spec/general/term.json",
+      update_path = "/index_management/json_index_spec/general/update/term.json",
+      index_suffix = elastic_client.term_index_suffix)
+  )
 
   def create_index(index_name: String, language: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val analyzer_json_path: String = "/index_management/json_index_spec/" + language + "/analyzer.json"
-
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
-    val state_json_is: InputStream = getClass.getResourceAsStream(state_json_path)
-    val question_json_is: InputStream = getClass.getResourceAsStream(question_json_path)
-    val term_json_is: InputStream = getClass.getResourceAsStream(term_json_path)
+    val analyzer_json: String = Source.fromInputStream(analyzer_json_is, "utf-8").mkString
 
-    val indexManagementResponse = if(analyzer_json_is != null &&
-      state_json_is != null && question_json_is != null && term_json_is != null) {
-      val analyzer_json: String = Source.fromInputStream(analyzer_json_is, "utf-8").mkString
-      val state_json: String = Source.fromInputStream(state_json_is, "utf-8").mkString
-      val question_json: String = Source.fromInputStream(question_json_is, "utf-8").mkString
-      val term_json: String = Source.fromInputStream(term_json_is, "utf-8").mkString
-
-      val dt_index_name = index_name + "." + elastic_client.dt_index_suffix
-      val kb_index_name = index_name + "." + elastic_client.kb_index_suffix
-      val term_index_name = index_name + "." + elastic_client.term_index_suffix
-
-      val create_dt_index_res: CreateIndexResponse =
-        client.admin().indices().prepareCreate(dt_index_name)
-          .setSettings(Settings.builder().loadFromSource(analyzer_json, XContentType.JSON))
-          .setSource(state_json, XContentType.JSON).get()
-
-      val create_kb_index_res: CreateIndexResponse =
-        client.admin().indices().prepareCreate(kb_index_name)
-          .setSettings(Settings.builder().loadFromSource(analyzer_json, XContentType.JSON))
-          .setSource(question_json, XContentType.JSON).get()
-
-      val create_term_index_res: CreateIndexResponse =
-        client.admin().indices().prepareCreate(term_index_name)
-          .setSettings(Settings.builder().loadFromSource(analyzer_json, XContentType.JSON))
-          .setSource(term_json, XContentType.JSON).get()
-
-      Option {
-        IndexManagementResponse("IndexCreation:" +
-          " decisiontable(" + dt_index_name + "," + create_dt_index_res.isAcknowledged.toString + ")" +
-          " knowledgebase(" + kb_index_name + "," + create_kb_index_res.isAcknowledged.toString + ")" +
-          " term(" + term_index_name + "," + create_term_index_res.isAcknowledged.toString + ")"
-        )
-      }
-    } else {
-      val message: String = "Check one of these files: (" + analyzer_json_path + ", " +
-        state_json_path + ", " + question_json_path + ", " + term_json_path + ")"
+    if(analyzer_json_is == null) {
+      val message = "Check the file: (" + analyzer_json_path + ")"
       throw new FileNotFoundException(message)
     }
-    indexManagementResponse
+
+    val operations_message: List[String] = schemaFiles.map(item => {
+      val json_in_stream: InputStream = getClass.getResourceAsStream(item.path)
+      if (json_in_stream == null) {
+        val message = "Check the file: (" + item.path + ")"
+        throw new FileNotFoundException(message)
+      }
+
+      val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
+      val full_index_name = index_name + "." + item.index_suffix
+
+      val create_index_res: CreateIndexResponse =
+        client.admin().indices().prepareCreate(full_index_name)
+          .setSettings(Settings.builder().loadFromSource(analyzer_json, XContentType.JSON))
+          .setSource(schema_json, XContentType.JSON).get()
+
+      item.index_suffix + "(" + full_index_name + ", " + create_index_res.isAcknowledged.toString + ")"
+    })
+
+    val message = "IndexCreation: " + operations_message.mkString(" ")
+
+    Option { IndexManagementResponse(message) }
   }
-  
+
   def remove_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
@@ -91,127 +83,89 @@ object IndexManagementService {
       throw new Exception(message)
     }
 
-    val dt_index_name = index_name + "." + elastic_client.dt_index_suffix
-    val kb_index_name = index_name + "." + elastic_client.kb_index_suffix
-    val term_index_name = index_name + "." + elastic_client.term_index_suffix
+    val operations_message: List[String] = schemaFiles.map(item => {
+      val full_index_name = index_name + "." + item.index_suffix
 
-    val delete_dt_index_res: DeleteIndexResponse =
-      client.admin().indices().prepareDelete(dt_index_name).get()
+      val delete_index_res: DeleteIndexResponse =
+        client.admin().indices().prepareDelete(full_index_name).get()
 
-    val delete_kb_index_res: DeleteIndexResponse =
-      client.admin().indices().prepareDelete(kb_index_name).get()
+      item.index_suffix + "(" + full_index_name + ", " + delete_index_res.isAcknowledged.toString + ")"
 
-    val delete_term_index_res: DeleteIndexResponse =
-      client.admin().indices().prepareDelete(term_index_name).get()
+    })
 
-    Option {
-      IndexManagementResponse("IndexDeletion:" +
-        " decisiontable(" + dt_index_name + "," + delete_dt_index_res.isAcknowledged.toString + ")" +
-        " knowledgebase(" + kb_index_name + "," + delete_kb_index_res.isAcknowledged.toString + ")" +
-        " term(" + term_index_name + "," + delete_term_index_res.isAcknowledged.toString + ")"
-      )
-    }
+    val message = "IndexDeletion: " + operations_message.mkString(" ")
+
+    Option { IndexManagementResponse(message) }
   }
 
   def check_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
-    val dt_index_name = index_name + "." + elastic_client.dt_index_suffix
-    val kb_index_name = index_name + "." + elastic_client.kb_index_suffix
-    val term_index_name = index_name + "." + elastic_client.term_index_suffix
+    val operations_message: List[String] = schemaFiles.map(item => {
+      val full_index_name = index_name + "." + item.index_suffix
+      val get_mappings_req = client.admin.indices.prepareGetMappings(full_index_name).get()
+      val check = get_mappings_req.mappings.containsKey(full_index_name)
+      item.index_suffix + "(" + full_index_name + ", " + check + ")"
+    })
 
-    val dt_get_mappings_req = client.admin.indices.prepareGetMappings(dt_index_name).get()
-    val dt_check = dt_get_mappings_req.mappings.containsKey(dt_index_name)
-    val kb_get_mappings_req = client.admin.indices.prepareGetMappings(kb_index_name).get()
-    val kb_check = kb_get_mappings_req.mappings.containsKey(kb_index_name)
-    val term_get_mappings_req = client.admin.indices.prepareGetMappings(term_index_name).get()
-    val term_check = term_get_mappings_req.mappings.containsKey(term_index_name)
+    val message = "IndexCheck: " + operations_message.mkString(" ")
 
-    Option {
-      IndexManagementResponse("check index: " + index_name
-        + " decisiontable(" + dt_index_name + "," + dt_check + ")"
-        + " knowledgebase(" + kb_index_name + "," + kb_check + ")"
-        + " term(" + term_index_name + "," + term_check + ")"
-      )
-    }
+    Option { IndexManagementResponse(message) }
   }
 
   def update_index(index_name: String, language: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
-    val state_json_path_update: String = "/index_management/json_index_spec/general/update/state.json"
-    val question_json_path_update: String = "/index_management/json_index_spec/general/update/question.json"
-    val term_json_path_update: String = "/index_management/json_index_spec/general/update/term.json"
-
     val analyzer_json_path: String = "/index_management/json_index_spec/" + language + "/analyzer.json"
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
-    val state_json_is: InputStream = getClass.getResourceAsStream(state_json_path_update)
-    val question_json_is: InputStream = getClass.getResourceAsStream(question_json_path_update)
-    val term_json_is: InputStream = getClass.getResourceAsStream(term_json_path_update)
+    val analyzer_json: String = Source.fromInputStream(analyzer_json_is, "utf-8").mkString
 
-    val indexManagementResponse = if(analyzer_json_is != null &&
-      state_json_is != null && question_json_is != null && term_json_is != null) {
-      val state_json: String = Source.fromInputStream(state_json_is, "utf-8").mkString
-      val question_json: String = Source.fromInputStream(question_json_is, "utf-8").mkString
-      val term_json: String = Source.fromInputStream(term_json_is, "utf-8").mkString
-
-      val dt_index_name = index_name + "." + elastic_client.dt_index_suffix
-      val kb_index_name = index_name + "." + elastic_client.kb_index_suffix
-      val term_index_name = index_name + "." + elastic_client.term_index_suffix
-
-      val update_dt_index_res  =
-        client.admin().indices().preparePutMapping().setIndices(dt_index_name)
-          .setType(dt_index_name)
-          .setSource(state_json, XContentType.JSON).get()
-
-      val update_kb_index_res  =
-        client.admin().indices().preparePutMapping().setIndices(kb_index_name)
-          .setType(kb_index_name)
-          .setSource(question_json, XContentType.JSON).get()
-
-      val update_term_index_res  =
-        client.admin().indices().preparePutMapping().setIndices(term_index_name)
-          .setType(term_index_name)
-          .setSource(term_json, XContentType.JSON).get()
-
-      Option {
-        IndexManagementResponse("updated index: " + index_name
-          + " decisiontable(" + update_dt_index_res.isAcknowledged.toString + ")"
-          + " knowledgebase(" + update_kb_index_res.isAcknowledged.toString + ")"
-          + " term(" + update_term_index_res.isAcknowledged.toString + ")"
-        )
-      }
-    } else {
-      val message: String = "Check one of these files: (" +
-        analyzer_json_path + ", " + state_json_path_update + ", " + question_json_path_update + ", " +
-        term_json_path_update + ")"
+    if(analyzer_json_is == null) {
+      val message = "Check the file: (" + analyzer_json_path + ")"
       throw new FileNotFoundException(message)
     }
-    indexManagementResponse
+
+    val operations_message: List[String] = schemaFiles.map(item => {
+      val json_in_stream: InputStream = getClass.getResourceAsStream(item.update_path)
+
+      if (json_in_stream == null) {
+        val message = "Check the file: (" + item.path + ")"
+        throw new FileNotFoundException(message)
+      }
+
+      val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
+      val full_index_name = index_name + "." + item.index_suffix
+
+      val update_index_res  =
+        client.admin().indices().preparePutMapping().setIndices(full_index_name)
+          .setType(item.index_suffix)
+          .setSource(schema_json, XContentType.JSON).get()
+
+      item.index_suffix + "(" + full_index_name + ", " + update_index_res.isAcknowledged.toString + ")"
+    })
+
+    val message = "IndexUpdate: " + operations_message.mkString(" ")
+
+    Option { IndexManagementResponse(message) }
   }
 
   def refresh_indexes(index_name: String) : Future[Option[RefreshIndexResults]] = Future {
-    val dt_index_name = index_name + "." + elastic_client.dt_index_suffix
-    val kb_index_name = index_name + "." + elastic_client.kb_index_suffix
-    val term_index_name = index_name + "." + elastic_client.term_index_suffix
+    val client: TransportClient = elastic_client.get_client()
 
-    val dt_refresh_index: RefreshIndexResult = elastic_client.refresh_index(dt_index_name)
-    val kb_refresh_index: RefreshIndexResult = elastic_client.refresh_index(kb_index_name)
-    val term_refresh_index: RefreshIndexResult = elastic_client.refresh_index(term_index_name)
+    val operations_results: List[RefreshIndexResult] = schemaFiles.map(item => {
+      val full_index_name = index_name + "." + item.index_suffix
+      val refresh_index_res: RefreshIndexResult = elastic_client.refresh_index(full_index_name)
+      if (refresh_index_res.failed_shards_n > 0) {
+        val index_refresh_message = item.index_suffix + "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"
+        throw new Exception(index_refresh_message)
+      }
 
-    val message = "IndexManagement : Refresh : FailedShards : " + index_name +
-      " decisiontable(" + dt_refresh_index.failed_shards_n + ")" +
-      " knowledgebase(" + kb_refresh_index.failed_shards_n + ")" +
-      " term(" + term_refresh_index.failed_shards_n + ")"
+      refresh_index_res
+    })
 
-    if (dt_refresh_index.failed_shards_n > 0 || kb_refresh_index.failed_shards_n > 0 ||
-      term_refresh_index.failed_shards_n > 0) {
-      throw new Exception(message)
-    }
-
-    Option {
-      RefreshIndexResults(results = List(dt_refresh_index, kb_refresh_index, term_refresh_index))
-    }
+    Option { RefreshIndexResults(results = operations_results) }
   }
 
 }
+
+

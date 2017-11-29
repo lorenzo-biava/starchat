@@ -1,21 +1,19 @@
 package com.getjenny.starchat.services
 
 /**
-  * Created by Angelo Leto <angelo@getjenny.com> on 11/14/17.
+  * Created by Angelo Leto <angelo@getjenny.com> on 22/11/17.
   */
+
 import com.getjenny.starchat.entities.{IndexManagementResponse, _}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Future}
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings._
-import scala.collection.JavaConverters._
-
 import scala.io.Source
 import java.io._
+import scala.collection.JavaConverters._
 
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.routing.auth.{UserFactory, UserService}
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import org.elasticsearch.common.xcontent.XContentType
@@ -26,42 +24,41 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
 object SystemIndexManagementService {
-  val elastic_client: SystemIndexManagementClient.type = SystemIndexManagementClient
+  val elastic_client: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val system_refresh_dt_json_path: String = "/index_management/json_index_spec/system/refresh_decisiontable.json"
-  val user_json_path: String = "/index_management/json_index_spec/system/user.json"
+
+  val schemaFiles: List[JsonIndexFiles] = List[JsonIndexFiles](
+    JsonIndexFiles(path = "/index_management/json_index_spec/system/user.json",
+      update_path = "/index_management/json_index_spec/system/update/user.json",
+      index_suffix = elastic_client.user_index_suffix),
+    JsonIndexFiles(path = "/index_management/json_index_spec/system/refresh_decisiontable.json",
+      update_path = "/index_management/json_index_spec/system/update/refresh_decisiontable.json",
+      index_suffix = elastic_client.system_refresh_dt_index_suffix)
+  )
 
   def create_index() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
-    val system_json_is: InputStream = getClass.getResourceAsStream(system_refresh_dt_json_path)
-    val user_json_is: InputStream = getClass.getResourceAsStream(user_json_path)
-    val indexManagementResponse = if(system_json_is != null && user_json_is != null) {
-      val system_json: String = Source.fromInputStream(system_json_is, "utf-8").mkString
-      val user_json: String = Source.fromInputStream(user_json_is, "utf-8").mkString
-
-      val system_refresh_dt_index_name = elastic_client.index_name + "." + elastic_client.system_refresh_dt_index_suffix
-      val user_index_name = elastic_client.index_name + "." + elastic_client.user_index_suffix
-
-      val create_system_index_res: CreateIndexResponse =
-        client.admin().indices().prepareCreate(system_refresh_dt_index_name)
-          .setSource(system_json, XContentType.JSON).get()
-
-      val create_user_index_res: CreateIndexResponse =
-        client.admin().indices().prepareCreate(user_index_name)
-          .setSource(user_json, XContentType.JSON).get()
-
-      Option {
-        IndexManagementResponse("IndexCreation:" +
-          " system(" + system_refresh_dt_index_name + "," + create_system_index_res.isAcknowledged.toString + ")" +
-          " user(" + user_index_name + ", " + create_user_index_res.isAcknowledged.toString + ")"
-        )
+    val operations_message: List[String] = schemaFiles.map(item => {
+      val json_in_stream: InputStream = getClass.getResourceAsStream(item.path)
+      if (json_in_stream == null) {
+        val message = "Check the file: (" + item.path + ")"
+        throw new FileNotFoundException(message)
       }
-    } else {
-      val message: String = "Check one of these files: (" + system_refresh_dt_json_path + "," + user_json_path + ")"
-      throw new FileNotFoundException(message)
-    }
-    indexManagementResponse
+
+      val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
+      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+
+      val create_index_res: CreateIndexResponse =
+        client.admin().indices().prepareCreate(full_index_name)
+          .setSource(schema_json, XContentType.JSON).get()
+
+      item.index_suffix + "(" + full_index_name + ", " + create_index_res.isAcknowledged.toString + ")"
+    })
+
+    val message = "IndexCreation: " + operations_message.mkString(" ")
+
+    Option { IndexManagementResponse(message) }
   }
 
   def remove_index() : Future[Option[IndexManagementResponse]] = Future {
@@ -72,105 +69,80 @@ object SystemIndexManagementService {
       throw new Exception(message)
     }
 
-    val system_refresh_dt_index_name = elastic_client.index_name + "." + elastic_client.system_refresh_dt_index_suffix
-    val user_index_name = elastic_client.index_name + "." + elastic_client.user_index_suffix
+    val operations_message: List[String] = schemaFiles.map(item => {
+      val full_index_name = elastic_client.index_name + "." + item.index_suffix
 
-    val system_refresh_dt_index_res: DeleteIndexResponse =
-      client.admin().indices().prepareDelete(system_refresh_dt_index_name).get()
+      val delete_index_res: DeleteIndexResponse =
+        client.admin().indices().prepareDelete(full_index_name).get()
 
-    val user_index_res: DeleteIndexResponse =
-      client.admin().indices().prepareDelete(user_index_name).get()
+      item.index_suffix + "(" + full_index_name + ", " + delete_index_res.isAcknowledged.toString + ")"
 
-    Option {
-      IndexManagementResponse("IndexDeletion:" +
-        " system(" + system_refresh_dt_index_name + "," + system_refresh_dt_index_res.isAcknowledged.toString + ")" +
-        " user(" + user_index_name + "," + user_index_res.isAcknowledged.toString + ")"
-      )
-    }
+    })
+
+    val message = "IndexDeletion: " + operations_message.mkString(" ")
+
+    Option { IndexManagementResponse(message) }
   }
 
   def check_index() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
-    val system_refresh_dt_index_name = elastic_client.index_name + "." + elastic_client.system_refresh_dt_index_suffix
-    val user_index_name = elastic_client.index_name + "." + elastic_client.user_index_suffix
+    val operations_message: List[String] = schemaFiles.map(item => {
+      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+      val get_mappings_req = client.admin.indices.prepareGetMappings(full_index_name).get()
+      val check = get_mappings_req.mappings.containsKey(full_index_name)
+      item.index_suffix + "(" + full_index_name + ", " + check + ")"
+    })
 
-    val system_refresh_dt_get_mappings_req = client.admin.indices.prepareGetMappings(system_refresh_dt_index_name).get()
-    val system_refresh_dt_check = system_refresh_dt_get_mappings_req
-      .mappings.containsKey(system_refresh_dt_index_name)
+    val message = "IndexCheck: " + operations_message.mkString(" ")
 
-    val user_mappings_req = client.admin.indices.prepareGetMappings(user_index_name).get()
-    val user_check = user_mappings_req
-      .mappings.containsKey(user_index_name)
-
-    Option {
-      IndexManagementResponse("check index: " + elastic_client.index_name
-        + " system(" + system_refresh_dt_index_name + ":" + system_refresh_dt_check + ")"
-        + " user(" + user_index_name + ":" + user_check + ")"
-      )
-    }
+    Option { IndexManagementResponse(message) }
   }
 
   def update_index() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
-    val system_refresh_dt_json_path_update: String = "/index_management/json_index_spec/system/update/refresh_decisiontable.json"
-    val user_path_update: String = "/index_management/json_index_spec/system/update/user.json"
 
-    val system_refresh_dt_json_is: InputStream = getClass.getResourceAsStream(system_refresh_dt_json_path_update)
-    val user_json_is: InputStream = getClass.getResourceAsStream(user_path_update)
+    val operations_message: List[String] = schemaFiles.map(item => {
+      val json_in_stream: InputStream = getClass.getResourceAsStream(item.update_path)
 
-    val indexManagementResponse = if(system_refresh_dt_json_is != null && user_json_is != null) {
-      val system_refresh_dt_json: String = Source.fromInputStream(system_refresh_dt_json_is, "utf-8").mkString
-      val user_json: String = Source.fromInputStream(user_json_is, "utf-8").mkString
-
-      val system_refresh_dt_index_name = elastic_client.index_name + "." + elastic_client.system_refresh_dt_index_suffix
-      val user_index_name = elastic_client.index_name + "." + elastic_client.user_index_suffix
-
-      val update_system_refresh_dt_index_res  =
-        client.admin().indices().preparePutMapping(system_refresh_dt_index_name)
-          .setType(elastic_client.system_refresh_dt_index_suffix)
-          .setSource(system_refresh_dt_json, XContentType.JSON).get()
-
-      val update_user_index_res  =
-        client.admin().indices().preparePutMapping(user_index_name)
-          .setType(elastic_client.user_index_suffix)
-          .setSource(user_json, XContentType.JSON).get()
-
-      Option {
-        IndexManagementResponse("updated index: " + elastic_client.index_name
-          + " system(" + update_system_refresh_dt_index_res.isAcknowledged.toString + ")"
-          + " system(" + update_user_index_res.isAcknowledged.toString + ")"
-        )
+      if (json_in_stream == null) {
+        val message = "Check the file: (" + item.path + ")"
+        throw new FileNotFoundException(message)
       }
-    } else {
-      val message: String = "Check one of these files: (" + system_refresh_dt_json_path + "," + user_json_path + ")"
-      throw new FileNotFoundException(message)
-    }
-    indexManagementResponse
+
+      val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
+      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+
+      val update_index_res  =
+        client.admin().indices().preparePutMapping().setIndices(full_index_name)
+          .setType(item.index_suffix)
+          .setSource(schema_json, XContentType.JSON).get()
+
+      item.index_suffix + "(" + full_index_name + ", " + update_index_res.isAcknowledged.toString + ")"
+    })
+
+    val message = "IndexUpdate: " + operations_message.mkString(" ")
+
+    Option { IndexManagementResponse(message) }
   }
 
   def refresh_indexes() : Future[Option[RefreshIndexResults]] = Future {
-    val system_refresh_dt_index_name = elastic_client.index_name + "." + elastic_client.system_refresh_dt_index_suffix
-    val user_index_name = elastic_client.index_name + "." + elastic_client.user_index_suffix
+    val operations_results: List[RefreshIndexResult] = schemaFiles.map(item => {
+      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+      val refresh_index_res: RefreshIndexResult = elastic_client.refresh_index(full_index_name)
+      if (refresh_index_res.failed_shards_n > 0) {
+        val index_refresh_message = item.index_suffix + "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"
+        throw new Exception(index_refresh_message)
+      }
 
-    val system_refresh_dt_index: RefreshIndexResult = elastic_client.refresh_index(system_refresh_dt_index_name)
-    val user_index: RefreshIndexResult = elastic_client.refresh_index(user_index_name)
+      refresh_index_res
+    })
 
-    val message = "SystemIndexManagement : Refresh : FailedShards : " + elastic_client.index_name +
-      " dt_index_ack(" + system_refresh_dt_index.failed_shards_n + ")" +
-      " dt_index_ack(" + user_index.failed_shards_n + ")"
-
-    if (system_refresh_dt_index.failed_shards_n > 0 || user_index.failed_shards_n > 0) {
-      throw new Exception(message)
-    }
-
-    Option {
-      RefreshIndexResults(results = List(system_refresh_dt_index, user_index))
-    }
+    Option { RefreshIndexResults(results = operations_results) }
   }
 
   def get_indices: Future[List[String]] = Future {
-    val indices_res = elastic_client.get_client
+    val indices_res = elastic_client.get_client()
       .admin.cluster.prepareState.get.getState.getMetaData.getIndices.asScala
     indices_res.map(x => x.key).toList
   }

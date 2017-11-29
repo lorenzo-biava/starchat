@@ -25,7 +25,7 @@ trait DecisionTableResource extends MyResource {
       pathEnd {
         val decisionTableService = DecisionTableService
         post {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -34,9 +34,7 @@ trait DecisionTableResource extends MyResource {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(decisionTableService.create(index_name, document, refresh)) {
                     case Success(t) =>
-                      completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
-                        t
-                      })
+                      completeResponse(StatusCodes.Created, StatusCodes.BadRequest, t)
                     case Failure(e) =>
                       log.error("index(" + index_name + ") route=decisionTableRoutes method=POST: " + e.getMessage)
                       completeResponse(StatusCodes.BadRequest,
@@ -50,7 +48,7 @@ trait DecisionTableResource extends MyResource {
           }
         } ~
           get {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -89,7 +87,7 @@ trait DecisionTableResource extends MyResource {
             }
           } ~
           delete {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -112,7 +110,7 @@ trait DecisionTableResource extends MyResource {
       } ~
         path(Segment) { id =>
           put {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -138,7 +136,7 @@ trait DecisionTableResource extends MyResource {
             }
           } ~
             delete {
-              authenticateBasicPFAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -169,7 +167,7 @@ trait DecisionTableResource extends MyResource {
   def decisionTableUploadCSVRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_upload_csv") { index_name =>
       pathEnd {
-        authenticateBasicPFAsync(realm = auth_realm,
+        authenticateBasicAsync(realm = auth_realm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -200,7 +198,7 @@ trait DecisionTableResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_analyzer") { index_name =>
       pathEnd {
         get {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -222,7 +220,7 @@ trait DecisionTableResource extends MyResource {
           }
         } ~
           post {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -250,7 +248,7 @@ trait DecisionTableResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_search") { index_name =>
       pathEnd {
         post {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -280,7 +278,7 @@ trait DecisionTableResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "get_next_response") { index_name =>
       pathEnd {
         post {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.write)) {

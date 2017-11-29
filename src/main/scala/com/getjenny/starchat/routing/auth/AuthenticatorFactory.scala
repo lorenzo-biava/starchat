@@ -1,6 +1,5 @@
 package com.getjenny.starchat.routing.auth
 
-
 case class AuthenticatorClassNotFoundException(message: String = "", cause: Throwable = null)
   extends Exception(message, cause)
 
@@ -11,10 +10,10 @@ object SupportedAuthImpl extends Enumeration {
 }
 
 object AuthenticatorFactory {
-  def apply(auth_method: SupportedAuthImpl.Value): StarchatAuthenticator = {
+  def apply(auth_method: SupportedAuthImpl.Value): StarChatAuthenticator = {
     auth_method match {
       case SupportedAuthImpl.basic_http_es =>
-        new BasicHttpStarchatAuthenticatorElasticSearch
+        new BasicHttpStarChatAuthenticatorElasticSearch
       case _ =>
         throw AuthenticatorClassNotFoundException("Authenticator not supported: " + auth_method)
     }
