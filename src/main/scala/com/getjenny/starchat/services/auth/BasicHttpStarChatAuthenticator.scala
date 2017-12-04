@@ -1,24 +1,23 @@
-package com.getjenny.starchat.routing.auth
+package com.getjenny.starchat.services.auth
 
+import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.directives.Credentials
 import com.roundeights.hasher.Implicits._
 import com.typesafe.config.{Config, ConfigFactory}
+import com.getjenny.starchat.services._
+import com.getjenny.starchat.entities._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
-import com.getjenny.starchat.entities.{User, Permissions}
-import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
-import scala.concurrent.ExecutionContext.Implicits.global
 
-class BasicHttpStarChatAuthenticatorElasticSearch extends StarChatAuthenticator {
+class BasicHttpStarChatAuthenticator(userService: AbstractUserService) extends AbstractStarChatAuthenticator {
   val config: Config = ConfigFactory.load()
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val admin: String = config.getString("starchat.basic_http_es.admin")
   val password: String = config.getString("starchat.basic_http_es.password")
   val salt: String = config.getString("starchat.basic_http_es.salt")
-
-  val userService: UserService = UserFactory.apply(SupportedAuthImpl.basic_http_es)
 
   def secret(password: String, salt: String): String = {
     password + "#" + salt

@@ -27,6 +27,7 @@ trait RestInterface extends Resources {
   lazy val termService = TermService
   lazy val responseService = ResponseService
   lazy val analyzerService = AnalyzerService
+  lazy val userService = UserService
   lazy val spellcheckService = SpellcheckService
   lazy val cronJobService = new CronJobService
   lazy val systemService = SystemService

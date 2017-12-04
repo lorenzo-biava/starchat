@@ -8,16 +8,19 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
+
 import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
+
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 import akka.pattern.CircuitBreaker
+import com.getjenny.starchat.services.{AbstractUserService, UserService}
 
 
 trait UserResource extends MyResource {
 
-  private val userService: auth.UserService = auth.UserFactory.apply(auth_method)
+  private val userService: AbstractUserService = UserService.service
 
   def postUserRoutes: Route = pathPrefix("user") {
     post {

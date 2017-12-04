@@ -1,12 +1,12 @@
 package com.getjenny.starchat.services
 
 /**
-  * Created by Angelo Leto <angelo@getjenny.com> on 22/11/17.
+  * Created by Angelo Leto <angelo@getjenny.com> on 01/12/17.
   */
 
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.routing.auth.{UserService, StarChatAuthenticator}
+import com.getjenny.starchat.services.auth.{AuthenticatorException, AbstractStarChatAuthenticator}
 import com.getjenny.starchat.SCActorSystem
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
@@ -28,7 +28,7 @@ import com.getjenny.analyzer.util.RandomNumbers
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
-class UserEsService extends UserService {
+class UserEsService extends AbstractUserService {
   val config: Config = ConfigFactory.load()
   val elastic_client: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
@@ -74,8 +74,8 @@ class UserEsService extends UserService {
       throw new Exception("User : index refresh failed: (" + index_name + ")")
     }
 
-    val doc_result: IndexDocumentResult = IndexDocumentResult(index = index_name,
-      dtype = elastic_client.user_index_suffix,
+    val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
+      dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
@@ -153,8 +153,8 @@ class UserEsService extends UserService {
       throw new Exception("User: index refresh failed: (" + index_name + ")")
     }
 
-    val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = index_name,
-      dtype = elastic_client.user_index_suffix,
+    val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
+      dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
       found = response.status != RestStatus.NOT_FOUND
@@ -201,7 +201,7 @@ class UserEsService extends UserService {
   }
 
   /** given id and optionally password and permissions, generate a new user */
-  def genUser(id: String, user: UserUpdate, authenticator: StarChatAuthenticator): Future[User] = Future {
+  def genUser(id: String, user: UserUpdate, authenticator: AbstractStarChatAuthenticator): Future[User] = Future {
 
     val password_plain = user.password match {
       case Some(t) => t
