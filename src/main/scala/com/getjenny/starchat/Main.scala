@@ -106,7 +106,8 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
   }
 
   /* activate cron jobs for data synchronization */
-  cronJobService.reloadAnalyzers()
+  cronReloadDTService.reloadAnalyzers()
+  cronCleanDTService.cleanDecisionTables()
 }
 
 object Main extends App {

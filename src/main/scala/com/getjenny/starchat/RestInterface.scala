@@ -29,7 +29,8 @@ trait RestInterface extends Resources {
   lazy val analyzerService = AnalyzerService
   lazy val userService = UserService
   lazy val spellcheckService = SpellcheckService
-  lazy val cronJobService = new CronJobService
+  lazy val cronReloadDTService = new CronReloadDTService
+  lazy val cronCleanDTService = new CronCleanDTService
   lazy val systemService = SystemService
 
   val routes: Route = LoggingEntities.logRequestAndResult(rootAPIsRoutes) ~

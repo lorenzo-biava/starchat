@@ -59,6 +59,9 @@ object ResponseService {
     val traversed_states_count: Map[String, Int] =
       traversed_states.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
 
+    // refresh last_used timestamp
+    AnalyzerService.analyzers_map(index_name).last_evaluation_timestamp = System.currentTimeMillis
+
     // prepare search result for search analyzer
     val analyzers_internal_data =
       decisionTableService.resultsToMap(index_name, decisionTableService.search_dt_queries(index_name, user_text))

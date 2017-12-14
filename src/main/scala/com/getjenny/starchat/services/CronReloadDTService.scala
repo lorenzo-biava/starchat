@@ -6,7 +6,7 @@ package com.getjenny.starchat.services
 
 import com.getjenny.starchat.entities._
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
@@ -15,7 +15,7 @@ import akka.actor.Actor
 import akka.actor.Props
 import scala.language.postfixOps
 
-class CronJobService (implicit val executionContext: ExecutionContext) {
+class CronReloadDTService(implicit val executionContext: ExecutionContext) {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val analyzerService: AnalyzerService.type = AnalyzerService
   val systemService: SystemService.type = SystemService
@@ -23,7 +23,7 @@ class CronJobService (implicit val executionContext: ExecutionContext) {
   val Tick = "tick"
 
   class ReloadAnalyzersTickActor extends Actor {
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case Tick =>
         analyzerService.analyzers_map.foreach(item => {
           val timestamp_result: Try[Option[Long]] =
@@ -68,7 +68,8 @@ class CronJobService (implicit val executionContext: ExecutionContext) {
 
   def reloadAnalyzers(): Unit = {
     if (systemService.elastic_client.dt_reload_check_frequency > 0) {
-      val reloadDecisionTableActorRef = SCActorSystem.system.actorOf(Props(classOf[ReloadAnalyzersTickActor], this))
+      val reloadDecisionTableActorRef =
+        SCActorSystem.system.actorOf(Props(classOf[ReloadAnalyzersTickActor], this))
       val delay: Int = if(systemService.elastic_client.dt_reload_check_delay >= 0) {
         systemService.elastic_client.dt_reload_check_delay
       } else {
