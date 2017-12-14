@@ -4,19 +4,15 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 19/12/16.
   */
 
-import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 
-import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
-import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.services.LanguageGuesserService
 import akka.pattern.CircuitBreaker
 
-import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 trait LanguageGuesserResource extends MyResource {
 

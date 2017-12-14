@@ -8,10 +8,9 @@ import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import akka.pattern.CircuitBreaker
-import scala.concurrent.{Future}
 import akka.http.scaladsl.model.StatusCodes
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 import scala.concurrent.duration._
 
 trait RootAPIResource extends MyResource {

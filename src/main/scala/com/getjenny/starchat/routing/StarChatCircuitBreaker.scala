@@ -1,14 +1,8 @@
 package com.getjenny.starchat.routing
 
-import akka.event.LoggingAdapter
-import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.entities.ReturnMessageData
-
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object StarChatCircuitBreaker {

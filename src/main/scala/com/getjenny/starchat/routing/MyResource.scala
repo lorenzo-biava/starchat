@@ -1,18 +1,16 @@
 package com.getjenny.starchat.routing
 
-import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
-import akka.http.scaladsl.marshalling.{ToEntityMarshaller, ToResponseMarshallable}
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
 
-import scala.concurrent.{ExecutionContext, Future}
-import akka.http.scaladsl.server.{Directives, Route}
+import scala.concurrent.ExecutionContext
+import akka.http.scaladsl.server.Directives
 import com.getjenny.starchat.serializers.JsonSupport
-import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.{Route, ValidationRejection}
+import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.services.auth.{AuthenticatorFactory, StarChatAuthenticator, SupportedAuthImpl}
+import com.getjenny.starchat.services.auth.StarChatAuthenticator
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 

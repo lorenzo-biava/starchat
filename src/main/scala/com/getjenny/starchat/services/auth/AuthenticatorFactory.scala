@@ -8,7 +8,8 @@ case class AuthenticatorClassNotFoundException(message: String = "", cause: Thro
 object SupportedAuthImpl extends Enumeration {
   type Permission = Value
   val basic_http, unknown = Value
-  def getValue(auth_method: String) = values.find(_.toString == auth_method).getOrElse(SupportedAuthImpl.unknown)
+  def getValue(auth_method: String): SupportedAuthImpl.Value =
+    values.find(_.toString == auth_method).getOrElse(SupportedAuthImpl.unknown)
 }
 
 object AuthenticatorFactory {

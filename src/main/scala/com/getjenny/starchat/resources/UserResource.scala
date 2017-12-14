@@ -4,16 +4,14 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 20/12/16.
   */
 
-import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import akka.http.scaladsl.model.StatusCodes
 
-import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.services.{AbstractUserService, UserService}
 

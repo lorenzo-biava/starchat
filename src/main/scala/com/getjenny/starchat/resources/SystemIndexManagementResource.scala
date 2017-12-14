@@ -4,17 +4,14 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 14/11/16.
   */
 
-import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 
-import scala.concurrent.{Await, Future}
 import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.services.SystemIndexManagementService
 
-import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 import akka.pattern.CircuitBreaker
 
 trait SystemIndexManagementResource extends MyResource {
