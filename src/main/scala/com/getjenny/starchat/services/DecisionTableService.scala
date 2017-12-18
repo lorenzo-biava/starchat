@@ -176,7 +176,12 @@ object DecisionTableService {
 
     val filtered_doc : List[SearchDTDocument] = documents.getOrElse(List[SearchDTDocument]())
 
-    val max_score : Float = search_response.getHits.getMaxScore
+    val max_score : Float = if(search_response.getHits.totalHits > 0) {
+      search_response.getHits.getMaxScore
+    } else {
+      0.0f
+    }
+
     val total : Int = filtered_doc.length
     val search_results : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = max_score,
       hits = filtered_doc)

@@ -303,9 +303,8 @@ object TermService {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(index_name)
+        .source(getIndexName(index_name))
         .filter(qb)
-        .filter(QueryBuilders.typeQuery(elastic_client.term_index_suffix))
         .get()
 
     val deleted: Long = response.getDeleted
@@ -350,8 +349,7 @@ object TermService {
   def search_term(index_name: String, term: Term) : Future[Option[TermsResults]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
-    val search_builder : SearchRequestBuilder = client.prepareSearch()
-      .setIndices(getIndexName(index_name))
+    val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
       .setTypes(elastic_client.term_index_suffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 

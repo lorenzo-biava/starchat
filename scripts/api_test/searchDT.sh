@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 Q="${1:-'cannot access my account'}"
-S="${2:-2.0}"
+S="${2:-0.0}"
 B="${3:-100.0}"
 PORT=${4:-8888}
 INDEX_NAME=${5:-index_0}

@@ -257,7 +257,7 @@ trait DecisionTableResource extends MyResource {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(decisionTableService.search(index_name, docsearch)) {
                   case Success(t) =>
-                    completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })
                   case Failure(e) =>
