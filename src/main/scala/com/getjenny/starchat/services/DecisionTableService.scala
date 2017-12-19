@@ -49,7 +49,7 @@ object DecisionTableService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   val queries_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
-            "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
+    "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.dt_index_suffix)
@@ -101,78 +101,78 @@ object DecisionTableService {
     val documents : Option[List[SearchDTDocument]] =
       Option { search_response.getHits.getHits.toList.map( { case(e) =>
 
-      val item: SearchHit = e
+        val item: SearchHit = e
 
-      val state : String = item.getId
+        val state : String = item.getId
 
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-      val execution_order: Int = source.get("execution_order") match {
-        case Some(t) => t.asInstanceOf[Int]
-        case None => 0
-      }
+        val execution_order: Int = source.get("execution_order") match {
+          case Some(t) => t.asInstanceOf[Int]
+          case None => 0
+        }
 
-      val max_state_count : Int = source.get("max_state_count") match {
-        case Some(t) => t.asInstanceOf[Int]
-        case None => 0
-      }
+        val max_state_count : Int = source.get("max_state_count") match {
+          case Some(t) => t.asInstanceOf[Int]
+          case None => 0
+        }
 
-     val analyzer : String = source.get("analyzer") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val analyzer : String = source.get("analyzer") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val queries : List[String] = source.get("queries") match {
-        case Some(t) =>
-          val offsets = e.getInnerHits.get("queries").getHits.toList.map(inner_hit => {
-            inner_hit.getNestedIdentity.getOffset
-          })
-          val query_array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
-            .map(q_e => q_e.get("query"))
-          val queries_ordered : List[String] = offsets.map(i => query_array(i))
-          queries_ordered
-        case None => List.empty[String]
-      }
+        val queries : List[String] = source.get("queries") match {
+          case Some(t) =>
+            val offsets = e.getInnerHits.get("queries").getHits.toList.map(inner_hit => {
+              inner_hit.getNestedIdentity.getOffset
+            })
+            val query_array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
+              .map(q_e => q_e.get("query"))
+            val queries_ordered : List[String] = offsets.map(i => query_array(i))
+            queries_ordered
+          case None => List.empty[String]
+        }
 
-      val bubble : String = source.get("bubble") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val bubble : String = source.get("bubble") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val action : String = source.get("action") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val action : String = source.get("action") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val action_input : Map[String,String] = source.get("action_input") match {
-        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
-        case None => Map[String, String]()
-      }
+        val action_input : Map[String,String] = source.get("action_input") match {
+          case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+          case None => Map[String, String]()
+        }
 
-      val state_data : Map[String,String] = source.get("state_data") match {
-        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
-        case None => Map[String, String]()
-      }
+        val state_data : Map[String,String] = source.get("state_data") match {
+          case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+          case None => Map[String, String]()
+        }
 
-      val success_value : String = source.get("success_value") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val success_value : String = source.get("success_value") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val failure_value : String = source.get("failure_value") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val failure_value : String = source.get("failure_value") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
-        max_state_count = max_state_count,
-        analyzer = analyzer, queries = queries, bubble = bubble,
-        action = action, action_input = action_input, state_data = state_data,
-        success_value = success_value, failure_value = failure_value)
+        val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
+          max_state_count = max_state_count,
+          analyzer = analyzer, queries = queries, bubble = bubble,
+          action = action, action_input = action_input, state_data = state_data,
+          success_value = success_value, failure_value = failure_value)
 
-      val search_document : SearchDTDocument = SearchDTDocument(score = item.getScore, document = document)
-      search_document
-    }) }
+        val search_document : SearchDTDocument = SearchDTDocument(score = item.getScore, document = document)
+        search_document
+      }) }
 
     val filtered_doc : List[SearchDTDocument] = documents.getOrElse(List[SearchDTDocument]())
 
@@ -287,7 +287,7 @@ object DecisionTableService {
   }
 
   def update(index_name: String, id: String, document: DTDocumentUpdate, refresh: Int):
-    Future[Option[UpdateDocumentResult]] = Future {
+  Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.analyzer match {
@@ -607,12 +607,9 @@ object DecisionTableService {
 
     val index_document_list_result = if (document_list.isDefined) {
       val values = document_list.get.map(d => {
-<<<<<<< HEAD
         val indexing_result: Try[Option[IndexDocumentResult]] =
           Await.ready(create(index_name, d, 1), 10.seconds).value.get
-=======
-        val indexing_result: Try[Option[IndexDocumentResult]] = Await.ready(create(d, 1), 30.seconds).value.get
->>>>>>> master
+
         indexing_result match {
           case Success(t) =>
             t.get
