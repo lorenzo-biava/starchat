@@ -7,7 +7,9 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
   * Created by angelo on 16/08/17.
   */
 
-/** test if the list of traversed states contains a state
+/** test if the list of traversed states contains a state, eg
+  *
+  * hasTravState("help")
   *
   * @param arguments of the state to be checked
   */

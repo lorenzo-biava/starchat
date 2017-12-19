@@ -242,6 +242,29 @@ trait DecisionTableResource extends MyResource {
             }
           }
       }
+  }
+
+  def decisionTableUploadCSVRoutes: Route = pathPrefix("decisiontable_upload_csv") {
+    pathEnd {
+        uploadedFile("csv") {
+          case (metadata, file) =>
+            val decisionTableService = DecisionTableService
+            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
+            onCompleteWithBreaker(breaker)(decisionTableService.indexCSVFileIntoDecisionTable(file)) {
+              case Success(t) =>
+                file.delete()
+                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                  t
+                })
+              case Failure(e) =>
+                log.error("route=decisionTableUploadCSVRoutes method=POST: " + e.getMessage)
+                completeResponse(StatusCodes.BadRequest,
+                  Option {
+                    ReturnMessageData(code = 107, message = e.getMessage)
+                  })
+            }
+        }
+>>>>>>> master
     }
 
   def decisionTableSearchRoutes: Route =
