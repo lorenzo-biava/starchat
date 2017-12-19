@@ -20,9 +20,9 @@ import akka.pattern.CircuitBreaker
 trait IndexManagementResource extends MyResource {
 
   def postIndexManagementCreateRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~
-      """([A-Za-z0-9_]+)""".r ~ Slash ~ "index_management" ~ Slash ~ """create""") {
-      (index_name, language) =>
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash
+      ~ "index_management" ~ Slash ~ """create""") {
+      (index_name) =>
         val indexManagementService = IndexManagementService
         post {
           authenticateBasicAsync(realm = auth_realm,
@@ -30,7 +30,7 @@ trait IndexManagementResource extends MyResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.create_index(index_name, language)) {
+              onCompleteWithBreaker(breaker)(indexManagementService.create_index(index_name)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                   t
                 })
@@ -45,7 +45,7 @@ trait IndexManagementResource extends MyResource {
     }
 
   def postIndexManagementRefreshRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~
       Slash ~ "index_management" ~ Slash ~ """refresh""") {
       (index_name) =>
         val indexManagementService = IndexManagementService
@@ -70,7 +70,7 @@ trait IndexManagementResource extends MyResource {
     }
 
   def putIndexManagementRoutes: Route = {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~
       Slash ~ """([A-Za-z0-9_]+)""".r ~ Slash ~ "index_management") {
       (index_name, language) =>
         val indexManagementService = IndexManagementService
@@ -98,7 +98,7 @@ trait IndexManagementResource extends MyResource {
   }
 
   def indexManagementRoutes: Route = {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "index_management") {
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "index_management") {
       (index_name) =>
         val indexManagementService = IndexManagementService
         pathEnd {

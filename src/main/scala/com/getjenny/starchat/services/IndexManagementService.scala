@@ -40,8 +40,17 @@ object IndexManagementService {
       index_suffix = elastic_client.term_index_suffix)
   )
 
-  def create_index(index_name: String, language: String) : Future[Option[IndexManagementResponse]] = Future {
+  def create_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
+
+    // extract language from index name
+    val index_language_regex = "^(?:(index)_([a-z]+)_([A-Za-z0-9_]+))$".r
+    val index_patterns = index_name match {
+      case index_language_regex(index_pattern, language_pattern, arbitrary_pattern) =>
+        (index_pattern, language_pattern, arbitrary_pattern)
+      case _ => throw new Exception("index name is not well formed")
+    }
+    val language: String = index_patterns._2
 
     val analyzer_json_path: String = "/index_management/json_index_spec/" + language + "/analyzer.json"
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)

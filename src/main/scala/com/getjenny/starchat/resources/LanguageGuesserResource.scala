@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
 trait LanguageGuesserResource extends MyResource {
 
   def languageGuesserRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "language_guesser") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "language_guesser") { index_name =>
       val languageGuesserService = LanguageGuesserService
       pathEnd {
         post {

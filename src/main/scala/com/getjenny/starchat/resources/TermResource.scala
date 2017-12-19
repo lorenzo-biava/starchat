@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
 trait TermResource extends MyResource {
 
   def termRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "term") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "term") { index_name =>
       val termService = TermService
       path(Segment) { operation: String =>
         post {

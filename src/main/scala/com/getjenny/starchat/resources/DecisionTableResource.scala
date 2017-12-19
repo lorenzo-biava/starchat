@@ -21,7 +21,7 @@ import scala.util.{Failure, Success, Try}
 trait DecisionTableResource extends MyResource {
 
   def decisionTableRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable") { index_name =>
       pathEnd {
         val decisionTableService = DecisionTableService
         post {
@@ -165,7 +165,7 @@ trait DecisionTableResource extends MyResource {
     }
 
   def decisionTableUploadCSVRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_upload_csv") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_upload_csv") { index_name =>
       pathEnd {
         authenticateBasicAsync(realm = auth_realm,
           authenticator = authenticator.authenticator) { user =>
@@ -195,7 +195,7 @@ trait DecisionTableResource extends MyResource {
     }
 
   def decisionTableAnalyzerRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_analyzer") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_analyzer") { index_name =>
       pathEnd {
         get {
           authenticateBasicAsync(realm = auth_realm,
@@ -245,7 +245,7 @@ trait DecisionTableResource extends MyResource {
     }
 
   def decisionTableSearchRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_search") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "decisiontable_search") { index_name =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,
