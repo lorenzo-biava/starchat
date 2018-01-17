@@ -27,10 +27,10 @@ class CosineDistanceAnalyzer(val arguments: List[String], restricted_args: Map[S
     })
 
     val keyword_groups = match_list.groupBy(_._1).map(x => {
-      (x._1, x._2.map(c => c._2).toSet.toList, x._2.map(c => c._3).sum)
+      (x._1, x._2.map(c => c._2).distinct, x._2.map(c => c._3).sum)
     }).filter(_._3 < 1).map(x => (x._1, x._2, 1)).toList // remove keywords with matches
     val token_groups = match_list.groupBy(_._2).map(x => {
-      (x._1, x._2.map(c => c._1).toSet.toList, x._2.map(c => c._3).sum)
+      (x._1, x._2.map(c => c._1).distinct, x._2.map(c => c._3).sum)
     }).toList
 
     val analyzer_items = (keyword_groups ::: token_groups).map(x => (x._1, x._3))
