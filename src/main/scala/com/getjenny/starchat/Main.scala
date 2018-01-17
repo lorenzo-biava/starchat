@@ -90,7 +90,7 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
       connectionContext = https, log = system.log) map { binding =>
       system.log.info(s"REST (HTTPS) interface bound to ${binding.localAddress}")
     } recover { case ex =>
-      system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.http_host}:${params.get.http_port}",
+      system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.https_host}:${params.get.https_port}",
         ex.getMessage)
     }
   }
