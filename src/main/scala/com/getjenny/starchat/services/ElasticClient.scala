@@ -35,15 +35,15 @@ trait ElasticClient {
   val inet_addresses: List[TransportAddress] =
     host_map.map{ case(k,v) => new TransportAddress(InetAddress.getByName(k), v) }.toList
 
-  var client : TransportClient = open_client()
+  var client : TransportClient = openClient()
 
-  def open_client(): TransportClient = {
+  def openClient(): TransportClient = {
     val client: TransportClient = new PreBuiltTransportClient(settings)
       .addTransportAddresses(inet_addresses:_*)
     client
   }
 
-  def refresh_index(index_name: String): RefreshIndexResult = {
+  def refreshIndex(index_name: String): RefreshIndexResult = {
     val refresh_res: RefreshResponse =
       client.admin().indices().prepareRefresh(index_name).get()
 
@@ -66,11 +66,11 @@ trait ElasticClient {
     refresh_index_result
   }
 
-  def get_client(): TransportClient = {
+  def getClient(): TransportClient = {
     this.client
   }
 
-  def close_client(client: TransportClient): Unit = {
+  def closeClient(client: TransportClient): Unit = {
     client.close()
   }
 }

@@ -88,7 +88,7 @@ object TermService {
   }
 
   def index_term(index_name: String, terms: Terms, refresh: Int) : Future[Option[IndexDocumentListResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
@@ -154,7 +154,7 @@ object TermService {
   }
 
   def get_term(index_name: String, terms_request: TermIdsRequest) : Option[Terms] = {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
     multiget_builder.add(getIndexName(index_name), elastic_client.term_index_suffix, terms_request.ids:_*)
     val response: MultiGetResponse = multiget_builder.get()
@@ -226,7 +226,7 @@ object TermService {
   }
 
   def update_term(index_name: String, terms: Terms, refresh: Int) : Future[Option[UpdateDocumentListResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
@@ -280,7 +280,7 @@ object TermService {
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
       }
@@ -299,7 +299,7 @@ object TermService {
   }
 
   def deleteAll(index_name: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -315,7 +315,7 @@ object TermService {
 
   def delete(index_name: String, termGetRequest: TermIdsRequest, refresh: Int):
   Future[Option[DeleteDocumentListResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
     termGetRequest.ids.foreach( id => {
@@ -328,7 +328,7 @@ object TermService {
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
       }
@@ -347,7 +347,7 @@ object TermService {
   }
 
   def search_term(index_name: String, term: Term) : Future[Option[TermsResults]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
       .setTypes(elastic_client.term_index_suffix)
@@ -456,7 +456,7 @@ object TermService {
 
   //given a text, return all terms which match
   def search(index_name: String, text: String): Future[Option[TermsResults]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val search_builder : SearchRequestBuilder = client.prepareSearch()
       .setIndices(getIndexName(index_name))
@@ -552,7 +552,7 @@ object TermService {
       throw new Exception("esTokenizer: analyzer not found or not supported: (" + analyzer + ")")
     }
 
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val analyzer_builder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.text)
     analyzer_builder.setAnalyzer(analyzer)

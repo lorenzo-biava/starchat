@@ -62,14 +62,14 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response = client.prepareIndex().setIndex(index_name)
       .setCreate(true)
       .setType(elastic_client.user_index_suffix)
       .setId(user.id)
       .setSource(builder).get()
 
-    val refresh_index = elastic_client.refresh_index(index_name)
+    val refresh_index = elastic_client.refreshIndex(index_name)
     if(refresh_index.failed_shards_n > 0) {
       throw new Exception("User : index refresh failed: (" + index_name + ")")
     }
@@ -117,13 +117,13 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response: UpdateResponse = client.prepareUpdate().setIndex(index_name)
       .setType(elastic_client.user_index_suffix).setId(id)
       .setDoc(builder)
       .get()
 
-    val refresh_index = elastic_client.refresh_index(index_name)
+    val refresh_index = elastic_client.refreshIndex(index_name)
     if(refresh_index.failed_shards_n > 0) {
       throw new Exception("User : index refresh failed: (" + index_name + ")")
     }
@@ -144,11 +144,11 @@ class UserEsService extends AbstractUserService {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response: DeleteResponse = client.prepareDelete().setIndex(index_name)
       .setType(elastic_client.user_index_suffix).setId(id).get()
 
-    val refresh_index = elastic_client.refresh_index(index_name)
+    val refresh_index = elastic_client.refreshIndex(index_name)
     if(refresh_index.failed_shards_n > 0) {
       throw new Exception("User: index refresh failed: (" + index_name + ")")
     }
@@ -168,7 +168,7 @@ class UserEsService extends AbstractUserService {
       admin_user
     } else {
 
-      val client: TransportClient = elastic_client.get_client()
+      val client: TransportClient = elastic_client.getClient()
       val get_builder: GetRequestBuilder = client.prepareGet(index_name, elastic_client.user_index_suffix, id)
 
       val response: GetResponse = get_builder.get()

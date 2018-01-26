@@ -4,7 +4,7 @@ import akka.http.scaladsl.server.directives.Credentials
 import com.getjenny.starchat.entities._
 import scala.concurrent.Future
 
-case class AuthenticatorException(message: String = "", cause: Throwable = null)
+case class AuthenticatorException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 abstract class AbstractStarChatAuthenticator {

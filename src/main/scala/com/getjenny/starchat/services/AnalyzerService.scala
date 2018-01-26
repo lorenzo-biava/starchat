@@ -59,10 +59,10 @@ object AnalyzerService {
   }
 
   def getAnalyzers(index_name: String): mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
 
-    val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+    val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
     if(refresh_index.failed_shards_n > 0) {
       throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
     }

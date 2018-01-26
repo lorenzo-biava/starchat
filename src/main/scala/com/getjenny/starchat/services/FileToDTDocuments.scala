@@ -33,7 +33,7 @@ object FileToDTDocuments extends JsonSupport {
     lazy val file_entries = CSVReader.read(input=file_reader, separator=separator,
       quote = '"', skipLines=skiplines)
 
-    val dtdocuments: List[DTDocument] = file_entries.map(entry => {
+    val dtDocuments: List[DTDocument] = file_entries.map(entry => {
       if (entry.length != refnumcol) {
         val message = "file row is not consistent  Row(" + entry.toString + ")"
         throw new Exception(message)
@@ -77,6 +77,6 @@ object FileToDTDocuments extends JsonSupport {
         document
       }
     }).toList.filter(_ != null)
-    dtdocuments
+    dtDocuments
   }
 }

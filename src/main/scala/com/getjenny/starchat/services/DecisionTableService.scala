@@ -56,7 +56,7 @@ object DecisionTableService {
   }
 
   def search(index_name: String, documentSearch: DTDocumentSearch): Future[Option[SearchDTDocumentsResults]] = {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
       .setTypes(elastic_client.dt_index_suffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
@@ -263,14 +263,14 @@ object DecisionTableService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
       .setType(elastic_client.dt_index_suffix)
       .setId(document.state)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
       }
@@ -345,14 +345,14 @@ object DecisionTableService {
     }
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(index_name))
       .setType(elastic_client.dt_index_suffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
       }
@@ -369,7 +369,7 @@ object DecisionTableService {
   }
 
   def deleteAll(index_name: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -384,12 +384,12 @@ object DecisionTableService {
   }
 
   def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(index_name))
       .setType(elastic_client.dt_index_suffix).setId(id).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + index_name + ")")
       }
@@ -406,7 +406,7 @@ object DecisionTableService {
   }
 
   def getDTDocuments(index_name: String): Future[Option[SearchDTDocumentsResults]] = {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
     val scroll_resp : SearchResponse = client.prepareSearch(getIndexName(index_name))
@@ -491,7 +491,7 @@ object DecisionTableService {
   }
 
   def read(index_name: String, ids: List[String]): Future[Option[SearchDTDocumentsResults]] = {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {

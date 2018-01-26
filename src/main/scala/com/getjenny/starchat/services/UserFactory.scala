@@ -1,6 +1,6 @@
 package com.getjenny.starchat.services
 
-case class UserClassNotFoundException(message: String = "", cause: Throwable = null)
+case class UserClassNotFoundException(message: String = "", cause: Throwable = None.orNull  )
   extends Exception(message, cause)
 
 object SupportedAuthCredentialStoreImpl extends Enumeration {

@@ -41,7 +41,7 @@ object IndexManagementService {
   )
 
   def create_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     // extract language from index name
     val index_language_regex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
@@ -85,7 +85,7 @@ object IndexManagementService {
   }
 
   def remove_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     if (! elastic_client.enable_delete_index) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -108,7 +108,7 @@ object IndexManagementService {
   }
 
   def check_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val operations_message: List[String] = schemaFiles.map(item => {
       val full_index_name = index_name + "." + item.index_suffix
@@ -123,7 +123,7 @@ object IndexManagementService {
   }
 
   def update_index(index_name: String, language: String) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val analyzer_json_path: String = "/index_management/json_index_spec/" + language + "/analyzer.json"
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
@@ -159,11 +159,11 @@ object IndexManagementService {
   }
 
   def refresh_indexes(index_name: String) : Future[Option[RefreshIndexResults]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val operations_results: List[RefreshIndexResult] = schemaFiles.map(item => {
       val full_index_name = index_name + "." + item.index_suffix
-      val refresh_index_res: RefreshIndexResult = elastic_client.refresh_index(full_index_name)
+      val refresh_index_res: RefreshIndexResult = elastic_client.refreshIndex(full_index_name)
       if (refresh_index_res.failed_shards_n > 0) {
         val index_refresh_message = item.index_suffix + "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"
         throw new Exception(index_refresh_message)

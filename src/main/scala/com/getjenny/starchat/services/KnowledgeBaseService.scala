@@ -55,7 +55,7 @@ object KnowledgeBaseService {
   }
 
   def search(index_name: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
       .setTypes(elastic_client.kb_index_suffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
@@ -328,14 +328,14 @@ object KnowledgeBaseService {
     builder.endObject()
 
     val json: String = builder.string()
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response: IndexResponse =
       client.prepareIndex().setIndex(getIndexName(index_name)).setType(elastic_client.kb_index_suffix)
         .setId(document.id)
         .setSource(json, XContentType.JSON).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
       }
@@ -438,14 +438,14 @@ object KnowledgeBaseService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(index_name))
       .setType(elastic_client.kb_index_suffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
       }
@@ -462,7 +462,7 @@ object KnowledgeBaseService {
   }
 
   def deleteAll(index_name: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -477,12 +477,12 @@ object KnowledgeBaseService {
   }
 
   def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(index_name))
       .setType(elastic_client.kb_index_suffix).setId(id).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
       }
@@ -499,7 +499,7 @@ object KnowledgeBaseService {
   }
 
   def read(index_name: String, ids: List[String]): Future[Option[SearchKBDocumentsResults]] = {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
     multiget_builder.add(getIndexName(index_name), elastic_client.kb_index_suffix, ids:_*)
     val response: MultiGetResponse = multiget_builder.get()

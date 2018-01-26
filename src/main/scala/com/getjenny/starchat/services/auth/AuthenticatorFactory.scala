@@ -2,7 +2,7 @@ package com.getjenny.starchat.services.auth
 
 import com.getjenny.starchat.services._
 
-case class AuthenticatorClassNotFoundException(message: String = "", cause: Throwable = null)
+case class AuthenticatorClassNotFoundException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 object SupportedAuthImpl extends Enumeration {

@@ -37,7 +37,7 @@ object SystemIndexManagementService {
   )
 
   def createIndex() : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val operations_message: List[String] = schemaFiles.map(item => {
       val json_in_stream: InputStream = getClass.getResourceAsStream(item.path)
@@ -62,7 +62,7 @@ object SystemIndexManagementService {
   }
 
   def removeIndex() : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     if (! elastic_client.enable_delete_index) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -85,7 +85,7 @@ object SystemIndexManagementService {
   }
 
   def checkIndex() : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val operations_message: List[String] = schemaFiles.map(item => {
       val full_index_name = elastic_client.index_name + "." + item.index_suffix
@@ -100,7 +100,7 @@ object SystemIndexManagementService {
   }
 
   def updateIndex() : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
 
     val operations_message: List[String] = schemaFiles.map(item => {
       val json_in_stream: InputStream = getClass.getResourceAsStream(item.update_path)
@@ -129,7 +129,7 @@ object SystemIndexManagementService {
   def refreshIndexes() : Future[Option[RefreshIndexResults]] = Future {
     val operations_results: List[RefreshIndexResult] = schemaFiles.map(item => {
       val full_index_name = elastic_client.index_name + "." + item.index_suffix
-      val refresh_index_res: RefreshIndexResult = elastic_client.refresh_index(full_index_name)
+      val refresh_index_res: RefreshIndexResult = elastic_client.refreshIndex(full_index_name)
       if (refresh_index_res.failed_shards_n > 0) {
         val index_refresh_message = item.index_suffix + "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"
         throw new Exception(index_refresh_message)
@@ -142,7 +142,7 @@ object SystemIndexManagementService {
   }
 
   def getIndices: Future[List[String]] = Future {
-    val indicesRes = elastic_client.get_client()
+    val indicesRes = elastic_client.getClient()
       .admin.cluster.prepareState.get.getState.getMetaData.getIndices.asScala
     indicesRes.map(x => x.key).toList
   }

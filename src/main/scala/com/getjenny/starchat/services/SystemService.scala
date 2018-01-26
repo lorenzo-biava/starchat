@@ -56,7 +56,7 @@ object SystemService {
     builder.field(elastic_client.dt_reload_timestamp_field_name, timestamp)
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val response: UpdateResponse =
       client.prepareUpdate().setIndex(getIndexName(index_name))
         .setType(elastic_client.system_refresh_dt_index_suffix)
@@ -68,7 +68,7 @@ object SystemService {
     log.debug("dt reload timestamp response status: " + response.status())
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
+      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("System: index refresh failed: (" + index_name + ")")
       }
@@ -79,7 +79,7 @@ object SystemService {
 
   def getDTReloadTimestamp(index_name: String) : Future[Option[Long]] = Future {
     val dt_reload_doc_id: String = index_name
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elastic_client.getClient()
     val get_builder: GetRequestBuilder = client.prepareGet()
       .setIndex(getIndexName(index_name))
       .setType(elastic_client.system_refresh_dt_index_suffix)
