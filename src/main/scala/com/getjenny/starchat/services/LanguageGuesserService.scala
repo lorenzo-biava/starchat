@@ -33,7 +33,7 @@ object LanguageGuesserService {
     }
   }
 
-  def get_languages(index_name: String, language_code: String /*ISO 639-1 name for language*/):
+  def getLanguages(index_name: String, language_code: String /*ISO 639-1 name for language*/):
       Future[Option[LanguageGuesserInformations]] = Future {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()
     val has_model: Boolean = detector.hasModel(language_code)

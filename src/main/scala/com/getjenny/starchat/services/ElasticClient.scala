@@ -4,8 +4,7 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config,ConfigFactory}
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.transport.client.PreBuiltTransportClient

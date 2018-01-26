@@ -51,7 +51,7 @@ trait LanguageGuesserResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(languageGuesserService.get_languages(index_name, language)) {
+                onCompleteWithBreaker(breaker)(languageGuesserService.getLanguages(index_name, language)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t

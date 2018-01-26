@@ -17,6 +17,8 @@ import com.getjenny.analyzer.analyzers._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
+import java.io.File
+import akka.http.scaladsl.server.directives.FileInfo
 
 trait DecisionTableResource extends MyResource {
 
@@ -164,6 +166,10 @@ trait DecisionTableResource extends MyResource {
         }
     }
 
+
+  def tempDestination(fileInfo: FileInfo): File =
+    File.createTempFile("DecisionTableCSV", ".csv")
+
   def decisionTableUploadCSVRoutes: Route =
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable_upload_csv") { index_name =>
       pathEnd {
@@ -171,7 +177,7 @@ trait DecisionTableResource extends MyResource {
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, index_name, Permissions.write)) {
-            uploadedFile("csv") {
+            storeUploadedFile("csv", tempDestination) {
               case (metadata, file) =>
                 val decisionTableService = DecisionTableService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 10.seconds)
@@ -183,6 +189,9 @@ trait DecisionTableResource extends MyResource {
                     })
                   case Failure(e) =>
                     log.error("index(" + index_name + ") route=decisionTableUploadCSVRoutes method=POST: " + e.getMessage)
+                    if(file.exists()) {
+                      file.delete()
+                    }
                     completeResponse(StatusCodes.BadRequest,
                       Option {
                         ReturnMessageData(code = 107, message = e.getMessage)
