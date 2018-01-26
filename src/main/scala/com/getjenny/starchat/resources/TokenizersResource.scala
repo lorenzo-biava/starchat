@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 trait TokenizersResource extends MyResource {
   def esTokenizersRoutes: Route =
-    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "tokenizers") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "tokenizers") { index_name =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,

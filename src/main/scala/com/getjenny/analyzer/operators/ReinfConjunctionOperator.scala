@@ -14,8 +14,8 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
     } else if(children.isEmpty){
       throw OperatorException("ReinfConjunction children list is empty")
     } else {
-      children.headOption match {
-        case c: Option[AbstractOperator] => new ReinfConjunctionOperator(c.get.add(e, level - 1) :: children.tail)
+      children.head match {
+        case c: AbstractOperator => new ReinfConjunctionOperator(c.add(e, level - 1) :: children.tail)
         case _ => throw OperatorException("ReinfConjunction: trying to add to smt else than an operator")
       }
     }

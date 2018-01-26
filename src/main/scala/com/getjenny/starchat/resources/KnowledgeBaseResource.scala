@@ -20,7 +20,7 @@ import scala.util.{Failure, Success, Try}
 trait KnowledgeBaseResource extends MyResource {
 
   def knowledgeBaseRoutes: Route =
-    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "knowledgebase") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "knowledgebase") { index_name =>
       val knowledgeBaseService = KnowledgeBaseService
       pathEnd {
         post {
@@ -153,7 +153,7 @@ trait KnowledgeBaseResource extends MyResource {
     }
 
   def knowledgeBaseSearchRoutes: Route =
-    pathPrefix("""^(index_(?:[a-z]+)_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "knowledgebase_search") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "knowledgebase_search") { index_name =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,

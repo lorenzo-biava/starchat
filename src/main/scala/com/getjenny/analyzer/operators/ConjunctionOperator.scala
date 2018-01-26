@@ -15,8 +15,8 @@ class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(c
     } else if(children.isEmpty){
       throw OperatorException("Conjunction children list is empty")
     } else {
-      children.headOption match {
-        case c: Option[AbstractOperator] => new ConjunctionOperator(c.get.add(e, level - 1) :: children.tail)
+      children.head match {
+        case c: AbstractOperator => new ConjunctionOperator(c.add(e, level - 1) :: children.tail)
         case _ => throw OperatorException("Conjunction: trying to add to smt else than an operator")
       }
     }
