@@ -10,8 +10,8 @@ class BooleanOrOperator(children: List[Expression]) extends AbstractOperator(chi
   override def toString: String = "booleanOr(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int): AbstractOperator = {
       if (level == 0) new BooleanOrOperator(e :: children)
-      else children.head match {
-        case c: AbstractOperator => new BooleanOrOperator(c.add(e, level - 1) :: children.tail)
+      else children.headOption match {
+        case c: Option[AbstractOperator] => new BooleanOrOperator(c.get.add(e, level - 1) :: children.tail)
         case _ => throw OperatorException("booleanOr: trying to add to smt else than an operator")
       }
   }

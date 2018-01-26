@@ -10,8 +10,8 @@ class DisjunctionOperator(children: List[Expression]) extends AbstractOperator(c
   override def toString: String = "disjunction(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
     if (level == 0) new DisjunctionOperator(e :: children)
-    else children.head match {
-      case c: AbstractOperator => new DisjunctionOperator(c.add(e, level - 1) :: children.tail)
+    else children.headOption match {
+      case c: Option[AbstractOperator] => new DisjunctionOperator(c.get.add(e, level - 1) :: children.tail)
       case _ => throw OperatorException("Disjunction: trying to add to smt else than an operator")
     }
   }
