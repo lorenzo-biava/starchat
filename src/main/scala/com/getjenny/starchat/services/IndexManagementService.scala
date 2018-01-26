@@ -44,7 +44,7 @@ object IndexManagementService {
     val client: TransportClient = elastic_client.get_client()
 
     // extract language from index name
-    val index_language_regex = "^(?:(index)_([a-z]+)_([A-Za-z0-9_]+))$".r
+    val index_language_regex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
     val index_patterns = index_name match {
       case index_language_regex(index_pattern, language_pattern, arbitrary_pattern) =>
         (index_pattern, language_pattern, arbitrary_pattern)
