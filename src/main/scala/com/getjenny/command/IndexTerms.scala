@@ -60,12 +60,11 @@ object IndexTerms extends JsonSupport {
     (term_text_entries.drop(skiplines)).foreach(entry => {
       val splitted = entry.split(" ")
       val term_text = splitted.head
-      var term_vector = Vector.empty[Double]
-
-      try {
-        term_vector = splitted.tail.map(e => e.toDouble).toVector
+      val term_vector = try {
+        splitted.tail.map(e => e.toDouble).toVector
       } catch {
         case e : Exception => println("Error: " + e.getMessage)
+        Vector.empty[Double]
       }
 
       if (term_vector.length != vecsize) {

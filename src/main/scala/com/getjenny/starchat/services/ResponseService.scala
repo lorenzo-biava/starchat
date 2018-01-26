@@ -122,7 +122,7 @@ object ResponseService {
         } else {
           val full_response: ResponseRequestOutOperationResult =
             ResponseRequestOutOperationResult(ReturnMessageData(500,
-              "Error during state retrieval"), null) // internal error
+              "Error during state retrieval"), None) // internal error
           full_response
         }
       } else {

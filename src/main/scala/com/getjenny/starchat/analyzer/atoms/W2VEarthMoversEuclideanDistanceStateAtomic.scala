@@ -40,15 +40,15 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], re
 
   val index_name = restricted_args("index_name")
 
-  val queries_sentences: DecisionTableRuntimeItem =
-    AnalyzerService.analyzers_map(index_name).analyzer_map.getOrElse(state, null)
-  if (queries_sentences == null) {
+  val queries_sentences: Option[DecisionTableRuntimeItem] =
+    AnalyzerService.analyzers_map(index_name).analyzer_map.get(state)
+  if (queries_sentences.isEmpty) {
     analyzerService.log.error(toString + " : state is null")
   } else {
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val queries_vectors: List[Option[TextTerms]] = queries_sentences.queries.map(item => Option{item})
+  val queries_vectors: List[Option[TextTerms]] = queries_sentences.get.queries.map(item => Option{item})
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {

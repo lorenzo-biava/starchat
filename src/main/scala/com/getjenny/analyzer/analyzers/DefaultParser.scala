@@ -56,102 +56,102 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
              command_buffer: String, argument_buffer: String, arguments: List[String],
              command_tree: AbstractOperator):  AbstractOperator = {
 
-      if(indice >= chars.length && chars.length != 0) {
+      if (indice >= chars.length && chars.nonEmpty) {
         if (quote_balance < 0)
           throw AnalyzerParsingException("Parsing error: quotes are not balanced")
         else if (parenthesis_balance.sum != 0)
           throw AnalyzerParsingException("Parsing error: parenthesis are not balanced")
         else
-          return command_tree
-      }
+          command_tree
+      } else {
+        val just_opened_parenthesis = chars(indice) == '(' && !escape_char(chars, indice) && quote_balance == 0
+        val just_closed_parenthesis = chars(indice) == ')' && !escape_char(chars, indice) && quote_balance == 0
 
-      val just_opened_parenthesis = chars(indice) == '(' && !escape_char(chars, indice) && quote_balance == 0
-      val just_closed_parenthesis = chars(indice) == ')' && !escape_char(chars, indice) && quote_balance == 0
+        val new_parenthesis_balance: List[Int] = {
+          // if a parenthesis is inside double quotes does not count
+          if (just_opened_parenthesis) 1 :: parenthesis_balance
+          else if (just_closed_parenthesis) -1 :: parenthesis_balance
+          else parenthesis_balance
+        }
 
-      val new_parenthesis_balance: List[Int] = {
-        // if a parenthesis is inside double quotes does not count
-        if (just_opened_parenthesis) 1 :: parenthesis_balance
-        else if (just_closed_parenthesis) -1 :: parenthesis_balance
-        else parenthesis_balance
-      }
+        // new_quote_balance > 0 if text in a quotation
+        val just_opened_quote = chars(indice) == '"' && !escape_char(chars, indice) && quote_balance == 0
+        val just_closed_quote = chars(indice) == '"' && !escape_char(chars, indice) && quote_balance == 1
+        val new_quote_balance: Int = {
+          if (just_opened_quote) 1
+          else if (just_closed_quote) 0
+          else quote_balance
+        }
 
-      // new_quote_balance > 0 if text in a quotation
-      val just_opened_quote = chars(indice) == '"' && !escape_char(chars, indice) && quote_balance == 0
-      val just_closed_quote = chars(indice) == '"' && !escape_char(chars, indice) && quote_balance == 1
-      val new_quote_balance: Int = {
-        if (just_opened_quote) 1
-        else if  (just_closed_quote) 0
-        else quote_balance
-      }
+        if (new_parenthesis_balance.sum < 0 || new_quote_balance < 0)
+          throw AnalyzerParsingException("Parsing error: quotes or parenthesis do not match")
 
-      if (new_parenthesis_balance.sum < 0 || new_quote_balance < 0)
-        throw AnalyzerParsingException("Parsing error: quotes or parenthesis do not match")
+        // Start reading the command
+        // If not in quotation and have letter, add to command string accumulator
+        // Then, if a parenthesis opens put the string in command
+        val new_command_buffer = if ((chars(indice).isLetter || chars(indice).isWhitespace) && new_quote_balance == 0)
+          (command_buffer + chars(indice)).filter(c => !c.isWhitespace)
+        else if (!just_closed_parenthesis) ""
+        else command_buffer.filter(c => !c.isWhitespace)
 
-      // Start reading the command
-      // If not in quotation and have letter, add to command string accumulator
-      // Then, if a parenthesis opens put the string in command
-      val new_command_buffer = if ((chars(indice).isLetter || chars(indice).isWhitespace) && new_quote_balance == 0)
-        (command_buffer + chars(indice)).filter(c => !c.isWhitespace )
-      else if (!just_closed_parenthesis) ""
-      else command_buffer.filter(c => !c.isWhitespace )
-
-      // Now read the argument of the command
-      // If inside last parenthesis was opened and quotes add to argument
-      val argument_acc =
-        if (new_parenthesis_balance.head == 1 && new_quote_balance == 1  && !just_opened_quote) {
+        // Now read the argument of the command
+        // If inside last parenthesis was opened and quotes add to argument
+        val argument_acc =
+        if (new_parenthesis_balance.head == 1 && new_quote_balance == 1 && !just_opened_quote) {
           argument_buffer + chars(indice)
         } else {
           ""
         }
 
-      if (just_opened_parenthesis && operatorFactory.operations(command_buffer)) {
-        // We have just read an operator.
-        //println("DEBUG Adding the operator " + command_buffer)
-        val operator = try {
-          operatorFactory.get(command_buffer, List())
-        } catch {
-          case e: NoSuchElementException =>
-            throw AnalyzerCommandException("Operator does not exists(" + command_buffer + ")", e)
-          case e: Exception =>
-            throw AnalyzerCommandException("Unknown error with operator(" + command_buffer + ")", e)
-        }
-        loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
-          arguments,
-          command_tree.add(operator, new_parenthesis_balance.sum - 1))
-      } else if (!atomicFactory.operations(command_buffer) && !operatorFactory.operations(command_buffer) &&
-        new_parenthesis_balance.head ==1 && just_opened_parenthesis) {
-        throw AnalyzerCommandException("Atomic or Operator does not exists(" + command_buffer + ")")
-      } else if (atomicFactory.operations(command_buffer) && new_parenthesis_balance.head == 1 && !just_closed_quote) {
-        // We are reading an atomic's argument...
-        //println("DEBUG calling loop, without adding an atom, with this command buffer: " + command_buffer + " : " + argument_acc)
-        loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
-          argument_acc, arguments, command_tree)
-      } else if (atomicFactory.operations(command_buffer) && just_closed_parenthesis) {
-        // We have read all the atomic's arguments, add the atomic to the tree
-        //println("DEBUG Calling loop, adding the atom: " + command_buffer + ", " + arguments)
-        val atomic = try {
-          atomicFactory.get(command_buffer, arguments, restricted_args)
-        } catch {
-          case e: NoSuchElementException =>
-            throw AnalyzerCommandException("Atomic does not exists(" + command_buffer + ")", e)
-          case e: Exception =>
-            throw AnalyzerCommandException("Unknown error with Atomic(" + command_buffer + ")", e)
-        }
-        loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "",
-          "", List.empty[String], command_tree.add(atomic, new_parenthesis_balance.sum))
-      } else if (atomicFactory.operations(command_buffer) && just_closed_quote && !just_closed_parenthesis) {
-        // We have read atomic's argument, add the argument to the list
-        //println("DEBUG Calling loop, adding argument: " + command_buffer + " <- " + argument_buffer)
-        loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
-          argument_acc, arguments ::: List(argument_buffer), command_tree)
-      } else {
-        //println("DEBUG going to return naked command tree... " + chars.length + " : " + command_buffer)
-        if (indice < chars.length - 1) {
-          loop(chars, indice+1, new_parenthesis_balance, new_quote_balance,
-            new_command_buffer, argument_acc, arguments, command_tree)
+        if (just_opened_parenthesis && operatorFactory.operations(command_buffer)) {
+          // We have just read an operator.
+          //println("DEBUG Adding the operator " + command_buffer)
+          val operator = try {
+            operatorFactory.get(command_buffer, List())
+          } catch {
+            case e: NoSuchElementException =>
+              throw AnalyzerCommandException("Operator does not exists(" + command_buffer + ")", e)
+            case e: Exception =>
+              throw AnalyzerCommandException("Unknown error with operator(" + command_buffer + ")", e)
+          }
+          loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "", argument_acc,
+            arguments,
+            command_tree.add(operator, new_parenthesis_balance.sum - 1))
+        } else if (!atomicFactory.operations(command_buffer) && !operatorFactory.operations(command_buffer) &&
+          new_parenthesis_balance.head == 1 && just_opened_parenthesis) {
+          throw AnalyzerCommandException("Atomic or Operator does not exists(" + command_buffer + ")")
+        } else if (atomicFactory.operations(command_buffer) && new_parenthesis_balance.head == 1 && !just_closed_quote) {
+          // We are reading an atomic's argument...
+          //println("DEBUG calling loop, without adding an atom, with this command buffer: " + command_buffer + " : " + argument_acc)
+          loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
+            argument_acc, arguments, command_tree)
+        } else if (atomicFactory.operations(command_buffer) && just_closed_parenthesis) {
+          // We have read all the atomic's arguments, add the atomic to the tree
+          //println("DEBUG Calling loop, adding the atom: " + command_buffer + ", " + arguments)
+          val atomic = try {
+            atomicFactory.get(command_buffer, arguments, restricted_args)
+          } catch {
+            case e: NoSuchElementException =>
+              throw AnalyzerCommandException("Atomic does not exists(" + command_buffer + ")", e)
+            case e: Exception =>
+              throw AnalyzerCommandException("Unknown error with Atomic(" + command_buffer + ")", e)
+          }
+          loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, "",
+            "", List.empty[String], command_tree.add(atomic, new_parenthesis_balance.sum))
+        } else if (atomicFactory.operations(command_buffer) && just_closed_quote && !just_closed_parenthesis) {
+          // We have read atomic's argument, add the argument to the list
+          //println("DEBUG Calling loop, adding argument: " + command_buffer + " <- " + argument_buffer)
+          loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
+            argument_acc, arguments ::: List(argument_buffer), command_tree)
         } else {
-          if (new_parenthesis_balance.sum == 0 && new_quote_balance == 0) command_tree
-          else throw AnalyzerParsingException("gobble_commands: Parenthesis or quotes do not match")
+          //println("DEBUG going to return naked command tree... " + chars.length + " : " + command_buffer)
+          if (indice < chars.length - 1) {
+            loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance,
+              new_command_buffer, argument_acc, arguments, command_tree)
+          } else {
+            if (new_parenthesis_balance.sum == 0 && new_quote_balance == 0) command_tree
+            else throw AnalyzerParsingException("gobble_commands: Parenthesis or quotes do not match")
+          }
         }
       }
     }
