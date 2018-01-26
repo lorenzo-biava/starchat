@@ -7,16 +7,21 @@ import com.getjenny.analyzer.expressions._
   */
 
 class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOperator(children: List[Expression]) {
-  override def toString: String = "conjunction(" + children.mkString(", ") + ")"
+  override def toString: String = "ReinfConjunctionOperator(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
     if (level == 0) {
       new ReinfConjunctionOperator(e :: children)
     } else if(children.isEmpty){
-      throw OperatorException("ReinfConjunction children list is empty")
+      throw OperatorException("ReinfConjunctionOperator children list is empty")
     } else {
-      children.head match {
-        case c: AbstractOperator => new ReinfConjunctionOperator(c.add(e, level - 1) :: children.tail)
-        case _ => throw OperatorException("ReinfConjunction: trying to add to smt else than an operator")
+      children.headOption match {
+        case Some(t) =>
+          t match {
+            case c: AbstractOperator => new ReinfConjunctionOperator(c.add(e, level - 1) :: children.tail)
+            case _ => throw OperatorException("ReinfConjunctionOperator: trying to add to smt else than an operator")
+          }
+        case _ =>
+          throw OperatorException("ReinfConjunctionOperator: trying to add None instead of an operator")
       }
     }
   }

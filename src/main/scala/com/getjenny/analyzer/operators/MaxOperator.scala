@@ -9,12 +9,19 @@ import Scalaz._
   */
 
 class MaxOperator(children: List[Expression]) extends AbstractOperator(children: List[Expression]) {
-  override def toString: String = "max(" + children.mkString(", ") + ")"
+  override def toString: String = "MaxOperator(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
     if (level === 0) new MaxOperator(e :: children)
-    else children.head match {
-      case c: AbstractOperator => new MaxOperator(c.add(e, level - 1) :: children.tail)
-      case _ => throw OperatorException("Max: trying to add to smt else than an operator")
+    else {
+      children.headOption match {
+        case Some(t) =>
+          t match {
+            case c: AbstractOperator => new MaxOperator(c.add(e, level - 1) :: children.tail)
+            case _ => throw OperatorException("MaxOperator: trying to add to smt else than an operator")
+          }
+        case _ =>
+          throw OperatorException("MaxOperator: trying to add None instead of an operator")
+      }
     }
   }
 

@@ -15,18 +15,24 @@ import Scalaz._
 
 class BooleanNotOperator(child: List[Expression]) extends AbstractOperator(child: List[Expression]) {
   require(child.lengthCompare(1) == 0, "BooleanNotOperator can only have one Expression")
-  override def toString: String = "booleanNot(" + child + ")"
+  override def toString: String = "BooleanNotOperator(" + child + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
     if (level === 0) {
       if (child.nonEmpty)
         throw OperatorException("BooleanNotOperator: trying to add more than one expression.")
       new BooleanNotOperator(e :: child)
-    }
-    else child.head match {
-      case c: AbstractOperator =>
-        if (child.tail.nonEmpty) throw OperatorException("BooleanNotOperator: more than one child expression.")
-        new BooleanNotOperator(c.add(e, level - 1) :: child.tail)
-      case _ => throw OperatorException("BooleanNotOperator: trying to add to smt else than an operator.")
+    } else {
+      child.headOption match {
+        case Some(t) =>
+          t match {
+            case c: AbstractOperator =>
+              if (child.tail.nonEmpty) throw OperatorException("BooleanNotOperator: more than one child expression.")
+              new BooleanNotOperator(c.add(e, level - 1) :: child.tail)
+            case _ => throw OperatorException("BooleanNotOperator: trying to add to smt else than an operator.")
+          }
+        case _ =>
+          throw OperatorException("BooleanNotOperator: operator must have at lest an argument")
+      }
     }
   }
 

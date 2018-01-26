@@ -9,19 +9,32 @@ import Scalaz._
   */
 
 class BooleanAndOperator(children: List[Expression]) extends AbstractOperator(children: List[Expression]) {
-  override def toString: String = "booleanAnd(" + children.mkString(", ") + ")"
+  override def toString: String = "BooleanAndOperator(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
     if (level === 0) new BooleanAndOperator(e :: children)
-    else children.head match {
-      case c: AbstractOperator => new BooleanAndOperator(c.add(e, level - 1) :: children.tail)
-      case _ => throw OperatorException("booleanAnd: trying to add to smt else than an operator")
+    else {
+      children.headOption match {
+        case Some(t) =>
+          t match {
+            case c: AbstractOperator => new BooleanAndOperator(c.add(e, level - 1) :: children.tail)
+            case _ => throw OperatorException("BooleanAndOperator: trying to add to smt else than an operator")
+          }
+        case _ =>
+          throw OperatorException("BooleanAndOperator: trying to add None instead of an operator")
+      }
     }
   }
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     def loop(l: List[Expression]): Result = {
-      val first_res = l.head.matches(query, data)
-      if (first_res.score ≠ 1.0d) {
+      val first_res = l.headOption match {
+        case Some(t) => {
+          t.matches(query, data)
+        }
+        case _ =>
+          throw OperatorException("BooleanAndOperator: operator argument is empty")
+      }
+      if (first_res.score =/= 1.0d) {
         Result(score=0, data = first_res.data)
       }
       else if (l.tail.isEmpty) {

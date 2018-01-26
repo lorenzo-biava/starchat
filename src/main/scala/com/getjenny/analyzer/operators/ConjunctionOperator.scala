@@ -10,16 +10,21 @@ import Scalaz._
   */
 
 class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(children: List[Expression]) {
-  override def toString: String = "conjunction(" + children.mkString(", ") + ")"
+  override def toString: String = "ConjunctionOperator(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
     if (level === 0) {
       new ConjunctionOperator(e :: children)
     } else if(children.isEmpty){
-      throw OperatorException("Conjunction children list is empty")
+      throw OperatorException("ConjunctionOperator: children list is empty")
     } else {
-      children.head match {
-        case c: AbstractOperator => new ConjunctionOperator(c.add(e, level - 1) :: children.tail)
-        case _ => throw OperatorException("Conjunction: trying to add to smt else than an operator")
+      children.headOption match {
+        case Some(t) =>
+          t match {
+            case c: AbstractOperator => new ConjunctionOperator(c.add(e, level - 1) :: children.tail)
+            case _ => throw OperatorException("ConjunctionOperator: trying to add to smt else than an operator")
+          }
+        case _ => throw OperatorException("ConjunctionOperator: trying to add None instead of an operator")
+
       }
     }
   }
@@ -27,7 +32,7 @@ class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(c
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     def conjunction(l: List[Expression]): Result = {
       if(l.isEmpty) {
-        throw OperatorException("Conjunction argument list is empty")
+        throw OperatorException("ConjunctionOperator: argument list is empty")
       }
       val eval = l.head.evaluate(query, data)
       if (eval.score == 0) Result(score = 0, data = eval.data)
