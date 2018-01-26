@@ -1,6 +1,8 @@
 package com.getjenny.analyzer.operators
 
 import com.getjenny.analyzer.expressions._
+import scalaz._
+import Scalaz._
 
 /** Not Operator
   *
@@ -12,10 +14,10 @@ import com.getjenny.analyzer.expressions._
   */
 
 class BooleanNotOperator(child: List[Expression]) extends AbstractOperator(child: List[Expression]) {
-  require(child.length <= 1, "BooleanNotOperator can only have one Expression")
+  require(child.lengthCompare(1) == 0, "BooleanNotOperator can only have one Expression")
   override def toString: String = "booleanNot(" + child + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
-    if (level == 0) {
+    if (level === 0) {
       if (child.nonEmpty)
         throw OperatorException("BooleanNotOperator: trying to add more than one expression.")
       new BooleanNotOperator(e :: child)

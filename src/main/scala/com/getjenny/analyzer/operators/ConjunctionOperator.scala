@@ -2,6 +2,8 @@ package com.getjenny.analyzer.operators
 
 import com.getjenny.analyzer.expressions._
 import com.getjenny.analyzer.analyzers._
+import scalaz._
+import Scalaz._
 
 /**
   * Created by mal on 21/02/2017.
@@ -10,7 +12,7 @@ import com.getjenny.analyzer.analyzers._
 class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(children: List[Expression]) {
   override def toString: String = "conjunction(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
-    if (level == 0) {
+    if (level === 0) {
       new ConjunctionOperator(e :: children)
     } else if(children.isEmpty){
       throw OperatorException("Conjunction children list is empty")
@@ -29,7 +31,7 @@ class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(c
       }
       val eval = l.head.evaluate(query, data)
       if (eval.score == 0) Result(score = 0, data = eval.data)
-      else if (l.tail == Nil) eval
+      else if (l.tail.isEmpty) eval
       else {
         val res = conjunction(l.tail)
 

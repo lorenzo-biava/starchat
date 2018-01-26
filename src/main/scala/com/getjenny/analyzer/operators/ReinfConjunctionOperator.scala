@@ -24,7 +24,7 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
   def evaluate(query: String, data: AnalyzersData = new AnalyzersData): Result = {
     def reinfConjunction(l: List[Expression]): Result = {
       val res = l.head.evaluate(query, data)
-      if (l.tail == Nil) {
+      if (l.tail.isEmpty) {
         println("SCORE_NIL: " + res.score * 1.1 + "(" + res.score + ")")
         Result(score = res.score * 1.1,
           AnalyzersData(

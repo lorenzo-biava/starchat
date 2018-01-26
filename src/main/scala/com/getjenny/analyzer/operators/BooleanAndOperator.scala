@@ -1,6 +1,8 @@
 package com.getjenny.analyzer.operators
 
 import com.getjenny.analyzer.expressions._
+import scalaz._
+import Scalaz._
 
 /**
   * Created by mal on 21/02/2017.
@@ -9,7 +11,7 @@ import com.getjenny.analyzer.expressions._
 class BooleanAndOperator(children: List[Expression]) extends AbstractOperator(children: List[Expression]) {
   override def toString: String = "booleanAnd(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
-    if (level == 0) new BooleanAndOperator(e :: children)
+    if (level === 0) new BooleanAndOperator(e :: children)
     else children.head match {
       case c: AbstractOperator => new BooleanAndOperator(c.add(e, level - 1) :: children.tail)
       case _ => throw OperatorException("booleanAnd: trying to add to smt else than an operator")
@@ -19,10 +21,10 @@ class BooleanAndOperator(children: List[Expression]) extends AbstractOperator(ch
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     def loop(l: List[Expression]): Result = {
       val first_res = l.head.matches(query, data)
-      if (first_res.score != 1) {
+      if (first_res.score ≠ 1.0d) {
         Result(score=0, data = first_res.data)
       }
-      else if (l.tail == Nil) {
+      else if (l.tail.isEmpty) {
         Result(score=1, data = first_res.data)
       }
       else {
