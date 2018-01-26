@@ -159,7 +159,7 @@ object AnalyzerService {
     result
   }
 
-  def loadAnalyzer(index_name: String, propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
+  def loadAnalyzer(index_name: String, propagate: Boolean = true) : Future[Option[DTAnalyzerLoad]] = Future {
     val analyzer_map = buildAnalyzers(index_name, getAnalyzers(index_name))
     val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=analyzer_map.size)
     val active_analyzers: ActiveAnalyzers = ActiveAnalyzers(analyzer_map = analyzer_map,
