@@ -38,8 +38,8 @@ object SimilarityTest extends JsonSupport {
                             analyzer: String = "keyword(\"test\")",
                             itemList: Seq[String] = Seq.empty[String],
                             variables: Map[String, String] = Map.empty[String, String],
-                            text1_index: Int = 3,
-                            text2_index: Int = 4,
+                            text1Index: Int = 3,
+                            text2Index: Int = 4,
                             separator: Char = ',',
                             skiplines: Int = 1,
                             timeout: Int = 60,
@@ -80,8 +80,8 @@ object SimilarityTest extends JsonSupport {
 
     termTextEntries.foreach(entry => {
 
-      val text1 = entry(params.text1_index).toString
-      val text2 = entry(params.text2_index).toString
+      val text1 = entry(params.text1Index).toString
+      val text2 = entry(params.text2Index).toString
       val escaped_text1 = text1.replace("\"", "\\\"")
       val escaped_text2 = text2.replace("\"", "\\\"")
 
@@ -160,12 +160,12 @@ object SimilarityTest extends JsonSupport {
         .action((x, c) => c.copy(variables = x))
       opt[Int]("text1_index")
         .text(s"the index of the text1 element" +
-          s"  default: ${defaultParams.text1_index}")
-        .action((x, c) => c.copy(text1_index = x))
+          s"  default: ${defaultParams.text1Index}")
+        .action((x, c) => c.copy(text1Index = x))
        opt[Int]("text2_index")
         .text(s"the index of the text2 element" +
-          s"  default: ${defaultParams.text2_index}")
-        .action((x, c) => c.copy(text2_index = x))
+          s"  default: ${defaultParams.text2Index}")
+        .action((x, c) => c.copy(text2Index = x))
       opt[Int]("timeout")
         .text(s"the timeout in seconds of each insert operation" +
           s"  default: ${defaultParams.timeout}")
