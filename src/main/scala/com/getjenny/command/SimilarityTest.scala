@@ -90,7 +90,7 @@ object SimilarityTest extends JsonSupport {
       val evaluate_request = AnalyzerEvaluateRequest(
         analyzer = analyzer,
         query = text2,
-        data = Option{ Data(extractedVariables = params.variables, itemList = params.itemList.toList) }
+        data = Option{ Data(extracted_variables = params.variables, item_list = params.itemList.toList) }
       )
 
       val entityFuture = Marshal(evaluate_request).to[MessageEntity]

@@ -33,8 +33,8 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
 //        println("SCORE_NIL: " + res.score * 1.1 + "(" + res.score + ")")
         Result(score = res.score * 1.1,
           AnalyzersData(
-            itemList = data.itemList,
-            extractedVariables = res.data.extractedVariables,
+            item_list = data.item_list,
+            extracted_variables = res.data.extracted_variables,
             data = res.data.data
           )
         )
@@ -44,8 +44,8 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
 //        println("SCORE_NOT_NIL: " + (val1.score * 1.1) * val2.score + "(" + val1.score + ")" + "(" + val2.score + ")")
         Result(score = (val1.score * 1.1) * val2.score,
           AnalyzersData(
-            itemList = data.itemList,
-            extractedVariables = res.data.extractedVariables,
+            item_list = data.item_list,
+            extracted_variables = res.data.extracted_variables,
             data = res.data.data
           )
         )

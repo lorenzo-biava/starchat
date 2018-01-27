@@ -27,7 +27,7 @@ class ExistsVariableAtomic(val arguments: List[String], restricted_args: Map[Str
     * @return Result with 1.0 if the variable exists score = 0.0 otherwise
     */
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    if(data.extractedVariables.contains(varName)) {
+    if(data.extracted_variables.contains(varName)) {
       Result(score = 1.0)
     } else {
       Result(score = 0.0)

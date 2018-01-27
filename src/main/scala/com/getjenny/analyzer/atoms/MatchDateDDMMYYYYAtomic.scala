@@ -32,7 +32,7 @@ class MatchDateDDMMYYYYAtomic(val arguments: List[String], restricted_args: Map[
     val res = try {
       Result(
         score = 1.0,
-        AnalyzersData(itemList = data.itemList, extractedVariables = regexExtractor.evaluate(query))
+        AnalyzersData(item_list = data.item_list, extracted_variables = regexExtractor.evaluate(query))
       )
     } catch {
       case e: PatternExtractionNoMatchException =>

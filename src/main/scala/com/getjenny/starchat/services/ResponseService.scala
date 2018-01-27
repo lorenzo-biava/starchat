@@ -68,7 +68,7 @@ object ResponseService {
     val analyzersInternalData =
       decisionTableService.resultsToMap(indexName, decisionTableService.searchDtQueries(indexName, user_text))
 
-    val data: AnalyzersData = AnalyzersData(extractedVariables = variables, itemList = traversedStates,
+    val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversedStates,
       data = analyzersInternalData)
 
     val returnValue: String = if (request.values.isDefined)
@@ -90,8 +90,8 @@ object ResponseService {
           var bubble: String = doc.bubble
           var actionInput: Map[String, String] = doc.action_input
           val stateData: Map[String, String] = doc.state_data
-          if (data.extractedVariables.nonEmpty) {
-            for ((key, value) <- data.extractedVariables) {
+          if (data.extracted_variables.nonEmpty) {
+            for ((key, value) <- data.extracted_variables) {
               bubble = bubble.replaceAll("%" + key + "%", value)
               actionInput = doc.action_input map { case (ki, vi) =>
                 val new_value: String = vi.replaceAll("%" + key + "%", value)
@@ -109,7 +109,7 @@ object ResponseService {
             analyzer = analyzer,
             bubble = bubble,
             action = doc.action,
-            data = data.extractedVariables,
+            data = data.extracted_variables,
             action_input = actionInput,
             state_data = stateData,
             success_value = doc.success_value,
@@ -170,7 +170,7 @@ object ResponseService {
             var actionInput: Map[String, String] = doc.action_input
             val stateData: Map[String, String] = doc.state_data
 
-            for ((key, value) <- data.extractedVariables) {
+            for ((key, value) <- data.extracted_variables) {
               bubble = bubble.replaceAll("%" + key + "%", value)
               actionInput = doc.action_input map { case (ki, vi) =>
                 val newValue: String = vi.replaceAll("%" + key + "%", value)
@@ -178,7 +178,7 @@ object ResponseService {
               }
             }
 
-            for ((key, value) <- evaluationRes.data.extractedVariables) {
+            for ((key, value) <- evaluationRes.data.extracted_variables) {
               bubble = bubble.replaceAll("%" + key + "%", value)
               actionInput = doc.action_input map { case (ki, vi) =>
                 val newValue: String = vi.replaceAll("%" + key + "%", value)
@@ -187,8 +187,8 @@ object ResponseService {
             }
 
             val cleaned_data =
-              data.extractedVariables ++
-                evaluationRes.data.extractedVariables.filter(item => !(item._1 matches "\\A__temp__.*"))
+              data.extracted_variables ++
+                evaluationRes.data.extracted_variables.filter(item => !(item._1 matches "\\A__temp__.*"))
 
             val traversed_states_updated: List[String] = traversedStates ++ List(state)
             val response_item: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,

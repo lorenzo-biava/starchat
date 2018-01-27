@@ -26,7 +26,7 @@ class HasTravStateAtomic(val arguments: List[String], restricted_args: Map[Strin
     * @return Result with 1.0 if the state exists score = 0.0 otherwise
     */
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    if(data.itemList.contains(name)) {
+    if(data.item_list.contains(name)) {
       Result(score = 1.0)
     } else {
       Result(score = 0.0)
