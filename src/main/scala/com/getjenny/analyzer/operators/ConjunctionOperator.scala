@@ -31,10 +31,12 @@ class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(c
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     def conjunction(l: List[Expression]): Result = {
-      if(l.isEmpty) {
-        throw OperatorException("ConjunctionOperator: argument list is empty")
+      val eval = l.headOption match {
+        case Some(t) =>
+          t.evaluate(query, data)
+        case _ =>
+          throw OperatorException("ConjunctionOperator: argument list is empty")
       }
-      val eval = l.head.evaluate(query, data)
       if (eval.score == 0) Result(score = 0, data = eval.data)
       else if (l.tail.isEmpty) eval
       else {

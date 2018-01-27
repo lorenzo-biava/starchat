@@ -37,16 +37,20 @@ class DisjunctionOperator(children: List[Expression]) extends AbstractOperator(c
 
       l.tailOption match {
         case Some(t) =>
-          val comp_disj = compDisjunction(t)
-          Result(score = (1.0 - res.score) * comp_disj.score,
-            AnalyzersData(
-              item_list = data.item_list,
-              extracted_variables = comp_disj.data.extracted_variables ++ res.data.extracted_variables,
-              data = comp_disj.data.data ++ res.data.data
+          if (t.nonEmpty) {
+            val comp_disj = compDisjunction(t)
+            Result(score = (1.0 - res.score) * comp_disj.score,
+              AnalyzersData(
+                item_list = data.item_list,
+                extracted_variables = comp_disj.data.extracted_variables ++ res.data.extracted_variables,
+                data = comp_disj.data.data ++ res.data.data
+              )
             )
-          )
+          } else {
+            Result(score = 1.0 - res.score, data = res.data)
+          }
         case _ =>
-          Result(score = 1.0 - res.score, data = res.data)
+          throw OperatorException("DisjunctionOperator: the tail must be a list")
       }
     }
     val comp_disj = compDisjunction(children)
