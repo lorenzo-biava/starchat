@@ -120,9 +120,9 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
             arguments,
             command_tree.add(operator, new_parenthesis_balance.sum - 1))
         } else if (!atomicFactory.operations(command_buffer) && !operatorFactory.operations(command_buffer) &&
-          new_parenthesis_balance.head == 1 && just_opened_parenthesis) {
+          new_parenthesis_balance.head === 1 && just_opened_parenthesis) {
           throw AnalyzerCommandException("Atomic or Operator does not exists(" + command_buffer + ")")
-        } else if (atomicFactory.operations(command_buffer) && new_parenthesis_balance.head == 1 && !just_closed_quote) {
+        } else if (atomicFactory.operations(command_buffer) && new_parenthesis_balance.head === 1 && !just_closed_quote) {
           // We are reading an atomic's argument...
           //println("DEBUG calling loop, without adding an atom, with this command buffer: " + command_buffer + " : " + argument_acc)
           loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance, command_buffer,
