@@ -186,25 +186,25 @@ object ResponseService {
               }
             }
 
-            val cleaned_data =
+            val cleanedData =
               data.extracted_variables ++
                 evaluationRes.data.extracted_variables.filter(item => !(item._1 matches "\\A__temp__.*"))
 
-            val traversed_states_updated: List[String] = traversedStates ++ List(state)
-            val response_item: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
+            val traversedStatesUpdated: List[String] = traversedStates ++ List(state)
+            val responseItem: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
               state = state,
               max_state_count = maxStateCount,
-              traversed_states = traversed_states_updated,
+              traversed_states = traversedStatesUpdated,
               analyzer = analyzer,
               bubble = bubble,
               action = doc.action,
-              data = cleaned_data,
+              data = cleanedData,
               action_input = actionInput,
               state_data = stateData,
               success_value = doc.success_value,
               failure_value = doc.failure_value,
               score = evaluationRes.score)
-            response_item
+            responseItem
           }).toList.sortWith(_.score > _.score)
           ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{docs}) // success
         } else {

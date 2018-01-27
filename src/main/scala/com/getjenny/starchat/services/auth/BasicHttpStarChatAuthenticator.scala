@@ -65,11 +65,11 @@ class BasicHttpStarChatAuthenticator(userService: AbstractUserService) extends A
   def hasPermissions(user: User, index: String, permission: Permissions.Value): Future[Boolean] = {
     user.id match {
       case `admin` => //admin can do everything
-        val user_permissions = user.permissions.getOrElse("admin", Set.empty[Permissions.Value])
-        Future.successful(user_permissions.contains(Permissions.admin))
+        val userPermissions = user.permissions.getOrElse("admin", Set.empty[Permissions.Value])
+        Future.successful(userPermissions.contains(Permissions.admin))
       case _ =>
-        val user_permissions = user.permissions.getOrElse(index, Set.empty[Permissions.Value])
-        Future.successful(user_permissions.contains(permission))
+        val userPermissions = user.permissions.getOrElse(index, Set.empty[Permissions.Value])
+        Future.successful(userPermissions.contains(permission))
     }
   }
 }

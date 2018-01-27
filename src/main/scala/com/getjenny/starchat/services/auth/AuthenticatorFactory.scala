@@ -13,13 +13,13 @@ object SupportedAuthImpl extends Enumeration {
 }
 
 object AuthenticatorFactory {
-  def apply(auth_method: SupportedAuthImpl.Value,
+  def apply(authMethod: SupportedAuthImpl.Value,
             userService: AbstractUserService): AbstractStarChatAuthenticator = {
-    auth_method match {
+    authMethod match {
       case SupportedAuthImpl.basic_http =>
         new BasicHttpStarChatAuthenticator(userService)
       case _ =>
-        throw AuthenticatorClassNotFoundException("Authenticator not supported: " + auth_method)
+        throw AuthenticatorClassNotFoundException("Authenticator not supported: " + authMethod)
     }
   }
 }

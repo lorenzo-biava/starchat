@@ -214,18 +214,18 @@ object AnalyzerService {
           AnalyzersData()
         }
 
-        val eval_res = result.evaluate(analyzer_request.query, data_internal)
-        val return_data = if(eval_res.data.extracted_variables.nonEmpty || eval_res.data.item_list.nonEmpty) {
-          val data_internal = eval_res.data
-          Option { Data(item_list = data_internal.item_list, extracted_variables =
-            data_internal.extracted_variables
+        val evalRes = result.evaluate(analyzer_request.query, data_internal)
+        val returnData = if(evalRes.data.extracted_variables.nonEmpty || evalRes.data.item_list.nonEmpty) {
+          val dataInternal = evalRes.data
+          Option { Data(item_list = dataInternal.item_list, extracted_variables =
+            dataInternal.extracted_variables
           ) }
         } else {
           None: Option[Data]
         }
 
         val analyzer_response = AnalyzerEvaluateResponse(build = true,
-          value = eval_res.score, data = return_data, build_message = "success")
+          value = evalRes.score, data = returnData, build_message = "success")
         analyzer_response
     }
 

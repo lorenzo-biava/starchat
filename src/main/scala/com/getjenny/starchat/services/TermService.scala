@@ -143,13 +143,13 @@ object TermService {
 
     val bulkResponse: BulkResponse = bulkRequest.get()
 
-    val list_of_doc_res: List[IndexDocumentResult] = bulkResponse.getItems.map(x => {
+    val listOfDocRes: List[IndexDocumentResult] = bulkResponse.getItems.map(x => {
       IndexDocumentResult(x.getIndex, x.getType, x.getId,
       x.getVersion,
       x.status === RestStatus.CREATED)
     }).toList
 
-    val result: IndexDocumentListResult = IndexDocumentListResult(list_of_doc_res)
+    val result: IndexDocumentListResult = IndexDocumentListResult(listOfDocRes)
     Option {
       result
     }

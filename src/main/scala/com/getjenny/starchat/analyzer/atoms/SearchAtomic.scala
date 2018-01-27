@@ -30,12 +30,12 @@ class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
 
-    val search_res = data.data.getOrElse("dt_queries_search_result", None)
+    val searchRes = data.data.getOrElse("dt_queries_search_result", None)
         .asInstanceOf[Option[Map[String, (Float, SearchDTDocument)]]]
 
-    val score = if(search_res.nonEmpty && search_res.get.contains(refState)) {
-      val doc = search_res.get.get(refState)
-      doc.get._1 / (search_res.get.map(x => x._2._1).sum + 1)
+    val score = if(searchRes.nonEmpty && searchRes.get.contains(refState)) {
+      val doc = searchRes.get.get(refState)
+      doc.get._1 / (searchRes.get.map(x => x._2._1).sum + 1)
     } else {
       0.0f
     }
