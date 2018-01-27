@@ -16,7 +16,8 @@ import akka.stream.ActorMaterializer
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.serializers.JsonSupport
-
+import scalaz._
+import Scalaz._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object FileToDTDocuments extends JsonSupport {
@@ -34,7 +35,7 @@ object FileToDTDocuments extends JsonSupport {
       quote = '"', skipLines=skiplines)
 
     val dtDocuments: List[DTDocument] = fileEntries.map(entry => {
-      if (entry.length != refnumcol) {
+      if (entry.length =/= refnumcol) {
         val message = "file row is not consistent  Row(" + entry.toString + ")"
         throw new Exception(message)
       } else {
