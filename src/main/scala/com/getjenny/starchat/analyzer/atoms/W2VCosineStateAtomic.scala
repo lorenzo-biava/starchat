@@ -33,14 +33,19 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
   val analyzerService: AnalyzerService.type = AnalyzerService
 
   val index_name = restricted_args("index_name")
-  val query_sentences: DecisionTableRuntimeItem = AnalyzerService.analyzers_map(index_name).analyzer_map.getOrElse(state, null)
-  if (query_sentences == null) {
-    analyzerService.log.error(toString + " : state is null")
+  val query_sentences: Option[DecisionTableRuntimeItem] =
+    AnalyzerService.analyzers_map(index_name).analyzer_map.get(state)
+  if (query_sentences.isEmpty) {
+    analyzerService.log.error(toString + " : state does not exists")
   } else {
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val query_terms: List[TextTerms] = query_sentences.queries
+  val query_terms: List[TextTerms] = query_sentences match {
+    case Some(t) => t.queries
+    case _ => List.empty[TextTerms]
+  }
+
   val query_vectors: List[(Vector[Double], Double)] = query_terms.map(item => {
     val query_vector = TextToVectorsTools.getSumOfTermsVectors(Option{item})
     query_vector
