@@ -32,14 +32,14 @@ object IndexDecisionTable extends JsonSupport {
 
   private case class Params(
                              host: String = "http://localhost:8888",
-                             index_name: String = "index_0",
+                             indexName: String = "index_0",
                              path: String = "/decisiontable",
                              inputfile: String = "decision_table.csv",
                              separator: Char = ',',
                              skiplines: Int = 1,
                              timeout: Int = 60,
                              numcols: Int = 11,
-                             header_kv: Seq[String] = Seq.empty[String]
+                             headerKv: Seq[String] = Seq.empty[String]
                            )
 
   private def doIndexDecisionTable(params: Params) {
@@ -50,11 +50,11 @@ object IndexDecisionTable extends JsonSupport {
     val vecsize = 0
     val skiplines = params.skiplines
 
-    val baseUrl = params.host + "/" + params.index_name + params.path
+    val baseUrl = params.host + "/" + params.indexName + params.path
     val file = new File(params.inputfile)
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
-      val headers: Seq[RawHeader] = params.header_kv.map(x => {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.length > 0) {
+      val headers: Seq[RawHeader] = params.headerKv.map(x => {
         val header_opt = x.split(":")
         val key = header_opt(0)
         val value = header_opt(1)
@@ -105,8 +105,8 @@ object IndexDecisionTable extends JsonSupport {
         .action((x, c) => c.copy(host = x))
       opt[String]("index_name")
         .text(s"the index_name, e.g. index_XXX" +
-          s"  default: ${defaultParams.index_name}")
-        .action((x, c) => c.copy(index_name = x))
+          s"  default: ${defaultParams.indexName}")
+        .action((x, c) => c.copy(indexName = x))
       opt[String]("path")
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")
@@ -121,8 +121,8 @@ object IndexDecisionTable extends JsonSupport {
         .action((x, c) => c.copy(skiplines = x))
       opt[Seq[String]]("header_kv")
         .text(s"header key-value pair, as key1:value1,key2:value2" +
-          s"  default: ${defaultParams.header_kv}")
-        .action((x, c) => c.copy(header_kv = x))
+          s"  default: ${defaultParams.headerKv}")
+        .action((x, c) => c.copy(headerKv = x))
     }
 
     parser.parse(args, defaultParams) match {

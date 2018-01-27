@@ -34,15 +34,15 @@ import java.util.Base64
 object IndexKnowledgeBase extends JsonSupport {
   private case class Params(
                              host: String = "http://localhost:8888",
-                             index_name: String = "index_0",
+                             indexName: String = "index_0",
                              path: String = "/knowledgebase",
-                             questions_path: Option[String] = None: Option[String],
-                             answers_path: Option[String] = None: Option[String],
-                             associations_path: Option[String] = None: Option[String],
+                             questionsPath: Option[String] = None: Option[String],
+                             answersPath: Option[String] = None: Option[String],
+                             associationsPath: Option[String] = None: Option[String],
                              base64: Boolean = false,
                              separator: Char = ';',
                              timeout: Int = 60,
-                             header_kv: Seq[String] = Seq.empty[String]
+                             headerKv: Seq[String] = Seq.empty[String]
                            )
 
   private def decodeBase64(in: String): String = {
@@ -53,7 +53,7 @@ object IndexKnowledgeBase extends JsonSupport {
 
   private def load_data(params: Params, transform: String => String):
       List[Map[String, String]] = {
-    val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.questions_path.get), "UTF-8")
+    val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.questionsPath.get), "UTF-8")
     lazy val questionsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,
       quote = '"', skipLines = 0)
 
@@ -68,11 +68,11 @@ object IndexKnowledgeBase extends JsonSupport {
       }
     }).filter(_._2).map(x => (x._3, x._4)).toMap
 
-    val answersInputStream: Reader = new InputStreamReader(new FileInputStream(params.answers_path.get), "UTF-8")
-    lazy val answers_entries = CSVReader.read(input = answersInputStream, separator = params.separator,
+    val answersInputStream: Reader = new InputStreamReader(new FileInputStream(params.answersPath.get), "UTF-8")
+    lazy val answersEntries = CSVReader.read(input = answersInputStream, separator = params.separator,
       quote = '"', skipLines = 0)
 
-    val answerMap = answers_entries.zipWithIndex.map(entry => {
+    val answerMap = answersEntries.zipWithIndex.map(entry => {
       if (entry._1.size < 2) {
         println("Error [answers] with line: " + entry._2)
         (entry._2, false, "", "")
@@ -83,7 +83,7 @@ object IndexKnowledgeBase extends JsonSupport {
       }
     }).filter(_._2).map(x => (x._3, x._4)).toMap
 
-    val fileAssoc = new File(params.associations_path.get)
+    val fileAssoc = new File(params.associationsPath.get)
     val fileReaderAssoc = new FileReader(fileAssoc)
     lazy val associationEntries = CSVReader.read(input = fileReaderAssoc, separator = params.separator,
       quote = '"', skipLines = 1)
@@ -113,16 +113,16 @@ object IndexKnowledgeBase extends JsonSupport {
 
     val vecsize = 0
 
-    val base_url = params.host + "/" + params.index_name + params.path
+    val baseUrl = params.host + "/" + params.indexName + params.path
 
-    val conv_items = if (params.base64) {
+    val convItems = if (params.base64) {
       load_data(params, decodeBase64)
     } else {
       load_data(params, identity)
     }
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
-      val headers: Seq[RawHeader] = params.header_kv.map(x => {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.length > 0) {
+      val headers: Seq[RawHeader] = params.headerKv.map(x => {
         val header_opt = x.split(":")
         val key = header_opt(0)
         val value = header_opt(1)
@@ -135,7 +135,7 @@ object IndexKnowledgeBase extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
-    conv_items.foreach(entry => {
+    convItems.foreach(entry => {
       val id: String = entry.toString().sha256
 
       val kb_document: KBDocument = KBDocument(
@@ -160,7 +160,7 @@ object IndexKnowledgeBase extends JsonSupport {
       val responseFuture: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(
           method = HttpMethods.POST,
-          uri = base_url,
+          uri = baseUrl,
           headers = httpHeader,
           entity = entity))
       val result = Await.result(responseFuture, timeout)
@@ -184,25 +184,25 @@ object IndexKnowledgeBase extends JsonSupport {
       help("help").text("prints this usage text")
       opt[String]("questions_path")
         .text(s"path of the file with questions, format: <question_id>;<question>" +
-          s"  default: ${defaultParams.questions_path}")
-        .action((x, c) => c.copy(questions_path = Option(x)))
+          s"  default: ${defaultParams.questionsPath}")
+        .action((x, c) => c.copy(questionsPath = Option(x)))
       opt[String]("answers_path")
         .text(s"path of the file with answers, format: <answer_id>;<answer>" +
-          s"  default: ${defaultParams.answers_path}")
-        .action((x, c) => c.copy(answers_path = Option(x)))
+          s"  default: ${defaultParams.answersPath}")
+        .action((x, c) => c.copy(answersPath = Option(x)))
       opt[String]("associations_path")
         .text(s"path of the file with answers in format: " +
             "<question_id>;<conversation_id>;<pos. in conv.>;<answer_id>" +
-          s"  default: ${defaultParams.associations_path}")
-        .action((x, c) => c.copy(associations_path = Option(x)))
+          s"  default: ${defaultParams.associationsPath}")
+        .action((x, c) => c.copy(associationsPath = Option(x)))
       opt[String]("host")
         .text(s"*Chat base url" +
           s"  default: ${defaultParams.host}")
         .action((x, c) => c.copy(host = x))
       opt[String]("index_name")
         .text(s"the index_name, e.g. index_XXX" +
-          s"  default: ${defaultParams.index_name}")
-        .action((x, c) => c.copy(index_name = x))
+          s"  default: ${defaultParams.indexName}")
+        .action((x, c) => c.copy(indexName = x))
       opt[String]("path")
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")
@@ -217,8 +217,8 @@ object IndexKnowledgeBase extends JsonSupport {
         .action((x, c) => c.copy(base64 = x))
       opt[Seq[String]]("header_kv")
         .text(s"header key-value pair, as key1:value1,key2:value2" +
-          s"  default: ${defaultParams.header_kv}")
-        .action((x, c) => c.copy(header_kv = x))
+          s"  default: ${defaultParams.headerKv}")
+        .action((x, c) => c.copy(headerKv = x))
     }
 
     parser.parse(args, defaultParams) match {

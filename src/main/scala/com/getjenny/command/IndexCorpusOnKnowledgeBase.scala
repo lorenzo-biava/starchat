@@ -33,14 +33,14 @@ import scala.io.Source
 object IndexCorpusOnKnowledgeBase extends JsonSupport {
   private case class Params(
                              host: String = "http://localhost:8888",
-                             index_name: String = "index_0",
+                             indexName: String = "index_0",
                              path: String = "/knowledgebase",
                              inputfile: Option[String] = None: Option[String],
                              base64: Boolean = false,
                              separator: Char = ',',
                              skiplines: Int = 0,
                              timeout: Int = 60,
-                             header_kv: Seq[String] = Seq.empty[String]
+                             headerKv: Seq[String] = Seq.empty[String]
                            )
 
   private def decodeBase64(in: String): String = {
@@ -57,7 +57,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
     val vecsize = 0
     val skiplines = params.skiplines
 
-    val base_url = params.host + "/" + params.index_name + params.path
+    val base_url = params.host + "/" + params.indexName + params.path
     val lines = Source.fromFile(name=params.inputfile.get).getLines.toList
 
     val conv_items: String => String = if (params.base64) {
@@ -66,8 +66,8 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
       identity
     }
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
-      val headers: Seq[RawHeader] = params.header_kv.map(x => {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.length > 0) {
+      val headers: Seq[RawHeader] = params.headerKv.map(x => {
         val header_opt = x.split(":")
         val key = header_opt(0)
         val value = header_opt(1)
@@ -135,8 +135,8 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
         .action((x, c) => c.copy(host = x))
       opt[String]("index_name")
         .text(s"the index_name, e.g. index_XXX" +
-          s"  default: ${defaultParams.index_name}")
-        .action((x, c) => c.copy(index_name = x))
+          s"  default: ${defaultParams.indexName}")
+        .action((x, c) => c.copy(indexName = x))
       opt[String]("path")
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")
@@ -155,8 +155,8 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
         .action((x, c) => c.copy(base64 = x))
       opt[Seq[String]]("header_kv")
         .text(s"header key-value pair, as key1:value1,key2:value2" +
-          s"  default: ${defaultParams.header_kv}")
-        .action((x, c) => c.copy(header_kv = x))
+          s"  default: ${defaultParams.headerKv}")
+        .action((x, c) => c.copy(headerKv = x))
     }
 
     parser.parse(args, defaultParams) match {

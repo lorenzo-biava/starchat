@@ -31,19 +31,19 @@ object SimilarityTest extends JsonSupport {
 
   private case class Params(
                             host: String = "http://localhost:8888",
-                            index_name: String = "index_0",
+                            indexName: String = "index_0",
                             path: String = "/analyzers_playground",
                             inputfile: String = "pairs.csv",
                             outputfile: String = "output.csv",
                             analyzer: String = "keyword(\"test\")",
-                            item_list: Seq[String] = Seq.empty[String],
+                            itemList: Seq[String] = Seq.empty[String],
                             variables: Map[String, String] = Map.empty[String, String],
                             text1_index: Int = 3,
                             text2_index: Int = 4,
                             separator: Char = ',',
                             skiplines: Int = 1,
                             timeout: Int = 60,
-                            header_kv: Seq[String] = Seq.empty[String]
+                            headerKv: Seq[String] = Seq.empty[String]
                            )
 
   private def doCalcAnalyzer(params: Params) {
@@ -54,17 +54,17 @@ object SimilarityTest extends JsonSupport {
     val vecsize = 0
     val skiplines = params.skiplines
 
-    val baseUrl = params.host + "/" + params.index_name + params.path
+    val baseUrl = params.host + "/" + params.indexName + params.path
     val file = new File(params.inputfile)
     val fileReader = new FileReader(file)
-    lazy val term_text_entries = CSVReader.read(input=fileReader, separator=params.separator,
+    lazy val termTextEntries = CSVReader.read(input=fileReader, separator=params.separator,
       quote = '"', skipLines=skiplines)
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
-      val headers: Seq[RawHeader] = params.header_kv.map(x => {
-        val header_opt = x.split(":")
-        val key = header_opt(0)
-        val value = header_opt(1)
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
+      val headers: Seq[RawHeader] = params.headerKv.map(x => {
+        val headerOpt = x.split(":")
+        val key = headerOpt(0)
+        val value = headerOpt(1)
         RawHeader(key, value)
       }) ++ Seq(RawHeader("application", "json"))
       headers.to[immutable.Seq]
@@ -74,11 +74,11 @@ object SimilarityTest extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
-    val out_file = new File(params.outputfile)
-    val file_writer = new FileWriter(out_file)
-    val output_csv = new CSVWriter(file_writer, params.separator, '"')
+    val outFile = new File(params.outputfile)
+    val fileWriter = new FileWriter(outFile)
+    val outputCsv = new CSVWriter(fileWriter, params.separator, '"')
 
-    term_text_entries.foreach(entry => {
+    termTextEntries.foreach(entry => {
 
       val text1 = entry(params.text1_index).toString
       val text2 = entry(params.text2_index).toString
@@ -90,11 +90,11 @@ object SimilarityTest extends JsonSupport {
       val evaluate_request = AnalyzerEvaluateRequest(
         analyzer = analyzer,
         query = text2,
-        data = Option{ Data(extracted_variables = params.variables, item_list = params.item_list.toList) }
+        data = Option{ Data(extracted_variables = params.variables, item_list = params.itemList.toList) }
       )
 
-      val entity_future = Marshal(evaluate_request).to[MessageEntity]
-      val entity = Await.result(entity_future, 10.second)
+      val entityFuture = Marshal(evaluate_request).to[MessageEntity]
+      val entity = Await.result(entityFuture, 10.second)
       val responseFuture: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(
           method = HttpMethods.POST,
@@ -110,7 +110,7 @@ object SimilarityTest extends JsonSupport {
           val score = value.value.toString
           val input_csv_fields = entry.toArray
           val csv_line = input_csv_fields ++ Array(score)
-          output_csv.writeNext(csv_line)
+          outputCsv.writeNext(csv_line)
         }
         case _ =>
           println("failed running analyzer(" + evaluate_request.analyzer
@@ -148,12 +148,12 @@ object SimilarityTest extends JsonSupport {
         .action((x, c) => c.copy(path = x))
       opt[String]("index_name")
         .text(s"the index_name, e.g. index_XXX" +
-          s"  default: ${defaultParams.index_name}")
-        .action((x, c) => c.copy(index_name = x))
+          s"  default: ${defaultParams.indexName}")
+        .action((x, c) => c.copy(indexName = x))
       opt[Seq[String]]("item_list")
         .text(s"list of string representing the traversed states" +
-          s"  default: ${defaultParams.item_list}")
-        .action((x, c) => c.copy(item_list = x))
+          s"  default: ${defaultParams.itemList}")
+        .action((x, c) => c.copy(itemList = x))
       opt[Map[String, String]]("variables")
         .text(s"set of variables to be used by the analyzers" +
           s"  default: ${defaultParams.variables}")
@@ -176,8 +176,8 @@ object SimilarityTest extends JsonSupport {
         .action((x, c) => c.copy(skiplines = x))
       opt[Seq[String]]("header_kv")
         .text(s"header key-value pair, as key1:value1,key2:value2" +
-          s"  default: ${defaultParams.header_kv}")
-        .action((x, c) => c.copy(header_kv = x))
+          s"  default: ${defaultParams.headerKv}")
+        .action((x, c) => c.copy(headerKv = x))
     }
 
     parser.parse(args, defaultParams) match {

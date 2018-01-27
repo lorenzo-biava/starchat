@@ -29,7 +29,7 @@ object IndexTerms extends JsonSupport {
     skiplines: Int = 0,
     timeout: Int = 60,
     vecsize: Int = 300,
-    header_kv: Seq[String] = Seq.empty[String]
+    headerKv: Seq[String] = Seq.empty[String]
   )
 
   private def doIndexTerms(params: Params) {
@@ -43,8 +43,8 @@ object IndexTerms extends JsonSupport {
     val base_url = params.host + "/" + params.index_name + params.path
     lazy val term_text_entries = Source.fromFile(params.inputfile).getLines
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.nonEmpty) {
-      val headers: Seq[RawHeader] = params.header_kv.map(x => {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
+      val headers: Seq[RawHeader] = params.headerKv.map(x => {
         val header_opt = x.split(":")
         val key = header_opt(0)
         val value = header_opt(1)
@@ -135,8 +135,8 @@ object IndexTerms extends JsonSupport {
         .action((x, c) => c.copy(skiplines = x))
       opt[Seq[String]]("header_kv")
         .text(s"header key-value pair, as key1:value1,key2:value2" +
-          s"  default: ${defaultParams.header_kv}")
-        .action((x, c) => c.copy(header_kv = x))
+          s"  default: ${defaultParams.headerKv}")
+        .action((x, c) => c.copy(headerKv = x))
     }
 
     parser.parse(args, defaultParams) match {
