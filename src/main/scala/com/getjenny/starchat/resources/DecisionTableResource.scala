@@ -19,6 +19,8 @@ import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 import java.io.File
 import akka.http.scaladsl.server.directives.FileInfo
+import scalaz._
+import Scalaz._
 
 trait DecisionTableResource extends MyResource {
 
@@ -310,8 +312,8 @@ trait DecisionTableResource extends MyResource {
                     case Success(response_value) =>
                       response_value match {
                         case Some(t) =>
-                          if (t.status.code == 200) {
-                            completeResponse(StatusCodes.OK, StatusCodes.Gone, t.response_request_out)
+                          if (t.status.code === 200) {
+                            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t.response_request_out)
                           } else {
                             completeResponse(StatusCodes.NoContent) // no response found
                           }

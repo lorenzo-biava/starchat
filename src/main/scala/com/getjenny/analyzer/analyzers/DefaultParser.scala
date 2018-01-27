@@ -8,6 +8,8 @@ import com.getjenny.analyzer.operators._
 import com.getjenny.analyzer.atoms._
 import com.getjenny.analyzer.expressions.{AnalyzersData, Expression, Result}
 import com.getjenny.analyzer.interfaces.{AtomicFactoryTrait, OperatorFactoryTrait}
+import scalaz._
+import Scalaz._
 
 /**
   * All sentences with more than 22 characters and with keywords "password" and either "lost" or "forgot"
@@ -50,7 +52,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
 
     /** \( does not count, \\( does
       */
-    def escape_char(chars: List[Char], i: Int): Boolean = chars(i-1) == '\\' && chars(i-2) != '\\'
+    def escape_char(chars: List[Char], i: Int): Boolean = chars(i-1) === '\\' && chars(i-2) =/= '\\'
 
     def loop(chars: List[Char], indice: Int, parenthesis_balance: List[Int], quote_balance: Int,
              command_buffer: String, argument_buffer: String, arguments: List[String],
@@ -59,13 +61,13 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
       if (indice >= chars.length && chars.nonEmpty) {
         if (quote_balance < 0)
           throw AnalyzerParsingException("Parsing error: quotes are not balanced")
-        else if (parenthesis_balance.sum != 0)
+        else if (parenthesis_balance.sum =/= 0)
           throw AnalyzerParsingException("Parsing error: parenthesis are not balanced")
         else
           command_tree
       } else {
-        val just_opened_parenthesis = chars(indice) == '(' && !escape_char(chars, indice) && quote_balance == 0
-        val just_closed_parenthesis = chars(indice) == ')' && !escape_char(chars, indice) && quote_balance == 0
+        val just_opened_parenthesis = chars(indice) === '(' && !escape_char(chars, indice) && quote_balance === 0
+        val just_closed_parenthesis = chars(indice) === ')' && !escape_char(chars, indice) && quote_balance === 0
 
         val new_parenthesis_balance: List[Int] = {
           // if a parenthesis is inside double quotes does not count
@@ -75,8 +77,8 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
         }
 
         // new_quote_balance > 0 if text in a quotation
-        val just_opened_quote = chars(indice) == '"' && !escape_char(chars, indice) && quote_balance == 0
-        val just_closed_quote = chars(indice) == '"' && !escape_char(chars, indice) && quote_balance == 1
+        val just_opened_quote = chars(indice) === '"' && !escape_char(chars, indice) && quote_balance === 0
+        val just_closed_quote = chars(indice) === '"' && !escape_char(chars, indice) && quote_balance === 1
         val new_quote_balance: Int = {
           if (just_opened_quote) 1
           else if (just_closed_quote) 0
@@ -89,7 +91,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
         // Start reading the command
         // If not in quotation and have letter, add to command string accumulator
         // Then, if a parenthesis opens put the string in command
-        val new_command_buffer = if ((chars(indice).isLetter || chars(indice).isWhitespace) && new_quote_balance == 0)
+        val new_command_buffer = if ((chars(indice).isLetter || chars(indice).isWhitespace) && new_quote_balance === 0)
           (command_buffer + chars(indice)).filter(c => !c.isWhitespace)
         else if (!just_closed_parenthesis) ""
         else command_buffer.filter(c => !c.isWhitespace)

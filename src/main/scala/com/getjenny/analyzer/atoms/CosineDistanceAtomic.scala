@@ -35,10 +35,10 @@ class CosineDistanceAnalyzer(val arguments: List[String], restricted_args: Map[S
 
     val analyzer_items = (keyword_groups ::: token_groups).map(x => (x._1, x._3))
     val query_word_count = tokens.map(t => (t,1)).groupBy(_._1).map(x => (x._1, x._2.map(c => c._2).sum))
-    val query_terms = analyzer_items.map(x => {
-      val occ = query_word_count.getOrElse(x._1, 0)
-      (x._1, occ)
-    })
+    val query_terms = analyzer_items.map { case (word, _) =>
+      val occ = query_word_count.getOrElse(word, 0)
+      (word, occ)
+    }
 
     val query_vector = query_terms.map(x => x._2.toDouble).toVector
     val analyzer_vector = analyzer_items.map(x => x._2.toDouble).toVector
