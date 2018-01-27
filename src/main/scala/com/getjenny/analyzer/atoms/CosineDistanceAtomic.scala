@@ -17,7 +17,7 @@ class CosineDistanceAnalyzer(val arguments: List[String], restricted_args: Map[S
     val tokens = query.split("\\W").filter(_ != "")
 
     // 2- for each argument try to match with the tokens and extract dimensions
-    val match_list = arguments.flatMap(keyword => {
+    val matchList = arguments.flatMap(keyword => {
       val rx = {"""\b""" + keyword + """\b"""}.r
       val matches = tokens.map(t => {
         val match_list = rx.findAllIn(t).toList
@@ -26,27 +26,27 @@ class CosineDistanceAnalyzer(val arguments: List[String], restricted_args: Map[S
       matches
     })
 
-    val keyword_groups = match_list.groupBy(_._1).map(x => {
+    val keywordGroups = matchList.groupBy(_._1).map(x => {
       (x._1, x._2.map(c => c._2).distinct, x._2.map(c => c._3).sum)
     }).filter(_._3 < 1).map(x => (x._1, x._2, 1)).toList // remove keywords with matches
-    val token_groups = match_list.groupBy(_._2).map(x => {
+    val tokenGroups = matchList.groupBy(_._2).map(x => {
       (x._1, x._2.map(c => c._1).distinct, x._2.map(c => c._3).sum)
     }).toList
 
-    val analyzer_items = (keyword_groups ::: token_groups).map(x => (x._1, x._3))
-    val query_word_count = tokens.map(t => (t,1)).groupBy(_._1).map(x => (x._1, x._2.map(c => c._2).sum))
-    val query_terms = analyzer_items.map { case (word, _) =>
-      val occ = query_word_count.getOrElse(word, 0)
+    val analyzerItems = (keywordGroups ::: tokenGroups).map(x => (x._1, x._3))
+    val queryWordCount = tokens.map(t => (t,1)).groupBy(_._1).map(x => (x._1, x._2.map(c => c._2).sum))
+    val queryTerms = analyzerItems.map { case (word, _) =>
+      val occ = queryWordCount.getOrElse(word, 0)
       (word, occ)
     }
 
-    val query_vector = query_terms.map(x => x._2.toDouble).toVector
-    val analyzer_vector = analyzer_items.map(x => x._2.toDouble).toVector
+    val queryVector = queryTerms.map(x => x._2.toDouble).toVector
+    val analyzerVector = analyzerItems.map(x => x._2.toDouble).toVector
 
     //println("DEBUG: " + analyzer_items)
     //println("DEBUG: " + query_terms)
 
-    val score = 1 - VectorUtils.cosineDist(query_vector, analyzer_vector)
+    val score = 1 - VectorUtils.cosineDist(queryVector, analyzerVector)
 
     Result(score = score)
   }

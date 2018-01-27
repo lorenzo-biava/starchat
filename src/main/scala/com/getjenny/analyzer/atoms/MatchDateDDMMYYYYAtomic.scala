@@ -18,7 +18,7 @@ class MatchDateDDMMYYYYAtomic(val arguments: List[String], restricted_args: Map[
     """(?:(?:[^0-9]+|\A)(0[1-9]|[12][0-9]|3[01])(?:[- \/\.])(0[1-9]|1[012])(?:[- \/\.])((?:19|20)\d\d)(?:[^0-9]+|$))"""
 
   /** PatternExtractionRegex is a pattern extraction utility class */
-  val regex_extractor = new PatternExtractionRegex(regex)
+  val regexExtractor = new PatternExtractionRegex(regex)
 
   /** Extract one or more dates from the query. If the query contains the pattern it returns a score = 1.0 and
     *   put the pattern into the extracted_variables dictionary.
@@ -32,7 +32,7 @@ class MatchDateDDMMYYYYAtomic(val arguments: List[String], restricted_args: Map[
     val res = try {
       Result(
         score = 1.0,
-        AnalyzersData(item_list = data.item_list, extracted_variables = regex_extractor.evaluate(query))
+        AnalyzersData(itemList = data.itemList, extractedVariables = regexExtractor.evaluate(query))
       )
     } catch {
       case e: PatternExtractionNoMatchException =>

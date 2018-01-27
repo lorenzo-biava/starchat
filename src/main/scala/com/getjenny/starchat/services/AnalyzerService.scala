@@ -208,16 +208,16 @@ object AnalyzerService {
             decisionTableService.resultsToMap(indexName,
               decisionTableService.searchDtQueries(indexName, analyzer_request.query))
 
-          AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
+          AnalyzersData(itemList = data.itemList, extractedVariables = data.extractedVariables,
             data = analyzers_internal_data)
         } else {
           AnalyzersData()
         }
 
         val eval_res = result.evaluate(analyzer_request.query, data_internal)
-        val return_data = if(eval_res.data.extracted_variables.nonEmpty || eval_res.data.item_list.nonEmpty) {
+        val return_data = if(eval_res.data.extractedVariables.nonEmpty || eval_res.data.itemList.nonEmpty) {
           val data_internal = eval_res.data
-          Option { Data(item_list = data_internal.item_list, extracted_variables = data_internal.extracted_variables) }
+          Option { Data(itemList = data_internal.itemList, extractedVariables = data_internal.extractedVariables) }
         } else {
           None: Option[Data]
         }

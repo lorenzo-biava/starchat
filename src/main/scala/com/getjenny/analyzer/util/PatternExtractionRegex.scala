@@ -57,19 +57,19 @@ class PatternExtractionRegex(declaration: String) extends
 
   def evaluate(input: String): Map[String, String] = {
     if (expression_declaration.nonEmpty && groups.nonEmpty) {
-      val match_iterator = regular_expression.findAllMatchIn(input)
-      if (match_iterator.nonEmpty) {
-        val captured_patterns = match_iterator.map(m => {
-          val group_names = m.groupNames.toList
-          val group_count = m.groupCount
-          val extracted_patterns = group_names.map(gn => (gn, m.group(gn)))
-          (group_count, extracted_patterns)
+      val matchIterator = regular_expression.findAllMatchIn(input)
+      if (matchIterator.nonEmpty) {
+        val capturedPatterns = matchIterator.map(m => {
+          val groupNames = m.groupNames.toList
+          val groupCount = m.groupCount
+          val extracted_patterns = groupNames.map(gn => (gn, m.group(gn)))
+          (groupCount, extracted_patterns)
         }).toList.filter(_._1 == groups.length).zipWithIndex.flatMap(m => {
           m._1._2.map(v => {
             (v._1 + "." + m._2, v._2)
           })
         }).toMap
-        captured_patterns
+        capturedPatterns
       } else {
         throw PatternExtractionNoMatchException("No match: regex_declaration(" +
           expression_declaration + ") groups(" + groups + ") input(" + input + ")")

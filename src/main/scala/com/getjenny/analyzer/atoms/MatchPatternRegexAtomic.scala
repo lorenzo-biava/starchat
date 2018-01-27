@@ -22,13 +22,13 @@ class MatchPatternRegexAtomic(val arguments: List[String], restricted_args: Map[
   override def toString: String = "matchPatternRegex(" + regex + ")"
   val isEvaluateNormalized: Boolean = true
 
-  val regex_extractor = new PatternExtractionRegex(regex)
+  val regexExtractor = new PatternExtractionRegex(regex)
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val res = try {
       Result(
         score = 1.0,
-        AnalyzersData(item_list = data.item_list, extracted_variables = regex_extractor.evaluate(query))
+        AnalyzersData(itemList = data.itemList, extractedVariables = regexExtractor.evaluate(query))
       )
     } catch {
       case e: PatternExtractionNoMatchException =>

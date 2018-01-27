@@ -28,7 +28,7 @@ class CronReloadDTService(implicit val executionContext: ExecutionContext) {
         analyzerService.analyzersMap.foreach(item => {
           val timestamp_result: Try[Option[Long]] =
             Await.ready(systemService.getDTReloadTimestamp(indexName = item._1), 20.seconds).value.get
-          val remote_ts: Long = timestamp_result match {
+          val remoteTs: Long = timestamp_result match {
             case Success(t) =>
               val ts: Long = t.getOrElse(-1)
               if (ts > 0) {
@@ -40,14 +40,14 @@ class CronReloadDTService(implicit val executionContext: ExecutionContext) {
               -1: Long
           }
 
-          if (remote_ts > 0 &&
-            SystemService.dtReloadTimestamp < remote_ts) {
+          if (remoteTs > 0 &&
+            SystemService.dtReloadTimestamp < remoteTs) {
             val reloadResult: Try[Option[DTAnalyzerLoad]] =
               Await.ready(analyzerService.loadAnalyzer(indexName = item._1), 60.seconds).value.get
             reloadResult match {
               case Success(t) =>
-                log.info("Analyzer loaded for index(" + item._1 + "), remote ts: " + remote_ts)
-                SystemService.dtReloadTimestamp = remote_ts
+                log.info("Analyzer loaded for index(" + item._1 + "), remote ts: " + remoteTs)
+                SystemService.dtReloadTimestamp = remoteTs
               case Failure(e) =>
                 log.error("unable to load analyzers for index(" + item._1 + ") from the cron job" + e.getMessage)
             }

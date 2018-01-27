@@ -24,7 +24,7 @@ class LastTravStateIsAtomic(val arguments: List[String], restricted_args: Map[St
     * @return Result with 1.0 if the last state is <name> score = 0.0 otherwise
     */
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    if(data.item_list.nonEmpty && data.item_list.last == name) {
+    if(data.itemList.nonEmpty && data.itemList.last == name) {
       Result(score = 1.0)
     } else {
       Result(score = 0.0)

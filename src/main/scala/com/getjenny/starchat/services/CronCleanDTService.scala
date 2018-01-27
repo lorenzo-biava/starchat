@@ -17,15 +17,15 @@ class CronCleanDTService(implicit val executionContext: ExecutionContext) {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val analyzerService: AnalyzerService.type = AnalyzerService
   val systemService: SystemService.type = SystemService
-  val dt_max_tables: Long = config.getLong("es.dt_max_tables")
+  val dtMaxTables: Long = config.getLong("es.dt_max_tables")
 
   val Tick = "tick"
 
   class CleanDecisionTablesTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
       case Tick =>
-        if(dt_max_tables > 0 && analyzerService.analyzersMap.size < dt_max_tables ) {
-          val exeding_items: Long = dt_max_tables - analyzerService.analyzersMap.size
+        if(dtMaxTables > 0 && analyzerService.analyzersMap.size < dtMaxTables ) {
+          val exeding_items: Long = dtMaxTables - analyzerService.analyzersMap.size
           val items_to_remove =
             analyzerService.analyzersMap.toList.sortBy(_._2.lastEvaluationTimestamp).take(exeding_items.toInt)
           items_to_remove.foreach(item => {

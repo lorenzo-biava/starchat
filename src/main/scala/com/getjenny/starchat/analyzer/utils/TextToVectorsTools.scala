@@ -24,15 +24,15 @@ object TextToVectorsTools {
   }
 
    def getSumOfTermsVectors(terms: Option[TextTerms]): (Vector[Double], Double) = {
-    val text_vectors = terms
-    val vector = text_vectors match {
+    val textVectors = terms
+    val vector = textVectors match {
       case Some(t) => {
         val vectors = t.terms.get.terms.map(e => e.vector.get).toVector
-        val sentence_vector =
+        val sentenceVector =
           if (vectors.nonEmpty) sumArrayOfArrays(vectors) else empty_vec
-        val reliability_factor =
-          text_vectors.get.terms_found_n.toDouble / text_vectors.get.text_terms_n.toDouble
-        (sentence_vector, reliability_factor)
+        val reliabilityFactor =
+          textVectors.get.terms_found_n.toDouble / textVectors.get.text_terms_n.toDouble
+        (sentenceVector, reliabilityFactor)
       }
       case _ => (empty_vec, 0.0) //default dimension
     }
@@ -40,8 +40,8 @@ object TextToVectorsTools {
   }
 
   def getSumOfVectorsFromText(index_name: String, text: String): (Vector[Double], Double) = {
-    val text_vectors = termService.textToVectors(index_name, text)
-    val vector = getSumOfTermsVectors(text_vectors)
+    val textVectors = termService.textToVectors(index_name, text)
+    val vector = getSumOfTermsVectors(textVectors)
     vector
   }
 
