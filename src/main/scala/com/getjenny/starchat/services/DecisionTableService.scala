@@ -38,8 +38,8 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import org.apache.lucene.search.join._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.collection.mutable
-
+import scalaz._
+import Scalaz._
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
@@ -280,7 +280,7 @@ object DecisionTableService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {docResult}
@@ -399,7 +399,7 @@ object DecisionTableService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     Option {doc_result}

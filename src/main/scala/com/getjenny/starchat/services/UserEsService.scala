@@ -44,7 +44,7 @@ class UserEsService extends AbstractUserService {
 
   def create(user: User): Future[IndexDocumentResult] = Future {
 
-    if(user.id == "admin") {
+    if(user.id === "admin") {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
@@ -80,7 +80,7 @@ class UserEsService extends AbstractUserService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     docResult

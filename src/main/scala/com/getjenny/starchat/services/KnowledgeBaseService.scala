@@ -40,7 +40,8 @@ import org.elasticsearch.index.query.ScriptQueryBuilder
 import org.elasticsearch.index.query.functionscore._
 import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.script._
-
+import scalaz._
+import Scalaz._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object KnowledgeBaseService {
@@ -348,7 +349,7 @@ object KnowledgeBaseService {
         .setId(document.id)
         .setSource(json, XContentType.JSON).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refresh_index = elasticClient.refreshIndex(getIndexName(indexName))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")

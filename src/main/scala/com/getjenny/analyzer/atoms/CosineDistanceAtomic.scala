@@ -2,6 +2,8 @@ package com.getjenny.analyzer.atoms
 
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.util._
+import scalaz._
+import Scalaz._
 
 /**
   * Created by angelo on 18/09/2017.
@@ -14,7 +16,7 @@ class CosineDistanceAnalyzer(val arguments: List[String], restricted_args: Map[S
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     // 1- tokenize
-    val tokens = query.split("\\W").filter(_ != "")
+    val tokens = query.split("\\W").filter(_ =/= "")
 
     // 2- for each argument try to match with the tokens and extract dimensions
     val matchList = arguments.flatMap(keyword => {

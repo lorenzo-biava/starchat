@@ -36,6 +36,8 @@ import com.getjenny.starchat.SCActorSystem
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 import org.apache.lucene.search.join._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scalaz._
+import Scalaz._
 
 object SystemService {
   var dtReloadTimestamp : Long = -1
@@ -67,7 +69,7 @@ object SystemService {
 
     log.debug("dt reload timestamp response status: " + response.status())
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("System: index refresh failed: (" + indexName + ")")

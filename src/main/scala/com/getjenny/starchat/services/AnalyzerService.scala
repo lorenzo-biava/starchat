@@ -133,7 +133,7 @@ object AnalyzerService {
       val maxStateCounter = runtimeItem.maxStateCounter
       val analyzerDeclaration = runtimeItem.analyzer.declaration
       val queriesTerms = runtimeItem.queries
-      val (analyzer : StarchatAnalyzer, message: String) = if (analyzerDeclaration != "") {
+      val (analyzer : StarchatAnalyzer, message: String) = if (analyzerDeclaration =/= "") {
         try {
           val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
           val analyzerObject = new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)

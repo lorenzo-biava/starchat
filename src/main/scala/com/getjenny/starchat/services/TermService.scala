@@ -281,7 +281,7 @@ object TermService {
 
     val bulkResponse: BulkResponse = bulkRequest.get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elastiClient.refreshIndex(getIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
@@ -329,7 +329,7 @@ object TermService {
     })
     val bulkResponse: BulkResponse = bulkRequest.get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elastiClient.refreshIndex(getIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
