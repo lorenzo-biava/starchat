@@ -43,7 +43,7 @@ class W2VEarthMoversCosineDistanceStateAtomic(val arguments: List[String], restr
   val indexName = restricted_args("index_name")
 
   val queriesSentences: Option[DecisionTableRuntimeItem] =
-    AnalyzerService.analyzersMap(indexName).analyzer_map.get(state)
+    AnalyzerService.analyzersMap(indexName).analyzerMap.get(state)
   if (queriesSentences.isEmpty) {
     val message = toString + " : state not found on states map"
     analyzerService.log.error(message)
@@ -56,7 +56,7 @@ class W2VEarthMoversCosineDistanceStateAtomic(val arguments: List[String], restr
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val queryVectors = termService.textToVectors(index_name = indexName, text = query)
+    val queryVectors = termService.textToVectors(indexName = indexName, text = query)
     val emdDistQueries = queriesVectors.map(q => {
       val dist = EmDistance.distanceCosine(q , queryVectors)
       dist

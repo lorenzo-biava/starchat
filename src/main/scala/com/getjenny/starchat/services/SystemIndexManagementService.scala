@@ -46,14 +46,14 @@ object SystemIndexManagementService {
         throw new FileNotFoundException(message)
       }
 
-      val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
-      val full_index_name = elastic_client.indexName + "." + item.indexSuffix
+      val schemaJson: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
+      val fullIndexName = elastic_client.indexName + "." + item.indexSuffix
 
-      val create_index_res: CreateIndexResponse =
-        client.admin().indices().prepareCreate(full_index_name)
-          .setSource(schema_json, XContentType.JSON).get()
+      val createIndexRes: CreateIndexResponse =
+        client.admin().indices().prepareCreate(fullIndexName)
+          .setSource(schemaJson, XContentType.JSON).get()
 
-      item.indexSuffix + "(" + full_index_name + ", " + create_index_res.isAcknowledged.toString + ")"
+      item.indexSuffix + "(" + fullIndexName + ", " + createIndexRes.isAcknowledged.toString + ")"
     })
 
     val message = "IndexCreation: " + operations_message.mkString(" ")
@@ -69,17 +69,17 @@ object SystemIndexManagementService {
       throw new Exception(message)
     }
 
-    val operations_message: List[String] = schemaFiles.map(item => {
-      val full_index_name = elastic_client.indexName + "." + item.indexSuffix
+    val operationsMessage: List[String] = schemaFiles.map(item => {
+      val fullIndexName = elastic_client.indexName + "." + item.indexSuffix
 
-      val delete_index_res: DeleteIndexResponse =
-        client.admin().indices().prepareDelete(full_index_name).get()
+      val deleteIndexRes: DeleteIndexResponse =
+        client.admin().indices().prepareDelete(fullIndexName).get()
 
-      item.indexSuffix + "(" + full_index_name + ", " + delete_index_res.isAcknowledged.toString + ")"
+      item.indexSuffix + "(" + fullIndexName + ", " + deleteIndexRes.isAcknowledged.toString + ")"
 
     })
 
-    val message = "IndexDeletion: " + operations_message.mkString(" ")
+    val message = "IndexDeletion: " + operationsMessage.mkString(" ")
 
     Option { IndexManagementResponse(message) }
   }
@@ -87,14 +87,14 @@ object SystemIndexManagementService {
   def checkIndex() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.getClient()
 
-    val operations_message: List[String] = schemaFiles.map(item => {
-      val full_index_name = elastic_client.indexName + "." + item.indexSuffix
-      val get_mappings_req = client.admin.indices.prepareGetMappings(full_index_name).get()
-      val check = get_mappings_req.mappings.containsKey(full_index_name)
-      item.indexSuffix + "(" + full_index_name + ", " + check + ")"
+    val operationsMessage: List[String] = schemaFiles.map(item => {
+      val fullIndexName = elastic_client.indexName + "." + item.indexSuffix
+      val getMappingsReq = client.admin.indices.prepareGetMappings(fullIndexName).get()
+      val check = getMappingsReq.mappings.containsKey(fullIndexName)
+      item.indexSuffix + "(" + fullIndexName + ", " + check + ")"
     })
 
-    val message = "IndexCheck: " + operations_message.mkString(" ")
+    val message = "IndexCheck: " + operationsMessage.mkString(" ")
 
     Option { IndexManagementResponse(message) }
   }
@@ -102,43 +102,43 @@ object SystemIndexManagementService {
   def updateIndex() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.getClient()
 
-    val operations_message: List[String] = schemaFiles.map(item => {
-      val json_in_stream: InputStream = getClass.getResourceAsStream(item.updatePath)
+    val operationsMessage: List[String] = schemaFiles.map(item => {
+      val jsonInStream: InputStream = getClass.getResourceAsStream(item.updatePath)
 
-      if (json_in_stream == None.orNull) {
+      if (jsonInStream == None.orNull) {
         val message = "Check the file: (" + item.path + ")"
         throw new FileNotFoundException(message)
       }
 
-      val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
-      val full_index_name = elastic_client.indexName + "." + item.indexSuffix
+      val schemaJson: String = Source.fromInputStream(jsonInStream, "utf-8").mkString
+      val fullIndexName = elastic_client.indexName + "." + item.indexSuffix
 
-      val update_index_res  =
-        client.admin().indices().preparePutMapping().setIndices(full_index_name)
+      val updateIndexRes  =
+        client.admin().indices().preparePutMapping().setIndices(fullIndexName)
           .setType(item.indexSuffix)
-          .setSource(schema_json, XContentType.JSON).get()
+          .setSource(schemaJson, XContentType.JSON).get()
 
-      item.indexSuffix + "(" + full_index_name + ", " + update_index_res.isAcknowledged.toString + ")"
+      item.indexSuffix + "(" + fullIndexName + ", " + updateIndexRes.isAcknowledged.toString + ")"
     })
 
-    val message = "IndexUpdate: " + operations_message.mkString(" ")
+    val message = "IndexUpdate: " + operationsMessage.mkString(" ")
 
     Option { IndexManagementResponse(message) }
   }
 
   def refreshIndexes() : Future[Option[RefreshIndexResults]] = Future {
-    val operations_results: List[RefreshIndexResult] = schemaFiles.map(item => {
-      val full_index_name = elastic_client.indexName + "." + item.indexSuffix
-      val refresh_index_res: RefreshIndexResult = elastic_client.refreshIndex(full_index_name)
-      if (refresh_index_res.failed_shards_n > 0) {
-        val index_refresh_message = item.indexSuffix + "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"
-        throw new Exception(index_refresh_message)
+    val operationsResults: List[RefreshIndexResult] = schemaFiles.map(item => {
+      val fullIndexName = elastic_client.indexName + "." + item.indexSuffix
+      val refreshIndexRes: RefreshIndexResult = elastic_client.refreshIndex(fullIndexName)
+      if (refreshIndexRes.failed_shards_n > 0) {
+        val indexRefreshMessage = item.indexSuffix + "(" + fullIndexName + ", " + refreshIndexRes.failed_shards_n + ")"
+        throw new Exception(indexRefreshMessage)
       }
 
-      refresh_index_res
+      refreshIndexRes
     })
 
-    Option { RefreshIndexResults(results = operations_results) }
+    Option { RefreshIndexResults(results = operationsResults) }
   }
 
   def getIndices: Future[List[String]] = Future {

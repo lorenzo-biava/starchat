@@ -206,13 +206,13 @@ class UserEsService extends AbstractUserService {
     val password_plain = user.password match {
       case Some(t) => t
       case None =>
-        generate_password()
+        generatePassword()
     }
 
     val salt = user.salt match {
       case Some(t) => t
       case None =>
-        generate_salt()
+        generateSalt()
     }
 
     val password = authenticator.hashedSecret(password = password_plain, salt = salt)
@@ -226,11 +226,11 @@ class UserEsService extends AbstractUserService {
     User(id = id, password = password, salt = salt, permissions = permissions)
   }
 
-  def generate_password(size: Int = 16): String = {
+  def generatePassword(size: Int = 16): String = {
     RandomNumbers.getString(size)
   }
 
-  def generate_salt(): String = {
+  def generateSalt(): String = {
     RandomNumbers.getString(16)
   }
 }

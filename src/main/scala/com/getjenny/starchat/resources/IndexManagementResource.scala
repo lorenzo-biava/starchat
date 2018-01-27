@@ -30,7 +30,7 @@ trait IndexManagementResource extends MyResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.create_index(index_name)) {
+              onCompleteWithBreaker(breaker)(indexManagementService.createIndex(index_name)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                   t
                 })
@@ -55,7 +55,7 @@ trait IndexManagementResource extends MyResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.write)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.refresh_indexes(index_name)) {
+              onCompleteWithBreaker(breaker)(indexManagementService.refreshIndexes(index_name)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                   t
                 })
@@ -81,7 +81,7 @@ trait IndexManagementResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(indexManagementService.update_index(index_name, language)) {
+                onCompleteWithBreaker(breaker)(indexManagementService.updateIndex(index_name, language)) {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                     t
                   })
@@ -108,7 +108,7 @@ trait IndexManagementResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(indexManagementService.check_index(index_name)) {
+                onCompleteWithBreaker(breaker)(indexManagementService.checkIndex(index_name)) {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                     t
                   })
@@ -126,7 +126,7 @@ trait IndexManagementResource extends MyResource {
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(indexManagementService.remove_index(index_name)) {
+                  onCompleteWithBreaker(breaker)(indexManagementService.removeIndex(index_name)) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })

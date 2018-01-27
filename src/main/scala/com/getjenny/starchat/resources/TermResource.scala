@@ -30,7 +30,7 @@ trait TermResource extends MyResource {
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     entity(as[Terms]) { request_data =>
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(termService.index_term(index_name, request_data, refresh)) {
+                      onCompleteWithBreaker(breaker)(termService.indexTerm(index_name, request_data, refresh)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>
@@ -53,7 +53,7 @@ trait TermResource extends MyResource {
                   entity(as[TermIdsRequest]) { request_data =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(Future {
-                      termService.get_term(index_name, request_data)
+                      termService.getTerm(index_name, request_data)
                     }) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
@@ -122,7 +122,7 @@ trait TermResource extends MyResource {
                     entity(as[Terms]) { request_data =>
                       val termService = TermService
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(termService.update_term(index_name, request_data, refresh)) {
+                      onCompleteWithBreaker(breaker)(termService.updateTerm(index_name, request_data, refresh)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>
@@ -145,10 +145,10 @@ trait TermResource extends MyResource {
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 operation match {
                   case "term" =>
-                    entity(as[Term]) { request_data =>
+                    entity(as[Term]) { requestData =>
                       val termService = TermService
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(termService.search_term(index_name, request_data)) {
+                      onCompleteWithBreaker(breaker)(termService.searchTerm(index_name, requestData)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>
@@ -161,10 +161,10 @@ trait TermResource extends MyResource {
                       }
                     }
                   case "text" =>
-                    entity(as[String]) { request_data =>
+                    entity(as[String]) { requestData =>
                       val termService = TermService
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(termService.search(index_name, request_data)) {
+                      onCompleteWithBreaker(breaker)(termService.search(index_name, requestData)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>

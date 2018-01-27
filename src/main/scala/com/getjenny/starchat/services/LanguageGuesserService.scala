@@ -20,10 +20,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 object LanguageGuesserService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  def guessLanguage(index_name: String, request_data: LanguageGuesserRequestIn):
+  def guessLanguage(indexName: String, requestData: LanguageGuesserRequestIn):
   Future[Option[LanguageGuesserRequestOut]] = Future {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()
-    val result: LanguageResult = detector.detect(request_data.input_text)
+    val result: LanguageResult = detector.detect(requestData.input_text)
 
     Option {
       LanguageGuesserRequestOut(result.getLanguage, result.getRawScore,
@@ -33,14 +33,14 @@ object LanguageGuesserService {
     }
   }
 
-  def getLanguages(index_name: String, language_code: String /*ISO 639-1 name for language*/):
+  def getLanguages(indexName: String, languageCode: String /*ISO 639-1 name for language*/):
       Future[Option[LanguageGuesserInformations]] = Future {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()
-    val hasModel: Boolean = detector.hasModel(language_code)
+    val hasModel: Boolean = detector.hasModel(languageCode)
     Option {
       LanguageGuesserInformations(
         Map[String,Map[String,Boolean]](
-        "languages" -> Map[String, Boolean](language_code -> hasModel))
+        "languages" -> Map[String, Boolean](languageCode -> hasModel))
       )
     }
   }

@@ -25,11 +25,11 @@ object SpellcheckService {
   val elasticClient = KnowledgeBaseElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)
+  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+    indexName + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)
   }
 
-  def termsSuggester(index_name: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
+  def termsSuggester(indexName: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
     val client: TransportClient = elasticClient.getClient()
 
     val suggestionBuilder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
@@ -41,7 +41,7 @@ object SpellcheckService {
     suggestBuilder.setGlobalText(request.text)
       .addSuggestion("suggestions", suggestionBuilder)
 
-    val searchBuilder = client.prepareSearch(getIndexName(index_name))
+    val searchBuilder = client.prepareSearch(getIndexName(indexName))
       .setTypes(elasticClient.kbIndexSuffix)
       .suggest(suggestBuilder)
 

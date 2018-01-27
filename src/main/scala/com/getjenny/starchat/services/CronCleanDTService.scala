@@ -27,7 +27,7 @@ class CronCleanDTService(implicit val executionContext: ExecutionContext) {
         if(dt_max_tables > 0 && analyzerService.analyzersMap.size < dt_max_tables ) {
           val exeding_items: Long = dt_max_tables - analyzerService.analyzersMap.size
           val items_to_remove =
-            analyzerService.analyzersMap.toList.sortBy(_._2.last_evaluation_timestamp).take(exeding_items.toInt)
+            analyzerService.analyzersMap.toList.sortBy(_._2.lastEvaluationTimestamp).take(exeding_items.toInt)
           items_to_remove.foreach(item => {
             log.info("removing decisin table: " + item._1)
             analyzerService.analyzersMap.remove(item._1)

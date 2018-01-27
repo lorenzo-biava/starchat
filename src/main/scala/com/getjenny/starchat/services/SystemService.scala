@@ -39,17 +39,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object SystemService {
   var dtReloadTimestamp : Long = -1
-  val elasticClient = SystemElasticClient
+  val elasticClient: SystemElasticClient.type = SystemElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
 
-  def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elasticClient.systemRefreshDtIndexSuffix)
+  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+    indexName + "." + suffix.getOrElse(elasticClient.systemRefreshDtIndexSuffix)
   }
 
-  def setDTReloadTimestamp(index_name: String, refresh: Int = 0):
+  def setDTReloadTimestamp(indexName: String, refresh: Int = 0):
       Future[Option[Long]] = Future {
-    val dt_reload_doc_id: String = index_name
+    val dtReloadDocId: String = indexName
     val timestamp: Long = System.currentTimeMillis
 
     val builder : XContentBuilder = jsonBuilder().startObject()
@@ -58,9 +58,9 @@ object SystemService {
 
     val client: TransportClient = elasticClient.getClient()
     val response: UpdateResponse =
-      client.prepareUpdate().setIndex(getIndexName(index_name))
+      client.prepareUpdate().setIndex(getIndexName(indexName))
         .setType(elasticClient.systemRefreshDtIndexSuffix)
-        .setId(dt_reload_doc_id)
+        .setId(dtReloadDocId)
         .setDocAsUpsert(true)
         .setDoc(builder)
         .get()
@@ -68,20 +68,20 @@ object SystemService {
     log.debug("dt reload timestamp response status: " + response.status())
 
     if (refresh != 0) {
-      val refresh_index = elasticClient.refreshIndex(getIndexName(index_name))
-      if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("System: index refresh failed: (" + index_name + ")")
+      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      if(refreshIndex.failed_shards_n > 0) {
+        throw new Exception("System: index refresh failed: (" + indexName + ")")
       }
     }
 
     Option {timestamp}
   }
 
-  def getDTReloadTimestamp(index_name: String) : Future[Option[Long]] = Future {
-    val dtReloadDocId: String = index_name
+  def getDTReloadTimestamp(indexName: String) : Future[Option[Long]] = Future {
+    val dtReloadDocId: String = indexName
     val client: TransportClient = elasticClient.getClient()
     val getBuilder: GetRequestBuilder = client.prepareGet()
-      .setIndex(getIndexName(index_name))
+      .setIndex(getIndexName(indexName))
       .setType(elasticClient.systemRefreshDtIndexSuffix)
       .setId(dtReloadDocId)
     val response: GetResponse = getBuilder.get()

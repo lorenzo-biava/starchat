@@ -76,7 +76,7 @@ object FileToDTDocuments extends JsonSupport {
         )
         document
       }
-    }).toList.filter(_ != null)
+    }).toList
     dtDocuments
   }
 }

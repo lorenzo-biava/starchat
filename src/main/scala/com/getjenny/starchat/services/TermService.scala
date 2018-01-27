@@ -45,8 +45,8 @@ object TermService {
   val elastiClient: TermClient.type = TermClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elastiClient.termIndexSuffix)
+  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+    indexName + "." + suffix.getOrElse(elastiClient.termIndexSuffix)
   }
 
   def payloadVectorToString[T](vector: Vector[T]): String = {
@@ -59,37 +59,37 @@ object TermService {
 
   def payloadStringToDoubleVector(payload: String): Vector[Double] = {
     val vector: Vector[Double] = payload.split(" ").map(x => {
-      val term_tuple = x.split("\\|") match { case Array(t, r) => r.toDouble }
-      term_tuple
+      val termTuple = x.split("\\|") match { case Array(t, r) => r.toDouble }
+      termTuple
     }).toVector
     vector
   }
 
   def payloadStringToMapStringDouble(payload: String): Map[String, Double] = {
     val m: Map[String, Double] = payload.split(" ").map(x => {
-      val term_tuple = x.split("\\|") match { case Array(t, r) => (t, r.toDouble) }
-      term_tuple
+      val termTuple = x.split("\\|") match { case Array(t, r) => (t, r.toDouble) }
+      termTuple
     }).toMap
     m
   }
 
   def payloadStringToMapIntDouble(payload: String): Map[Int, Double] = {
     val m: Map[Int, Double] = payload.split(" ").map(x => {
-      val term_tuple = x.split("\\|") match { case Array(t, r) => (t.toInt, r.toDouble) }
-      term_tuple
+      val termTuple = x.split("\\|") match { case Array(t, r) => (t.toInt, r.toDouble) }
+      termTuple
     }).toMap
     m
   }
 
   def payloadStringToMapStringString(payload: String): Map[String, String] = {
     val m: Map[String, String] = payload.split(" ").map(x => {
-      val term_tuple = x.split("\\|") match { case Array(t, r) => (t, r) }
-      term_tuple
+      val termTuple = x.split("\\|") match { case Array(t, r) => (t, r) }
+      termTuple
     }).toMap
     m
   }
 
-  def index_term(index_name: String, terms: Terms, refresh: Int) : Future[Option[IndexDocumentListResult]] = Future {
+  def indexTerm(indexName: String, terms: Terms, refresh: Int) : Future[Option[IndexDocumentListResult]] = Future {
     val client: TransportClient = elastiClient.getClient()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
@@ -135,7 +135,7 @@ object TermService {
       }
       builder.endObject()
 
-      bulkRequest.add(client.prepareIndex().setIndex(getIndexName(index_name))
+      bulkRequest.add(client.prepareIndex().setIndex(getIndexName(indexName))
         .setType(elastiClient.termIndexSuffix)
         .setId(term.term)
         .setSource(builder))
@@ -155,11 +155,11 @@ object TermService {
     }
   }
 
-  def get_term(index_name: String, terms_request: TermIdsRequest) : Option[Terms] = {
+  def getTerm(indexName: String, terms_request: TermIdsRequest) : Option[Terms] = {
     val client: TransportClient = elastiClient.getClient()
-    val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multiget_builder.add(getIndexName(index_name), elastiClient.termIndexSuffix, terms_request.ids:_*)
-    val response: MultiGetResponse = multiget_builder.get()
+    val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
+    multigetBuilder.add(getIndexName(indexName), elastiClient.termIndexSuffix, terms_request.ids:_*)
+    val response: MultiGetResponse = multigetBuilder.get()
     val documents : List[Term] = response.getResponses.toList
         .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case(e) =>
       val item: GetResponse = e.getResponse
@@ -196,12 +196,12 @@ object TermService {
         case None => None: Option[Map[String, String]]
       }
 
-      val frequency_base : Option[Double] = source.get("frequency_base") match {
+      val frequencyBase : Option[Double] = source.get("frequency_base") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
 
-      val frequency_stem : Option[Double] = source.get("frequency_stem") match {
+      val frequencyStem : Option[Double] = source.get("frequency_stem") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
@@ -218,8 +218,8 @@ object TermService {
         antonyms = antonyms,
         tags = tags,
         features = features,
-        frequency_base = frequency_base,
-        frequency_stem = frequency_stem,
+        frequency_base = frequencyBase,
+        frequency_stem = frequencyStem,
         vector = vector,
         score = None: Option[Double])
     })
@@ -227,7 +227,7 @@ object TermService {
     Option {Terms(terms=documents)}
   }
 
-  def update_term(index_name: String, terms: Terms, refresh: Int) : Future[Option[UpdateDocumentListResult]] = Future {
+  def updateTerm(indexName: String, terms: Terms, refresh: Int) : Future[Option[UpdateDocumentListResult]] = Future {
     val client: TransportClient = elastiClient.getClient()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
@@ -273,7 +273,7 @@ object TermService {
       }
       builder.endObject()
 
-      bulkRequest.add(client.prepareUpdate().setIndex(getIndexName(index_name))
+      bulkRequest.add(client.prepareUpdate().setIndex(getIndexName(indexName))
         .setType(elastiClient.termIndexSuffix)
         .setId(term.term)
         .setDoc(builder))
@@ -282,30 +282,30 @@ object TermService {
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh != 0) {
-      val refresh_index = elastiClient.refreshIndex(getIndexName(index_name))
-      if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
+      val refreshIndex = elastiClient.refreshIndex(getIndexName(indexName))
+      if(refreshIndex.failed_shards_n > 0) {
+        throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
       }
     }
 
-    val list_of_doc_res: List[UpdateDocumentResult] = bulkResponse.getItems.map(x => {
+    val listOfDocRes: List[UpdateDocumentResult] = bulkResponse.getItems.map(x => {
       UpdateDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
         x.status == RestStatus.CREATED)
     }).toList
 
-    val result: UpdateDocumentListResult = UpdateDocumentListResult(list_of_doc_res)
+    val result: UpdateDocumentListResult = UpdateDocumentListResult(listOfDocRes)
     Option {
       result
     }
   }
 
-  def deleteAll(index_name: String): Future[Option[DeleteDocumentsResult]] = Future {
+  def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
     val client: TransportClient = elastiClient.getClient()
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(getIndexName(index_name))
+        .source(getIndexName(indexName))
         .filter(qb)
         .get()
 
@@ -315,74 +315,74 @@ object TermService {
     Option {result}
   }
 
-  def delete(index_name: String, termGetRequest: TermIdsRequest, refresh: Int):
+  def delete(indexName: String, termGetRequest: TermIdsRequest, refresh: Int):
   Future[Option[DeleteDocumentListResult]] = Future {
     val client: TransportClient = elastiClient.getClient()
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
     termGetRequest.ids.foreach( id => {
-      val delete_request: DeleteRequestBuilder = client.prepareDelete()
-        .setIndex(getIndexName(index_name))
+      val deleteRequest: DeleteRequestBuilder = client.prepareDelete()
+        .setIndex(getIndexName(indexName))
         .setType(elastiClient.termIndexSuffix)
         .setId(id)
-      bulkRequest.add(delete_request)
+      bulkRequest.add(deleteRequest)
     })
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh != 0) {
-      val refresh_index = elastiClient.refreshIndex(getIndexName(index_name))
-      if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
+      val refreshIndex = elastiClient.refreshIndex(getIndexName(indexName))
+      if(refreshIndex.failed_shards_n > 0) {
+        throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
       }
     }
 
-    val list_of_doc_res: List[DeleteDocumentResult] = bulkResponse.getItems.map(x => {
+    val listOfDocRes: List[DeleteDocumentResult] = bulkResponse.getItems.map(x => {
       DeleteDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
         x.status != RestStatus.NOT_FOUND)
     }).toList
 
-    val result: DeleteDocumentListResult = DeleteDocumentListResult(list_of_doc_res)
+    val result: DeleteDocumentListResult = DeleteDocumentListResult(listOfDocRes)
     Option {
       result
     }
   }
 
-  def search_term(index_name: String, term: Term) : Future[Option[TermsResults]] = Future {
+  def searchTerm(indexName: String, term: Term) : Future[Option[TermsResults]] = Future {
     val client: TransportClient = elastiClient.getClient()
 
-    val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
+    val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
       .setTypes(elastiClient.termIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
-    val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
-    bool_query_builder.must(QueryBuilders.termQuery("term.base", term.term))
+    val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
+    boolQueryBuilder.must(QueryBuilders.termQuery("term.base", term.term))
 
     if (term.frequency_base.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("frequency_base", term.frequency_base.get))
+      boolQueryBuilder.must(QueryBuilders.termQuery("frequency_base", term.frequency_base.get))
 
     if (term.frequency_stem.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("frequency_stem", term.frequency_stem.get))
+      boolQueryBuilder.must(QueryBuilders.termQuery("frequency_stem", term.frequency_stem.get))
 
     if (term.synonyms.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("synonyms", term.synonyms.get))
+      boolQueryBuilder.must(QueryBuilders.termQuery("synonyms", term.synonyms.get))
 
     if (term.antonyms.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("antonyms", term.antonyms.get))
+      boolQueryBuilder.must(QueryBuilders.termQuery("antonyms", term.antonyms.get))
 
     if (term.tags.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("tags", term.tags.get))
+      boolQueryBuilder.must(QueryBuilders.termQuery("tags", term.tags.get))
 
     if (term.features.isDefined)
-      bool_query_builder.must(QueryBuilders.termQuery("features", term.features.get))
+      boolQueryBuilder.must(QueryBuilders.termQuery("features", term.features.get))
 
-    search_builder.setQuery(bool_query_builder)
+    searchBuilder.setQuery(boolQueryBuilder)
 
-    val search_response : SearchResponse = search_builder
+    val searchResponse : SearchResponse = searchBuilder
       .execute()
       .actionGet()
 
-    val documents : List[Term] = search_response.getHits.getHits.toList.map({ case(e) =>
+    val documents : List[Term] = searchResponse.getHits.getHits.toList.map({ case(e) =>
       val item: SearchHit = e
       val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
       val term : String = source.get("term") match {
@@ -416,12 +416,12 @@ object TermService {
         case None => None: Option[Map[String, String]]
       }
 
-      val frequency_base : Option[Double] = source.get("frequency_base") match {
+      val frequencyBase : Option[Double] = source.get("frequency_base") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
 
-      val frequency_stem : Option[Double] = source.get("frequency_stem") match {
+      val frequencyStem : Option[Double] = source.get("frequency_stem") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
@@ -438,42 +438,42 @@ object TermService {
         antonyms = antonyms,
         tags = tags,
         features = features,
-        frequency_base = frequency_base,
-        frequency_stem = frequency_stem,
+        frequency_base = frequencyBase,
+        frequency_stem = frequencyStem,
         vector = vector,
         score = Option{item.getScore.toDouble})
     })
 
     val terms: Terms = Terms(terms=documents)
 
-    val max_score : Float = search_response.getHits.getMaxScore
+    val maxScore : Float = searchResponse.getHits.getMaxScore
     val total : Int = terms.terms.length
-    val search_results : TermsResults = TermsResults(total = total, max_score = max_score,
+    val searchResults : TermsResults = TermsResults(total = total, max_score = maxScore,
       hits = terms)
 
     Option {
-      search_results
+      searchResults
     }
   }
 
   //given a text, return all terms which match
-  def search(index_name: String, text: String): Future[Option[TermsResults]] = Future {
+  def search(indexName: String, text: String): Future[Option[TermsResults]] = Future {
     val client: TransportClient = elastiClient.getClient()
 
-    val search_builder : SearchRequestBuilder = client.prepareSearch()
-      .setIndices(getIndexName(index_name))
+    val searchBuilder : SearchRequestBuilder = client.prepareSearch()
+      .setIndices(getIndexName(indexName))
       .setTypes(elastiClient.termIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
-    val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
-    bool_query_builder.should(QueryBuilders.matchQuery("term.base", text))
-    search_builder.setQuery(bool_query_builder)
+    val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
+    boolQueryBuilder.should(QueryBuilders.matchQuery("term.base", text))
+    searchBuilder.setQuery(boolQueryBuilder)
 
-    val search_response : SearchResponse = search_builder
+    val searchResponse : SearchResponse = searchBuilder
       .execute()
       .actionGet()
 
-    val documents : List[Term] = search_response.getHits.getHits.toList.map({ case(e) =>
+    val documents : List[Term] = searchResponse.getHits.getHits.toList.map({ case(e) =>
       val item: SearchHit = e
       val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
       val term : String = source.get("term") match {
@@ -507,12 +507,12 @@ object TermService {
         case None => None: Option[Map[String, String]]
       }
 
-      val frequency_base : Option[Double] = source.get("frequency_base") match {
+      val frequencyBase : Option[Double] = source.get("frequency_base") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
 
-      val frequency_stem : Option[Double] = source.get("frequency_stem") match {
+      val frequencyStem : Option[Double] = source.get("frequency_stem") match {
         case Some(t) => Option {t.asInstanceOf[Double]}
         case None => None: Option[Double]
       }
@@ -529,81 +529,81 @@ object TermService {
         antonyms = antonyms,
         tags = tags,
         features = features,
-        frequency_base = frequency_base,
-        frequency_stem = frequency_stem,
+        frequency_base = frequencyBase,
+        frequency_stem = frequencyStem,
         vector = vector,
         score = Option{item.getScore.toDouble})
     })
 
     val terms: Terms = Terms(terms=documents)
 
-    val max_score : Float = search_response.getHits.getMaxScore
+    val maxScore : Float = searchResponse.getHits.getMaxScore
     val total : Int = terms.terms.length
-    val search_results : TermsResults = TermsResults(total = total, max_score = max_score,
+    val searchResults : TermsResults = TermsResults(total = total, max_score = maxScore,
       hits = terms)
 
     Option {
-      search_results
+      searchResults
     }
   }
 
-  def esTokenizer(index_name: String, query: TokenizerQueryRequest) : Option[TokenizerResponse] = {
+  def esTokenizer(indexName: String, query: TokenizerQueryRequest) : Option[TokenizerResponse] = {
     val analyzer = query.tokenizer
-    val is_supported: Boolean = TokenizersDescription.analyzers_map.isDefinedAt(analyzer)
-    if(! is_supported) {
+    val isSupported: Boolean = TokenizersDescription.analyzers_map.isDefinedAt(analyzer)
+    if(! isSupported) {
       throw new Exception("esTokenizer: analyzer not found or not supported: (" + analyzer + ")")
     }
 
     val client: TransportClient = elastiClient.getClient()
 
-    val analyzer_builder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.text)
-    analyzer_builder.setAnalyzer(analyzer)
-    analyzer_builder.setIndex(getIndexName(index_name))
+    val analyzerBuilder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.text)
+    analyzerBuilder.setAnalyzer(analyzer)
+    analyzerBuilder.setIndex(getIndexName(indexName))
 
-    val analyze_response: AnalyzeResponse = analyzer_builder
+    val analyzeResponse: AnalyzeResponse = analyzerBuilder
       .execute()
       .actionGet()
 
     val tokens : List[TokenizerResponseItem] =
-      analyze_response.getTokens.listIterator.asScala.toList.map(t => {
-        val response_item: TokenizerResponseItem =
+      analyzeResponse.getTokens.listIterator.asScala.toList.map(t => {
+        val responseItem: TokenizerResponseItem =
           TokenizerResponseItem(start_offset = t.getStartOffset,
             position = t.getPosition,
             end_offset = t.getEndOffset,
             token = t.getTerm,
             token_type = t.getType)
-        response_item
+        responseItem
     })
 
     val response = Option { TokenizerResponse(tokens = tokens) }
     response
   }
 
-  def textToVectors(index_name: String, text: String, analyzer: String = "stop", unique: Boolean = false):
+  def textToVectors(indexName: String, text: String, analyzer: String = "stop", unique: Boolean = false):
   Option[TextTerms] = {
-    val analyzer_request = TokenizerQueryRequest(tokenizer = analyzer, text = text)
-    val analyzers_response = esTokenizer(index_name, analyzer_request)
+    val analyzerRequest = TokenizerQueryRequest(tokenizer = analyzer, text = text)
+    val analyzersResponse = esTokenizer(indexName, analyzerRequest)
 
-    val full_token_list = analyzers_response match {
+    val fullTokenList = analyzersResponse match {
       case Some(r) => r.tokens.map(e => e.token)
       case _  => List.empty[String]
     }
 
-    val token_list = if (unique) full_token_list.toSet.toList else full_token_list
-    val return_value = if(token_list.nonEmpty) {
-      val terms_request = TermIdsRequest(ids = token_list)
-      val term_list = get_term(index_name, terms_request)
+    val tokenList = if (unique) fullTokenList.toSet.toList else fullTokenList
+    val returnValue = if(tokenList.nonEmpty) {
+      val termsRequest = TermIdsRequest(ids = tokenList)
+      val termList = getTerm(indexName, termsRequest)
 
-      val text_terms = TextTerms(text = text,
-        text_terms_n = token_list.length,
-        terms_found_n = term_list.getOrElse(Terms(terms=List.empty[Term])).terms.length,
-        terms = term_list
+      val textTerms = TextTerms(text = text,
+        text_terms_n = tokenList.length,
+        terms_found_n = termList.getOrElse(Terms(terms=List.empty[Term])).terms.length,
+        terms = termList
       )
-      Option { text_terms }
+      Option { textTerms }
     } else {
       None: Option[TextTerms]
     }
-    return_value
+    returnValue
   }
 
 }

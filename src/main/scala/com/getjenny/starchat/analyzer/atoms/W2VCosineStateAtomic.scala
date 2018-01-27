@@ -34,7 +34,7 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
 
   val indexName = restricted_args("index_name")
   val querySentences: Option[DecisionTableRuntimeItem] =
-    AnalyzerService.analyzersMap(indexName).analyzer_map.get(state)
+    AnalyzerService.analyzersMap(indexName).analyzerMap.get(state)
   if (querySentences.isEmpty) {
     analyzerService.log.error(toString + " : state does not exists")
   } else {

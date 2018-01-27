@@ -33,12 +33,12 @@ object ResponseService {
   val termService: TermService.type = TermService
   val decisionTableService: DecisionTableService.type = DecisionTableService
 
-  def getNextResponse(index_name: String, request: ResponseRequestIn):
+  def getNextResponse(indexName: String, request: ResponseRequestIn):
   Future[Option[ResponseRequestOutOperationResult]] = Future {
 
-    if(! AnalyzerService.analyzersMap.contains(index_name)) {
-      log.debug("Analyzers map for index(" + index_name + ") is not present, fetching and building")
-      AnalyzerService.initializeAnalyzers(index_name)
+    if(! AnalyzerService.analyzersMap.contains(indexName)) {
+      log.debug("Analyzers map for index(" + indexName + ") is not present, fetching and building")
+      AnalyzerService.initializeAnalyzers(indexName)
     }
 
     // calculate and return the ResponseRequestOut
@@ -48,50 +48,50 @@ object ResponseService {
       ""
     }
 
-    val conversation_id: String = request.conversation_id
+    val conversationId: String = request.conversation_id
 
     val variables: Map[String, String] = if (request.values.isDefined)
       request.values.get.data.getOrElse(Map[String, String]())
     else
       Map.empty[String, String]
 
-    val traversed_states: List[String] = request.traversed_states.getOrElse(List.empty[String])
-    val traversed_states_count: Map[String, Int] =
-      traversed_states.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
+    val traversedStates: List[String] = request.traversed_states.getOrElse(List.empty[String])
+    val traversedStatesCount: Map[String, Int] =
+      traversedStates.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
 
     // refresh last_used timestamp
-    AnalyzerService.analyzersMap(index_name).last_evaluation_timestamp = System.currentTimeMillis
+    AnalyzerService.analyzersMap(indexName).lastEvaluationTimestamp = System.currentTimeMillis
 
     // prepare search result for search analyzer
-    val analyzers_internal_data =
-      decisionTableService.resultsToMap(index_name, decisionTableService.searchDtQueries(index_name, user_text))
+    val analyzersInternalData =
+      decisionTableService.resultsToMap(indexName, decisionTableService.searchDtQueries(indexName, user_text))
 
-    val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversed_states,
-      data = analyzers_internal_data)
+    val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversedStates,
+      data = analyzersInternalData)
 
-    val return_value: String = if (request.values.isDefined)
+    val returnValue: String = if (request.values.isDefined)
       request.values.get.return_value.getOrElse("")
     else
       ""
 
-    val return_state: Option[ResponseRequestOutOperationResult] = Option {
-      if (!return_value.isEmpty) {
+    val returnState: Option[ResponseRequestOutOperationResult] = Option {
+      if (!returnValue.isEmpty) {
         // there is a state in return_value (eg the client asked for a state), no analyzers evaluation
         val state: Future[Option[SearchDTDocumentsResults]] =
-          decisionTableService.read(index_name, List[String](return_value))
+          decisionTableService.read(indexName, List[String](returnValue))
         val res: Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
         if (res.get.total > 0) {
           val doc: DTDocument = res.get.hits.head.document
           val state: String = doc.state
-          val max_state_count: Int = doc.max_state_count
+          val maxStateCount: Int = doc.max_state_count
           val analyzer: String = doc.analyzer
           var bubble: String = doc.bubble
-          var action_input: Map[String, String] = doc.action_input
-          val state_data: Map[String, String] = doc.state_data
+          var actionInput: Map[String, String] = doc.action_input
+          val stateData: Map[String, String] = doc.state_data
           if (data.extracted_variables.nonEmpty) {
             for ((key, value) <- data.extracted_variables) {
               bubble = bubble.replaceAll("%" + key + "%", value)
-              action_input = doc.action_input map { case (ki, vi) =>
+              actionInput = doc.action_input map { case (ki, vi) =>
                 val new_value: String = vi.replaceAll("%" + key + "%", value)
                 (ki, new_value)
               }
@@ -99,105 +99,109 @@ object ResponseService {
           }
 
           /* we do not update the traversed_states list, if the state is requested we just return it */
-          val traversed_states_updated: List[String] = traversed_states ++ List(state)
-          val response_data: ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
+          val traversedStatesUpdated: List[String] = traversedStates ++ List(state)
+          val responseData: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
             state = state,
-            traversed_states = traversed_states_updated,
-            max_state_count = max_state_count,
+            traversed_states = traversedStatesUpdated,
+            max_state_count = maxStateCount,
             analyzer = analyzer,
             bubble = bubble,
             action = doc.action,
             data = data.extracted_variables,
-            action_input = action_input,
-            state_data = state_data,
+            action_input = actionInput,
+            state_data = stateData,
             success_value = doc.success_value,
             failure_value = doc.failure_value,
             score = 1.0d)
 
-          val full_response: ResponseRequestOutOperationResult =
+          val fullResponse: ResponseRequestOutOperationResult =
             ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option {
-              List(response_data)
+              List(responseData)
             }) // success
-          full_response
+          fullResponse
         } else {
-          val full_response: ResponseRequestOutOperationResult =
+          val fullResponse: ResponseRequestOutOperationResult =
             ResponseRequestOutOperationResult(ReturnMessageData(500,
               "Error during state retrieval"), None) // internal error
-          full_response
+          fullResponse
         }
       } else {
         // No states in the return values
-        val max_results: Int = request.max_results.getOrElse(2)
+        val maxResults: Int = request.max_results.getOrElse(2)
         val threshold: Double = request.threshold.getOrElse(0.0d)
-        val analyzer_values: Map[String, Result] =
-          AnalyzerService.analyzersMap(index_name).analyzer_map.filter(_._2.analyzer.build == true).filter(v => {
-            val traversed_state_count = traversed_states_count.getOrElse(v._1, 0)
-            val max_state_count = v._2.max_state_counter
-            max_state_count == 0 ||
-              traversed_state_count < max_state_count // skip states already evaluated too much times
+        val analyzerValues: Map[String, Result] =
+          AnalyzerService.analyzersMap(indexName).analyzerMap.filter(_._2.analyzer.build == true).filter(v => {
+            val traversedStateCount = traversedStatesCount.getOrElse(v._1, 0)
+            val maxStateCount = v._2.maxStateCounter
+            maxStateCount == 0 ||
+              traversedStateCount < maxStateCount // skip states already evaluated too much times
           }).map(item => {
-            val analyzer_evaluation = try {
-              val evaluation_res = item._2.analyzer.analyzer.evaluate(user_text, data = data)
+            val analyzerEvaluation = try {
+              val analyzer = item._2.analyzer.analyzer
+              val evaluationRes = analyzer match {
+                case Some(t) => t.evaluate(user_text, data = data)
+                case _ => throw AnalyzerEvaluationException("Analyzer is None")
+              }
               log.debug("ResponseService: Evaluation of State(" +
-                item._1 + ") Query(" + user_text + ") Score(" + evaluation_res.toString + ")")
-              evaluation_res
+                item._1 + ") Query(" + user_text + ") Score(" + evaluationRes.toString + ")")
+              evaluationRes
             } catch {
               case e: Exception =>
                 log.error("ResponseService: Evaluation of (" + item._1 + ") : " + e.getMessage)
                 throw AnalyzerEvaluationException(e.getMessage, e)
             }
-            val state_id = item._1
-            (state_id, analyzer_evaluation)
-        }).toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(max_results).toMap
+            val stateId = item._1
+            (stateId, analyzerEvaluation)
+        }).toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(maxResults).toMap
 
-        if(analyzer_values.nonEmpty) {
+        if(analyzerValues.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] =
-            decisionTableService.read(index_name, analyzer_values.keys.toList)
+            decisionTableService.read(indexName, analyzerValues.keys.toList)
           val res : Option[SearchDTDocumentsResults] = Await.result(items, 30.seconds)
           val docs = res.get.hits.par.map(item => {
             val doc: DTDocument = item.document
             val state = doc.state
-            val evaluation_res: Result = analyzer_values(state)
-            val max_state_count: Int = doc.max_state_count
+            val evaluationRes: Result = analyzerValues(state)
+            val maxStateCount: Int = doc.max_state_count
             val analyzer: String = doc.analyzer
             var bubble: String = doc.bubble
-            var action_input: Map[String, String] = doc.action_input
-            val state_data: Map[String, String] = doc.state_data
+            var actionInput: Map[String, String] = doc.action_input
+            val stateData: Map[String, String] = doc.state_data
 
             for ((key, value) <- data.extracted_variables) {
               bubble = bubble.replaceAll("%" + key + "%", value)
-              action_input = doc.action_input map { case (ki, vi) =>
-                val new_value: String = vi.replaceAll("%" + key + "%", value)
-                (ki, new_value)
+              actionInput = doc.action_input map { case (ki, vi) =>
+                val newValue: String = vi.replaceAll("%" + key + "%", value)
+                (ki, newValue)
               }
             }
 
-            for ((key, value) <- evaluation_res.data.extracted_variables) {
+            for ((key, value) <- evaluationRes.data.extracted_variables) {
               bubble = bubble.replaceAll("%" + key + "%", value)
-              action_input = doc.action_input map { case (ki, vi) =>
-                val new_value: String = vi.replaceAll("%" + key + "%", value)
-                (ki, new_value)
+              actionInput = doc.action_input map { case (ki, vi) =>
+                val newValue: String = vi.replaceAll("%" + key + "%", value)
+                (ki, newValue)
               }
             }
 
             val cleaned_data =
               data.extracted_variables ++
-                evaluation_res.data.extracted_variables.filter(item => !(item._1 matches "\\A__temp__.*"))
+                evaluationRes.data.extracted_variables.filter(item => !(item._1 matches "\\A__temp__.*"))
 
-            val traversed_states_updated: List[String] = traversed_states ++ List(state)
-            val response_item: ResponseRequestOut = ResponseRequestOut(conversation_id = conversation_id,
+            val traversed_states_updated: List[String] = traversedStates ++ List(state)
+            val response_item: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
               state = state,
-              max_state_count = max_state_count,
+              max_state_count = maxStateCount,
               traversed_states = traversed_states_updated,
               analyzer = analyzer,
               bubble = bubble,
               action = doc.action,
               data = cleaned_data,
-              action_input = action_input,
-              state_data = state_data,
+              action_input = actionInput,
+              state_data = stateData,
               success_value = doc.success_value,
               failure_value = doc.failure_value,
-              score = evaluation_res.score)
+              score = evaluationRes.score)
             response_item
           }).toList.sortWith(_.score > _.score)
           ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{docs}) // success
@@ -206,6 +210,6 @@ object ResponseService {
         }
       }
     }
-    return_state
+    returnState
   }
 }
