@@ -57,10 +57,10 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
     val vecsize = 0
     val skiplines = params.skiplines
 
-    val base_url = params.host + "/" + params.indexName + params.path
+    val baseUrl = params.host + "/" + params.indexName + params.path
     val lines = Source.fromFile(name=params.inputfile.get).getLines.toList
 
-    val conv_items: String => String = if (params.base64) {
+    val convItems: String => String = if (params.base64) {
       decodeBase64
     } else {
       identity
@@ -81,7 +81,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
     val timeout = Duration(params.timeout, "s")
 
     lines.foreach(entry => {
-      val document_string = conv_items(entry)
+      val document_string = convItems(entry)
       val id: String = document_string.sha256
 
       val kb_document: KBDocument = KBDocument(
@@ -93,20 +93,18 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
         question_scored_terms = None: Option[List[(String, Double)]],
         answer = document_string,
         answer_scored_terms = None: Option[List[(String, Double)]],
-        verified = false,
         topics = None: Option[String],
         dclass = None: Option[String],
         doctype = doctypes.hidden,
         state = None: Option[String],
-        status = 0
       )
 
-      val entity_future = Marshal(kb_document).to[MessageEntity]
-      val entity = Await.result(entity_future, 10.second)
+      val entityFuture = Marshal(kb_document).to[MessageEntity]
+      val entity = Await.result(entityFuture, 10.second)
       val responseFuture: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(
           method = HttpMethods.POST,
-          uri = base_url,
+          uri = baseUrl,
           headers = httpHeader,
           entity = entity))
       val result = Await.result(responseFuture, timeout)

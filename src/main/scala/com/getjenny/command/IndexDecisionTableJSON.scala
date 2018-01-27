@@ -63,7 +63,7 @@ object IndexDecisionTableJSON extends JsonSupport {
         SearchDTDocumentsResults(total = 0, max_score = .0f, hits = List.empty[SearchDTDocument])
     }
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.length > 0) {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
       val headers: Seq[RawHeader] = params.headerKv.map(x => {
         val headerOpt = x.split(":")
         val key = headerOpt(0)

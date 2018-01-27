@@ -40,8 +40,8 @@ object IndexTerms extends JsonSupport {
     val vecsize = params.vecsize
     val skiplines = params.skiplines
 
-    val base_url = params.host + "/" + params.index_name + params.path
-    lazy val term_text_entries = Source.fromFile(params.inputfile).getLines
+    val baseUrl = params.host + "/" + params.index_name + params.path
+    lazy val termTextEntries = Source.fromFile(params.inputfile).getLines
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
       val headers: Seq[RawHeader] = params.headerKv.map(x => {
@@ -57,7 +57,7 @@ object IndexTerms extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
-    (term_text_entries.drop(skiplines)).foreach(entry => {
+    (termTextEntries.drop(skiplines)).foreach(entry => {
       val splitted = entry.split(" ")
       val term_text = splitted.head
       val term_vector = try {
@@ -86,7 +86,7 @@ object IndexTerms extends JsonSupport {
         val responseFuture: Future[HttpResponse] =
           Http().singleRequest(HttpRequest(
             method = HttpMethods.POST,
-            uri = base_url,
+            uri = baseUrl,
             headers = httpHeader,
             entity = entity))
         val result = Await.result(responseFuture, timeout)

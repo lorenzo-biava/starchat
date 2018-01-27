@@ -64,7 +64,7 @@ object EmDistance {
       val weightedWords1 = words1.map(x => (x._1, (x._2._1 / words2.size, x._2._2)))
       val weightedWords2 = words2.map(x => (x._1, (x._2._1 / words1.size, x._2._2)))
 
-      val work_from_v_to_u = weightedWords1.map({ case((term1, (weight1, vector1))) =>
+      val workFromVtoU = weightedWords1.map({ case((term1, (weight1, vector1))) =>
         val min_term = weightedWords2.map({ case((term2, (weight2, vector2))) =>
           val distance: Double = dist_f(vector1, vector2)
           (term1, term2, weight1, weight2, vector1, vector2, distance, weight1 * distance)
@@ -80,9 +80,9 @@ object EmDistance {
         min_term._8
       }).map(x => math.abs(x)).sum
 
-      val dist = math.max(workFromUtoV, work_from_v_to_u)
+      val dist = math.max(workFromUtoV, workFromVtoU)
       println("Info: work_from_u_to_v("
-        + workFromUtoV + ") work_from_v_to_u(" + work_from_v_to_u + ") dist(" + dist + ")"
+        + workFromUtoV + ") work_from_v_to_u(" + workFromVtoU + ") dist(" + dist + ")"
         + " reliability_factor1(" + reliabilityFactor1 + ")"
         + " reliability_factor2(" + reliabilityFactor2 + ")"
       )
@@ -91,21 +91,21 @@ object EmDistance {
   }
 
   //reduced EMD
-  def distanceText(index_name: String, text1: String, text2: String,
+  def distanceText(indexName: String, text1: String, text2: String,
                    dist_f: (Vector[Double], Vector[Double]) => Double): (Double, Double, Double) = {
-    val textVectors1 = termService.textToVectors(index_name, text = text1)
-    val textVectors2 = termService.textToVectors(index_name, text = text2)
+    val textVectors1 = termService.textToVectors(indexName, text = text1)
+    val textVectors2 = termService.textToVectors(indexName, text = text2)
     distance(textVectors1, textVectors2, dist_f)
   }
 
-  def distanceEuclidean(index_name: String, text1: String, text2: String): Double = {
-    val emdDist = distanceText(index_name =  index_name, text1 = text1, text2 = text2, euclideanDist)
+  def distanceEuclidean(indexName: String, text1: String, text2: String): Double = {
+    val emdDist = distanceText(indexName =  indexName, text1 = text1, text2 = text2, euclideanDist)
     val score = (1.0 / (1 + emdDist._1)) * (emdDist._2 * emdDist._3)
     score
   }
 
-  def distanceCosine(index_name: String, text1: String, text2: String): Double = {
-    val emdDist = distanceText(index_name = index_name, text1 = text1, text2 = text2, cosineDist)
+  def distanceCosine(indexName: String, text1: String, text2: String): Double = {
+    val emdDist = distanceText(indexName = indexName, text1 = text1, text2 = text2, cosineDist)
     val score = (1.0 / (1 + emdDist._1)) * (emdDist._2 * emdDist._3)
     score
   }
