@@ -138,7 +138,7 @@ object IndexKnowledgeBase extends JsonSupport {
     convItems.foreach(entry => {
       val id: String = entry.toString().sha256
 
-      val kb_document: KBDocument = KBDocument(
+      val kbDocument: KBDocument = KBDocument(
         id = id,
         conversation = entry("conversation_id"),
         index_in_conversation =  Option { entry("position").toInt },
@@ -147,15 +147,13 @@ object IndexKnowledgeBase extends JsonSupport {
         question_scored_terms = None: Option[List[(String, Double)]],
         answer = entry("answer"),
         answer_scored_terms = None: Option[List[(String, Double)]],
-        verified = false,
         topics = None: Option[String],
         dclass = None: Option[String],
         doctype = doctypes.normal,
         state = None: Option[String],
-        status = 0
       )
 
-      val entity_future = Marshal(kb_document).to[MessageEntity]
+      val entity_future = Marshal(kbDocument).to[MessageEntity]
       val entity = Await.result(entity_future, 10.second)
       val responseFuture: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(
@@ -165,9 +163,9 @@ object IndexKnowledgeBase extends JsonSupport {
           entity = entity))
       val result = Await.result(responseFuture, timeout)
       result.status match {
-        case StatusCodes.Created | StatusCodes.OK => println("indexed: " + kb_document.id +
-          " conv(" + kb_document.conversation + ")" +
-          " position(" + kb_document.index_in_conversation.get + ")" +
+        case StatusCodes.Created | StatusCodes.OK => println("indexed: " + kbDocument.id +
+          " conv(" + kbDocument.conversation + ")" +
+          " position(" + kbDocument.index_in_conversation.get + ")" +
           " q_id(" + entry("question_id") + ")" +
           " a_id(" + entry("answer_id") + ")")
         case _ =>

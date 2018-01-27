@@ -23,6 +23,8 @@ import com.getjenny.analyzer.analyzers._
 import com.getjenny.analyzer.expressions.Result
 import com.getjenny.analyzer.expressions.AnalyzersData
 import scala.concurrent.ExecutionContext.Implicits.global
+import scalaz._
+import Scalaz._
 
 /**
   * Implements response functionalities
@@ -133,7 +135,7 @@ object ResponseService {
           AnalyzerService.analyzersMap(indexName).analyzerMap.filter(_._2.analyzer.build == true).filter(v => {
             val traversedStateCount = traversedStatesCount.getOrElse(v._1, 0)
             val maxStateCount = v._2.maxStateCounter
-            maxStateCount == 0 ||
+            maxStateCount === 0 ||
               traversedStateCount < maxStateCount // skip states already evaluated too much times
           }).map(item => {
             val analyzerEvaluation = try {

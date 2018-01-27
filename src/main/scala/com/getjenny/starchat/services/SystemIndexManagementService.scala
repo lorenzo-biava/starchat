@@ -40,13 +40,13 @@ object SystemIndexManagementService {
     val client: TransportClient = elastic_client.getClient()
 
     val operations_message: List[String] = schemaFiles.map(item => {
-      val json_in_stream: InputStream = getClass.getResourceAsStream(item.path)
-      if (json_in_stream == None.orNull) {
+      val jsonInStream: InputStream = getClass.getResourceAsStream(item.path)
+      if (jsonInStream == None.orNull) {
         val message = "Check the file: (" + item.path + ")"
         throw new FileNotFoundException(message)
       }
 
-      val schemaJson: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
+      val schemaJson: String = Source.fromInputStream(jsonInStream, "utf-8").mkString
       val fullIndexName = elastic_client.indexName + "." + item.indexSuffix
 
       val createIndexRes: CreateIndexResponse =

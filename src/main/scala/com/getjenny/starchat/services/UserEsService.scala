@@ -24,6 +24,8 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.getjenny.analyzer.util.RandomNumbers
+import scalaz._
+import Scalaz._
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
@@ -69,25 +71,25 @@ class UserEsService extends AbstractUserService {
       .setId(user.id)
       .setSource(builder).get()
 
-    val refresh_index = elasticClient.refreshIndex(indexName)
-    if(refresh_index.failed_shards_n > 0) {
+    val refreshIndex = elasticClient.refreshIndex(indexName)
+    if(refreshIndex.failed_shards_n > 0) {
       throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
 
-    val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
+    val docResult: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
     )
 
-    doc_result
+    docResult
   }
 
   def update(id: String, user: UserUpdate):
   Future[UpdateDocumentResult] = Future {
 
-    if(id == "admin") {
+    if(id === "admin") {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
@@ -128,19 +130,19 @@ class UserEsService extends AbstractUserService {
       throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
 
-    val doc_result: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
+    val docResult: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
     )
 
-    doc_result
+    docResult
   }
 
   def delete(id: String): Future[DeleteDocumentResult] = Future {
 
-    if(id == "admin") {
+    if(id === "admin") {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
@@ -148,23 +150,23 @@ class UserEsService extends AbstractUserService {
     val response: DeleteResponse = client.prepareDelete().setIndex(indexName)
       .setType(elasticClient.userIndexSuffix).setId(id).get()
 
-    val refresh_index = elasticClient.refreshIndex(indexName)
-    if(refresh_index.failed_shards_n > 0) {
+    val refreshIndex = elasticClient.refreshIndex(indexName)
+    if(refreshIndex.failed_shards_n > 0) {
       throw new Exception("User: index refresh failed: (" + indexName + ")")
     }
 
-    val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
+    val docResult: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
-    doc_result
+    docResult
   }
 
   def read(id: String): Future[User] = Future {
-    if(id == "admin") {
+    if(id === "admin") {
       admin_user
     } else {
 
@@ -203,7 +205,7 @@ class UserEsService extends AbstractUserService {
   /** given id and optionally password and permissions, generate a new user */
   def genUser(id: String, user: UserUpdate, authenticator: AbstractStarChatAuthenticator): Future[User] = Future {
 
-    val password_plain = user.password match {
+    val passwordPlain = user.password match {
       case Some(t) => t
       case None =>
         generatePassword()
@@ -215,7 +217,7 @@ class UserEsService extends AbstractUserService {
         generateSalt()
     }
 
-    val password = authenticator.hashedSecret(password = password_plain, salt = salt)
+    val password = authenticator.hashedSecret(password = passwordPlain, salt = salt)
 
     val permissions = user.permissions match {
       case Some(t) => t

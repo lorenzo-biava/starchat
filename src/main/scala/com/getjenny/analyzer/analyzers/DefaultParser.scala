@@ -99,7 +99,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
         // Now read the argument of the command
         // If inside last parenthesis was opened and quotes add to argument
         val argument_acc =
-        if (new_parenthesis_balance.head == 1 && new_quote_balance == 1 && !just_opened_quote) {
+        if (new_parenthesis_balance.head === 1 && new_quote_balance === 1 && !just_opened_quote) {
           argument_buffer + chars(indice)
         } else {
           ""
@@ -151,7 +151,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
             loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance,
               newCommandBuffer, argument_acc, arguments, command_tree)
           } else {
-            if (new_parenthesis_balance.sum == 0 && new_quote_balance == 0) command_tree
+            if (new_parenthesis_balance.sum === 0 && new_quote_balance === 0) command_tree
             else throw AnalyzerParsingException("gobble_commands: Parenthesis or quotes do not match")
           }
         }

@@ -17,23 +17,23 @@ import scala.util.{Failure, Success}
 trait LanguageGuesserResource extends MyResource {
 
   def languageGuesserRoutes: Route =
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "language_guesser") { index_name =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "language_guesser") { indexName =>
       val languageGuesserService = LanguageGuesserService
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.read)) {
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[LanguageGuesserRequestIn]) { request_data =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(languageGuesserService.guessLanguage(index_name, request_data)) {
+                onCompleteWithBreaker(breaker)(languageGuesserService.guessLanguage(indexName, request_data)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })
                   case Failure(e) =>
-                    log.error("index(" + index_name + ") route=languageGuesserRoutes method=POST: " + e.getMessage)
+                    log.error("index(" + indexName + ") route=languageGuesserRoutes method=POST: " + e.getMessage)
                     completeResponse(StatusCodes.BadRequest,
                       Option {
                         ReturnMessageData(code = 100, message = e.getMessage)
@@ -49,15 +49,15 @@ trait LanguageGuesserResource extends MyResource {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(languageGuesserService.getLanguages(index_name, language)) {
+                onCompleteWithBreaker(breaker)(languageGuesserService.getLanguages(indexName, language)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })
                   case Failure(e) =>
-                    log.error("index(" + index_name + ") route=languageGuesserRoutes method=GET: " + e.getMessage)
+                    log.error("index(" + indexName + ") route=languageGuesserRoutes method=GET: " + e.getMessage)
                     completeResponse(StatusCodes.BadRequest,
                       Option {
                         ReturnMessageData(code = 101, message = e.getMessage)

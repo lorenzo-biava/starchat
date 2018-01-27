@@ -9,7 +9,8 @@ import com.getjenny.starchat.services._
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
 import ExecutionContext.Implicits.global
-
+import scalaz._
+import Scalaz._
 
 /**
   * Created by mal on 20/02/2017.
@@ -35,7 +36,7 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
       val termVector = textVectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)
         .map(term => term.vector.get)
       val distanceList = termVector.map(vector => {
-        if(vector.isEmpty || wordVec._2 == 0.0) {
+        if(vector.isEmpty || wordVec._2 === 0.0) {
           0.0
         } else {
           1 - cosineDist(vector, wordVec._1)

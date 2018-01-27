@@ -208,9 +208,9 @@ object DecisionTableService {
           userText
         })
 
-    val search_result: Try[Option[SearchDTDocumentsResults]] =
+    val searchResult: Try[Option[SearchDTDocumentsResults]] =
       Await.ready(this.search(indexName, dtDocumentSearch), 10.seconds).value.get
-    val found_documents = search_result match {
+    val foundDocuments = searchResult match {
       case Success(t) =>
         t
       case Failure(e) =>
@@ -218,7 +218,7 @@ object DecisionTableService {
         log.error(message + " : " + e.getMessage)
         throw new Exception(message, e)
     }
-    found_documents
+    foundDocuments
   }
 
   def resultsToMap(indexName: String, results: Option[SearchDTDocumentsResults]): Map[String, Any] = {
