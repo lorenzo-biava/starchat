@@ -29,8 +29,8 @@ object FileToDTDocuments extends JsonSupport {
 
 
     val refnumcol = 11
-    val file_reader = new FileReader(file)
-    lazy val file_entries = CSVReader.read(input=file_reader, separator=separator,
+    val fileReader = new FileReader(file)
+    lazy val file_entries = CSVReader.read(input=fileReader, separator=separator,
       quote = '"', skipLines=skiplines)
 
     val dtDocuments: List[DTDocument] = file_entries.map(entry => {

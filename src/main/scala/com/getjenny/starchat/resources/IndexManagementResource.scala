@@ -25,7 +25,7 @@ trait IndexManagementResource extends MyResource {
       (index_name) =>
         val indexManagementService = IndexManagementService
         post {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -50,7 +50,7 @@ trait IndexManagementResource extends MyResource {
       (index_name) =>
         val indexManagementService = IndexManagementService
         post {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -76,7 +76,7 @@ trait IndexManagementResource extends MyResource {
         val indexManagementService = IndexManagementService
         pathEnd {
           put {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -103,7 +103,7 @@ trait IndexManagementResource extends MyResource {
         val indexManagementService = IndexManagementService
         pathEnd {
           get {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -121,7 +121,7 @@ trait IndexManagementResource extends MyResource {
             }
           } ~
             delete {
-              authenticateBasicAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = authRealm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, "admin", Permissions.admin)) {

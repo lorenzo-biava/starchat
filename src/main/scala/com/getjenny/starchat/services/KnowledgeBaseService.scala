@@ -44,24 +44,24 @@ import org.elasticsearch.script._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object KnowledgeBaseService {
-  val elastic_client = KnowledgeBaseElasticClient
+  val elasticClient = KnowledgeBaseElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   val nested_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
             "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elastic_client.kb_index_suffix)
+    index_name + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)
   }
 
   def search(index_name: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
-    val client: TransportClient = elastic_client.getClient()
+    val client: TransportClient = elasticClient.getClient()
     val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
-      .setTypes(elastic_client.kb_index_suffix)
+      .setTypes(elasticClient.kbIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     search_builder.setMinScore(documentSearch.min_score.getOrElse(
-      Option{elastic_client.query_min_threshold}.getOrElse(0.0f))
+      Option{elasticClient.queryMinThreshold}.getOrElse(0.0f))
     )
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
@@ -88,14 +88,14 @@ object KnowledgeBaseService {
       bool_query_builder.must(QueryBuilders.boolQuery()
           .must(QueryBuilders.matchQuery("question.stem_bm25", question_query))
           .should(QueryBuilders.matchPhraseQuery("question.raw", question_query)
-            .boost(elastic_client.question_exact_match_boost))
+            .boost(elasticClient.questionExactMatchBoost))
       )
 
       val question_negative_nested_query: QueryBuilder = QueryBuilders.nestedQuery(
         "question_negative",
         QueryBuilders.matchQuery("question_negative.query.base", question_query)
-            .minimumShouldMatch(elastic_client.question_negative_minimum_match)
-          .boost(elastic_client.question_negative_boost),
+            .minimumShouldMatch(elasticClient.questionNegativeMinimumMatch)
+          .boost(elasticClient.questionNegativeBoost),
         ScoreMode.Total
       ).ignoreUnmapped(true)
         .innerHit(new InnerHitBuilder().setSize(100))
@@ -121,7 +121,7 @@ object KnowledgeBaseService {
       val nested_query: QueryBuilder = QueryBuilders.nestedQuery(
         "question_scored_terms",
         function_score_query,
-        nested_score_mode.getOrElse(elastic_client.queries_score_mode, ScoreMode.Total)
+        nested_score_mode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Total)
       ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100))
 
       bool_query_builder.should(nested_query)
@@ -328,14 +328,14 @@ object KnowledgeBaseService {
     builder.endObject()
 
     val json: String = builder.string()
-    val client: TransportClient = elastic_client.getClient()
+    val client: TransportClient = elasticClient.getClient()
     val response: IndexResponse =
-      client.prepareIndex().setIndex(getIndexName(index_name)).setType(elastic_client.kb_index_suffix)
+      client.prepareIndex().setIndex(getIndexName(index_name)).setType(elasticClient.kbIndexSuffix)
         .setId(document.id)
         .setSource(json, XContentType.JSON).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
+      val refresh_index = elasticClient.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
       }
@@ -438,14 +438,14 @@ object KnowledgeBaseService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.getClient()
+    val client: TransportClient = elasticClient.getClient()
     val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(index_name))
-      .setType(elastic_client.kb_index_suffix).setId(id)
+      .setType(elasticClient.kbIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
+      val refresh_index = elasticClient.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
       }
@@ -462,7 +462,7 @@ object KnowledgeBaseService {
   }
 
   def deleteAll(index_name: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elastic_client.getClient()
+    val client: TransportClient = elasticClient.getClient()
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -477,12 +477,12 @@ object KnowledgeBaseService {
   }
 
   def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elastic_client.getClient()
+    val client: TransportClient = elasticClient.getClient()
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(index_name))
-      .setType(elastic_client.kb_index_suffix).setId(id).get()
+      .setType(elasticClient.kbIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
+      val refresh_index = elasticClient.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + index_name + ")")
       }
@@ -499,9 +499,9 @@ object KnowledgeBaseService {
   }
 
   def read(index_name: String, ids: List[String]): Future[Option[SearchKBDocumentsResults]] = {
-    val client: TransportClient = elastic_client.getClient()
+    val client: TransportClient = elasticClient.getClient()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multiget_builder.add(getIndexName(index_name), elastic_client.kb_index_suffix, ids:_*)
+    multiget_builder.add(getIndexName(index_name), elasticClient.kbIndexSuffix, ids:_*)
     val response: MultiGetResponse = multiget_builder.get()
 
     val documents : Option[List[SearchKBDocument]] = Option { response.getResponses

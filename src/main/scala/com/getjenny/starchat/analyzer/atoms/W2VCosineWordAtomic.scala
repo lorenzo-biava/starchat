@@ -25,23 +25,23 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
 
   val termService: TermService.type = TermService
 
-  val index_name: String = restricted_args("index_name")
-  val word_vec: (Vector[Double], Double) = TextToVectorsTools.getSumOfVectorsFromText(index_name, word)
+  val indexName: String = restricted_args("index_name")
+  val wordVec: (Vector[Double], Double) = TextToVectorsTools.getSumOfVectorsFromText(indexName, word)
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val text_vectors = termService.textToVectors(index_name, query)
-    val distance: Double = if (text_vectors.nonEmpty && text_vectors.get.terms.nonEmpty) {
-      val term_vector = text_vectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)
+    val textVectors = termService.textToVectors(indexName, query)
+    val distance: Double = if (textVectors.nonEmpty && textVectors.get.terms.nonEmpty) {
+      val termVector = textVectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)
         .map(term => term.vector.get)
-      val distance_list = term_vector.map(vector => {
-        if(vector.isEmpty || word_vec._2 == 0.0) {
+      val distanceList = termVector.map(vector => {
+        if(vector.isEmpty || wordVec._2 == 0.0) {
           0.0
         } else {
-          1 - cosineDist(vector, word_vec._1)
+          1 - cosineDist(vector, wordVec._1)
         }
       })
-      val dist = if (distance_list.nonEmpty) distance_list.max else 0.0
+      val dist = if (distanceList.nonEmpty) distanceList.max else 0.0
       dist
     } else {
       0.0
@@ -50,5 +50,5 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
   }
   // Similarity is normally the cosine itself. The threshold should be at least
   // angle < pi/2 (cosine > 0), but for synonyms let's put cosine > 0.6, i.e. self.evaluate > 0.8
-  override val match_threshold: Double = 0.8
+  override val matchThreshold: Double = 0.8
 }

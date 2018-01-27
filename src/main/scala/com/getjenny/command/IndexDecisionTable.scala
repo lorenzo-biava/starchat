@@ -50,7 +50,7 @@ object IndexDecisionTable extends JsonSupport {
     val vecsize = 0
     val skiplines = params.skiplines
 
-    val base_url = params.host + "/" + params.index_name + params.path
+    val baseUrl = params.host + "/" + params.index_name + params.path
     val file = new File(params.inputfile)
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
@@ -75,7 +75,7 @@ object IndexDecisionTable extends JsonSupport {
         val responseFuture: Future[HttpResponse] =
           Http().singleRequest(HttpRequest(
             method = HttpMethods.POST,
-            uri = base_url,
+            uri = baseUrl,
             headers = httpHeader,
             entity = entity))
         val result = Await.result(responseFuture, timeout)

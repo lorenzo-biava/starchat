@@ -19,7 +19,7 @@ trait MyResource extends Directives with JsonSupport {
   implicit def executionContext: ExecutionContext
 
   val config: Config = ConfigFactory.load()
-  val auth_realm: String = config.getString("starchat.auth_realm")
+  val authRealm: String = config.getString("starchat.auth_realm")
   val authenticator = StarChatAuthenticator.authenticator
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
@@ -30,8 +30,8 @@ trait MyResource extends Directives with JsonSupport {
   def completeResponse[A: ToEntityMarshaller](status_code: StatusCode, data: Option[A]): Route = {
     data match {
       case Some(t) =>
-        val blippy = RawHeader("application", "json")
-        respondWithDefaultHeader(blippy) {
+        val defaultHeader = RawHeader("application", "json")
+        respondWithDefaultHeader(defaultHeader) {
           complete(status_code, t)
         }
       case None =>
@@ -43,8 +43,8 @@ trait MyResource extends Directives with JsonSupport {
                                      data: Option[A]): Route = {
     data match {
       case Some(t) =>
-        val blippy = RawHeader("application", "json")
-        respondWithDefaultHeader(blippy) {
+        val defaultHeader = RawHeader("application", "json")
+        respondWithDefaultHeader(defaultHeader) {
           complete(status_code_ok, t)
         }
       case None =>

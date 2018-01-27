@@ -38,13 +38,13 @@ import org.apache.lucene.search.join._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object SystemService {
-  var dt_reload_timestamp : Long = -1
-  val elastic_client = SystemElasticClient
+  var dtReloadTimestamp : Long = -1
+  val elasticClient = SystemElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elastic_client.system_refresh_dt_index_suffix)
+    index_name + "." + suffix.getOrElse(elasticClient.systemRefreshDtIndexSuffix)
   }
 
   def setDTReloadTimestamp(index_name: String, refresh: Int = 0):
@@ -53,13 +53,13 @@ object SystemService {
     val timestamp: Long = System.currentTimeMillis
 
     val builder : XContentBuilder = jsonBuilder().startObject()
-    builder.field(elastic_client.dt_reload_timestamp_field_name, timestamp)
+    builder.field(elasticClient.dtReloadTimestampFieldName, timestamp)
     builder.endObject()
 
-    val client: TransportClient = elastic_client.getClient()
+    val client: TransportClient = elasticClient.getClient()
     val response: UpdateResponse =
       client.prepareUpdate().setIndex(getIndexName(index_name))
-        .setType(elastic_client.system_refresh_dt_index_suffix)
+        .setType(elasticClient.systemRefreshDtIndexSuffix)
         .setId(dt_reload_doc_id)
         .setDocAsUpsert(true)
         .setDoc(builder)
@@ -68,7 +68,7 @@ object SystemService {
     log.debug("dt reload timestamp response status: " + response.status())
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
+      val refresh_index = elasticClient.refreshIndex(getIndexName(index_name))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("System: index refresh failed: (" + index_name + ")")
       }
@@ -78,26 +78,26 @@ object SystemService {
   }
 
   def getDTReloadTimestamp(index_name: String) : Future[Option[Long]] = Future {
-    val dt_reload_doc_id: String = index_name
-    val client: TransportClient = elastic_client.getClient()
-    val get_builder: GetRequestBuilder = client.prepareGet()
+    val dtReloadDocId: String = index_name
+    val client: TransportClient = elasticClient.getClient()
+    val getBuilder: GetRequestBuilder = client.prepareGet()
       .setIndex(getIndexName(index_name))
-      .setType(elastic_client.system_refresh_dt_index_suffix)
-      .setId(dt_reload_doc_id)
-    val response: GetResponse = get_builder.get()
+      .setType(elasticClient.systemRefreshDtIndexSuffix)
+      .setId(dtReloadDocId)
+    val response: GetResponse = getBuilder.get()
 
     val timestamp = if(! response.isExists || response.isSourceEmpty) {
       log.info("dt reload timestamp field is empty or does not exists")
       -1 : Long
     } else {
       val source : Map[String, Any] = response.getSource.asScala.toMap
-      val loaded_ts : Long = source.get(elastic_client.dt_reload_timestamp_field_name) match {
+      val loadedTs : Long = source.get(elasticClient.dtReloadTimestampFieldName) match {
         case Some(t) => t.asInstanceOf[Long]
         case None =>
           -1: Long
       }
-      log.info("dt reload timestamp is: " + loaded_ts)
-      loaded_ts
+      log.info("dt reload timestamp is: " + loadedTs)
+      loadedTs
     }
 
     Option {timestamp}

@@ -52,21 +52,21 @@ object DecisionTableService {
     "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elastic_client.dt_index_suffix)
+    index_name + "." + suffix.getOrElse(elastic_client.dtIndexSuffix)
   }
 
   def search(index_name: String, documentSearch: DTDocumentSearch): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elastic_client.getClient()
     val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
-      .setTypes(elastic_client.dt_index_suffix)
+      .setTypes(elastic_client.dtIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val min_score = documentSearch.min_score.getOrElse(
-      Option{elastic_client.query_min_threshold}.getOrElse(0.0f)
+      Option{elastic_client.queryMinThreshold}.getOrElse(0.0f)
     )
 
     val boost_exact_match_factor = documentSearch.boost_exact_match_factor.getOrElse(
-      Option{elastic_client.boost_exact_match_factor}.getOrElse(1.0f)
+      Option{elastic_client.boostExactMatchFactor}.getOrElse(1.0f)
     )
 
     search_builder.setMinScore(min_score)
@@ -86,7 +86,7 @@ object DecisionTableService {
           .should(QueryBuilders.matchPhraseQuery("queries.query.raw", documentSearch.queries.get)
             .boost(1 + (min_score * boost_exact_match_factor))
           ),
-        queries_score_mode.getOrElse(elastic_client.queries_score_mode, ScoreMode.Max)
+        queries_score_mode.getOrElse(elastic_client.queriesScoreMode, ScoreMode.Max)
       ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100))
       bool_query_builder.must(nested_query)
     }
@@ -198,11 +198,11 @@ object DecisionTableService {
         10000
       },
         min_score = Option {
-          elastic_client.query_min_threshold
+          elastic_client.queryMinThreshold
         },
         execution_order = None: Option[Int],
         boost_exact_match_factor = Option {
-          elastic_client.boost_exact_match_factor
+          elastic_client.boostExactMatchFactor
         },
         state = None: Option[String], queries = Option {
           user_text
@@ -265,7 +265,7 @@ object DecisionTableService {
 
     val client: TransportClient = elastic_client.getClient()
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
-      .setType(elastic_client.dt_index_suffix)
+      .setType(elastic_client.dtIndexSuffix)
       .setId(document.state)
       .setSource(builder).get()
 
@@ -347,7 +347,7 @@ object DecisionTableService {
 
     val client: TransportClient = elastic_client.getClient()
     val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(index_name))
-      .setType(elastic_client.dt_index_suffix).setId(id)
+      .setType(elastic_client.dtIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
@@ -386,7 +386,7 @@ object DecisionTableService {
   def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.getClient()
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(index_name))
-      .setType(elastic_client.dt_index_suffix).setId(id).get()
+      .setType(elastic_client.dtIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
       val refresh_index = elastic_client.refreshIndex(getIndexName(index_name))
@@ -410,7 +410,7 @@ object DecisionTableService {
 
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
     val scroll_resp : SearchResponse = client.prepareSearch(getIndexName(index_name))
-      .setTypes(elastic_client.dt_index_suffix)
+      .setTypes(elastic_client.dtIndexSuffix)
       .setQuery(qb)
       .setScroll(new TimeValue(60000))
       .setSize(10000).get()
@@ -495,7 +495,7 @@ object DecisionTableService {
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multiget_builder.add(getIndexName(index_name), elastic_client.dt_index_suffix, ids:_*)
+      multiget_builder.add(getIndexName(index_name), elastic_client.dtIndexSuffix, ids:_*)
     } else {
       val all_documents = getDTDocuments(index_name)
       return all_documents

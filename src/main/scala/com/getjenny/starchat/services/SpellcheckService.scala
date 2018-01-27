@@ -22,15 +22,15 @@ import org.elasticsearch.search.suggest.term.TermSuggestion
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object SpellcheckService {
-  val elastic_client = KnowledgeBaseElasticClient
+  val elasticClient = KnowledgeBaseElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elastic_client.kb_index_suffix)
+    index_name + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)
   }
 
   def termsSuggester(index_name: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
-    val client: TransportClient = elastic_client.getClient()
+    val client: TransportClient = elasticClient.getClient()
 
     val suggestion_builder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
     suggestion_builder.maxEdits(2)
@@ -42,7 +42,7 @@ object SpellcheckService {
       .addSuggestion("suggestions", suggestion_builder)
 
     val search_builder = client.prepareSearch(getIndexName(index_name))
-      .setTypes(elastic_client.kb_index_suffix)
+      .setTypes(elasticClient.kbIndexSuffix)
       .suggest(suggest_builder)
 
     val search_response : SearchResponse = search_builder

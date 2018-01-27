@@ -23,7 +23,7 @@ trait TermResource extends MyResource {
         post {
           operation match {
             case "index" =>
-              authenticateBasicAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = authRealm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -46,7 +46,7 @@ trait TermResource extends MyResource {
                 }
               }
             case "get" =>
-              authenticateBasicAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = authRealm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -76,7 +76,7 @@ trait TermResource extends MyResource {
       } ~
         pathEnd {
           delete {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -114,7 +114,7 @@ trait TermResource extends MyResource {
             }
           } ~
             put {
-              authenticateBasicAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = authRealm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -139,7 +139,7 @@ trait TermResource extends MyResource {
         } ~
         path(Segment) { operation: String =>
           get {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {

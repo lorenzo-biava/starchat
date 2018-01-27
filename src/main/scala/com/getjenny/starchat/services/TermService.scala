@@ -46,7 +46,7 @@ object TermService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elastiClient.term_index_suffix)
+    index_name + "." + suffix.getOrElse(elastiClient.termIndexSuffix)
   }
 
   def payloadVectorToString[T](vector: Vector[T]): String = {
@@ -136,7 +136,7 @@ object TermService {
       builder.endObject()
 
       bulkRequest.add(client.prepareIndex().setIndex(getIndexName(index_name))
-        .setType(elastiClient.term_index_suffix)
+        .setType(elastiClient.termIndexSuffix)
         .setId(term.term)
         .setSource(builder))
     })
@@ -158,7 +158,7 @@ object TermService {
   def get_term(index_name: String, terms_request: TermIdsRequest) : Option[Terms] = {
     val client: TransportClient = elastiClient.getClient()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multiget_builder.add(getIndexName(index_name), elastiClient.term_index_suffix, terms_request.ids:_*)
+    multiget_builder.add(getIndexName(index_name), elastiClient.termIndexSuffix, terms_request.ids:_*)
     val response: MultiGetResponse = multiget_builder.get()
     val documents : List[Term] = response.getResponses.toList
         .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case(e) =>
@@ -274,7 +274,7 @@ object TermService {
       builder.endObject()
 
       bulkRequest.add(client.prepareUpdate().setIndex(getIndexName(index_name))
-        .setType(elastiClient.term_index_suffix)
+        .setType(elastiClient.termIndexSuffix)
         .setId(term.term)
         .setDoc(builder))
     })
@@ -323,7 +323,7 @@ object TermService {
     termGetRequest.ids.foreach( id => {
       val delete_request: DeleteRequestBuilder = client.prepareDelete()
         .setIndex(getIndexName(index_name))
-        .setType(elastiClient.term_index_suffix)
+        .setType(elastiClient.termIndexSuffix)
         .setId(id)
       bulkRequest.add(delete_request)
     })
@@ -352,7 +352,7 @@ object TermService {
     val client: TransportClient = elastiClient.getClient()
 
     val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
-      .setTypes(elastiClient.term_index_suffix)
+      .setTypes(elastiClient.termIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
@@ -462,7 +462,7 @@ object TermService {
 
     val search_builder : SearchRequestBuilder = client.prepareSearch()
       .setIndices(getIndexName(index_name))
-      .setTypes(elastiClient.term_index_suffix)
+      .setTypes(elastiClient.termIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()

@@ -32,29 +32,29 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
 
   val analyzerService: AnalyzerService.type = AnalyzerService
 
-  val index_name = restricted_args("index_name")
-  val query_sentences: Option[DecisionTableRuntimeItem] =
-    AnalyzerService.analyzers_map(index_name).analyzer_map.get(state)
-  if (query_sentences.isEmpty) {
+  val indexName = restricted_args("index_name")
+  val querySentences: Option[DecisionTableRuntimeItem] =
+    AnalyzerService.analyzersMap(indexName).analyzer_map.get(state)
+  if (querySentences.isEmpty) {
     analyzerService.log.error(toString + " : state does not exists")
   } else {
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val query_terms: List[TextTerms] = query_sentences match {
+  val queryTerms: List[TextTerms] = querySentences match {
     case Some(t) => t.queries
     case _ => List.empty[TextTerms]
   }
 
-  val query_vectors: List[(Vector[Double], Double)] = query_terms.map(item => {
+  val queryVectors: List[(Vector[Double], Double)] = queryTerms.map(item => {
     val query_vector = TextToVectorsTools.getSumOfTermsVectors(Option{item})
     query_vector
   })
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val distance = query_vectors.map(q_item => {
-      val query_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, query)
+    val distance = queryVectors.map(q_item => {
+      val query_vector = TextToVectorsTools.getSumOfVectorsFromText(indexName, query)
       val dist = (1.0 - cosineDist(q_item._1, query_vector._1)) *
         (q_item._2 * query_vector._2)
       dist
@@ -65,5 +65,5 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
 
   // Similarity is normally the cosine itself. The threshold should be at least
   // angle < pi/2 (cosine > 0), but for synonyms let's put cosine > 0.6, i.e. self.evaluate > 0.8
-  override val match_threshold: Double = 0.8
+  override val matchThreshold: Double = 0.8
 }

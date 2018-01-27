@@ -44,8 +44,8 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
                            )
 
   private def decodeBase64(in: String): String = {
-    val decoded_bytes = Base64.getDecoder.decode(in)
-    val decoded = new String(decoded_bytes, "UTF-8")
+    val decodedBytes = Base64.getDecoder.decode(in)
+    val decoded = new String(decodedBytes, "UTF-8")
     decoded
   }
 

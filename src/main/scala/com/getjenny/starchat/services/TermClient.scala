@@ -5,5 +5,5 @@ package com.getjenny.starchat.services
   */
 
 object TermClient extends ElasticClient {
-  val term_index_suffix: String = config.getString("es.term_index_suffix")
+  val termIndexSuffix: String = config.getString("es.term_index_suffix")
 }

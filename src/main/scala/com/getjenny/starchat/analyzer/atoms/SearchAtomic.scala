@@ -22,9 +22,9 @@ class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]
   val state = arguments(0)
   override def toString: String = "search(\"" + state + "\")"
   val isEvaluateNormalized: Boolean = false
-  val ref_state: String = state
+  val refState: String = state
 
-  override val match_threshold: Double = 0.65
+  override val matchThreshold: Double = 0.65
 
   val decisionTableService: DecisionTableService.type = DecisionTableService
 
@@ -33,8 +33,8 @@ class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]
     val search_res = data.data.getOrElse("dt_queries_search_result", None)
         .asInstanceOf[Option[Map[String, (Float, SearchDTDocument)]]]
 
-    val score = if(search_res.nonEmpty && search_res.get.contains(ref_state)) {
-      val doc = search_res.get.get(ref_state)
+    val score = if(search_res.nonEmpty && search_res.get.contains(refState)) {
+      val doc = search_res.get.get(refState)
       doc.get._1 / (search_res.get.map(x => x._2._1).sum + 1)
     } else {
       0.0f

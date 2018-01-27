@@ -91,7 +91,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
         // Start reading the command
         // If not in quotation and have letter, add to command string accumulator
         // Then, if a parenthesis opens put the string in command
-        val new_command_buffer = if ((chars(indice).isLetter || chars(indice).isWhitespace) && new_quote_balance === 0)
+        val newCommandBuffer = if ((chars(indice).isLetter || chars(indice).isWhitespace) && new_quote_balance === 0)
           (command_buffer + chars(indice)).filter(c => !c.isWhitespace)
         else if (!just_closed_parenthesis) ""
         else command_buffer.filter(c => !c.isWhitespace)
@@ -149,7 +149,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
           //println("DEBUG going to return naked command tree... " + chars.length + " : " + command_buffer)
           if (indice < chars.length - 1) {
             loop(chars, indice + 1, new_parenthesis_balance, new_quote_balance,
-              new_command_buffer, argument_acc, arguments, command_tree)
+              newCommandBuffer, argument_acc, arguments, command_tree)
           } else {
             if (new_parenthesis_balance.sum == 0 && new_quote_balance == 0) command_tree
             else throw AnalyzerParsingException("gobble_commands: Parenthesis or quotes do not match")

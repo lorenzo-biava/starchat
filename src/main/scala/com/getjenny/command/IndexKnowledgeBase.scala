@@ -46,18 +46,18 @@ object IndexKnowledgeBase extends JsonSupport {
                            )
 
   private def decodeBase64(in: String): String = {
-    val decoded_bytes = Base64.getDecoder.decode(in)
-    val decoded = new String(decoded_bytes, "UTF-8")
+    val decodedBytes = Base64.getDecoder.decode(in)
+    val decoded = new String(decodedBytes, "UTF-8")
     decoded
   }
 
   private def load_data(params: Params, transform: String => String):
       List[Map[String, String]] = {
-    val questions_input_stream: Reader = new InputStreamReader(new FileInputStream(params.questions_path.get), "UTF-8")
-    lazy val questions_entries = CSVReader.read(input = questions_input_stream, separator = params.separator,
+    val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.questions_path.get), "UTF-8")
+    lazy val questionsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,
       quote = '"', skipLines = 0)
 
-    val questions_map = questions_entries.zipWithIndex.map(entry => {
+    val questionsMap = questionsEntries.zipWithIndex.map(entry => {
       if (entry._1.size < 2) {
         println("Error [questions] with line: " + entry._2)
         (entry._2, false, "", "")
@@ -68,11 +68,11 @@ object IndexKnowledgeBase extends JsonSupport {
       }
     }).filter(_._2).map(x => (x._3, x._4)).toMap
 
-    val answers_input_stream: Reader = new InputStreamReader(new FileInputStream(params.answers_path.get), "UTF-8")
-    lazy val answers_entries = CSVReader.read(input = answers_input_stream, separator = params.separator,
+    val answersInputStream: Reader = new InputStreamReader(new FileInputStream(params.answers_path.get), "UTF-8")
+    lazy val answers_entries = CSVReader.read(input = answersInputStream, separator = params.separator,
       quote = '"', skipLines = 0)
 
-    val answer_map = answers_entries.zipWithIndex.map(entry => {
+    val answerMap = answers_entries.zipWithIndex.map(entry => {
       if (entry._1.size < 2) {
         println("Error [answers] with line: " + entry._2)
         (entry._2, false, "", "")
@@ -83,16 +83,16 @@ object IndexKnowledgeBase extends JsonSupport {
       }
     }).filter(_._2).map(x => (x._3, x._4)).toMap
 
-    val file_assoc = new File(params.associations_path.get)
-    val file_reader_assoc = new FileReader(file_assoc)
-    lazy val association_entries = CSVReader.read(input = file_reader_assoc, separator = params.separator,
+    val fileAssoc = new File(params.associations_path.get)
+    val fileReaderAssoc = new FileReader(fileAssoc)
+    lazy val associationEntries = CSVReader.read(input = fileReaderAssoc, separator = params.separator,
       quote = '"', skipLines = 1)
 
-    val conv_pairs = association_entries.map(entry => {
+    val convPairs = associationEntries.map(entry => {
       val question_id = entry(0)
       val answer_id = entry(3)
-      val question = Try(questions_map(question_id)).getOrElse("")
-      val answer = Try(answer_map(answer_id)).getOrElse("")
+      val question = Try(questionsMap(question_id)).getOrElse("")
+      val answer = Try(answerMap(answer_id)).getOrElse("")
       val val_map = Map(
         "conversation_id" -> entry(1),
         "question_id" -> question_id,
@@ -103,7 +103,7 @@ object IndexKnowledgeBase extends JsonSupport {
       )
       val_map
     })
-    conv_pairs.toList
+    convPairs.toList
   }
 
   private def doIndexConversationPairs(params: Params) {

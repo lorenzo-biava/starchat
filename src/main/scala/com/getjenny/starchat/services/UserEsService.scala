@@ -30,9 +30,9 @@ import com.getjenny.analyzer.util.RandomNumbers
   */
 class UserEsService extends AbstractUserService {
   val config: Config = ConfigFactory.load()
-  val elastic_client: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
+  val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val index_name: String = elastic_client.index_name + "." + elastic_client.user_index_suffix
+  val indexName: String = elasticClient.indexName + "." + elasticClient.userIndexSuffix
 
   val admin: String = config.getString("starchat.basic_http_es.admin")
   val password: String = config.getString("starchat.basic_http_es.password")
@@ -62,16 +62,16 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.getClient()
-    val response = client.prepareIndex().setIndex(index_name)
+    val client: TransportClient = elasticClient.getClient()
+    val response = client.prepareIndex().setIndex(indexName)
       .setCreate(true)
-      .setType(elastic_client.user_index_suffix)
+      .setType(elasticClient.userIndexSuffix)
       .setId(user.id)
       .setSource(builder).get()
 
-    val refresh_index = elastic_client.refreshIndex(index_name)
+    val refresh_index = elasticClient.refreshIndex(indexName)
     if(refresh_index.failed_shards_n > 0) {
-      throw new Exception("User : index refresh failed: (" + index_name + ")")
+      throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
 
     val doc_result: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
@@ -117,15 +117,15 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.getClient()
-    val response: UpdateResponse = client.prepareUpdate().setIndex(index_name)
-      .setType(elastic_client.user_index_suffix).setId(id)
+    val client: TransportClient = elasticClient.getClient()
+    val response: UpdateResponse = client.prepareUpdate().setIndex(indexName)
+      .setType(elasticClient.userIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
-    val refresh_index = elastic_client.refreshIndex(index_name)
+    val refresh_index = elasticClient.refreshIndex(indexName)
     if(refresh_index.failed_shards_n > 0) {
-      throw new Exception("User : index refresh failed: (" + index_name + ")")
+      throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
 
     val doc_result: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
@@ -144,13 +144,13 @@ class UserEsService extends AbstractUserService {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
-    val client: TransportClient = elastic_client.getClient()
-    val response: DeleteResponse = client.prepareDelete().setIndex(index_name)
-      .setType(elastic_client.user_index_suffix).setId(id).get()
+    val client: TransportClient = elasticClient.getClient()
+    val response: DeleteResponse = client.prepareDelete().setIndex(indexName)
+      .setType(elasticClient.userIndexSuffix).setId(id).get()
 
-    val refresh_index = elastic_client.refreshIndex(index_name)
+    val refresh_index = elasticClient.refreshIndex(indexName)
     if(refresh_index.failed_shards_n > 0) {
-      throw new Exception("User: index refresh failed: (" + index_name + ")")
+      throw new Exception("User: index refresh failed: (" + indexName + ")")
     }
 
     val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
@@ -168,13 +168,13 @@ class UserEsService extends AbstractUserService {
       admin_user
     } else {
 
-      val client: TransportClient = elastic_client.getClient()
-      val get_builder: GetRequestBuilder = client.prepareGet(index_name, elastic_client.user_index_suffix, id)
+      val client: TransportClient = elasticClient.getClient()
+      val getBuilder: GetRequestBuilder = client.prepareGet(indexName, elasticClient.userIndexSuffix, id)
 
-      val response: GetResponse = get_builder.get()
+      val response: GetResponse = getBuilder.get()
       val source = response.getSource.asScala.toMap
 
-      val user_id: String = source.get("id") match {
+      val userId: String = source.get("id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
@@ -196,7 +196,7 @@ class UserEsService extends AbstractUserService {
         case None => Map.empty[String, Set[Permissions.Value]]
       }
 
-      User(id = user_id, password = password, salt = salt, permissions = permissions)
+      User(id = userId, password = password, salt = salt, permissions = permissions)
     }
   }
 

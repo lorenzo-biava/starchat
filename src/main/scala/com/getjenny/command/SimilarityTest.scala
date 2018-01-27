@@ -54,10 +54,10 @@ object SimilarityTest extends JsonSupport {
     val vecsize = 0
     val skiplines = params.skiplines
 
-    val base_url = params.host + "/" + params.index_name + params.path
+    val baseUrl = params.host + "/" + params.index_name + params.path
     val file = new File(params.inputfile)
-    val file_reader = new FileReader(file)
-    lazy val term_text_entries = CSVReader.read(input=file_reader, separator=params.separator,
+    val fileReader = new FileReader(file)
+    lazy val term_text_entries = CSVReader.read(input=fileReader, separator=params.separator,
       quote = '"', skipLines=skiplines)
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
@@ -98,7 +98,7 @@ object SimilarityTest extends JsonSupport {
       val responseFuture: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(
           method = HttpMethods.POST,
-          uri = base_url,
+          uri = baseUrl,
           headers = httpHeader,
           entity = entity))
       val result = Await.result(responseFuture, timeout)

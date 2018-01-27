@@ -21,7 +21,7 @@ trait LanguageGuesserResource extends MyResource {
       val languageGuesserService = LanguageGuesserService
       pathEnd {
         post {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.read)) {
@@ -46,7 +46,7 @@ trait LanguageGuesserResource extends MyResource {
       } ~
         path(Segment) { language: String =>
           get {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {

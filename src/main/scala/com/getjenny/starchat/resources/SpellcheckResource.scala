@@ -20,7 +20,7 @@ trait SpellcheckResource extends MyResource {
       pathPrefix("terms") {
         pathEnd {
           post {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {

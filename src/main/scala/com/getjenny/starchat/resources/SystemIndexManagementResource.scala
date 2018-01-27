@@ -22,7 +22,7 @@ trait SystemIndexManagementResource extends MyResource {
       val systemIndexManagementService = SystemIndexManagementService
       pathEnd {
         get {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -45,7 +45,7 @@ trait SystemIndexManagementResource extends MyResource {
     val indexManagementService = SystemIndexManagementService
     path(Segment) { operation: String =>
       post {
-        authenticateBasicAsync(realm = auth_realm,
+        authenticateBasicAsync(realm = authRealm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -83,7 +83,7 @@ trait SystemIndexManagementResource extends MyResource {
     } ~
       pathEnd {
         get {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -101,7 +101,7 @@ trait SystemIndexManagementResource extends MyResource {
           }
         } ~
           delete {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -119,7 +119,7 @@ trait SystemIndexManagementResource extends MyResource {
             }
           } ~
           put {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {

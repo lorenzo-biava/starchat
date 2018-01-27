@@ -35,21 +35,21 @@ class W2VCosineSentenceAtomic(val arguments: List[String], restricted_args: Map[
   val isEvaluateNormalized: Boolean = true
 
 
-  val index_name = restricted_args("index_name")
-  val sentence_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, sentence)
+  val indexName = restricted_args("index_name")
+  val sentenceVector = TextToVectorsTools.getSumOfVectorsFromText(indexName, sentence)
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val query_vector = TextToVectorsTools.getSumOfVectorsFromText(index_name, query)
+    val query_vector = TextToVectorsTools.getSumOfVectorsFromText(indexName, query)
 
     /** cosineDist returns 0.0 for the closest vector, we want 1.0 when the similarity is the highest
       *   so we use 1.0 - ...
       */
-    val distance = (1.0 - cosineDist(sentence_vector._1, query_vector._1)) *
-      (sentence_vector._2 * query_vector._2) /** <-- these terms are 1.0 when all vector for all terms of the sentence were found */
+    val distance = (1.0 - cosineDist(sentenceVector._1, query_vector._1)) *
+      (sentenceVector._2 * query_vector._2) /** <-- these terms are 1.0 when all vector for all terms of the sentence were found */
     Result(score=distance)
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least
   // angle < pi/2 (cosine > 0), but for synonyms let's put cosine > 0.6, i.e. self.evaluate > 0.8
-  override val match_threshold: Double = 0.8
+  override val matchThreshold: Double = 0.8
 }

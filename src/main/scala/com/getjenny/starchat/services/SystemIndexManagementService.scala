@@ -30,10 +30,10 @@ object SystemIndexManagementService {
   val schemaFiles: List[JsonIndexFiles] = List[JsonIndexFiles](
     JsonIndexFiles(path = "/index_management/json_index_spec/system/user.json",
       update_path = "/index_management/json_index_spec/system/update/user.json",
-      index_suffix = elastic_client.user_index_suffix),
+      index_suffix = elastic_client.userIndexSuffix),
     JsonIndexFiles(path = "/index_management/json_index_spec/system/refresh_decisiontable.json",
       update_path = "/index_management/json_index_spec/system/update/refresh_decisiontable.json",
-      index_suffix = elastic_client.system_refresh_dt_index_suffix)
+      index_suffix = elastic_client.systemRefreshDtIndexSuffix)
   )
 
   def createIndex() : Future[Option[IndexManagementResponse]] = Future {
@@ -41,13 +41,13 @@ object SystemIndexManagementService {
 
     val operations_message: List[String] = schemaFiles.map(item => {
       val json_in_stream: InputStream = getClass.getResourceAsStream(item.path)
-      if (json_in_stream == null) {
+      if (json_in_stream == None.orNull) {
         val message = "Check the file: (" + item.path + ")"
         throw new FileNotFoundException(message)
       }
 
       val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
-      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+      val full_index_name = elastic_client.indexName + "." + item.index_suffix
 
       val create_index_res: CreateIndexResponse =
         client.admin().indices().prepareCreate(full_index_name)
@@ -64,13 +64,13 @@ object SystemIndexManagementService {
   def removeIndex() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.getClient()
 
-    if (! elastic_client.enable_delete_index) {
+    if (! elastic_client.enableDeleteIndex) {
       val message: String = "operation is not allowed, contact system administrator"
       throw new Exception(message)
     }
 
     val operations_message: List[String] = schemaFiles.map(item => {
-      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+      val full_index_name = elastic_client.indexName + "." + item.index_suffix
 
       val delete_index_res: DeleteIndexResponse =
         client.admin().indices().prepareDelete(full_index_name).get()
@@ -88,7 +88,7 @@ object SystemIndexManagementService {
     val client: TransportClient = elastic_client.getClient()
 
     val operations_message: List[String] = schemaFiles.map(item => {
-      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+      val full_index_name = elastic_client.indexName + "." + item.index_suffix
       val get_mappings_req = client.admin.indices.prepareGetMappings(full_index_name).get()
       val check = get_mappings_req.mappings.containsKey(full_index_name)
       item.index_suffix + "(" + full_index_name + ", " + check + ")"
@@ -105,13 +105,13 @@ object SystemIndexManagementService {
     val operations_message: List[String] = schemaFiles.map(item => {
       val json_in_stream: InputStream = getClass.getResourceAsStream(item.update_path)
 
-      if (json_in_stream == null) {
+      if (json_in_stream == None.orNull) {
         val message = "Check the file: (" + item.path + ")"
         throw new FileNotFoundException(message)
       }
 
       val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
-      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+      val full_index_name = elastic_client.indexName + "." + item.index_suffix
 
       val update_index_res  =
         client.admin().indices().preparePutMapping().setIndices(full_index_name)
@@ -128,7 +128,7 @@ object SystemIndexManagementService {
 
   def refreshIndexes() : Future[Option[RefreshIndexResults]] = Future {
     val operations_results: List[RefreshIndexResult] = schemaFiles.map(item => {
-      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+      val full_index_name = elastic_client.indexName + "." + item.index_suffix
       val refresh_index_res: RefreshIndexResult = elastic_client.refreshIndex(full_index_name)
       if (refresh_index_res.failed_shards_n > 0) {
         val index_refresh_message = item.index_suffix + "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"

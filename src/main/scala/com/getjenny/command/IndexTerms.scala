@@ -43,7 +43,7 @@ object IndexTerms extends JsonSupport {
     val base_url = params.host + "/" + params.index_name + params.path
     lazy val term_text_entries = Source.fromFile(params.inputfile).getLines
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.nonEmpty) {
       val headers: Seq[RawHeader] = params.header_kv.map(x => {
         val header_opt = x.split(":")
         val key = header_opt(0)

@@ -25,17 +25,17 @@ class W2VEarthMoversEuclideanDistanceAtomic(val arguments: List[String], restric
   val sentence: String = arguments.head
   val termService: TermService.type = TermService
 
-  val index_name = restricted_args("index_name")
+  val indexName = restricted_args("index_name")
 
   override def toString: String = "similarEucEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val emd_dist = EmDistance.distanceEuclidean(index_name, query, sentence)
-    Result(score=emd_dist)
+    val emdDist = EmDistance.distanceEuclidean(indexName, query, sentence)
+    Result(score=emdDist)
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least
 
   // angle < pi/2 (cosine > 0), but for synonyms let's put cosine > 0.6, i.e. self.evaluate > 0.8
-  override val match_threshold: Double = 0.8
+  override val matchThreshold: Double = 0.8
 }

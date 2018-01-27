@@ -5,9 +5,9 @@ package com.getjenny.starchat.services
   */
 
 object SystemElasticClient extends ElasticClient {
-  val system_refresh_dt_index_suffix: String = config.getString("es.system_refresh_dt_index_suffix")
-  val dt_reload_check_delay : Int = config.getInt("es.dt_reload_check_delay")
-  val dt_reload_check_frequency : Int = config.getInt("es.dt_reload_check_frequency")
-  val dt_reload_index_name_field_name = "index_name"
-  val dt_reload_timestamp_field_name = "state_refresh_ts"
+  val systemRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
+  val dtReloadCheckDelay : Int = config.getInt("es.dt_reload_check_delay")
+  val dtReloadCheckFrequency : Int = config.getInt("es.dt_reload_check_frequency")
+  val dtReloadIndexNameFieldName = "index_name"
+  val dtReloadTimestampFieldName = "state_refresh_ts"
 }

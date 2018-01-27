@@ -31,13 +31,13 @@ object IndexManagementService {
   val schemaFiles: List[JsonIndexFiles] = List[JsonIndexFiles](
     JsonIndexFiles(path = "/index_management/json_index_spec/general/state.json",
       update_path = "/index_management/json_index_spec/general/update/state.json",
-      index_suffix = elastic_client.dt_index_suffix),
+      index_suffix = elastic_client.dtIndexSuffix),
     JsonIndexFiles(path = "/index_management/json_index_spec/general/question.json",
       update_path = "/index_management/json_index_spec/general/update/question.json",
-      index_suffix = elastic_client.kb_index_suffix),
+      index_suffix = elastic_client.kbIndexSuffix),
     JsonIndexFiles(path = "/index_management/json_index_spec/general/term.json",
       update_path = "/index_management/json_index_spec/general/update/term.json",
-      index_suffix = elastic_client.term_index_suffix)
+      index_suffix = elastic_client.termIndexSuffix)
   )
 
   def create_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
@@ -56,14 +56,14 @@ object IndexManagementService {
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
     val analyzer_json: String = Source.fromInputStream(analyzer_json_is, "utf-8").mkString
 
-    if(analyzer_json_is == null) {
+    if(analyzer_json_is == None.orNull) {
       val message = "Check the file: (" + analyzer_json_path + ")"
       throw new FileNotFoundException(message)
     }
 
     val operations_message: List[String] = schemaFiles.map(item => {
       val json_in_stream: InputStream = getClass.getResourceAsStream(item.path)
-      if (json_in_stream == null) {
+      if (json_in_stream == None.orNull) {
         val message = "Check the file: (" + item.path + ")"
         throw new FileNotFoundException(message)
       }
@@ -87,7 +87,7 @@ object IndexManagementService {
   def remove_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.getClient()
 
-    if (! elastic_client.enable_delete_index) {
+    if (! elastic_client.enableDeleteIndex) {
       val message: String = "operation is not allowed, contact system administrator"
       throw new Exception(message)
     }
@@ -129,7 +129,7 @@ object IndexManagementService {
     val analyzer_json_is: InputStream = getClass.getResourceAsStream(analyzer_json_path)
     val analyzer_json: String = Source.fromInputStream(analyzer_json_is, "utf-8").mkString
 
-    if(analyzer_json_is == null) {
+    if(analyzer_json_is == None.orNull) {
       val message = "Check the file: (" + analyzer_json_path + ")"
       throw new FileNotFoundException(message)
     }
@@ -137,7 +137,7 @@ object IndexManagementService {
     val operations_message: List[String] = schemaFiles.map(item => {
       val json_in_stream: InputStream = getClass.getResourceAsStream(item.update_path)
 
-      if (json_in_stream == null) {
+      if (json_in_stream == None.orNull) {
         val message = "Check the file: (" + item.path + ")"
         throw new FileNotFoundException(message)
       }

@@ -38,32 +38,32 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], re
 
   val analyzerService: AnalyzerService.type = AnalyzerService
 
-  val index_name = restricted_args("index_name")
+  val indexName = restricted_args("index_name")
 
-  val queries_sentences: Option[DecisionTableRuntimeItem] =
-    AnalyzerService.analyzers_map(index_name).analyzer_map.get(state)
-  if (queries_sentences.isEmpty) {
+  val queriesSentences: Option[DecisionTableRuntimeItem] =
+    AnalyzerService.analyzersMap(indexName).analyzer_map.get(state)
+  if (queriesSentences.isEmpty) {
     analyzerService.log.error(toString + " : state is null")
   } else {
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val queries_vectors: List[Option[TextTerms]] = queries_sentences.get.queries.map(item => Option{item})
+  val queriesVectors: List[Option[TextTerms]] = queriesSentences.get.queries.map(item => Option{item})
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val query_vectors = termService.textToVectors(index_name = index_name, text = query)
-    val emd_dist_queries = queries_vectors.map(q => {
-      val dist = EmDistance.distanceEuclidean(q , query_vectors)
+    val queryVectors = termService.textToVectors(index_name = indexName, text = query)
+    val emdDistQueries = queriesVectors.map(q => {
+      val dist = EmDistance.distanceEuclidean(q , queryVectors)
       dist
     })
 
-    val emd_dist = if (emd_dist_queries.nonEmpty) emd_dist_queries.max else 0.0
-    Result(score=emd_dist)
+    val emdDist = if (emdDistQueries.nonEmpty) emdDistQueries.max else 0.0
+    Result(score=emdDist)
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least
 
   // angle < pi/2 (cosine > 0), but for synonyms let's put cosine > 0.6, i.e. self.evaluate > 0.8
-  override val match_threshold: Double = 0.8
+  override val matchThreshold: Double = 0.8
 }

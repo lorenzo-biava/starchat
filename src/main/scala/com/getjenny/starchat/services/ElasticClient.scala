@@ -21,49 +21,49 @@ import org.apache.http.HttpHost
 
 trait ElasticClient {
   val config: Config = ConfigFactory.load()
-  val cluster_name: String = config.getString("es.cluster_name")
-  val ignore_cluster_name: Boolean = config.getBoolean("es.ignore_cluster_name")
+  val clusterName: String = config.getString("es.cluster_name")
+  val ignoreClusterName: Boolean = config.getBoolean("es.ignore_cluster_name")
 
-  val host_map_str : String = config.getString("es.host_map")
-  val host_map : Map[String, Int] = host_map_str.split(";").map(x => x.split("=")).map(x => (x(0), (x(1)).toInt)).toMap
+  val hostMapStr : String = config.getString("es.host_map")
+  val hostMap : Map[String, Int] = hostMapStr.split(";").map(x => x.split("=")).map(x => (x(0), (x(1)).toInt)).toMap
 
   val settings: Settings = Settings.builder()
-    .put("cluster.name", cluster_name)
-    .put("client.transport.ignore_cluster_name", ignore_cluster_name)
+    .put("cluster.name", clusterName)
+    .put("client.transport.ignore_cluster_name", ignoreClusterName)
     .put("client.transport.sniff", false).build()
 
-  val inet_addresses: List[TransportAddress] =
-    host_map.map{ case(k,v) => new TransportAddress(InetAddress.getByName(k), v) }.toList
+  val inetAddresses: List[TransportAddress] =
+    hostMap.map{ case(k,v) => new TransportAddress(InetAddress.getByName(k), v) }.toList
 
   var client : TransportClient = openClient()
 
   def openClient(): TransportClient = {
     val client: TransportClient = new PreBuiltTransportClient(settings)
-      .addTransportAddresses(inet_addresses:_*)
+      .addTransportAddresses(inetAddresses:_*)
     client
   }
 
   def refreshIndex(index_name: String): RefreshIndexResult = {
-    val refresh_res: RefreshResponse =
+    val refreshRes: RefreshResponse =
       client.admin().indices().prepareRefresh(index_name).get()
 
-    val failed_shards: List[FailedShard] = refresh_res.getShardFailures.map(item => {
-      val failed_shard_item = FailedShard(index_name = item.index,
+    val failedShards: List[FailedShard] = refreshRes.getShardFailures.map(item => {
+      val failedShardItem = FailedShard(index_name = item.index,
         shard_id = item.shardId,
         reason = item.reason,
         status = item.status.getStatus
       )
-      failed_shard_item
+      failedShardItem
     }).toList
 
-    val refresh_index_result =
+    val refreshIndexResult =
       RefreshIndexResult(index_name = index_name,
-        failed_shards_n = refresh_res.getFailedShards,
-        successful_shards_n = refresh_res.getSuccessfulShards,
-        total_shards_n = refresh_res.getTotalShards,
-        failed_shards = failed_shards
+        failed_shards_n = refreshRes.getFailedShards,
+        successful_shards_n = refreshRes.getSuccessfulShards,
+        total_shards_n = refreshRes.getTotalShards,
+        failed_shards = failedShards
       )
-    refresh_index_result
+    refreshIndexResult
   }
 
   def getClient(): TransportClient = {

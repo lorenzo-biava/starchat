@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Implements response functionalities
   */
 object ResponseService {
-  val elastic_client: DecisionTableElasticClient.type = DecisionTableElasticClient
+  val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val termService: TermService.type = TermService
   val decisionTableService: DecisionTableService.type = DecisionTableService
@@ -36,7 +36,7 @@ object ResponseService {
   def getNextResponse(index_name: String, request: ResponseRequestIn):
   Future[Option[ResponseRequestOutOperationResult]] = Future {
 
-    if(! AnalyzerService.analyzers_map.contains(index_name)) {
+    if(! AnalyzerService.analyzersMap.contains(index_name)) {
       log.debug("Analyzers map for index(" + index_name + ") is not present, fetching and building")
       AnalyzerService.initializeAnalyzers(index_name)
     }
@@ -60,7 +60,7 @@ object ResponseService {
       traversed_states.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
 
     // refresh last_used timestamp
-    AnalyzerService.analyzers_map(index_name).last_evaluation_timestamp = System.currentTimeMillis
+    AnalyzerService.analyzersMap(index_name).last_evaluation_timestamp = System.currentTimeMillis
 
     // prepare search result for search analyzer
     val analyzers_internal_data =
@@ -130,7 +130,7 @@ object ResponseService {
         val max_results: Int = request.max_results.getOrElse(2)
         val threshold: Double = request.threshold.getOrElse(0.0d)
         val analyzer_values: Map[String, Result] =
-          AnalyzerService.analyzers_map(index_name).analyzer_map.filter(_._2.analyzer.build == true).filter(v => {
+          AnalyzerService.analyzersMap(index_name).analyzer_map.filter(_._2.analyzer.build == true).filter(v => {
             val traversed_state_count = traversed_states_count.getOrElse(v._1, 0)
             val max_state_count = v._2.max_state_counter
             max_state_count == 0 ||

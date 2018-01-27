@@ -40,7 +40,7 @@ object DeleteDecisionTable extends JsonSupport {
 
     val skiplines = params.skiplines
 
-    val base_url = params.host + "/" + params.index_name + params.path
+    val baseUrl = params.host + "/" + params.index_name + params.path
     lazy val term_text_entries = Source.fromFile(params.inputfile).getLines
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
@@ -61,7 +61,7 @@ object DeleteDecisionTable extends JsonSupport {
       val cols = entry.split(",").map(_.trim)
       val numcols = cols.length
       val state = cols(0)
-      val url = base_url + "/" + URLEncoder.encode(state, "UTF-8")
+      val url = baseUrl + "/" + URLEncoder.encode(state, "UTF-8")
 
       val response_future: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(

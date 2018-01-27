@@ -19,7 +19,7 @@ trait TokenizersResource extends MyResource {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "tokenizers") { index_name =>
       pathEnd {
         post {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.write)) {
@@ -44,7 +44,7 @@ trait TokenizersResource extends MyResource {
           }
         } ~ {
           get {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
