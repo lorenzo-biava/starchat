@@ -23,7 +23,7 @@ class BasicHttpStarChatAuthenticator(userService: AbstractUserService) extends A
     password + "#" + salt
   }
 
-  def hashed_secret(password: String, salt: String): String = {
+  def hashedSecret(password: String, salt: String): String = {
     secret(password, salt).sha512
   }
 

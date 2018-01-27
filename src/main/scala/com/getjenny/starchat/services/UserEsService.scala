@@ -215,7 +215,7 @@ class UserEsService extends AbstractUserService {
         generate_salt()
     }
 
-    val password = authenticator.hashed_secret(password = password_plain, salt = salt)
+    val password = authenticator.hashedSecret(password = password_plain, salt = salt)
 
     val permissions = user.permissions match {
       case Some(t) => t

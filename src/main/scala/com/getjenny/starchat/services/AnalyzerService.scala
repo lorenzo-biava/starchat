@@ -204,7 +204,7 @@ object AnalyzerService {
           // prepare search result for search analyzer
           val analyzers_internal_data =
             decisionTableService.resultsToMap(index_name,
-              decisionTableService.search_dt_queries(index_name, analyzer_request.query))
+              decisionTableService.searchDtQueries(index_name, analyzer_request.query))
 
           AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
             data = analyzers_internal_data)

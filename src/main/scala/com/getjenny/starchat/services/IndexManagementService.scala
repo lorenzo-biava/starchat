@@ -30,14 +30,14 @@ object IndexManagementService {
 
   val schemaFiles: List[JsonIndexFiles] = List[JsonIndexFiles](
     JsonIndexFiles(path = "/index_management/json_index_spec/general/state.json",
-      update_path = "/index_management/json_index_spec/general/update/state.json",
-      index_suffix = elastic_client.dtIndexSuffix),
+      updatePath = "/index_management/json_index_spec/general/update/state.json",
+      indexSuffix = elastic_client.dtIndexSuffix),
     JsonIndexFiles(path = "/index_management/json_index_spec/general/question.json",
-      update_path = "/index_management/json_index_spec/general/update/question.json",
-      index_suffix = elastic_client.kbIndexSuffix),
+      updatePath = "/index_management/json_index_spec/general/update/question.json",
+      indexSuffix = elastic_client.kbIndexSuffix),
     JsonIndexFiles(path = "/index_management/json_index_spec/general/term.json",
-      update_path = "/index_management/json_index_spec/general/update/term.json",
-      index_suffix = elastic_client.termIndexSuffix)
+      updatePath = "/index_management/json_index_spec/general/update/term.json",
+      indexSuffix = elastic_client.termIndexSuffix)
   )
 
   def create_index(index_name: String) : Future[Option[IndexManagementResponse]] = Future {
@@ -69,14 +69,14 @@ object IndexManagementService {
       }
 
       val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
-      val full_index_name = index_name + "." + item.index_suffix
+      val full_index_name = index_name + "." + item.indexSuffix
 
       val create_index_res: CreateIndexResponse =
         client.admin().indices().prepareCreate(full_index_name)
           .setSettings(Settings.builder().loadFromSource(analyzer_json, XContentType.JSON))
           .setSource(schema_json, XContentType.JSON).get()
 
-      item.index_suffix + "(" + full_index_name + ", " + create_index_res.isAcknowledged.toString + ")"
+      item.indexSuffix + "(" + full_index_name + ", " + create_index_res.isAcknowledged.toString + ")"
     })
 
     val message = "IndexCreation: " + operations_message.mkString(" ")
@@ -93,12 +93,12 @@ object IndexManagementService {
     }
 
     val operations_message: List[String] = schemaFiles.map(item => {
-      val full_index_name = index_name + "." + item.index_suffix
+      val full_index_name = index_name + "." + item.indexSuffix
 
       val delete_index_res: DeleteIndexResponse =
         client.admin().indices().prepareDelete(full_index_name).get()
 
-      item.index_suffix + "(" + full_index_name + ", " + delete_index_res.isAcknowledged.toString + ")"
+      item.indexSuffix + "(" + full_index_name + ", " + delete_index_res.isAcknowledged.toString + ")"
 
     })
 
@@ -111,10 +111,10 @@ object IndexManagementService {
     val client: TransportClient = elastic_client.getClient()
 
     val operations_message: List[String] = schemaFiles.map(item => {
-      val full_index_name = index_name + "." + item.index_suffix
+      val full_index_name = index_name + "." + item.indexSuffix
       val get_mappings_req = client.admin.indices.prepareGetMappings(full_index_name).get()
       val check = get_mappings_req.mappings.containsKey(full_index_name)
-      item.index_suffix + "(" + full_index_name + ", " + check + ")"
+      item.indexSuffix + "(" + full_index_name + ", " + check + ")"
     })
 
     val message = "IndexCheck: " + operations_message.mkString(" ")
@@ -135,7 +135,7 @@ object IndexManagementService {
     }
 
     val operations_message: List[String] = schemaFiles.map(item => {
-      val json_in_stream: InputStream = getClass.getResourceAsStream(item.update_path)
+      val json_in_stream: InputStream = getClass.getResourceAsStream(item.updatePath)
 
       if (json_in_stream == None.orNull) {
         val message = "Check the file: (" + item.path + ")"
@@ -143,14 +143,14 @@ object IndexManagementService {
       }
 
       val schema_json: String = Source.fromInputStream(json_in_stream, "utf-8").mkString
-      val full_index_name = index_name + "." + item.index_suffix
+      val full_index_name = index_name + "." + item.indexSuffix
 
       val update_index_res  =
         client.admin().indices().preparePutMapping().setIndices(full_index_name)
-          .setType(item.index_suffix)
+          .setType(item.indexSuffix)
           .setSource(schema_json, XContentType.JSON).get()
 
-      item.index_suffix + "(" + full_index_name + ", " + update_index_res.isAcknowledged.toString + ")"
+      item.indexSuffix + "(" + full_index_name + ", " + update_index_res.isAcknowledged.toString + ")"
     })
 
     val message = "IndexUpdate: " + operations_message.mkString(" ")
@@ -162,10 +162,10 @@ object IndexManagementService {
     val client: TransportClient = elastic_client.getClient()
 
     val operations_results: List[RefreshIndexResult] = schemaFiles.map(item => {
-      val full_index_name = index_name + "." + item.index_suffix
+      val full_index_name = index_name + "." + item.indexSuffix
       val refresh_index_res: RefreshIndexResult = elastic_client.refreshIndex(full_index_name)
       if (refresh_index_res.failed_shards_n > 0) {
-        val index_refresh_message = item.index_suffix + "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"
+        val index_refresh_message = item.indexSuffix + "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"
         throw new Exception(index_refresh_message)
       }
 

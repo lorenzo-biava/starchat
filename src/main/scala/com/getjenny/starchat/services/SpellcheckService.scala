@@ -32,25 +32,25 @@ object SpellcheckService {
   def termsSuggester(index_name: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
     val client: TransportClient = elasticClient.getClient()
 
-    val suggestion_builder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
-    suggestion_builder.maxEdits(2)
+    val suggestionBuilder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
+    suggestionBuilder.maxEdits(2)
       .prefixLength(request.prefix_length)
       .minDocFreq(request.min_doc_freq)
 
-    val suggest_builder: SuggestBuilder = new SuggestBuilder()
-    suggest_builder.setGlobalText(request.text)
-      .addSuggestion("suggestions", suggestion_builder)
+    val suggestBuilder: SuggestBuilder = new SuggestBuilder()
+    suggestBuilder.setGlobalText(request.text)
+      .addSuggestion("suggestions", suggestionBuilder)
 
-    val search_builder = client.prepareSearch(getIndexName(index_name))
+    val searchBuilder = client.prepareSearch(getIndexName(index_name))
       .setTypes(elasticClient.kbIndexSuffix)
-      .suggest(suggest_builder)
+      .suggest(suggestBuilder)
 
-    val search_response : SearchResponse = search_builder
+    val searchResponse : SearchResponse = searchBuilder
       .execute()
       .actionGet()
 
     val suggestions: List[SpellcheckToken] =
-      search_response.getSuggest.getSuggestion[TermSuggestion]("suggestions")
+      searchResponse.getSuggest.getSuggestion[TermSuggestion]("suggestions")
       .getEntries.asScala.toList.map({ case(e) =>
         val item: TermSuggestion.Entry = e
         val text = item.getText.toString
@@ -65,10 +65,10 @@ object SpellcheckService {
             )
             option
         })
-        val spellcheck_token =
+        val spellcheckToken =
           SpellcheckToken(text = text, offset = offset, length = length,
             options = options)
-        spellcheck_token
+        spellcheckToken
     })
 
     val response = SpellcheckTermsResponse(tokens = suggestions)

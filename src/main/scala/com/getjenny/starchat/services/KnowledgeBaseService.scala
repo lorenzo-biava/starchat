@@ -56,87 +56,87 @@ object KnowledgeBaseService {
 
   def search(index_name: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elasticClient.getClient()
-    val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
+    val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
       .setTypes(elasticClient.kbIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
-    search_builder.setMinScore(documentSearch.min_score.getOrElse(
+    searchBuilder.setMinScore(documentSearch.min_score.getOrElse(
       Option{elasticClient.queryMinThreshold}.getOrElse(0.0f))
     )
 
-    val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
+    val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
     if (documentSearch.doctype.isDefined)
-      bool_query_builder.filter(QueryBuilders.termQuery("doctype", documentSearch.doctype.get))
+      boolQueryBuilder.filter(QueryBuilders.termQuery("doctype", documentSearch.doctype.get))
 
     if (documentSearch.verified.isDefined)
-      bool_query_builder.filter(QueryBuilders.termQuery("verified", documentSearch.verified.get))
+      boolQueryBuilder.filter(QueryBuilders.termQuery("verified", documentSearch.verified.get))
 
     if (documentSearch.topics.isDefined)
-      bool_query_builder.must(QueryBuilders.matchQuery("topics.base", documentSearch.topics.get))
+      boolQueryBuilder.must(QueryBuilders.matchQuery("topics.base", documentSearch.topics.get))
 
     if (documentSearch.dclass.isDefined)
-      bool_query_builder.filter(QueryBuilders.matchQuery("dclass", documentSearch.dclass.get))
+      boolQueryBuilder.filter(QueryBuilders.matchQuery("dclass", documentSearch.dclass.get))
 
     if (documentSearch.state.isDefined)
-      bool_query_builder.filter(QueryBuilders.termQuery("state", documentSearch.state.get))
+      boolQueryBuilder.filter(QueryBuilders.termQuery("state", documentSearch.state.get))
 
     if (documentSearch.status.isDefined)
-      bool_query_builder.filter(QueryBuilders.termQuery("status", documentSearch.status.get))
+      boolQueryBuilder.filter(QueryBuilders.termQuery("status", documentSearch.status.get))
 
     if(documentSearch.question.isDefined) {
-      val question_query = documentSearch.question.get
-      bool_query_builder.must(QueryBuilders.boolQuery()
-          .must(QueryBuilders.matchQuery("question.stem_bm25", question_query))
-          .should(QueryBuilders.matchPhraseQuery("question.raw", question_query)
+      val questionQuery = documentSearch.question.get
+      boolQueryBuilder.must(QueryBuilders.boolQuery()
+          .must(QueryBuilders.matchQuery("question.stem_bm25", questionQuery))
+          .should(QueryBuilders.matchPhraseQuery("question.raw", questionQuery)
             .boost(elasticClient.questionExactMatchBoost))
       )
 
-      val question_negative_nested_query: QueryBuilder = QueryBuilders.nestedQuery(
+      val questionNegativeNestedQuery: QueryBuilder = QueryBuilders.nestedQuery(
         "question_negative",
-        QueryBuilders.matchQuery("question_negative.query.base", question_query)
+        QueryBuilders.matchQuery("question_negative.query.base", questionQuery)
             .minimumShouldMatch(elasticClient.questionNegativeMinimumMatch)
           .boost(elasticClient.questionNegativeBoost),
         ScoreMode.Total
       ).ignoreUnmapped(true)
         .innerHit(new InnerHitBuilder().setSize(100))
 
-      bool_query_builder.should(
-          question_negative_nested_query
+      boolQueryBuilder.should(
+          questionNegativeNestedQuery
       )
     }
 
     if(documentSearch.random.isDefined && documentSearch.random.get) {
-      val random_builder = new RandomScoreFunctionBuilder().seed(RandomNumbers.getInt())
-      val function_score_query: QueryBuilder = QueryBuilders.functionScoreQuery(random_builder)
-      bool_query_builder.must(function_score_query)
+      val randomBuilder = new RandomScoreFunctionBuilder().seed(RandomNumbers.getInt())
+      val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(randomBuilder)
+      boolQueryBuilder.must(functionScoreQuery)
     }
 
     if(documentSearch.question_scored_terms.isDefined) {
-      val query_terms = QueryBuilders.boolQuery()
+      val queryTerms = QueryBuilders.boolQuery()
           .should(QueryBuilders.matchQuery("question_scored_terms.term", documentSearch.question_scored_terms.get))
       val script: Script = new Script("doc[\"question_scored_terms.score\"].value")
-      val script_function = new ScriptScoreFunctionBuilder(script)
-      val function_score_query: QueryBuilder = QueryBuilders.functionScoreQuery(query_terms, script_function)
+      val scriptFunction = new ScriptScoreFunctionBuilder(script)
+      val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(queryTerms, scriptFunction)
 
-      val nested_query: QueryBuilder = QueryBuilders.nestedQuery(
+      val nestedQuery: QueryBuilder = QueryBuilders.nestedQuery(
         "question_scored_terms",
-        function_score_query,
+        functionScoreQuery,
         nested_score_mode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Total)
       ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100))
 
-      bool_query_builder.should(nested_query)
+      boolQueryBuilder.should(nestedQuery)
     }
 
     if(documentSearch.answer.isDefined) {
-      bool_query_builder.must(QueryBuilders.matchQuery("answer.stem", documentSearch.answer.get))
+      boolQueryBuilder.must(QueryBuilders.matchQuery("answer.stem", documentSearch.answer.get))
     }
 
     if(documentSearch.conversation.isDefined)
-      bool_query_builder.must(QueryBuilders.matchQuery("conversation", documentSearch.conversation.get))
+      boolQueryBuilder.must(QueryBuilders.matchQuery("conversation", documentSearch.conversation.get))
 
-    search_builder.setQuery(bool_query_builder)
+    searchBuilder.setQuery(boolQueryBuilder)
 
-    val search_response : SearchResponse = search_builder
+    val search_response : SearchResponse = searchBuilder
       .setFrom(documentSearch.from.getOrElse(0)).setSize(documentSearch.size.getOrElse(10))
       .execute()
       .actionGet()
@@ -244,19 +244,19 @@ object KnowledgeBaseService {
         state = state,
         status = status)
 
-      val search_document : SearchKBDocument = SearchKBDocument(score = item.getScore, document = document)
-      search_document
+      val searchDocument : SearchKBDocument = SearchKBDocument(score = item.getScore, document = document)
+      searchDocument
     }) }
 
-    val filtered_doc : List[SearchKBDocument] = documents.getOrElse(List[SearchKBDocument]())
+    val filteredDoc : List[SearchKBDocument] = documents.getOrElse(List[SearchKBDocument]())
 
-    val max_score : Float = search_response.getHits.getMaxScore
-    val total : Int = filtered_doc.length
-    val search_results : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, max_score = max_score,
-      hits = filtered_doc)
+    val maxScore : Float = search_response.getHits.getMaxScore
+    val total : Int = filteredDoc.length
+    val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, max_score = maxScore,
+      hits = filteredDoc)
 
-    val search_results_option : Future[Option[SearchKBDocumentsResults]] = Future { Option { search_results } }
-    search_results_option
+    val searchResultsOption : Future[Option[SearchKBDocumentsResults]] = Future { Option { searchResults } }
+    searchResultsOption
   }
 
   def create(index_name: String, document: KBDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
@@ -528,7 +528,7 @@ object KnowledgeBaseService {
         case None => ""
       }
 
-      val question_negative : Option[List[String]] = source.get("question_negative") match {
+      val questionNegative : Option[List[String]] = source.get("question_negative") match {
         case Some(t) =>
           val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
           .asScala.map(_.getOrDefault("query", null)).filter(_ != null).toList
@@ -536,7 +536,7 @@ object KnowledgeBaseService {
         case None => None: Option[List[String]]
       }
 
-      val question_scored_terms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
+      val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
         case Some(t) =>
           Option {
             t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
@@ -552,7 +552,7 @@ object KnowledgeBaseService {
         case None => ""
       }
 
-      val answer_scored_terms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
+      val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
         case Some(t) =>
           Option {
             t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
@@ -596,10 +596,10 @@ object KnowledgeBaseService {
       val document : KBDocument = KBDocument(id = id, conversation = conversation,
         index_in_conversation = index_in_conversation,
         question = question,
-        question_negative = question_negative,
-        question_scored_terms = question_scored_terms,
+        question_negative = questionNegative,
+        question_scored_terms = questionScoredTerms,
         answer = answer,
-        answer_scored_terms = answer_scored_terms,
+        answer_scored_terms = answerScoredTerms,
         verified = verified,
         topics = topics,
         dclass = dclass,
@@ -611,15 +611,15 @@ object KnowledgeBaseService {
       search_document
     }) }
 
-    val filtered_doc : List[SearchKBDocument] = documents.getOrElse(List[SearchKBDocument]())
+    val filteredDoc : List[SearchKBDocument] = documents.getOrElse(List[SearchKBDocument]())
 
-    val max_score : Float = .0f
-    val total : Int = filtered_doc.length
-    val search_results : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, max_score = max_score,
-      hits = filtered_doc)
+    val maxScore : Float = .0f
+    val total : Int = filteredDoc.length
+    val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, max_score = maxScore,
+      hits = filteredDoc)
 
-    val search_results_option : Future[Option[SearchKBDocumentsResults]] = Future { Option { search_results } }
-    search_results_option
+    val searchResultsOption : Future[Option[SearchKBDocumentsResults]] = Future { Option { searchResults } }
+    searchResultsOption
   }
 
 }

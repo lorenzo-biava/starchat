@@ -17,5 +17,5 @@ abstract class AbstractStarChatAuthenticator {
 
   def secret(password: String, salt: String): String
 
-  def hashed_secret(password: String, salt: String): String
+  def hashedSecret(password: String, salt: String): String
 }

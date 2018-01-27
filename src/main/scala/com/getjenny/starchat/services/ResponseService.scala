@@ -64,7 +64,7 @@ object ResponseService {
 
     // prepare search result for search analyzer
     val analyzers_internal_data =
-      decisionTableService.resultsToMap(index_name, decisionTableService.search_dt_queries(index_name, user_text))
+      decisionTableService.resultsToMap(index_name, decisionTableService.searchDtQueries(index_name, user_text))
 
     val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversed_states,
       data = analyzers_internal_data)
