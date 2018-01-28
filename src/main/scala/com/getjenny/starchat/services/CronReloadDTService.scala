@@ -44,7 +44,9 @@ class CronReloadDTService(implicit val executionContext: ExecutionContext) {
           if (remoteTs > 0 &&
             SystemService.dtReloadTimestamp < remoteTs) {
             val reloadResult: Try[Option[DTAnalyzerLoad]] =
-              Await.ready(analyzerService.loadAnalyzer(indexName = stateName), 60.seconds).value.get
+              Await.ready(analyzerService.loadAnalyzer(indexName = stateName), 60.seconds).value.getOrElse(
+                Failure(throw new Exception("ReloadAnalyzersTickActor: getting an empty response reloading analyzers"))
+              )
             reloadResult match {
               case Success(t) =>
                 log.info("Analyzer loaded for index(" + stateName + "), remote ts: " + remoteTs)
