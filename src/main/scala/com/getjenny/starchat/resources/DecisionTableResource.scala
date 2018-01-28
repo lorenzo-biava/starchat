@@ -4,23 +4,19 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
-import akka.event.{Logging, LoggingAdapter}
+import java.io.File
+
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.directives.FileInfo
+import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.{AnalyzerService, DecisionTableService, ResponseService}
-import akka.http.scaladsl.model.StatusCodes
-import akka.pattern.CircuitBreaker
-import com.getjenny.starchat.SCActorSystem
-import com.getjenny.analyzer.analyzers._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
-import java.io.File
-import akka.http.scaladsl.server.directives.FileInfo
-import scalaz._
-import Scalaz._
+import scala.util.{Failure, Success}
+import scalaz.Scalaz._
 
 trait DecisionTableResource extends MyResource {
 

@@ -4,14 +4,15 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 19/12/16.
   */
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
-import akka.pattern.CircuitBreaker
-import akka.http.scaladsl.model.StatusCodes
+
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 trait RootAPIResource extends MyResource {
   def rootAPIsRoutes: Route = pathPrefix("") {

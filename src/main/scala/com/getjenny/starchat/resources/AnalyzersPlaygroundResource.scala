@@ -4,12 +4,13 @@ package com.getjenny.starchat.resources
   * Created by angelo on 07/04/17.
   */
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.AnalyzerService
-import akka.http.scaladsl.model.StatusCodes
-import akka.pattern.CircuitBreaker
+
 import scala.util.{Failure, Success}
 
 trait AnalyzersPlaygroundResource extends MyResource {

@@ -4,17 +4,15 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 20/12/16.
   */
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
-
-import scala.concurrent.Future
-import akka.http.scaladsl.model.StatusCodes
-
-import scala.util.{Failure, Success}
-import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.services.{AbstractUserService, UserService}
 
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 trait UserResource extends MyResource {
 

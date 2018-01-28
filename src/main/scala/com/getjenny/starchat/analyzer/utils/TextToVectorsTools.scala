@@ -5,15 +5,8 @@ package com.getjenny.starchat.analyzer.utils
   */
 
 import com.getjenny.analyzer.util.VectorUtils._
-import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.entities._
-
-import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
-
-import scala.concurrent.duration._
-import scala.concurrent._
-import ExecutionContext.Implicits.global
 
 object TextToVectorsTools {
   val termService = TermService
