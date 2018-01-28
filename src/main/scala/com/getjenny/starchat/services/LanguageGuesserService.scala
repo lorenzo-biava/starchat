@@ -7,13 +7,11 @@ package com.getjenny.starchat.services
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities.{LanguageGuesserInformations, LanguageGuesserRequestIn, LanguageGuesserRequestOut}
-
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext
 import org.apache.tika.langdetect.OptimaizeLangDetector
-import org.apache.tika.language.detect.LanguageDetector
-import org.apache.tika.language.detect.LanguageResult
+import org.apache.tika.language.detect.{LanguageDetector, LanguageResult}
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Implements functions, eventually used by LanguageGuesserResource

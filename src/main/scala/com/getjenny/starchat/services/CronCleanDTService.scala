@@ -4,14 +4,14 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 23/08/17.
   */
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
+import akka.actor.{Actor, Props}
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
-import akka.actor.Actor
-import akka.actor.Props
-import scala.language.postfixOps
 import com.getjenny.starchat.services.DecisionTableElasticClient.config
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class CronCleanDTService(implicit val executionContext: ExecutionContext) {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)

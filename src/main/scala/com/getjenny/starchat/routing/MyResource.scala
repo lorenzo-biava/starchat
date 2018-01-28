@@ -27,28 +27,28 @@ trait MyResource extends Directives with JsonSupport {
       complete(status_code)
   }
 
-  def completeResponse[A: ToEntityMarshaller](status_code: StatusCode, data: Option[A]): Route = {
+  def completeResponse[A: ToEntityMarshaller](statusCode: StatusCode, data: Option[A]): Route = {
     data match {
       case Some(t) =>
         val defaultHeader = RawHeader("application", "json")
         respondWithDefaultHeader(defaultHeader) {
-          complete(status_code, t)
+          complete(statusCode, t)
         }
       case None =>
-        complete(status_code)
+        complete(statusCode)
     }
   }
 
-  def completeResponse[A: ToEntityMarshaller](status_code_ok: StatusCode, status_code_failed: StatusCode,
-                                     data: Option[A]): Route = {
+  def completeResponse[A: ToEntityMarshaller](statusCodeOk: StatusCode, statusCodeFailed: StatusCode,
+                                              data: Option[A]): Route = {
     data match {
       case Some(t) =>
         val defaultHeader = RawHeader("application", "json")
         respondWithDefaultHeader(defaultHeader) {
-          complete(status_code_ok, t)
+          complete(statusCodeOk, t)
         }
       case None =>
-        complete(status_code_failed)
+        complete(statusCodeFailed)
     }
   }
 }

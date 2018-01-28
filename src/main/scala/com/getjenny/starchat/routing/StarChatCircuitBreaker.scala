@@ -2,8 +2,9 @@ package com.getjenny.starchat.routing
 
 import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.SCActorSystem
-import scala.concurrent.duration._
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 object StarChatCircuitBreaker {
   def getCircuitBreaker(maxFailure: Int = 10, callTimeout: FiniteDuration = 10.seconds,

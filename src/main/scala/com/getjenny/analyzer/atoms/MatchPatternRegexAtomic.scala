@@ -2,6 +2,7 @@ package com.getjenny.analyzer.atoms
 
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.utils._
+import scala.util.control.NonFatal
 
 /**
   * Created by angelo on 27/06/17.
@@ -34,7 +35,7 @@ class MatchPatternRegexAtomic(val arguments: List[String], restricted_args: Map[
       case e: PatternExtractionNoMatchException =>
         //println("DEBUG: no match for regular expression specification(" + regex + "), query(" + query + ")")
         Result(score=0)
-      case e: Exception =>
+      case NonFatal(e) =>
         throw ExceptionAtomic("Parsing of regular expression specification(" + regex + "), query(" + query + ")", e)
     }
     res

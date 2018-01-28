@@ -4,27 +4,26 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 23/08/17.
   */
 
-import com.getjenny.starchat.entities._
-
-import scala.concurrent.{Await, ExecutionContext}
-import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import akka.actor.{Actor, Props}
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
-import akka.actor.Actor
-import akka.actor.Props
+import com.getjenny.starchat.entities._
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
+import scala.util.{Failure, Success, Try}
 
 class CronReloadDTService(implicit val executionContext: ExecutionContext) {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val analyzerService: AnalyzerService.type = AnalyzerService
   val systemService: SystemService.type = SystemService
 
-  val Tick = "tick"
+  val tickMessage = "tick"
 
   class ReloadAnalyzersTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
-      case Tick =>
+      case tickMessage =>
         analyzerService.analyzersMap.foreach(item => {
           val timestamp_result: Try[Option[Long]] =
             Await.ready(systemService.getDTReloadTimestamp(indexName = item._1), 20.seconds).value.get
@@ -82,7 +81,7 @@ class CronReloadDTService(implicit val executionContext: ExecutionContext) {
         delay seconds,
         systemService.elasticClient.dtReloadCheckFrequency seconds,
         reloadDecisionTableActorRef,
-        Tick)
+        tickMessage)
     }
   }
 }

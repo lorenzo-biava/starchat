@@ -4,45 +4,32 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-import com.getjenny.starchat.entities._
-import org.elasticsearch.common.xcontent.XContentBuilder
-
-import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.collection.immutable.{List, Map}
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.action.index.IndexResponse
-import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.DeleteResponse
-import org.elasticsearch.action.get.{MultiGetRequestBuilder, MultiGetResponse}
-import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
-import java.net.InetAddress
-import java.util
+import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.RandomNumbers
-
-import org.elasticsearch.common.xcontent.XContentType
+import com.getjenny.starchat.SCActorSystem
+import com.getjenny.starchat.entities._
+import org.apache.lucene.search.join._
+import org.elasticsearch.action.delete.DeleteResponse
+import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
+import org.elasticsearch.action.index.IndexResponse
+import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
+import org.elasticsearch.action.update.UpdateResponse
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.xcontent.XContentFactory._
+import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
+import org.elasticsearch.index.query.functionscore._
+import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
+import org.elasticsearch.rest.RestStatus
+import org.elasticsearch.script._
+import org.elasticsearch.search.SearchHit
 
 import scala.collection.JavaConverters._
-import com.typesafe.config.ConfigFactory
-import org.elasticsearch.action.DocWriteResponse.Result
-import org.elasticsearch.search.SearchHit
-import org.elasticsearch.rest.RestStatus
-import akka.event.{Logging, LoggingAdapter}
-import akka.event.Logging._
-import com.getjenny.starchat.SCActorSystem
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import org.apache.lucene.search.join._
-import org.elasticsearch.common.lucene.search.function.ScriptScoreFunction
-import org.elasticsearch.index.query.ScriptQueryBuilder
-import org.elasticsearch.index.query.functionscore._
-import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
-import org.elasticsearch.script._
-import scalaz._
-import Scalaz._
+import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scalaz.Scalaz._
+import scalaz._
 
 object KnowledgeBaseService {
   val elasticClient = KnowledgeBaseElasticClient

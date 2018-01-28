@@ -4,40 +4,19 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 23/08/17.
   */
 
-import java.util
-
-import akka.actor.ActorSystem
-import com.getjenny.starchat.entities._
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.collection.immutable.{List, Map}
-import org.elasticsearch.common.xcontent.XContentBuilder
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.action.index.IndexResponse
-import org.elasticsearch.cluster.metadata.IndexMetaData
+import akka.event.{Logging, LoggingAdapter}
+import com.getjenny.starchat.SCActorSystem
+import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
 import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.DeleteResponse
-import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, GetRequestBuilder, MultiGetRequestBuilder, MultiGetResponse}
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders, InnerHitBuilder}
-import org.elasticsearch.common.unit._
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.XContentFactory._
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
-import org.elasticsearch.search.SearchHit
-import org.elasticsearch.rest.RestStatus
-import com.getjenny.starchat.analyzer.analyzers._
-
-import scala.util.{Failure, Success, Try}
-import akka.event.{Logging, LoggingAdapter}
-import akka.event.Logging._
-import com.getjenny.starchat.SCActorSystem
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import org.apache.lucene.search.join._
+import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
-import scalaz._
-import Scalaz._
+import scala.concurrent.Future
+import scalaz.Scalaz._
 
 object SystemService {
   var dtReloadTimestamp : Long = -1

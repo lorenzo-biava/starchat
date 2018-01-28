@@ -4,32 +4,25 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-import akka.actor.ActorSystem
-import com.getjenny.starchat.entities._
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.collection.immutable.{List, Map}
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.common.unit._
-
-import scala.collection.mutable
-import scala.collection.mutable.LinkedHashMap
-import scala.collection.JavaConverters._
-import scala.concurrent.duration._
-import org.elasticsearch.search.SearchHit
-import com.getjenny.starchat.analyzer.analyzers._
-import com.getjenny.analyzer.expressions.{Data, AnalyzersData}
-import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
-import akka.event.Logging._
+import com.getjenny.analyzer.expressions.{AnalyzersData, Data}
 import com.getjenny.starchat.SCActorSystem
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import com.getjenny.analyzer.expressions.Result
+import com.getjenny.starchat.analyzer.analyzers._
+import com.getjenny.starchat.entities._
+import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.unit._
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.search.SearchHit
+
+import scala.collection.JavaConverters._
+import scala.collection.immutable.{List, Map}
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scalaz._
-import Scalaz._
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
+import scalaz.Scalaz._
 
 case class AnalyzerItem(declaration: String,
                         analyzer: Option[StarchatAnalyzer],

@@ -1,24 +1,19 @@
 package com.getjenny.starchat.services
 
-import com.getjenny.starchat.entities.DTDocument
-import akka.http.scaladsl.unmarshalling.Unmarshal
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-
-import breeze.io.CSVReader
-
-import scala.concurrent.Await
-import scala.collection.immutable.{List, Map}
 import java.io.{File, FileReader}
 
-import akka.stream.ActorMaterializer
 import akka.actor.ActorSystem
-import akka.event.{Logging, LoggingAdapter}
+import akka.event.LoggingAdapter
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.ActorMaterializer
+import breeze.io.CSVReader
+import com.getjenny.starchat.entities.DTDocument
 import com.getjenny.starchat.serializers.JsonSupport
-import scalaz._
-import Scalaz._
-import scala.concurrent.ExecutionContext.Implicits.global
+
+import scala.collection.immutable.{List, Map}
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+import scalaz.Scalaz._
 
 object FileToDTDocuments extends JsonSupport {
 

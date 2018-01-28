@@ -4,42 +4,32 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-import java.util
+import java.io.File
 
-import akka.actor.ActorSystem
+import akka.event.{Logging, LoggingAdapter}
+import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.collection.immutable.{List, Map}
-import org.elasticsearch.common.xcontent.XContentBuilder
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.action.index.IndexResponse
-import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
+import org.apache.lucene.search.join._
+import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.reindex.{DeleteByQueryAction, BulkByScrollResponse}
-import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
+import org.elasticsearch.action.update.UpdateResponse
+import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.unit._
+import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.XContentFactory._
+import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
+import org.elasticsearch.rest.RestStatus
+import org.elasticsearch.search.SearchHit
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
-import org.elasticsearch.search.SearchHit
-import org.elasticsearch.rest.RestStatus
-import com.getjenny.starchat.analyzer.analyzers._
-
-import java.io.{File, FileReader}
-import scala.util.{Failure, Success, Try}
-import akka.event.{Logging, LoggingAdapter}
-import akka.event.Logging._
-import com.getjenny.starchat.SCActorSystem
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import org.apache.lucene.search.join._
-
+import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scalaz._
-import Scalaz._
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
@@ -323,16 +313,16 @@ object DecisionTableService {
     }
     document.action_input match {
       case Some(t) =>
-        val action_input_builder : XContentBuilder = builder.startObject("action_input")
-        for ((k,v) <- t) action_input_builder.field(k,v)
-        action_input_builder.endObject()
+        val actionInputBuilder : XContentBuilder = builder.startObject("action_input")
+        for ((k,v) <- t) actionInputBuilder.field(k,v)
+        actionInputBuilder.endObject()
       case None => ;
     }
     document.state_data match {
       case Some(t) =>
-        val state_data_builder : XContentBuilder = builder.startObject("state_data")
-        for ((k,v) <- t) state_data_builder.field(k,v)
-        state_data_builder.endObject()
+        val stateDataBuilder : XContentBuilder = builder.startObject("state_data")
+        for ((k,v) <- t) stateDataBuilder.field(k,v)
+        stateDataBuilder.endObject()
       case None => ;
     }
     document.success_value match {
@@ -358,14 +348,14 @@ object DecisionTableService {
       }
     }
 
-    val doc_result: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
+    val docResult: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
     )
 
-    Option {doc_result}
+    Option {docResult}
   }
 
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
@@ -395,14 +385,14 @@ object DecisionTableService {
       }
     }
 
-    val doc_result: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
+    val docResult: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
       found = response.status =/= RestStatus.NOT_FOUND
     )
 
-    Option {doc_result}
+    Option {docResult}
   }
 
   def getDTDocuments(index_name: String): Future[Option[SearchDTDocumentsResults]] = {
@@ -416,17 +406,17 @@ object DecisionTableService {
       .setSize(10000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
-    val decisiontable_content : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
+    val decisiontableContent : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
       val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-      val execution_order : Int = source.get("execution_order") match {
+      val executionOrder : Int = source.get("execution_order") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
       }
 
-      val max_state_count : Int = source.get("max_state_count") match {
+      val maxStateCount : Int = source.get("max_state_count") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
       }
@@ -473,8 +463,8 @@ object DecisionTableService {
         case None => ""
       }
 
-      val document : DTDocument = DTDocument(state = state, execution_order = execution_order,
-        max_state_count = max_state_count,
+      val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
+        max_state_count = maxStateCount,
         analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = actionInput, state_data = stateData,
         success_value = successValue, failure_value = failureValue)
@@ -484,9 +474,9 @@ object DecisionTableService {
     }).sortBy(_.document.state)
 
     val maxScore : Float = .0f
-    val total : Int = decisiontable_content.length
+    val total : Int = decisiontableContent.length
     val searchResults : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = maxScore,
-      hits = decisiontable_content)
+      hits = decisiontableContent)
 
     Future{Option{searchResults}}
   }

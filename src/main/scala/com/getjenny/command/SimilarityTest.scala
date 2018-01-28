@@ -4,28 +4,25 @@ package com.getjenny.command
   * Created by angelo on 11/04/17.
   */
 
-import akka.http.scaladsl.model.HttpRequest
+import java.io.{File, FileReader, FileWriter}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.ActorMaterializer
 import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import akka.stream.ActorMaterializer
+import au.com.bytecode.opencsv.CSVWriter
+import breeze.io.CSVReader
+import com.getjenny.analyzer.expressions.Data
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
-import breeze.io.CSVReader
-import au.com.bytecode.opencsv.CSVWriter
 
-import scala.concurrent.Await
 import scala.collection.immutable
-import scala.collection.immutable.{List, Map}
-import java.io.{File, FileReader, FileWriter}
-import com.getjenny.analyzer.expressions.Data
+import scala.collection.immutable.Map
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 object SimilarityTest extends JsonSupport {
 

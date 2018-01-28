@@ -4,12 +4,13 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
+import java.util.Base64
+
 import akka.event.Logging
-import com.typesafe.config.{Config, ConfigFactory}
-import akka.http.scaladsl.server.directives.{LogEntry, DebuggingDirectives}
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.RouteResult
-import java.util.Base64
+import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry}
+import com.typesafe.config.{Config, ConfigFactory}
 
 object LoggingEntities {
   val config: Config = ConfigFactory.load()

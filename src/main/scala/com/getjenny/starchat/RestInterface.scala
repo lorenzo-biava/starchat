@@ -4,12 +4,11 @@ package com.getjenny.starchat
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
-import scala.concurrent.ExecutionContext
-import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Route
-
 import com.getjenny.starchat.resources._
 import com.getjenny.starchat.services._
+
+import scala.concurrent.ExecutionContext
 
 trait Resources extends KnowledgeBaseResource with DecisionTableResource
   with RootAPIResource with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource

@@ -4,28 +4,26 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/12/17.
   */
 
-import akka.event.{Logging, LoggingAdapter}
-import com.getjenny.starchat.entities._
-import com.getjenny.starchat.services.auth.{AuthenticatorException, AbstractStarChatAuthenticator}
-import com.getjenny.starchat.SCActorSystem
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
 import javax.naming.AuthenticationException
 
-import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
-import org.elasticsearch.action.get.GetRequestBuilder
-import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
+import akka.event.{Logging, LoggingAdapter}
+import com.getjenny.analyzer.util.RandomNumbers
+import com.getjenny.starchat.SCActorSystem
+import com.getjenny.starchat.entities._
+import com.getjenny.starchat.services.auth.AbstractStarChatAuthenticator
+import com.typesafe.config.{Config, ConfigFactory}
+import org.elasticsearch.action.delete.DeleteResponse
+import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.rest.RestStatus
+
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.getjenny.analyzer.util.RandomNumbers
-import scalaz._
-import Scalaz._
+import scala.concurrent.Future
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management

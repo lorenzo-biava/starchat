@@ -4,39 +4,28 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/17.
   */
 
-import org.elasticsearch.action.bulk._
+import akka.event.{Logging, LoggingAdapter}
+import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
-import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
-import org.elasticsearch.common.xcontent.XContentBuilder
-
-import scala.concurrent.{Await, ExecutionContext, Future, Promise}
-import scala.collection.immutable.{List, Map}
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.xcontent.XContentFactory._
+import org.elasticsearch.action.admin.indices.analyze.{AnalyzeRequestBuilder, AnalyzeResponse}
+import org.elasticsearch.action.bulk._
+import org.elasticsearch.action.delete.DeleteRequestBuilder
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
-
-import scala.collection.JavaConverters._
+import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
-import akka.event.{Logging, LoggingAdapter}
-import akka.event.Logging._
-import scala.concurrent.duration._
-import com.getjenny.starchat.SCActorSystem
-import java.lang.String
-import scala.util.{Failure, Success, Try}
-import akka.http.scaladsl.server.Directives._
 
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse.AnalyzeToken
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
-
+import scala.collection.JavaConverters._
+import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scalaz.Scalaz._
 import scalaz._
-import Scalaz._
 
 /**
   * Implements functions, eventually used by TermResource

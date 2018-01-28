@@ -4,23 +4,15 @@ package com.getjenny.starchat
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
-import scala.concurrent.duration._
-import akka.actor._
-import akka.http.scaladsl.Http
+import java.io.InputStream
+import java.security.{KeyStore, SecureRandom}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+
+import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import java.io.InputStream
-import java.security.{ SecureRandom, KeyStore }
-import javax.net.ssl.{ SSLContext, TrustManagerFactory, KeyManagerFactory }
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.server.{ Route, Directives }
-import akka.http.scaladsl.{ ConnectionContext, HttpsConnectionContext, Http }
-import akka.stream.ActorMaterializer
-import com.typesafe.sslconfig.akka.AkkaSSLConfig
-import com.typesafe.config.ConfigFactory
-import scalaz._
-import Scalaz._
+import scala.concurrent.duration._
 
 case class Parameters(
          http_enable: Boolean,

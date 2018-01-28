@@ -1,18 +1,13 @@
-import org.scalatest.{Matchers, WordSpec}
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.http.scaladsl.server._
-import Directives._
-import com.getjenny.starchat.entities._
-import com.getjenny.starchat.serializers.JsonSupport
-import com.typesafe.config.ConfigFactory
-import com.getjenny.starchat.StarChatService
 import akka.actor.ActorSystem
-import akka.http.scaladsl.testkit.RouteTestTimeout
-import scala.concurrent.duration._
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server._
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.testkit._
-import scala.util.matching.Regex
-import akka.http.scaladsl.model.HttpMethods._
+import com.getjenny.starchat.StarChatService
+import com.getjenny.starchat.serializers.JsonSupport
+import org.scalatest.{Matchers, WordSpec}
+
+import scala.concurrent.duration._
 
 class RootAPIResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds.dilated(system))

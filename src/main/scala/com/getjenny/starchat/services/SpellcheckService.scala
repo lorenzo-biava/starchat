@@ -4,22 +4,18 @@ package com.getjenny.starchat.services
   * Created by angelo on 21/04/17.
   */
 
-import com.getjenny.starchat.entities._
-import scala.concurrent.ExecutionContext
-import scala.collection.immutable.List
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.action.search.SearchResponse
-import scala.collection.JavaConverters._
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
-import akka.http.scaladsl.model.StatusCodes
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
-
+import com.getjenny.starchat.entities._
+import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.search.suggest.SuggestBuilder
-import org.elasticsearch.search.suggest.term.TermSuggestionBuilder
-import org.elasticsearch.search.suggest.term.TermSuggestion
+import org.elasticsearch.search.suggest.term.{TermSuggestion, TermSuggestionBuilder}
+
+import scala.collection.JavaConverters._
+import scala.collection.immutable.List
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object SpellcheckService {
   val elasticClient = KnowledgeBaseElasticClient

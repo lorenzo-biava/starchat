@@ -4,20 +4,17 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-import com.typesafe.config.{Config,ConfigFactory}
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.transport.client.PreBuiltTransportClient
-import org.elasticsearch.common.settings.Settings
 import java.net.InetAddress
 
+import com.getjenny.starchat.entities._
+import com.typesafe.config.{Config, ConfigFactory}
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.TransportAddress
-import org.elasticsearch.rest.RestStatus
+import org.elasticsearch.transport.client.PreBuiltTransportClient
 
 import scala.collection.immutable.{List, Map}
-import scala.collection.JavaConverters._
-import com.getjenny.starchat.entities._
-import org.apache.http.HttpHost
 
 trait ElasticClient {
   val config: Config = ConfigFactory.load()

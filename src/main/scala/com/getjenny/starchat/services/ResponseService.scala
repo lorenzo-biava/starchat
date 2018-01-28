@@ -4,27 +4,17 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-import akka.actor.ActorSystem
+import akka.event.{Logging, LoggingAdapter}
+import com.getjenny.analyzer.analyzers._
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.collection.immutable.{List, Map}
-import scala.collection.JavaConverters._
-import scala.concurrent.duration._
-import org.elasticsearch.search.SearchHit
-import com.getjenny.starchat.analyzer.analyzers._
-
-import scala.util.{Failure, Success, Try}
-import akka.event.{Logging, LoggingAdapter}
-import akka.event.Logging._
-import com.getjenny.starchat.SCActorSystem
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import com.getjenny.analyzer.analyzers._
-import com.getjenny.analyzer.expressions.Result
-import com.getjenny.analyzer.expressions.AnalyzersData
 import scala.concurrent.ExecutionContext.Implicits.global
-import scalaz._
-import Scalaz._
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scalaz.Scalaz._
 
 /**
   * Implements response functionalities

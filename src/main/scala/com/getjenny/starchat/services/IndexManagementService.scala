@@ -4,22 +4,20 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/17.
   */
 
-import com.getjenny.starchat.entities._
-
-import scala.concurrent.Future
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings._
-
-import scala.io.Source
 import java.io._
 
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
+import com.getjenny.starchat.entities._
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.io.Source
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
