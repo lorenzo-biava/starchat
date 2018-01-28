@@ -51,7 +51,7 @@ object IndexKnowledgeBase extends JsonSupport {
     decoded
   }
 
-  private def load_data(params: Params, transform: String => String):
+  private def loadData(params: Params, transform: String => String):
       List[Map[String, String]] = {
     val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.questionsPath.get), "UTF-8")
     lazy val questionsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,
@@ -106,7 +106,7 @@ object IndexKnowledgeBase extends JsonSupport {
     convPairs.toList
   }
 
-  private def doIndexConversationPairs(params: Params) {
+  private def execute(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -116,9 +116,9 @@ object IndexKnowledgeBase extends JsonSupport {
     val baseUrl = params.host + "/" + params.indexName + params.path
 
     val convItems = if (params.base64) {
-      load_data(params, decodeBase64)
+      loadData(params, decodeBase64)
     } else {
-      load_data(params, identity)
+      loadData(params, identity)
     }
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.length > 0) {
@@ -221,7 +221,7 @@ object IndexKnowledgeBase extends JsonSupport {
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doIndexConversationPairs(params)
+        execute(params)
       case _ =>
         sys.exit(1)
     }

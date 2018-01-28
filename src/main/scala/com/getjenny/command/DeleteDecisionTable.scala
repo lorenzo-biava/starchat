@@ -33,7 +33,7 @@ object DeleteDecisionTable extends JsonSupport {
                              headerKv: Seq[String] = Seq.empty[String]
                            )
 
-  private def doDeleteDecisionTable(params: Params) {
+  private def execute(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -116,7 +116,7 @@ object DeleteDecisionTable extends JsonSupport {
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doDeleteDecisionTable(params)
+        execute(params)
       case _ =>
         sys.exit(1)
     }

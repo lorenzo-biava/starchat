@@ -43,7 +43,7 @@ object SimilarityTest extends JsonSupport {
                             headerKv: Seq[String] = Seq.empty[String]
                            )
 
-  private def doCalcAnalyzer(params: Params) {
+  private def execute(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -179,7 +179,7 @@ object SimilarityTest extends JsonSupport {
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doCalcAnalyzer(params)
+        execute(params)
       case _ =>
         sys.exit(1)
     }

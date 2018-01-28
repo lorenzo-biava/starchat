@@ -49,7 +49,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
     decoded
   }
 
-  private def doIndexCorpus(params: Params) {
+  private def execute(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -159,7 +159,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doIndexCorpus(params)
+        execute(params)
       case _ =>
         sys.exit(1)
     }

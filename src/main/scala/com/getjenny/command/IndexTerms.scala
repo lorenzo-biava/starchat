@@ -32,7 +32,7 @@ object IndexTerms extends JsonSupport {
     headerKv: Seq[String] = Seq.empty[String]
   )
 
-  private def doIndexTerms(params: Params) {
+  private def execute(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -141,7 +141,7 @@ object IndexTerms extends JsonSupport {
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doIndexTerms(params)
+        execute(params)
       case _ =>
         sys.exit(1)
     }

@@ -42,7 +42,7 @@ object IndexDecisionTable extends JsonSupport {
                              headerKv: Seq[String] = Seq.empty[String]
                            )
 
-  private def doIndexDecisionTable(params: Params) {
+  private def execute(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -127,7 +127,7 @@ object IndexDecisionTable extends JsonSupport {
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doIndexDecisionTable(params)
+        execute(params)
         sys.exit(0)
       case _ =>
         sys.exit(1)
