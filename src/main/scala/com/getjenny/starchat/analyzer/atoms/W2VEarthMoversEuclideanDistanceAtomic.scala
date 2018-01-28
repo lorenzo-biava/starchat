@@ -1,13 +1,9 @@
 package com.getjenny.starchat.analyzer.atoms
 
-import com.getjenny.starchat.analyzer.utils.EmDistance
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import com.getjenny.starchat.services._
-
-import ExecutionContext.Implicits.global
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.starchat.analyzer.utils.EmDistance
+import com.getjenny.starchat.services._
 
 /**
   * Created by angelo on 04/04/17.

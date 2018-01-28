@@ -4,18 +4,11 @@ package com.getjenny.starchat.analyzer.atoms
   * Created by angelo on 11/04/17.
   */
 
-import com.getjenny.analyzer.util.VectorUtils._
-import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
-import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
-
 import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.starchat.analyzer.utils.EmDistance
 import com.getjenny.starchat.entities.TextTerms
-import scala.concurrent.{ExecutionContext, Await, Future}
 import com.getjenny.starchat.services._
-
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
-import ExecutionContext.Implicits.global
 
 class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], restricted_args: Map[String, String])
   extends AbstractAtomic  {

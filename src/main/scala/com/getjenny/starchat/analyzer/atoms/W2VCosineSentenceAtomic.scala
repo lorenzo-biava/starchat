@@ -1,19 +1,10 @@
 package com.getjenny.starchat.analyzer.atoms
 
-import com.getjenny.analyzer.util.VectorUtils._
-import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
-import com.getjenny.starchat.entities._
-
-import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
-
-import scala.concurrent.duration._
-import scala.concurrent._
-import ExecutionContext.Implicits.global
-import com.getjenny.analyzer.expressions.Result
-import com.getjenny.analyzer.expressions.AnalyzersData
 
 /**
   * Created by mal on 20/02/2017.
