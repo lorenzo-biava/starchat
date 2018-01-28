@@ -4,7 +4,7 @@ package com.getjenny.starchat.analyzer.atoms
   * Created by mal on 20/02/2017.
   */
 
-import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.starchat.entities._
 
@@ -19,7 +19,12 @@ import ExecutionContext.Implicits.global
   * Query ElasticSearch
   */
 class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
-  val state = arguments(0)
+  val state: String = arguments.headOption match {
+    case Some(t) => t
+    case _ =>
+      throw ExceptionAtomic("search requires an argument")
+  }
+
   override def toString: String = "search(\"" + state + "\")"
   val isEvaluateNormalized: Boolean = false
   val refState: String = state

@@ -1,6 +1,6 @@
 package com.getjenny.starchat.analyzer.atoms
 
-import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.atoms.{AbstractAtomic,ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
 /**
@@ -15,7 +15,11 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
 class PreviousTravStateIsAtomic(val arguments: List[String], restricted_args: Map[String, String])
   extends AbstractAtomic {
-  val name: String = arguments.head
+  val name: String = arguments.headOption match {
+    case Some(t) => t
+    case _ =>
+      throw ExceptionAtomic("prevTravStateIs requires an argument")
+  }
   override def toString: String = "prevTravStateIs"
   val isEvaluateNormalized: Boolean = true
 

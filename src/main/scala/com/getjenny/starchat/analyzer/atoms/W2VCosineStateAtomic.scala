@@ -7,7 +7,7 @@ package com.getjenny.starchat.analyzer.atoms
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
-import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.starchat.entities._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -27,7 +27,12 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
     *
     */
 
-  val state: String = arguments.head
+  val state: String = arguments.headOption match {
+    case Some(t) => t
+    case _ =>
+      throw ExceptionAtomic("similarState requires an argument")
+  }
+
   override def toString: String = "similarState(\"" + state + "\")"
 
   val analyzerService: AnalyzerService.type = AnalyzerService

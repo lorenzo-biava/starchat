@@ -2,7 +2,7 @@ package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.EmDistance._
-import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.starchat.analyzer.utils.EmDistance
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -25,7 +25,12 @@ class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String], restricted
     *
     */
 
-  val sentence: String = arguments.head
+  val sentence: String = arguments.headOption match {
+    case Some(t) => t
+    case _ =>
+      throw ExceptionAtomic("similarCosEmd requires an argument")
+  }
+
   val termService: TermService.type = TermService
 
   implicit class Crosstable[X](xs: Traversable[X]) {

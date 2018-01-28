@@ -1,5 +1,5 @@
 package com.getjenny.starchat.analyzer.atoms
-import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools._
@@ -21,7 +21,12 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
     * Return the normalized w2vcosine similarity of the nearest word
     */
 
-  val word: String = arguments.head
+  val word: String = arguments.headOption match {
+    case Some(t) => t
+    case _ =>
+      throw ExceptionAtomic("similar requires an argument")
+  }
+
   override def toString: String = "similar(\"" + word + "\")"
 
   val termService: TermService.type = TermService

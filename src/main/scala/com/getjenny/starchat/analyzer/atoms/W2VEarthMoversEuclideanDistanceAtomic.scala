@@ -1,7 +1,7 @@
 package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.starchat.analyzer.utils.EmDistance
-import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
@@ -22,7 +22,12 @@ class W2VEarthMoversEuclideanDistanceAtomic(val arguments: List[String], restric
     *
     */
 
-  val sentence: String = arguments.head
+  val sentence: String = arguments.headOption match {
+    case Some(t) => t
+    case _ =>
+      throw ExceptionAtomic("similarEucEmd requires an argument")
+  }
+
   val termService: TermService.type = TermService
 
   val indexName = restricted_args("index_name")
