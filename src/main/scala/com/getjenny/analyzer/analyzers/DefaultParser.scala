@@ -27,7 +27,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
   val atomicFactory: AtomicFactoryTrait[List[String], AbstractAtomic, Map[String, String]]
   val operatorFactory: OperatorFactoryTrait[List[Expression], AbstractOperator]
 
-  private val operator = this.gobble_commands(command_string)
+  private[this] val operator = gobble_commands(command_string)
 
   override def toString: String = operator.toString
   /** Read a sentence and produce a score (the higher, the more confident)
