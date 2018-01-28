@@ -14,7 +14,7 @@ import Scalaz._
   */
 
 class BooleanNotOperator(child: List[Expression]) extends AbstractOperator(child: List[Expression]) {
-  require(child.lengthCompare(1) == 0, "BooleanNotOperator can only have one Expression")
+  require(child.lengthCompare(1) === 0, "BooleanNotOperator can only have one Expression")
   override def toString: String = "booleanNot(" + child + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
     if (level === 0) {

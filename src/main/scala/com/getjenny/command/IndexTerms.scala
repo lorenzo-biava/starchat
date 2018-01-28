@@ -1,23 +1,21 @@
 package com.getjenny.command
 
-import akka.http.scaladsl.model.HttpRequest
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
-import akka.http.scaladsl.marshalling.Marshal
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import com.getjenny.starchat.entities.{Term, Terms}
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
 
-import scala.concurrent.Await
 import scala.collection.immutable
 import scala.collection.immutable.Map
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.io.Source
+import scalaz.Scalaz._
 
 object IndexTerms extends JsonSupport {
 
@@ -67,7 +65,7 @@ object IndexTerms extends JsonSupport {
         Vector.empty[Double]
       }
 
-      if (term_vector.length != vecsize) {
+      if (term_vector.length =/= vecsize) {
         println("Error: file row does not contains a consistent vector Row(" + entry + ")")
       } else {
         val term = Term(term = term_text,

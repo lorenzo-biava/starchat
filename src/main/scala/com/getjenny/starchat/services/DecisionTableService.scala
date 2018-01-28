@@ -259,7 +259,7 @@ object DecisionTableService {
       .setId(document.state)
       .setSource(builder).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")

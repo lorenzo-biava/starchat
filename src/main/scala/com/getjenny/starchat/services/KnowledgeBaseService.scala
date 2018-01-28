@@ -494,7 +494,7 @@ object KnowledgeBaseService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     Option {docResult}

@@ -6,6 +6,7 @@ package com.getjenny.analyzer.util
 
 import breeze.linalg._
 import breeze.linalg.functions._
+import scalaz.Scalaz._
 
 //https://github.com/scalanlp/breeze/wiki/Linear-Algebra-Cheat-Sheet
 
@@ -23,7 +24,7 @@ object VectorUtils {
     * @return the distance in the range 0.0 - 1.0
     */
   def cosineDist(u: scala.Vector[Double], v: scala.Vector[Double]): Double = {
-    if (u.length != v.length) throw new IllegalArgumentException("Vectors have different length")
+    if (u.length =/= v.length) throw new IllegalArgumentException("Vectors have different length")
 
     /** the range of the function cosineDistance (breeze package) goes from 2.0 (max distance) to 0.0 (min distance)
       * we divide by 2.0 to normalize between 1.0 and 0.0
@@ -32,7 +33,7 @@ object VectorUtils {
   }
 
   def euclideanDist(u: scala.Vector[Double], v: scala.Vector[Double]): Double = {
-    if (u.length != v.length) throw new IllegalArgumentException("Vectors have different length")
+    if (u.length =/= v.length) throw new IllegalArgumentException("Vectors have different length")
     euclideanDistance(DenseVector(u.toArray), DenseVector(v.toArray))
   }
 

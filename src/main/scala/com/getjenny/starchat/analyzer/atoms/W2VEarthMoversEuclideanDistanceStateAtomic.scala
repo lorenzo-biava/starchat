@@ -4,7 +4,7 @@ package com.getjenny.starchat.analyzer.atoms
   * Created by angelo on 11/04/17.
   */
 
-import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.starchat.analyzer.utils.EmDistance
 import com.getjenny.starchat.entities.TextTerms
@@ -20,7 +20,12 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], re
     *
     */
 
-  val state: String = arguments.head
+  val state: String = arguments.headOption match {
+    case Some(t) => t
+    case _ =>
+      throw ExceptionAtomic("similarEucEmdState requires an argument")
+  }
+
   val termService: TermService.type = TermService
 
   implicit class Crosstable[X](xs: Traversable[X]) {

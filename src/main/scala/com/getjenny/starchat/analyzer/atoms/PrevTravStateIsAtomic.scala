@@ -2,6 +2,7 @@ package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.analyzer.atoms.{AbstractAtomic,ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import scalaz.Scalaz._
 
 /**
   * Created by angelo on 16/08/17.
@@ -31,7 +32,7 @@ class PreviousTravStateIsAtomic(val arguments: List[String], restricted_args: Ma
     */
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val listLength = data.item_list.length
-    if(listLength >= 2 && data.item_list(listLength-2) == name) {
+    if(listLength >= 2 && data.item_list(listLength-2) === name) {
       Result(score = 1.0)
     } else {
       Result(score = 0.0)

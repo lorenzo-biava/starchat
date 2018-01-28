@@ -2,6 +2,8 @@ package com.getjenny.starchat.services.auth
 
 import com.getjenny.starchat.services._
 
+import scalaz.Scalaz._
+
 case class AuthenticatorClassNotFoundException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
@@ -9,7 +11,7 @@ object SupportedAuthImpl extends Enumeration {
   type Permission = Value
   val basic_http, unknown = Value
   def getValue(auth_method: String): SupportedAuthImpl.Value =
-    values.find(_.toString == auth_method).getOrElse(SupportedAuthImpl.unknown)
+    values.find(_.toString === auth_method).getOrElse(SupportedAuthImpl.unknown)
 }
 
 object AuthenticatorFactory {

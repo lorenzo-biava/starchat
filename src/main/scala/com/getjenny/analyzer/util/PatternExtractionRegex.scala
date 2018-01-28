@@ -7,6 +7,7 @@ package com.getjenny.analyzer.utils
 import java.util.regex.PatternSyntaxException
 
 import scala.util.matching._
+import scalaz.Scalaz._
 
 /** A generic pattern extraction utility class, it extract named patterns matching a given regex
   *   e.g. the following will match tree numbers separated by semicolumn:
@@ -64,7 +65,7 @@ class PatternExtractionRegex(declaration: String) extends
           val groupCount = m.groupCount
           val extracted_patterns = groupNames.map(gn => (gn, m.group(gn)))
           (groupCount, extracted_patterns)
-        }).toList.filter(_._1 == groups.length).zipWithIndex.flatMap(m => {
+        }).toList.filter(_._1 === groups.length).zipWithIndex.flatMap(m => {
           m._1._2.map(v => {
             (v._1 + "." + m._2, v._2)
           })
