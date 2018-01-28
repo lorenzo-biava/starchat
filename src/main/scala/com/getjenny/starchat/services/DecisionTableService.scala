@@ -584,8 +584,8 @@ object DecisionTableService {
           Option{
             FileToDTDocuments.getDTDocumentsFromCSV(log = log, file = file, skiplines = skiplines, separator = separator)
           }
-        },
-        30.seconds).value.get
+        }, 30.seconds).value
+        .getOrElse(Failure(throw new Exception("indexCSVFileIntoDecisionTable: empty list of documents from csv")))
 
     val documentList = documents match {
       case Success(t) =>
