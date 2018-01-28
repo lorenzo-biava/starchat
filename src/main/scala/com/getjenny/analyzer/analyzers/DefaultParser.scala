@@ -4,12 +4,12 @@ package com.getjenny.analyzer.analyzers
   * Created by mal on 20/02/2017.
   */
 
-import com.getjenny.analyzer.operators._
 import com.getjenny.analyzer.atoms._
 import com.getjenny.analyzer.expressions.{AnalyzersData, Expression, Result}
 import com.getjenny.analyzer.interfaces.{AtomicFactoryTrait, OperatorFactoryTrait}
-import scalaz._
-import Scalaz._
+import com.getjenny.analyzer.operators._
+
+import scalaz.Scalaz._
 
 /**
   * All sentences with more than 22 characters and with keywords "password" and either "lost" or "forgot"

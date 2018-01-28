@@ -18,7 +18,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scalaz.Scalaz._
 
-object SystemService {
+object  SystemService {
   var dtReloadTimestamp : Long = -1
   val elasticClient: SystemElasticClient.type = SystemElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
