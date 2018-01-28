@@ -429,7 +429,7 @@ object DecisionTableService {
       val queries : List[String] = source.get("queries") match {
         case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
           .asScala.map(query =>
-            query.asScala.get("query")).filter(_.isDefined).toList.map(_.get)
+          query.asScala.get("query")).filter(_.isDefined).toList.map(_.get)
         case None => List[String]()
       }
 
@@ -596,25 +596,27 @@ object DecisionTableService {
         throw new Exception(message, e)
     }
 
-    val indexDocumentListResult = if (documentList.isDefined) {
-      val values = documentList.get.map(d => {
-        val indexingResult: Try[Option[IndexDocumentResult]] =
-          Await.ready(create(indexName, d, 1), 10.seconds).value.get
-
-        indexingResult match {
-          case Success(t) =>
-            t.get
-          case Failure(e) =>
-            val message = "Cannot index document: " + d.state
-            log.error(message + " : " + e.getMessage)
-            throw new Exception(message, e)
-        }
-      })
-      Option { IndexDocumentListResult(data = values) }
-    } else {
-      val message = "I could not index any document"
-      log.error(message)
-      throw new Exception(message)
+    val indexDocumentListResult = documentList match {
+      case Some(t) =>
+        val values = t.map(dtDocument => {
+          val indexingResult: Try[Option[IndexDocumentResult]] =
+            Await.ready(create(indexName, dtDocument, 1), 10.seconds).value.getOrElse(
+              Failure(throw new Exception("indexCSVFileIntoDecisionTable: operation result was empty"))
+            )
+          indexingResult match {
+            case Success(result) =>
+              result.get
+            case Failure(e) =>
+              val message = "Cannot index document: " + dtDocument.state
+              log.error(message + " : " + e.getMessage)
+              throw new Exception(message, e)
+          }
+        })
+        Option { IndexDocumentListResult(data = values) }
+      case _ =>
+        val message = "I could not index any document"
+        log.error(message)
+        throw new Exception(message)
     }
 
     Future { indexDocumentListResult }
