@@ -25,7 +25,6 @@ import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scalaz.Scalaz._
-import scalaz._
 
 /**
   * Implements functions, eventually used by TermResource
@@ -280,7 +279,7 @@ object TermService {
     val listOfDocRes: List[UpdateDocumentResult] = bulkResponse.getItems.map(x => {
       UpdateDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
-        x.status == RestStatus.CREATED)
+        x.status === RestStatus.CREATED)
     }).toList
 
     val result: UpdateDocumentListResult = UpdateDocumentListResult(listOfDocRes)
@@ -328,7 +327,7 @@ object TermService {
     val listOfDocRes: List[DeleteDocumentResult] = bulkResponse.getItems.map(x => {
       DeleteDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
-        x.status != RestStatus.NOT_FOUND)
+        x.status =/= RestStatus.NOT_FOUND)
     }).toList
 
     val result: DeleteDocumentListResult = DeleteDocumentListResult(listOfDocRes)

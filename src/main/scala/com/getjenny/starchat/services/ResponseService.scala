@@ -34,10 +34,10 @@ object ResponseService {
     }
 
     // calculate and return the ResponseRequestOut
-    val user_text: String = if (request.user_input.isDefined) {
-      request.user_input.get.text.getOrElse("")
-    } else {
-      ""
+    val userText: String = request.user_input match {
+      case Some(t) =>
+        t.text.getOrElse("")
+      case _ => ""
     }
 
     val conversationId: String = request.conversation_id
@@ -56,15 +56,16 @@ object ResponseService {
 
     // prepare search result for search analyzer
     val analyzersInternalData =
-      decisionTableService.resultsToMap(indexName, decisionTableService.searchDtQueries(indexName, user_text))
+      decisionTableService.resultsToMap(indexName, decisionTableService.searchDtQueries(indexName, userText))
 
     val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversedStates,
       data = analyzersInternalData)
 
-    val returnValue: String = if (request.values.isDefined)
-      request.values.get.return_value.getOrElse("")
-    else
-      ""
+    val returnValue: String = request.values match {
+      case Some(t) =>
+        t.return_value.getOrElse("")
+      case _ => ""
+    }
 
     val returnState: Option[ResponseRequestOutOperationResult] = Option {
       if (!returnValue.isEmpty) {
@@ -131,11 +132,11 @@ object ResponseService {
             val analyzerEvaluation = try {
               val analyzer = item._2.analyzer.analyzer
               val evaluationRes = analyzer match {
-                case Some(t) => t.evaluate(user_text, data = data)
+                case Some(t) => t.evaluate(userText, data = data)
                 case _ => throw AnalyzerEvaluationException("Analyzer is None")
               }
               log.debug("ResponseService: Evaluation of State(" +
-                item._1 + ") Query(" + user_text + ") Score(" + evaluationRes.toString + ")")
+                item._1 + ") Query(" + userText + ") Score(" + evaluationRes.toString + ")")
               evaluationRes
             } catch {
               case e: Exception =>
@@ -144,7 +145,7 @@ object ResponseService {
             }
             val stateId = item._1
             (stateId, analyzerEvaluation)
-        }).toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(maxResults).toMap
+          }).toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(maxResults).toMap
 
         if(analyzerValues.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] =
