@@ -605,7 +605,11 @@ object DecisionTableService {
             )
           indexingResult match {
             case Success(result) =>
-              result.get
+              result match {
+                case Some(indexingDocuments) => indexingDocuments
+                case _ =>
+                  throw new Exception("indexCSVFileIntoDecisionTable: indexingDocuments was empty")
+              }
             case Failure(e) =>
               val message = "Cannot index document: " + dtDocument.state
               log.error(message + " : " + e.getMessage)
