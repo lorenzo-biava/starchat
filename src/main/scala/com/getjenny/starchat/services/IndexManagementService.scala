@@ -62,10 +62,9 @@ object IndexManagementService {
     val operations_message: List[String] = schemaFiles.map(item => {
       val jsonInStream: InputStream = getClass.getResourceAsStream(item.path)
 
-      jsonInStream match {
-        case None.orNull =>
-          val message = "Check the file: (" + item.path + ")"
-          throw new FileNotFoundException(message)
+      if (jsonInStream == None.orNull) {
+        val message = "Check the file: (" + item.path + ")"
+        throw new FileNotFoundException(message)
       }
 
       val schemaJson: String = Source.fromInputStream(jsonInStream, "utf-8").mkString
