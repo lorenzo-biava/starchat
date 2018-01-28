@@ -23,7 +23,7 @@ class CronReloadDTService(implicit val executionContext: ExecutionContext) {
 
   class ReloadAnalyzersTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
-      case tickMessage =>
+      case `tickMessage` =>
         analyzerService.analyzersMap.foreach(item => {
           val timestamp_result: Try[Option[Long]] =
             Await.ready(systemService.getDTReloadTimestamp(indexName = item._1), 20.seconds).value.get

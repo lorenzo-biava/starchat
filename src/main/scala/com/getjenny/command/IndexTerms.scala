@@ -21,7 +21,7 @@ import scala.io.Source
 
 object IndexTerms extends JsonSupport {
 
-  private case class Params(
+  private[this] case class Params(
     host: String = "http://localhost:8888",
     index_name: String = "index_0",
     path: String = "/term/index",
@@ -32,7 +32,7 @@ object IndexTerms extends JsonSupport {
     headerKv: Seq[String] = Seq.empty[String]
   )
 
-  private def execute(params: Params) {
+  private[this] def execute(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
@@ -57,7 +57,7 @@ object IndexTerms extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
-    (termTextEntries.drop(skiplines)).foreach(entry => {
+    termTextEntries.drop(skiplines).foreach(entry => {
       val splitted = entry.split(" ")
       val term_text = splitted.head
       val term_vector = try {

@@ -32,7 +32,7 @@ import java.io.{File, FileReader, Reader, FileInputStream, InputStreamReader}
 import java.util.Base64
 
 object IndexKnowledgeBase extends JsonSupport {
-  private case class Params(
+  private[this] case class Params(
                              host: String = "http://localhost:8888",
                              indexName: String = "index_0",
                              path: String = "/knowledgebase",
@@ -45,13 +45,13 @@ object IndexKnowledgeBase extends JsonSupport {
                              headerKv: Seq[String] = Seq.empty[String]
                            )
 
-  private def decodeBase64(in: String): String = {
+  private[this] def decodeBase64(in: String): String = {
     val decodedBytes = Base64.getDecoder.decode(in)
     val decoded = new String(decodedBytes, "UTF-8")
     decoded
   }
 
-  private def loadData(params: Params, transform: String => String):
+  private[this] def loadData(params: Params, transform: String => String):
       List[Map[String, String]] = {
     val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.questionsPath.get), "UTF-8")
     lazy val questionsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,

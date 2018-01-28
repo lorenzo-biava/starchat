@@ -23,7 +23,7 @@ import scala.io.Source
 
 object DeleteDecisionTable extends JsonSupport {
 
-  private case class Params(
+  private[this] case class Params(
                              host: String = "http://localhost:8888",
                              indexName: String = "index_0",
                              path: String = "/decisiontable",
@@ -33,7 +33,7 @@ object DeleteDecisionTable extends JsonSupport {
                              headerKv: Seq[String] = Seq.empty[String]
                            )
 
-  private def execute(params: Params) {
+  private[this] def execute(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher

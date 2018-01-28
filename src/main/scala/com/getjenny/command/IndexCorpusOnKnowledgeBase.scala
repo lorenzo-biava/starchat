@@ -31,7 +31,7 @@ import java.util.Base64
 import scala.io.Source
 
 object IndexCorpusOnKnowledgeBase extends JsonSupport {
-  private case class Params(
+  private[this] case class Params(
                              host: String = "http://localhost:8888",
                              indexName: String = "index_0",
                              path: String = "/knowledgebase",
@@ -43,13 +43,13 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
                              headerKv: Seq[String] = Seq.empty[String]
                            )
 
-  private def decodeBase64(in: String): String = {
+  private[this] def decodeBase64(in: String): String = {
     val decodedBytes = Base64.getDecoder.decode(in)
     val decoded = new String(decodedBytes, "UTF-8")
     decoded
   }
 
-  private def execute(params: Params) {
+  private[this] def execute(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
