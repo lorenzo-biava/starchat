@@ -29,7 +29,6 @@ import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scalaz.Scalaz._
-import scalaz._
 
 object KnowledgeBaseService {
   val elasticClient = KnowledgeBaseElasticClient
@@ -347,7 +346,7 @@ object KnowledgeBaseService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {doc_result}
@@ -446,7 +445,7 @@ object KnowledgeBaseService {
       .setDoc(builder)
       .get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refresh_index = elasticClient.refreshIndex(getIndexName(indexName))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
@@ -483,7 +482,7 @@ object KnowledgeBaseService {
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
       .setType(elasticClient.kbIndexSuffix).setId(id).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refresh_index = elasticClient.refreshIndex(getIndexName(indexName))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
@@ -533,7 +532,7 @@ object KnowledgeBaseService {
       val questionNegative : Option[List[String]] = source.get("question_negative") match {
         case Some(t) =>
           val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-          .asScala.map(_.getOrDefault("query", null)).filter(_ != null).toList
+          .asScala.map(_.getOrDefault("query", None.orNull)).filter(_ =/= None.orNull).toList
           Option { res }
         case None => None: Option[List[String]]
       }
@@ -544,7 +543,7 @@ object KnowledgeBaseService {
             t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
               .asScala.map(_.asScala.toMap)
               .map(term => (term.getOrElse("term", "").asInstanceOf[String],
-                term.getOrElse("score", 0.0).asInstanceOf[Double])).filter(_._1 != "").toList
+                term.getOrElse("score", 0.0).asInstanceOf[Double])).filter(_._1 =/= "").toList
           }
         case None => None : Option[List[(String, Double)]]
       }
@@ -560,7 +559,7 @@ object KnowledgeBaseService {
             t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
               .asScala.map(_.asScala.toMap)
               .map(term => (term.getOrElse("term", "").asInstanceOf[String],
-                term.getOrElse("score", 0.0).asInstanceOf[Double])).filter(_._1 != "").toList
+                term.getOrElse("score", 0.0).asInstanceOf[Double])).filter(_._1 =/= "").toList
           }
         case None => None : Option[List[(String, Double)]]
       }

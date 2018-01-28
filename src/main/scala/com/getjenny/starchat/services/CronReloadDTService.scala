@@ -49,7 +49,7 @@ class CronReloadDTService(implicit val executionContext: ExecutionContext) {
               )
             reloadResult match {
               case Success(t) =>
-                log.info("Analyzer loaded for index(" + stateName + "), remote ts: " + remoteTs)
+                log.info("Analyzer loaded for index(" + stateName + "), remote ts: " + remoteTs )
                 SystemService.dtReloadTimestamp = remoteTs
               case Failure(e) =>
                 log.error("unable to load analyzers for index(" + stateName + ") from the cron job" + e.getMessage)
