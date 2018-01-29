@@ -3,6 +3,8 @@ package com.getjenny.analyzer.atoms
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.utils._
 
+import scala.util.control.NonFatal
+
 /**
   * Created by angelo on 26/06/17.
   */
@@ -37,7 +39,7 @@ class MatchDateDDMMYYYYAtomic(val arguments: List[String], restricted_args: Map[
     } catch {
       case e: PatternExtractionNoMatchException =>
         Result(score=0)
-      case e: Exception =>
+      case NonFatal(e) =>
         throw ExceptionAtomic("Parsing of regular expression specification(" + regex + "), query(" + query + ")", e)
     }
     res

@@ -21,8 +21,12 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
+
+case class AnalyzerServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
 
 case class AnalyzerItem(declaration: String,
                         analyzer: Option[StarchatAnalyzer],
@@ -59,7 +63,7 @@ object AnalyzerService {
 
     val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
     if(refreshIndex.failed_shards_n > 0) {
-      throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")
+      throw new AnalyzerServiceException("DecisionTable : index refresh failed: (" + indexName + ")")
     }
 
     val scrollResp : SearchResponse = client.prepareSearch().setIndices(getIndexName(indexName))
@@ -132,7 +136,7 @@ object AnalyzerService {
           val analyzerObject = new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)
           (Some(analyzerObject), "Analyzer successfully built: " + stateId)
         } catch {
-          case e: Exception =>
+          case NonFatal(e) =>
             val msg = "Error building analyzer (" + stateId + ") declaration(" + analyzerDeclaration + "): " + e.getMessage
             log.error(msg)
             (None, msg)

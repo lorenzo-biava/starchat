@@ -9,6 +9,8 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Expression, Result}
 import com.getjenny.analyzer.interfaces.{AtomicFactoryTrait, OperatorFactoryTrait}
 import com.getjenny.analyzer.operators._
 
+import scala.util.control.NonFatal
+import scala.util.Try
 import scalaz.Scalaz._
 
 /**
@@ -108,17 +110,15 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
         if (justOpenedParenthesis && operatorFactory.operations(commandBuffer)) {
           // We have just read an operator.
           //println("DEBUG Adding the operator " + command_buffer)
-          val operator = try {
-            operatorFactory.get(commandBuffer, List())
-          } catch {
+          val operator = Try(operatorFactory.get(commandBuffer, List())) recover {
             case e: NoSuchElementException =>
               throw AnalyzerCommandException("Operator does not exists(" + commandBuffer + ")", e)
-            case e: Exception =>
+            case NonFatal(e) =>
               throw AnalyzerCommandException("Unknown error with operator(" + commandBuffer + ")", e)
           }
           loop(chars, indice + 1, newParenthesisBalance, newQuoteBalance, "", argumentAcc,
             arguments,
-            commandTree.add(operator, newParenthesisBalance.sum - 1))
+            commandTree.add(operator.get, newParenthesisBalance.sum - 1))
         } else if (!atomicFactory.operations(commandBuffer) && !operatorFactory.operations(commandBuffer) &&
           newParenthesisBalance.head === 1 && justOpenedParenthesis) {
           throw AnalyzerCommandException("Atomic or Operator does not exists(" + commandBuffer + ")")
@@ -130,16 +130,14 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
         } else if (atomicFactory.operations(commandBuffer) && justClosedParenthesis) {
           // We have read all the atomic's arguments, add the atomic to the tree
           //println("DEBUG Calling loop, adding the atom: " + command_buffer + ", " + arguments)
-          val atomic = try {
-            atomicFactory.get(commandBuffer, arguments, restricted_args)
-          } catch {
+          val atomic = Try(atomicFactory.get(commandBuffer, arguments, restricted_args)) recover {
             case e: NoSuchElementException =>
               throw AnalyzerCommandException("Atomic does not exists(" + commandBuffer + ")", e)
-            case e: Exception =>
+            case NonFatal(e) =>
               throw AnalyzerCommandException("Unknown error with Atomic(" + commandBuffer + ")", e)
           }
           loop(chars, indice + 1, newParenthesisBalance, newQuoteBalance, "",
-            "", List.empty[String], commandTree.add(atomic, newParenthesisBalance.sum))
+            "", List.empty[String], commandTree.add(atomic.get, newParenthesisBalance.sum))
         } else if (atomicFactory.operations(commandBuffer) && justClosedQuote && !justClosedParenthesis) {
           // We have read atomic's argument, add the argument to the list
           //println("DEBUG Calling loop, adding argument: " + command_buffer + " <- " + argument_buffer)
