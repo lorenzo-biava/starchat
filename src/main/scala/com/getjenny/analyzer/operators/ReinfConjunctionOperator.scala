@@ -1,6 +1,7 @@
 package com.getjenny.analyzer.operators
 
 import com.getjenny.analyzer.expressions._
+import scalaz.Scalaz._
 
 /**
   * Created by angelo on 18/01/2018.
@@ -9,7 +10,7 @@ import com.getjenny.analyzer.expressions._
 class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOperator(children: List[Expression]) {
   override def toString: String = "ReinfConjunctionOperator(" + children.mkString(", ") + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
-    if (level == 0) {
+    if (level === 0) {
       new ReinfConjunctionOperator(e :: children)
     } else if(children.isEmpty){
       throw OperatorException("ReinfConjunctionOperator children list is empty")

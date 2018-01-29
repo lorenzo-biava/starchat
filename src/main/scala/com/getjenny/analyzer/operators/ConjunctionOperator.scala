@@ -2,8 +2,7 @@ package com.getjenny.analyzer.operators
 
 import com.getjenny.analyzer.expressions._
 import com.getjenny.analyzer.analyzers._
-import scalaz._
-import Scalaz._
+import scalaz.Scalaz._
 
 /**
   * Created by mal on 21/02/2017.
@@ -37,7 +36,7 @@ class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(c
         case _ =>
           throw OperatorException("ConjunctionOperator: argument list is empty")
       }
-      if (eval.score == 0) Result(score = 0, data = eval.data)
+      if (eval.score === 0) Result(score = 0, data = eval.data)
       else if (l.tail.isEmpty) eval
       else {
         val res = conjunction(l.tail)

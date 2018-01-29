@@ -111,7 +111,7 @@ object AnalyzerService {
           analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=false, analyzer=None, message = "not built"),
           queries=queriesTerms)
       (state, decisionTableRuntimeItem)
-    }).filter(_._2.analyzer.declaration != "").sortWith(_._2.executionOrder < _._2.executionOrder)
+    }).filter(_._2.analyzer.declaration =/= "").sortWith(_._2.executionOrder < _._2.executionOrder)
 
     analyzersData.foreach(x => {
       analyzersLHM += x
@@ -126,29 +126,30 @@ object AnalyzerService {
       val maxStateCounter = runtimeItem.maxStateCounter
       val analyzerDeclaration = runtimeItem.analyzer.declaration
       val queriesTerms = runtimeItem.queries
-      val (analyzer : StarchatAnalyzer, message: String) = if (analyzerDeclaration =/= "") {
+      val (analyzer : Option[StarchatAnalyzer], message: String) = if (analyzerDeclaration =/= "") {
         try {
           val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
           val analyzerObject = new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)
-          (analyzerObject, "Analyzer successfully built: " + stateId)
+          (Some(analyzerObject), "Analyzer successfully built: " + stateId)
         } catch {
           case e: Exception =>
             val msg = "Error building analyzer (" + stateId + ") declaration(" + analyzerDeclaration + "): " + e.getMessage
             log.error(msg)
-            (None.orNull, msg)
+            (None, msg)
         }
       } else {
         val msg = "analyzer declaration is empty"
         log.debug(msg)
-        (None.orNull, msg)
+        (None, msg)
       }
 
-      val build = analyzer != None.orNull
-
       val decisionTableRuntimeItem = DecisionTableRuntimeItem(executionOrder=executionOrder,
-        maxStateCounter=maxStateCounter,
-        analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=build, analyzer=Some(analyzer), message = message),
-        queries=queriesTerms)
+        maxStateCounter = maxStateCounter,
+        analyzer =
+          AnalyzerItem(
+            declaration=analyzerDeclaration, build=analyzer.isDefined, analyzer=analyzer, message = message
+          ),
+        queries = queriesTerms)
       (stateId, decisionTableRuntimeItem)
     }}.filter(_._2.analyzer.build)
     result
@@ -227,7 +228,7 @@ object AnalyzerService {
 
   def initializeAnalyzers(indexName: String): Unit = {
     if( ! AnalyzerService.analyzersMap.contains(indexName) ||
-        AnalyzerService.analyzersMap(indexName).analyzerMap.isEmpty) {
+      AnalyzerService.analyzersMap(indexName).analyzerMap.isEmpty) {
       val result: Try[Option[DTAnalyzerLoad]] =
         Await.ready(loadAnalyzer(indexName), 60.seconds).value.get
       result match {

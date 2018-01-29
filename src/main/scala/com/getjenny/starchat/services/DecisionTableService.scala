@@ -341,7 +341,7 @@ object DecisionTableService {
       .setDoc(builder)
       .get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")
@@ -352,7 +352,7 @@ object DecisionTableService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {docResult}
@@ -520,7 +520,7 @@ object DecisionTableService {
 
       val queries : List[String] = source.get("queries") match {
         case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-          .asScala.map(_.getOrDefault("query", null)).filter(_ != null).toList
+          .asScala.map(_.getOrDefault("query", null)).filter(_ =/= None.orNull).toList
         case None => List[String]()
       }
 
