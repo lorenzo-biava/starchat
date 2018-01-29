@@ -51,23 +51,24 @@ object IndexManagementService {
     val language: String = indexPatterns._2
 
     val analyzerJsonPath: String = "/index_management/json_index_spec/" + language + "/analyzer.json"
-    val analyzerJsonIs: InputStream = getClass.getResourceAsStream(analyzerJsonPath)
-    val analyzerJson: String = Source.fromInputStream(analyzerJsonIs, "utf-8").mkString
-
-    if(analyzerJsonIs == None.orNull) {
-      val message = "Check the file: (" + analyzerJsonPath + ")"
-      throw new FileNotFoundException(message)
+    val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
+    val analyzerJson: String = analyzerJsonIs match {
+      case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
+      case _ =>
+        val message = "Check the file: (" + analyzerJsonPath + ")"
+        throw new FileNotFoundException(message)
     }
 
-    val operations_message: List[String] = schemaFiles.map(item => {
-      val jsonInStream: InputStream = getClass.getResourceAsStream(item.path)
+    val operationsMessage: List[String] = schemaFiles.map(item => {
+      val jsonInStream: Option[InputStream] = Option{getClass.getResourceAsStream(item.path)}
 
-      if (jsonInStream == None.orNull) {
-        val message = "Check the file: (" + item.path + ")"
-        throw new FileNotFoundException(message)
+      val schemaJson: String = jsonInStream match {
+        case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
+        case _ =>
+          val message = "Check the file: (" + item.path + ")"
+          throw new FileNotFoundException(message)
       }
 
-      val schemaJson: String = Source.fromInputStream(jsonInStream, "utf-8").mkString
       val fullIndexName = indexName + "." + item.indexSuffix
 
       val createIndexRes: CreateIndexResponse =
@@ -78,7 +79,7 @@ object IndexManagementService {
       item.indexSuffix + "(" + fullIndexName + ", " + createIndexRes.isAcknowledged.toString + ")"
     })
 
-    val message = "IndexCreation: " + operations_message.mkString(" ")
+    val message = "IndexCreation: " + operationsMessage.mkString(" ")
 
     Option { IndexManagementResponse(message) }
   }
@@ -125,23 +126,24 @@ object IndexManagementService {
     val client: TransportClient = elasticClient.getClient()
 
     val analyzerJsonPath: String = "/index_management/json_index_spec/" + language + "/analyzer.json"
-    val analyzerJsonIs: InputStream = getClass.getResourceAsStream(analyzerJsonPath)
-    val analyzerJson: String = Source.fromInputStream(analyzerJsonIs, "utf-8").mkString
-
-    if(analyzerJsonIs == None.orNull) {
-      val message = "Check the file: (" + analyzerJsonPath + ")"
-      throw new FileNotFoundException(message)
+    val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
+    val analyzerJson: String = analyzerJsonIs match {
+      case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
+      case _ =>
+        val message = "Check the file: (" + analyzerJsonPath + ")"
+        throw new FileNotFoundException(message)
     }
 
     val operationsMessage: List[String] = schemaFiles.map(item => {
-      val jsonInStream: InputStream = getClass.getResourceAsStream(item.updatePath)
+      val jsonInStream: Option[InputStream] = Option{getClass.getResourceAsStream(item.updatePath)}
 
-      if (jsonInStream == None.orNull) {
-        val message = "Check the file: (" + item.path + ")"
-        throw new FileNotFoundException(message)
+      val schemaJson: String = jsonInStream match {
+        case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
+        case _ =>
+          val message = "Check the file: (" + item.path + ")"
+          throw new FileNotFoundException(message)
       }
 
-      val schemaJson: String = Source.fromInputStream(jsonInStream, "utf-8").mkString
       val fullIndexName = indexName + "." + item.indexSuffix
 
       val updateIndexRes  =
@@ -158,8 +160,6 @@ object IndexManagementService {
   }
 
   def refreshIndexes(indexName: String) : Future[Option[RefreshIndexResults]] = Future {
-    val client: TransportClient = elasticClient.getClient()
-
     val operationsResults: List[RefreshIndexResult] = schemaFiles.map(item => {
       val fullIndexName = indexName + "." + item.indexSuffix
       val refreshIndexRes: RefreshIndexResult = elasticClient.refreshIndex(fullIndexName)

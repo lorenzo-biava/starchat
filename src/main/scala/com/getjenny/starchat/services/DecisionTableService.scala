@@ -378,7 +378,7 @@ object DecisionTableService {
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
       .setType(elasticClient.dtIndexSuffix).setId(id).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")
@@ -520,7 +520,8 @@ object DecisionTableService {
 
       val queries : List[String] = source.get("queries") match {
         case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-          .asScala.map(_.getOrDefault("query", null)).filter(_ =/= None.orNull).toList
+          .asScala.map{res => Some(res.getOrDefault("query", None.orNull))}
+          .filter(_.isDefined).map(_.get).toList
         case None => List[String]()
       }
 
