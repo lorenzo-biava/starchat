@@ -38,7 +38,6 @@ object IndexDecisionTable extends JsonSupport {
                              separator: Char = ',',
                              skiplines: Int = 1,
                              timeout: Int = 60,
-                             numcols: Int = 11,
                              headerKv: Seq[String] = Seq.empty[String]
                            )
 
@@ -66,7 +65,6 @@ object IndexDecisionTable extends JsonSupport {
     }
 
     val timeout = Duration(params.timeout, "s")
-    val refnumcol = params.numcols
 
     FileToDTDocuments.getDTDocumentsFromCSV(log = system.log, file = file, separator = params.separator)
       .foreach(state => {

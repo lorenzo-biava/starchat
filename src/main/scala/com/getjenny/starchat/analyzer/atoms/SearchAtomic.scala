@@ -35,16 +35,18 @@ class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
 
     val searchRes = data.data.getOrElse("dt_queries_search_result", None)
-        .asInstanceOf[Option[Map[String, (Float, SearchDTDocument)]]]
+      .asInstanceOf[Option[Map[String, (Float, SearchDTDocument)]]]
 
     val score = searchRes match {
       case Some(t) =>
         t.get(state) match {
           case Some(refState) =>
-            val searchScoresSum = t.map{case (_, (docScore, _)) => docScore}.sum + 1
-            refState._1 / searchScoresSum
+            val referenceStateScore = refState._1
+            val searchScoresSum = t.map { case (_, (docScore, _)) => docScore }.sum + 1
+            referenceStateScore / searchScoresSum
           case _ => 0.0d
         }
+      case _ => 0.0d
     }
 
     Result(score=score)
