@@ -123,29 +123,31 @@ object ResponseService {
         val maxResults: Int = request.max_results.getOrElse(2)
         val threshold: Double = request.threshold.getOrElse(0.0d)
         val analyzerValues: Map[String, Result] =
-          AnalyzerService.analyzersMap(indexName).analyzerMap.filter(_._2.analyzer.build == true).filter(v => {
-            val traversedStateCount = traversedStatesCount.getOrElse(v._1, 0)
-            val maxStateCount = v._2.maxStateCounter
-            maxStateCount === 0 ||
-              traversedStateCount < maxStateCount // skip states already evaluated too much times
-          }).map(item => {
+          AnalyzerService.analyzersMap(indexName).analyzerMap
+            .filter{case (_, runtimeAnalyzerItem) => runtimeAnalyzerItem.analyzer.build === true}
+            .filter{case (stateName, runtimeAnalyzerItem) =>
+              val traversedStateCount = traversedStatesCount.getOrElse(stateName, 0)
+              val maxStateCount = runtimeAnalyzerItem.maxStateCounter
+              maxStateCount === 0 ||
+                traversedStateCount < maxStateCount // skip states already evaluated too much times
+            }.map{case (stateName, runtimeAnalyzerItem) =>
             val analyzerEvaluation = try {
-              val analyzer = item._2.analyzer.analyzer
+              val analyzer = runtimeAnalyzerItem.analyzer.analyzer
               val evaluationRes = analyzer match {
                 case Some(t) => t.evaluate(userText, data = data)
                 case _ => throw AnalyzerEvaluationException("Analyzer is None")
               }
               log.debug("ResponseService: Evaluation of State(" +
-                item._1 + ") Query(" + userText + ") Score(" + evaluationRes.toString + ")")
+                stateName + ") Query(" + userText + ") Score(" + evaluationRes.toString + ")")
               evaluationRes
             } catch {
               case e: Exception =>
-                log.error("ResponseService: Evaluation of (" + item._1 + ") : " + e.getMessage)
+                log.error("ResponseService: Evaluation of (" + stateName + ") : " + e.getMessage)
                 throw AnalyzerEvaluationException(e.getMessage, e)
             }
-            val stateId = item._1
+            val stateId = stateName
             (stateId, analyzerEvaluation)
-          }).toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(maxResults).toMap
+          }.toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(maxResults).toMap
 
         if(analyzerValues.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] =

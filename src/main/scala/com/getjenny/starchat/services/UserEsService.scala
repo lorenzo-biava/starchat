@@ -132,7 +132,7 @@ class UserEsService extends AbstractUserService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     docResult
