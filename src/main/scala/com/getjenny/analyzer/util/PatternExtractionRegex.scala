@@ -6,6 +6,7 @@ package com.getjenny.analyzer.utils
 
 import java.util.regex.PatternSyntaxException
 
+import scala.util.control.NonFatal
 import scala.util.matching._
 import scalaz.Scalaz._
 
@@ -54,6 +55,8 @@ class PatternExtractionRegex(declaration: String) extends
     case e: PatternSyntaxException =>
       throw PatternExtractionParsingException("Regex parsing exception: Description(" + e.getDescription
         + ") Index(" + e.getIndex + ") Message(" + e.getMessage + ") Pattern(" + e.getPattern + ")", e)
+    case NonFatal(e) =>
+      throw PatternExtractionParsingException("Non fatal exception matching regex: " + e.getMessage)
   }
 
   def evaluate(input: String): Map[String, String] = {
