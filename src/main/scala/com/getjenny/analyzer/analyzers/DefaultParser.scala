@@ -29,7 +29,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
   val atomicFactory: AtomicFactoryTrait[List[String], AbstractAtomic, Map[String, String]]
   val operatorFactory: OperatorFactoryTrait[List[Expression], AbstractOperator]
 
-  private[this] val operator = gobble_commands(command_string)
+  private[this] val operator = gobbleCommands(command_string)
 
   override def toString: String = operator.toString
   /** Read a sentence and produce a score (the higher, the more confident)
@@ -44,17 +44,17 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
     *
     * e.g.
     *
-    * gobble_commands("""boolean-and(regex(".{22,}"), boolean-and(boolean-or(keyword("forgot"), keyword("lost")), keyword("password")))""")
+    * gobbleCommands("""boolean-and(regex(".{22,}"), boolean-and(boolean-or(keyword("forgot"), keyword("lost")), keyword("password")))""")
     *
     * will produce a boolean OR operator with inside a regex Expression (which can be evaluated),
     * a boolean AND etc
     *
     */
-  def gobble_commands(commands_string: String): AbstractOperator = {
+  def gobbleCommands(commands_string: String): AbstractOperator = {
 
     /** \( does not count, \\( does
       */
-    def escape_char(chars: List[Char], i: Int): Boolean = chars(i-1) === '\\' && chars(i-2) =/= '\\'
+    def escapeChar(chars: List[Char], i: Int): Boolean = chars(i-1) === '\\' && chars(i-2) =/= '\\'
 
     def loop(chars: List[Char], indice: Int, parenthesis_balance: List[Int], quoteBalance: Int,
              commandBuffer: String, argument_buffer: String, arguments: List[String],
@@ -68,8 +68,8 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
         else
           commandTree
       } else {
-        val justOpenedParenthesis = chars(indice) === '(' && !escape_char(chars, indice) && quoteBalance === 0
-        val justClosedParenthesis = chars(indice) === ')' && !escape_char(chars, indice) && quoteBalance === 0
+        val justOpenedParenthesis = chars(indice) === '(' && !escapeChar(chars, indice) && quoteBalance === 0
+        val justClosedParenthesis = chars(indice) === ')' && !escapeChar(chars, indice) && quoteBalance === 0
 
         val newParenthesisBalance: List[Int] = {
           // if a parenthesis is inside double quotes does not count
@@ -79,8 +79,8 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
         }
 
         // new_quote_balance > 0 if text in a quotation
-        val justOpenedQuote = chars(indice) === '"' && !escape_char(chars, indice) && quoteBalance === 0
-        val justClosedQuote = chars(indice) === '"' && !escape_char(chars, indice) && quoteBalance === 1
+        val justOpenedQuote = chars(indice) === '"' && !escapeChar(chars, indice) && quoteBalance === 0
+        val justClosedQuote = chars(indice) === '"' && !escapeChar(chars, indice) && quoteBalance === 1
         val newQuoteBalance: Int = {
           if (justOpenedQuote) 1
           else if (justClosedQuote) 0
@@ -150,7 +150,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
               newCommandBuffer, argumentAcc, arguments, commandTree)
           } else {
             if (newParenthesisBalance.sum === 0 && newQuoteBalance === 0) commandTree
-            else throw AnalyzerParsingException("gobble_commands: Parenthesis or quotes do not match")
+            else throw AnalyzerParsingException("gobbleCommands: Parenthesis or quotes do not match")
           }
         }
       }
