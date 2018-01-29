@@ -58,7 +58,7 @@ object IndexTerms extends JsonSupport {
 
     termTextEntries.drop(skiplines).foreach(entry => {
       val splitted = entry.split(" ")
-      val term_text = splitted.head
+      val term_text = splitted.headOption.getOrElse("")
       val term_vector = try {
         splitted.tail.map(e => e.toDouble).toVector
       } catch {

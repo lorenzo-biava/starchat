@@ -14,6 +14,7 @@ import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.util.control.NonFatal
 import scalaz.Scalaz._
 
 /**
@@ -141,7 +142,7 @@ object ResponseService {
                 stateName + ") Query(" + userText + ") Score(" + evaluationRes.toString + ")")
               evaluationRes
             } catch {
-              case e: Exception =>
+              case NonFatal(e) =>
                 log.error("ResponseService: Evaluation of (" + stateName + ") : " + e.getMessage)
                 throw AnalyzerEvaluationException(e.getMessage, e)
             }

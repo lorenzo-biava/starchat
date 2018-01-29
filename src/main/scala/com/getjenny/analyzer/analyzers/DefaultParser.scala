@@ -99,7 +99,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
         // Now read the argument of the command
         // If inside last parenthesis was opened and quotes add to argument
         val argumentAcc =
-        if (newParenthesisBalance.head === 1 && newQuoteBalance === 1 && !justOpenedQuote) {
+        if (newParenthesisBalance.headOption.getOrElse(0) === 1 && newQuoteBalance === 1 && !justOpenedQuote) {
           argument_buffer + chars(indice)
         } else {
           ""
