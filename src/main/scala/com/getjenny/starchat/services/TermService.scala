@@ -62,7 +62,11 @@ object TermService {
 
   def payloadStringToMapStringDouble(payload: String): Map[String, Double] = {
     val m: Map[String, Double] = payload.split(" ").map(x => {
-      val termTuple = x.split("\\|") match { case Array(t, r) => (t, r.toDouble) }
+      val termTuple = x.split("\\|") match {
+        case Array(key, value) => (key, value.toDouble)
+        case _ =>
+          throw TermServiceException("unable to convert string to string->double map")
+      }
       termTuple
     }).toMap
     m
@@ -73,7 +77,7 @@ object TermService {
       val termTuple = x.split("\\|") match {
         case Array(index, value) => (index.toInt, value.toDouble)
         case _ =>
-          throw TermServiceException("unable to convert string to map")
+          throw TermServiceException("unable to convert string to int->double map")
       }
       termTuple
     }).toMap
@@ -82,7 +86,11 @@ object TermService {
 
   def payloadStringToMapStringString(payload: String): Map[String, String] = {
     val m: Map[String, String] = payload.split(" ").map(x => {
-      val termTuple = x.split("\\|") match { case Array(t, r) => (t, r) }
+      val termTuple = x.split("\\|") match {
+        case Array(key, value) => (key, value)
+        case _ =>
+          throw TermServiceException("unable to convert string to string->string map")
+      }
       termTuple
     }).toMap
     m
