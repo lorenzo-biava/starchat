@@ -2,17 +2,15 @@ package com.getjenny.starchat.routing
 
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-
-import scala.concurrent.ExecutionContext
-import akka.http.scaladsl.server.Directives
-import com.getjenny.starchat.serializers.JsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{Directives, Route}
 import com.getjenny.starchat.SCActorSystem
+import com.getjenny.starchat.serializers.JsonSupport
 import com.getjenny.starchat.services.auth.StarChatAuthenticator
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
+
+import scala.concurrent.ExecutionContext
 
 trait MyResource extends Directives with JsonSupport {
 
