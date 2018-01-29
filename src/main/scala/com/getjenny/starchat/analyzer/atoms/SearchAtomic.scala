@@ -7,13 +7,7 @@ package com.getjenny.starchat.analyzer.atoms
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.starchat.entities._
-
-import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
-
-import scala.concurrent.duration._
-import scala.concurrent._
-import ExecutionContext.Implicits.global
 
 /**
   * Query ElasticSearch

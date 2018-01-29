@@ -1,11 +1,6 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.expressions.Result
-import com.getjenny.analyzer.utils._
-import com.getjenny.analyzer.expressions.AnalyzersData
-import com.getjenny.analyzer.expressions.Result
-import scalaz._
-import Scalaz._
+import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
 /**
   * Created by angelo on 26/06/17.
@@ -16,7 +11,11 @@ import Scalaz._
   * @param arguments name of the variable to be checked
   */
 class ExistsVariableAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
-  val varName = arguments.head
+  val varName = arguments.headOption match {
+    case Some(t) => t
+    case _ => throw ExceptionAtomic("ExistsVariableAtomic: must have one argument")
+  }
+
   override def toString: String = "existsVariable"
   val isEvaluateNormalized: Boolean = true
 

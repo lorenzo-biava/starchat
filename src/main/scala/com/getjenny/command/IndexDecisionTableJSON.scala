@@ -4,26 +4,23 @@ package com.getjenny.command
   * Created by angelo on 28/09/17.
   */
 
-import akka.http.scaladsl.model.HttpRequest
+import java.io.{File, FileInputStream}
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.ActorMaterializer
 import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.Unmarshal
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import akka.stream.ActorMaterializer
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
 
-import scala.concurrent.Await
 import scala.collection.immutable
-import scala.collection.immutable.{List, Map}
-import java.io.{File, FileInputStream, FileReader}
-
+import scala.collection.immutable.List
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 object IndexDecisionTableJSON extends JsonSupport {
@@ -45,23 +42,23 @@ object IndexDecisionTableJSON extends JsonSupport {
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
 
-    val vecsize = 0
-    val skiplines = params.skiplines
-
     val baseUrl = params.host + "/" + params.indexName + params.path
     val file = new File(params.inputfile)
     val stream = new FileInputStream(file)
     val json = scala.io.Source.fromInputStream(stream).mkString
 
-    val listOfDocumentsRes: Try[SearchDTDocumentsResults] =
-      Await.ready(Unmarshal(json).to[SearchDTDocumentsResults], 30.seconds).value.get
-
-    val listOfDocuments = listOfDocumentsRes match {
-      case Success(t) => t
-      case Failure(e) =>
-        println("Error: " + e)
-        SearchDTDocumentsResults(total = 0, max_score = .0f, hits = List.empty[SearchDTDocument])
-    }
+//    val listOfDocumentsRes: Try[SearchDTDocumentsResults] =
+    val listOfDocuments = Await.ready(Unmarshal(json).to[SearchDTDocumentsResults], 30.seconds).value match {
+        case Some(listOfDocumentsRes) => listOfDocumentsRes match {
+          case Success(dtDocumentResult) => dtDocumentResult
+          case Failure(e) =>
+            println("Error: " + e)
+            SearchDTDocumentsResults(total = 0, max_score = .0f, hits = List.empty[SearchDTDocument])
+        }
+        case _ =>
+          println("Error: empty response")
+          SearchDTDocumentsResults(total = 0, max_score = .0f, hits = List.empty[SearchDTDocument])
+      }
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
       val headers: Seq[RawHeader] = params.headerKv.map(x => {

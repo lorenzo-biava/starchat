@@ -3,6 +3,7 @@ package com.getjenny.analyzer.atoms
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.utils._
 
+import scala.util.Try
 import scala.util.control.NonFatal
 
 /**
@@ -13,7 +14,10 @@ import scala.util.control.NonFatal
   * @param arguments
   */
 class MatchDateDDMMYYYYAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
-  val prefix = arguments(0)
+  val prefix = arguments.headOption match {
+    case Some(t) => t
+    case _ => throw ExceptionAtomic("MatchDateDDMMYYYYAtomic: must have one argument")
+  }
   override def toString: String = "matchDateDDMMYYYY(" + prefix + ")"
   val isEvaluateNormalized: Boolean = true
   val regex = """[""" + prefix + """day,""" + prefix + """month,""" + prefix + """year]""" +
@@ -31,17 +35,14 @@ class MatchDateDDMMYYYYAtomic(val arguments: List[String], restricted_args: Map[
     * @return Result with 1.0 the date on extracted_variables if the pattern matches, score = 0.0 otherwise
     */
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val res = try {
-      Result(
-        score = 1.0,
+    val res = Try(Result(score = 1.0,
         AnalyzersData(item_list = data.item_list, extracted_variables = regexExtractor.evaluate(query))
-      )
-    } catch {
-      case e: PatternExtractionNoMatchException =>
+      )) recover {
+      case _: PatternExtractionNoMatchException =>
         Result(score=0)
       case NonFatal(e) =>
         throw ExceptionAtomic("Parsing of regular expression specification(" + regex + "), query(" + query + ")", e)
     }
-    res
+    res.get
   }
 }

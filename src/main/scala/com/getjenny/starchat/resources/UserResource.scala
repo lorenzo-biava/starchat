@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 trait UserResource extends MyResource {
 
-  private val userService: AbstractUserService = UserService.service
+  private[this] val userService: AbstractUserService = UserService.service
 
   def postUserRoutes: Route = pathPrefix("user") {
     post {

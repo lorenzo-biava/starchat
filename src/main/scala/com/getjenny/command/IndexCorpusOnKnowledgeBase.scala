@@ -4,30 +4,23 @@ package com.getjenny.command
   * Created by angelo on 18/04/17.
   */
 
-import akka.http.scaladsl.model.HttpRequest
+import java.util.Base64
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.unmarshalling.Unmarshal
-
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-
-import com.getjenny.starchat.serializers.JsonSupport
 import com.getjenny.starchat.entities._
-import scopt.OptionParser
-import scala.util.Try
-
+import com.getjenny.starchat.serializers.JsonSupport
 import com.roundeights.hasher.Implicits._
+import scopt.OptionParser
 
-import scala.concurrent.Await
 import scala.collection.immutable
-import scala.collection.immutable.{List, Map}
-import java.util.Base64
+import scala.collection.immutable.List
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.io.Source
 
 object IndexCorpusOnKnowledgeBase extends JsonSupport {

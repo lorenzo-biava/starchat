@@ -5,11 +5,12 @@ package com.getjenny.command
   */
 
 import java.io.{File, FileReader, FileWriter}
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import au.com.bytecode.opencsv.CSVWriter
@@ -21,8 +22,8 @@ import scopt.OptionParser
 
 import scala.collection.immutable
 import scala.collection.immutable.Map
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 object SimilarityTest extends JsonSupport {
 

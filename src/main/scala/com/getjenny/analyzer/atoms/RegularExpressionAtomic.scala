@@ -14,7 +14,10 @@ class RegularExpressionAtomic(arguments: List[String], restricted_args: Map[Stri
   /**
     * A Regex
     */
-  val re = arguments(0)
+  val re = arguments.headOption match {
+    case Some(t) => t
+    case _ => throw ExceptionAtomic("RegularExpressionAtomic: must have one argument")
+  }
   override def toString: String = "regex(\"" + re + "\")"
   val isEvaluateNormalized: Boolean = false
   private[this] val rx = re.r

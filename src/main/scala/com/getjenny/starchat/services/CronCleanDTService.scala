@@ -19,11 +19,11 @@ class CronCleanDTService(implicit val executionContext: ExecutionContext) {
   val systemService: SystemService.type = SystemService
   val dtMaxTables: Long = config.getLong("es.dt_max_tables")
 
-  val Tick = "tick"
+  val tickMessage = "tick"
 
   class CleanDecisionTablesTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
-      case Tick =>
+      case `tickMessage` =>
         if(dtMaxTables > 0 && analyzerService.analyzersMap.size < dtMaxTables ) {
           val exeding_items: Long = dtMaxTables - analyzerService.analyzersMap.size
           val items_to_remove =
@@ -46,6 +46,6 @@ class CronCleanDTService(implicit val executionContext: ExecutionContext) {
       0 seconds,
       30 seconds,
       reloadDecisionTableActorRef,
-      Tick)
+      tickMessage)
   }
 }

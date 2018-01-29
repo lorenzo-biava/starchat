@@ -4,21 +4,19 @@ package com.getjenny.command
   * Created by angelo on 29/03/17.
   */
 
-import akka.http.scaladsl.model.HttpRequest
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.ActorMaterializer
 import java.net.URLEncoder
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.stream.ActorMaterializer
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
 
-import scala.concurrent.Await
 import scala.collection.immutable
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.io.Source
 
 object DeleteDecisionTable extends JsonSupport {

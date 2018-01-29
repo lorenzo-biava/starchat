@@ -2,6 +2,8 @@ package com.getjenny.analyzer.atoms
 
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.utils._
+
+import scala.util.Try
 import scala.util.control.NonFatal
 
 /**
@@ -19,25 +21,25 @@ import scala.util.control.NonFatal
   * @param arguments the regular expression in the form [<name0>,..,<nameN>](<regex>)
   */
 class MatchPatternRegexAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
-  val regex = arguments(0)
+  val regex = arguments.headOption match {
+    case Some(t) => t
+    case _ => throw ExceptionAtomic("MatchPatternRegexAtomic: must have one argument")
+  }
   override def toString: String = "matchPatternRegex(" + regex + ")"
   val isEvaluateNormalized: Boolean = true
 
   val regexExtractor = new PatternExtractionRegex(regex)
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val res = try {
-      Result(
-        score = 1.0,
-        AnalyzersData(item_list = data.item_list, extracted_variables = regexExtractor.evaluate(query))
-      )
-    } catch {
+    val res = Try(Result(score = 1.0,
+      AnalyzersData(item_list = data.item_list, extracted_variables = regexExtractor.evaluate(query))
+      )) recover {
       case e: PatternExtractionNoMatchException =>
         //println("DEBUG: no match for regular expression specification(" + regex + "), query(" + query + ")")
         Result(score=0)
       case NonFatal(e) =>
         throw ExceptionAtomic("Parsing of regular expression specification(" + regex + "), query(" + query + ")", e)
     }
-    res
+    res.get
   }
 }
