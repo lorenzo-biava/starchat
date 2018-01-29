@@ -27,7 +27,10 @@ class BooleanOrOperator(children: List[Expression]) extends AbstractOperator(chi
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     def loop(l: List[Expression]): Result = {
-      val res = l.head.matches(query, data)
+      val res = l.headOption match {
+        case Some(arg) => arg.matches(query, data)
+        case _ => throw OperatorException("BooleanOrOperator: inner expression is empty")
+      }
       if (res.score === 1) Result(score=1, data = res.data)
       else if (l.tail.isEmpty) Result(score=0, data = res.data)
       else loop(l.tail)

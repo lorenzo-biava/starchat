@@ -45,7 +45,10 @@ abstract class AbstractOperator(children: List[Expression]) extends Expression {
     */
     def add(e: Expression, level: Int): AbstractOperator
 
-  def head: Expression = children.head
+  def head: Expression = children.headOption match {
+    case Some(expr) => expr
+    case _ => throw OperatorException("Operator must have arguments")
+  }
   def tail: List[Expression] = children.tail
 }
 

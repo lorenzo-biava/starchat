@@ -120,7 +120,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
             arguments,
             commandTree.add(operator.get, newParenthesisBalance.sum - 1))
         } else if (!atomicFactory.operations(commandBuffer) && !operatorFactory.operations(commandBuffer) &&
-          newParenthesisBalance.head === 1 && justOpenedParenthesis) {
+          newParenthesisBalance.headOption.getOrElse(0) === 1 && justOpenedParenthesis) {
           throw AnalyzerCommandException("Atomic or Operator does not exists(" + commandBuffer + ")")
         } else if (atomicFactory.operations(commandBuffer) && newParenthesisBalance.head === 1 && !justClosedQuote) {
           // We are reading an atomic's argument...

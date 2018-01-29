@@ -48,7 +48,7 @@ class CronReloadDTService(implicit val executionContext: ExecutionContext) {
                 Failure(throw new Exception("ReloadAnalyzersTickActor: getting an empty response reloading analyzers"))
               )
             reloadResult match {
-              case Success(t) =>
+              case Success(_) =>
                 log.info("Analyzer loaded for index(" + stateName + "), remote ts: " + remoteTs )
                 SystemService.dtReloadTimestamp = remoteTs
               case Failure(e) =>
