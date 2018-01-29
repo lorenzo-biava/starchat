@@ -4,10 +4,12 @@ package com.getjenny.starchat.serializers
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
-import com.getjenny.starchat.entities._
-import com.getjenny.analyzer.expressions.Data
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import com.getjenny.analyzer.expressions.Data
+import com.getjenny.starchat.entities._
 import spray.json._
+
+import scalaz.Scalaz._
 
 trait   JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val responseMessageDataFormat = jsonFormat2(ReturnMessageData)
@@ -63,7 +65,11 @@ trait   JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
     def write(obj: Permissions.Value): JsValue = JsString(obj.toString)
     def read(json: JsValue): Permissions.Value = json match {
-        case JsString(str) => Permissions.withName(str)
+        case JsString(str) =>
+          Permissions.values.find(_.toString === str) match {
+            case Some(t) => t
+            case _ => throw DeserializationException("Permission string is invalid")
+          }
         case _ => throw DeserializationException("Permission string expected")
       }
   }

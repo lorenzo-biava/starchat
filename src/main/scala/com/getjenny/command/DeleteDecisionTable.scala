@@ -43,7 +43,7 @@ object DeleteDecisionTable extends JsonSupport {
     val baseUrl = params.host + "/" + params.indexName + params.path
     lazy val termTextEntries = Source.fromFile(params.inputfile).getLines
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.length > 0) {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
       val headers: Seq[RawHeader] = params.headerKv.map(x => {
         val header_opt = x.split(":")
         val key = header_opt(0)
