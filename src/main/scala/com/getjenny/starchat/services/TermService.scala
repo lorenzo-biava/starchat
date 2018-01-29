@@ -26,6 +26,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scalaz.Scalaz._
 
+case class TermServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 /**
   * Implements functions, eventually used by TermResource
   */
@@ -47,7 +50,11 @@ object TermService {
 
   def payloadStringToDoubleVector(payload: String): Vector[Double] = {
     val vector: Vector[Double] = payload.split(" ").map(x => {
-      val termTuple = x.split("\\|") match { case Array(t, r) => r.toDouble }
+      val termTuple = x.split("\\|") match {
+        case Array(_, value) => value.toDouble
+        case _ =>
+          throw TermServiceException("unable to convert payload string to double vector")
+      }
       termTuple
     }).toVector
     vector
@@ -63,7 +70,11 @@ object TermService {
 
   def payloadStringToMapIntDouble(payload: String): Map[Int, Double] = {
     val m: Map[Int, Double] = payload.split(" ").map(x => {
-      val termTuple = x.split("\\|") match { case Array(t, r) => (t.toInt, r.toDouble) }
+      val termTuple = x.split("\\|") match {
+        case Array(index, value) => (index.toInt, value.toDouble)
+        case _ =>
+          throw TermServiceException("unable to convert string to map")
+      }
       termTuple
     }).toMap
     m
