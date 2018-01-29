@@ -27,7 +27,6 @@ class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]
 
   override def toString: String = "search(\"" + state + "\")"
   val isEvaluateNormalized: Boolean = false
-  val refState: String = state
 
   override val matchThreshold: Double = 0.65
 
@@ -38,11 +37,14 @@ class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]
     val searchRes = data.data.getOrElse("dt_queries_search_result", None)
         .asInstanceOf[Option[Map[String, (Float, SearchDTDocument)]]]
 
-    val score = if(searchRes.nonEmpty && searchRes.get.contains(refState)) {
-      val doc = searchRes.get.get(refState)
-      doc.get._1 / (searchRes.get.map(x => x._2._1).sum + 1)
-    } else {
-      0.0f
+    val score = searchRes match {
+      case Some(t) =>
+        t.get(state) match {
+          case Some(refState) =>
+            val searchScoresSum = t.map{case (_, (docScore, _)) => docScore}.sum + 1
+            refState._1 / searchScoresSum
+          case _ => 0.0d
+        }
     }
 
     Result(score=score)

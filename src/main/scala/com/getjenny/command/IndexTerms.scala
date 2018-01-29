@@ -3,8 +3,8 @@ package com.getjenny.command
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.stream.ActorMaterializer
 import com.getjenny.starchat.entities.{Term, Terms}
 import com.getjenny.starchat.serializers.JsonSupport
@@ -12,9 +12,10 @@ import scopt.OptionParser
 
 import scala.collection.immutable
 import scala.collection.immutable.Map
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.io.Source
+import scala.util.control.NonFatal
 import scalaz.Scalaz._
 
 object IndexTerms extends JsonSupport {
@@ -61,7 +62,7 @@ object IndexTerms extends JsonSupport {
       val term_vector = try {
         splitted.tail.map(e => e.toDouble).toVector
       } catch {
-        case e : Exception => println("Error: " + e.getMessage)
+        case NonFatal(e) => println("Error: " + e.getMessage)
         Vector.empty[Double]
       }
 
