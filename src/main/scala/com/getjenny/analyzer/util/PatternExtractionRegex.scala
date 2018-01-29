@@ -63,13 +63,14 @@ class PatternExtractionRegex(declaration: String) extends
         val capturedPatterns = matchIterator.map(m => {
           val groupNames = m.groupNames.toList
           val groupCount = m.groupCount
-          val extracted_patterns = groupNames.map(gn => (gn, m.group(gn)))
-          (groupCount, extracted_patterns)
-        }).toList.filter(_._1 === groups.length).zipWithIndex.flatMap(m => {
-          m._1._2.map(v => {
-            (v._1 + "." + m._2, v._2)
-          })
-        }).toMap
+          val extractedPatterns = groupNames.map(gn => (gn, m.group(gn)))
+          (groupCount, extractedPatterns)
+        }).toList.filter {case (groupCount, _) => groupCount === groups.length}.zipWithIndex.flatMap {
+          case (matchPair, index) =>
+            matchPair._2.map { case (matchKey, matchValue) =>
+              (matchKey + "." + index, matchValue)
+            }
+        }.toMap
         capturedPatterns
       } else {
         throw PatternExtractionNoMatchException("No match: regex_declaration(" +
