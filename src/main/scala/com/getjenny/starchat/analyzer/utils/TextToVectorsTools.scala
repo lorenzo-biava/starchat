@@ -13,7 +13,7 @@ object TextToVectorsTools {
   val emptyVec: Vector[Double] = Vector.fill(300){0.0}
 
   implicit class Crosstable[X](xs: Traversable[X]) {
-    def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
+    def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
   }
 
    def getSumOfTermsVectors(terms: Option[TextTerms]): (Vector[Double], Double) = {

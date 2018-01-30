@@ -43,10 +43,10 @@ object ResponseService {
 
     val conversationId: String = request.conversation_id
 
-    val variables: Map[String, String] = if (request.values.isDefined)
-      request.values.get.data.getOrElse(Map[String, String]())
-    else
-      Map.empty[String, String]
+    val variables : Map[String, String] = request.values match {
+      case Some(vars) => vars.data.getOrElse(Map[String, String]())
+      case _ => Map.empty[String, String]
+    }
 
     val traversedStates: List[String] = request.traversed_states.getOrElse(List.empty[String])
     val traversedStatesCount: Map[String, Int] =

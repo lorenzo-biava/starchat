@@ -34,20 +34,23 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val textVectors = termService.textToVectors(indexName, query)
-    val distance: Double = if (textVectors.nonEmpty && textVectors.get.terms.nonEmpty) {
-      val termVector = textVectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)
-        .map(term => term.vector.get)
-      val distanceList = termVector.map(vector => {
-        if(vector.isEmpty || reliabilityFactor === 0.0) {
-          0.0
-        } else {
-          1 - cosineDist(vector, sentenceVector)
+    val distance: Double = textVectors match {
+      case Some(vectors) =>
+        val termVector = vectors.terms match {
+          case Some(terms) => terms.terms.map(term => term.vector.getOrElse(Vector.empty[Double]))
+            .filter(vector => vector.nonEmpty)
+          case _ => List.empty[Vector[Double]]
         }
-      })
-      val dist = if (distanceList.nonEmpty) distanceList.max else 0.0
-      dist
-    } else {
-      0.0
+        val distanceList = termVector.map(vector => {
+          if(vector.isEmpty || reliabilityFactor === 0.0) {
+            0.0
+          } else {
+            1 - cosineDist(vector, sentenceVector)
+          }
+        })
+        val dist = if (distanceList.nonEmpty) distanceList.max else 0.0
+        dist
+      case _ => 0.0
     }
     Result(score=distance)
   }
