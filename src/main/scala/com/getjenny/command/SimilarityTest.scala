@@ -19,6 +19,7 @@ import com.getjenny.analyzer.expressions.Data
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
+import scala.util.{Try, Success, Failure}
 
 import scala.collection.immutable
 import scala.collection.immutable.Map
@@ -31,15 +32,15 @@ object SimilarityTest extends JsonSupport {
                             host: String = "http://localhost:8888",
                             indexName: String = "index_0",
                             path: String = "/analyzers_playground",
-                            inputfile: String = "pairs.csv",
-                            outputfile: String = "output.csv",
+                            inputFile: String = "pairs.csv",
+                            outputFile: String = "output.csv",
                             analyzer: String = "keyword(\"test\")",
                             itemList: Seq[String] = Seq.empty[String],
                             variables: Map[String, String] = Map.empty[String, String],
                             text1Index: Int = 3,
                             text2Index: Int = 4,
                             separator: Char = ',',
-                            skiplines: Int = 1,
+                            skipLines: Int = 1,
                             timeout: Int = 60,
                             headerKv: Seq[String] = Seq.empty[String]
                            )
@@ -49,14 +50,13 @@ object SimilarityTest extends JsonSupport {
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
 
-    val vecsize = 0
-    val skiplines = params.skiplines
+    val skipLines = params.skipLines
 
     val baseUrl = params.host + "/" + params.indexName + params.path
-    val file = new File(params.inputfile)
+    val file = new File(params.inputFile)
     val fileReader = new FileReader(file)
     lazy val termTextEntries = CSVReader.read(input=fileReader, separator=params.separator,
-      quote = '"', skipLines=skiplines)
+      quote = '"', skipLines=skipLines)
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
       val headers: Seq[RawHeader] = params.headerKv.map(x => {
@@ -72,7 +72,7 @@ object SimilarityTest extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
-    val outFile = new File(params.outputfile)
+    val outFile = new File(params.outputFile)
     val fileWriter = new FileWriter(outFile)
     val outputCsv = new CSVWriter(fileWriter, params.separator, '"')
 
@@ -104,7 +104,16 @@ object SimilarityTest extends JsonSupport {
         case StatusCodes.OK => {
           val response =
             Unmarshal(result.entity).to[AnalyzerEvaluateResponse]
-          val value = response.value.get.get
+          val value = response.value match {
+            case Some(evalResponse) => evalResponse match {
+              case Success(t) => t
+              case Failure(e) => AnalyzerEvaluateResponse(
+                build = false, value = 0.0, build_message = "Failed evaluating response", data = None)
+            }
+            case _ =>
+              AnalyzerEvaluateResponse(
+                build = false, value = 0.0, build_message = "Response is empty", data = None)
+          }
           val score = value.value.toString
           val input_csv_fields = entry.toArray
           val csv_line = input_csv_fields ++ Array(score)
@@ -126,12 +135,12 @@ object SimilarityTest extends JsonSupport {
       help("help").text("prints this usage text")
       opt[String]("inputfile")
         .text(s"the path of the csv file with sentences" +
-          s"  default: ${defaultParams.inputfile}")
-        .action((x, c) => c.copy(inputfile = x))
+          s"  default: ${defaultParams.inputFile}")
+        .action((x, c) => c.copy(inputFile = x))
       opt[String]("outputfile")
         .text(s"the path of the output csv file" +
-          s"  default: ${defaultParams.outputfile}")
-        .action((x, c) => c.copy(outputfile = x))
+          s"  default: ${defaultParams.outputFile}")
+        .action((x, c) => c.copy(outputFile = x))
       opt[String]("host")
         .text(s"*Chat base url" +
           s"  default: ${defaultParams.host}")
@@ -170,8 +179,8 @@ object SimilarityTest extends JsonSupport {
         .action((x, c) => c.copy(timeout = x))
       opt[Int]("skiplines")
         .text(s"skip the first N lines from vector file" +
-          s"  default: ${defaultParams.skiplines}")
-        .action((x, c) => c.copy(skiplines = x))
+          s"  default: ${defaultParams.skipLines}")
+        .action((x, c) => c.copy(skipLines = x))
       opt[Seq[String]]("header_kv")
         .text(s"header key-value pair, as key1:value1,key2:value2" +
           s"  default: ${defaultParams.headerKv}")
