@@ -28,7 +28,8 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
   val termService: TermService.type = TermService
 
   val indexName: String = restricted_args("index_name")
-  val wordVec: (Vector[Double], Double) = TextToVectorsTools.getSumOfVectorsFromText(indexName, word)
+  val (sentenceVector: Vector[Double], reliabilityFactor: Double) =
+    TextToVectorsTools.getSumOfVectorsFromText(indexName, word)
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
@@ -37,10 +38,10 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
       val termVector = textVectors.get.terms.get.terms.filter(term => term.vector.nonEmpty)
         .map(term => term.vector.get)
       val distanceList = termVector.map(vector => {
-        if(vector.isEmpty || wordVec._2 === 0.0) {
+        if(vector.isEmpty || reliabilityFactor === 0.0) {
           0.0
         } else {
-          1 - cosineDist(vector, wordVec._1)
+          1 - cosineDist(vector, sentenceVector)
         }
       })
       val dist = if (distanceList.nonEmpty) distanceList.max else 0.0

@@ -7,10 +7,10 @@ import org.scalatest._
 
 class AtomsTest extends FlatSpec with Matchers {
 
-  val restricted_args = Map.empty[String, String]
+  val restrictedArgs = Map.empty[String, String]
 
   "An AtomicKeyword" should "support a floating point or a boolean value" in {
-    val k = new KeywordAtomic(List("ciao"), restricted_args)
+    val k = new KeywordAtomic(List("ciao"), restrictedArgs)
     k.evaluate("ciao, stupid moron").score should be (1.0/3)
     k.matches("ciao stupid moron").score should be (1)
   }

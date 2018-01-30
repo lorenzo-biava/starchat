@@ -6,7 +6,7 @@ package com.getjenny.analyzer.utils
 
 import java.util.regex.PatternSyntaxException
 
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
 import scala.util.control.NonFatal
 import scala.util.matching._
 import scalaz.Scalaz._
@@ -51,10 +51,21 @@ class PatternExtractionRegex(declaration: String) extends
       throw PatternExtractionDeclarationParsingException(message, e)
   }
 
-  val groups: Array[String] = regexComponents.get.getOrElse("groups", "").split(",")
-  val expressionDeclaration: String = regexComponents.get.getOrElse("regex", "")
+  val groups: Array[String] = regexComponents match {
+    case Success(g) => g.getOrElse("groups", "").split(",")
+    case Failure(e) =>
+      val message = "Bad group results: " + e.getMessage
+      throw PatternExtractionDeclarationParsingException(message)
+  }
 
-  val regularExpression: Try[Regex] = Try(Regex(expressionDeclaration, groups: _*)) recover {
+  val expressionDeclaration: String = regexComponents match {
+    case Success(s) => s.getOrElse("regex", "")
+    case Failure(e) =>
+      val message = "Bad regex results: " + e.getMessage
+      throw PatternExtractionDeclarationParsingException(message)
+  }
+
+  val regularExpression: Try[Regex] = Try(new Regex(expressionDeclaration, groups: _*)) recover {
     case e: PatternSyntaxException =>
       throw PatternExtractionParsingException("Regex parsing exception: Description(" + e.getDescription
         + ") Index(" + e.getIndex + ") Message(" + e.getMessage + ") Pattern(" + e.getPattern + ")", e)
@@ -64,14 +75,20 @@ class PatternExtractionRegex(declaration: String) extends
 
   def evaluate(input: String): Map[String, String] = {
     if (expressionDeclaration.nonEmpty && groups.nonEmpty) {
-      val matchIterator = regularExpression.get.findAllMatchIn(input)
+      val matchIterator = regularExpression match {
+        case Success(regex) => regex.findAllMatchIn(input)
+        case Failure(_) => Iterator.empty
+      }
+
       if (matchIterator.nonEmpty) {
         val capturedPatterns = matchIterator.map(m => {
           val groupNames = m.groupNames.toList
           val groupCount = m.groupCount
           val extractedPatterns = groupNames.map(gn => (gn, m.group(gn)))
           (groupCount, extractedPatterns)
-        }).toList.filter {case (groupCount, _) => groupCount === groups.length}.zipWithIndex.flatMap {
+        }).toList.filter {
+          case (groupCount, _) => groupCount === groups.length
+        }.zipWithIndex.flatMap {
           case (matchPair, index) =>
             matchPair._2.map { case (matchKey, matchValue) =>
               (matchKey + "." + index, matchValue)

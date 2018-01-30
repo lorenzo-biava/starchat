@@ -38,7 +38,7 @@ object SystemIndexManagementService {
   def createIndex() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.getClient()
 
-    val operations_message: List[String] = schemaFiles.map(item => {
+    val operationsMessage: List[String] = schemaFiles.map(item => {
       val jsonInStream: Option[InputStream] = Option {getClass.getResourceAsStream(item.path)}
 
       val schemaJson = jsonInStream match {
@@ -57,7 +57,7 @@ object SystemIndexManagementService {
       item.indexSuffix + "(" + fullIndexName + ", " + createIndexRes.isAcknowledged.toString + ")"
     })
 
-    val message = "IndexCreation: " + operations_message.mkString(" ")
+    val message = "IndexCreation: " + operationsMessage.mkString(" ")
 
     Option { IndexManagementResponse(message) }
   }

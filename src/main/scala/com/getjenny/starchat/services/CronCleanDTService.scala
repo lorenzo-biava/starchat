@@ -25,10 +25,10 @@ class CronCleanDTService(implicit val executionContext: ExecutionContext) {
     def receive: PartialFunction[Any, Unit] = {
       case `tickMessage` =>
         if(dtMaxTables > 0 && analyzerService.analyzersMap.size < dtMaxTables ) {
-          val exeding_items: Long = dtMaxTables - analyzerService.analyzersMap.size
-          val items_to_remove =
-            analyzerService.analyzersMap.toList.sortBy(_._2.lastEvaluationTimestamp).take(exeding_items.toInt)
-          items_to_remove.foreach(item => {
+          val exedingItems: Long = dtMaxTables - analyzerService.analyzersMap.size
+          val itemsToRemove =
+            analyzerService.analyzersMap.toList.sortBy(_._2.lastEvaluationTimestamp).take(exedingItems.toInt)
+          itemsToRemove.foreach(item => {
             log.info("removing decisin table: " + item._1)
             analyzerService.analyzersMap.remove(item._1)
           })

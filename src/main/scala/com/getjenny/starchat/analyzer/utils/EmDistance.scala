@@ -23,25 +23,33 @@ object EmDistance {
 
     val vectors1 = textTerms1 match {
       case Some(t) => {
-        t.terms.get.terms.map(e => (e.term, e.vector.get))
+        t.terms match {
+          case Some(terms) => terms.terms.map (e => (e.term, e.vector.get) )
+          case _ => List.empty[(String, Vector[Double])]
+        }
       }
       case _ => List.empty[(String, Vector[Double])]
     }
 
     val vectors2 = textTerms2 match {
       case Some(t) => {
-        t.terms.get.terms.map(e => (e.term, e.vector.get))
+        t.terms match {
+          case Some(terms) => terms.terms.map (e => (e.term, e.vector.get) )
+          case _ => List.empty[(String, Vector[Double])]
+        }
       }
       case _ => List.empty[(String, Vector[Double])]
     }
 
-    val reliabilityFactor1 = if(textTerms1.nonEmpty) {
-      textTerms1.get.terms_found_n.toDouble / textTerms1.get.text_terms_n.toDouble
-    } else 0.0
+    val reliabilityFactor1 = textTerms1 match {
+      case Some(terms) => terms.terms_found_n.toDouble / terms.text_terms_n.toDouble
+      case _ => 0.0d
+    }
 
-    val reliabilityFactor2 = if(textTerms2.nonEmpty) {
-      textTerms2.get.terms_found_n.toDouble / textTerms2.get.text_terms_n.toDouble
-    } else 0.0
+    val reliabilityFactor2 = textTerms2 match {
+      case Some(terms) => terms.terms_found_n.toDouble / terms.text_terms_n.toDouble
+      case _ => 0.0d
+    }
 
     val words1 = vectors1.groupBy(_._1).map(x =>
       (x._1, (x._2.length.toDouble, x._2.head._2.asInstanceOf[Vector[Double]])))

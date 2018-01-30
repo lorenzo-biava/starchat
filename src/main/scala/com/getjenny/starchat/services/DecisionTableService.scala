@@ -212,7 +212,7 @@ object DecisionTableService {
   }
 
   def resultsToMap(indexName: String, results: Option[SearchDTDocumentsResults]): Map[String, Any] = {
-    val search_results_map: Map[String, Any] = if (results.isEmpty || results.get.hits.isEmpty) {
+    val searchResultsMap: Map[String, Any] = if (results.isEmpty || results.get.hits.isEmpty) {
       Map.empty[String, Any]
     } else {
       val m: Map[String, (Float, SearchDTDocument)] = results.get.hits.map(doc => {
@@ -220,7 +220,7 @@ object DecisionTableService {
       }).toMap
       Map("dt_queries_search_result" -> Option{m})
     }
-    search_results_map
+    searchResultsMap
   }
 
   def create(indexName: String, document: DTDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {

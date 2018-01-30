@@ -198,21 +198,21 @@ object AnalyzerService {
         log.error("error during evaluation of analyzer: " + exception.getMessage)
         throw exception
       case Success(result) =>
-        val data_internal = if (analyzer_request.data.isDefined) {
+        val dataInternal = if (analyzer_request.data.isDefined) {
           val data = analyzer_request.data.get
 
           // prepare search result for search analyzer
-          val analyzers_internal_data =
+          val analyzersInternalData =
             decisionTableService.resultsToMap(indexName,
               decisionTableService.searchDtQueries(indexName, analyzer_request.query))
 
           AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
-            data = analyzers_internal_data)
+            data = analyzersInternalData)
         } else {
           AnalyzersData()
         }
 
-        val evalRes = result.evaluate(analyzer_request.query, data_internal)
+        val evalRes = result.evaluate(analyzer_request.query, dataInternal)
         val returnData = if(evalRes.data.extracted_variables.nonEmpty || evalRes.data.item_list.nonEmpty) {
           val dataInternal = evalRes.data
           Option { Data(item_list = dataInternal.item_list, extracted_variables =
@@ -222,9 +222,9 @@ object AnalyzerService {
           None: Option[Data]
         }
 
-        val analyzer_response = AnalyzerEvaluateResponse(build = true,
+        val analyzerResponse = AnalyzerEvaluateResponse(build = true,
           value = evalRes.score, data = returnData, build_message = "success")
-        analyzer_response
+        analyzerResponse
     }
 
     Future { Option { response } }

@@ -29,8 +29,8 @@ class W2VEarthMoversCosineDistanceStateAtomic(val arguments: List[String], restr
 
   val termService: TermService.type = TermService
 
-  implicit class Crosstable[X](xs: Traversable[X]) {
-    def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
+  implicit class CrossTable[X](xs: Traversable[X]) {
+    def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
   }
 
   override def toString: String = "similarCosEmdState(\"" + state + "\")"
@@ -49,7 +49,10 @@ class W2VEarthMoversCosineDistanceStateAtomic(val arguments: List[String], restr
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val queriesVectors: List[Option[TextTerms]] = queriesSentences.get.queries.map(item => Option{item})
+  val queriesVectors: List[Option[TextTerms]] = queriesSentences match {
+    case Some(sentences) => sentences.queries.map(item => Option{item})
+    case _ => List.empty[Option[TextTerms]]
+  }
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
@@ -59,8 +62,10 @@ class W2VEarthMoversCosineDistanceStateAtomic(val arguments: List[String], restr
       dist
     })
 
-    val emdDist = if (emdDistQueries.nonEmpty) emdDistQueries.max else 0.0
-    Result(score=emdDist)
+    emdDistQueries match {
+      case _ :: _ => Result(score = emdDistQueries.max)
+      case _ => Result(score = 0.0)
+    }
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least
