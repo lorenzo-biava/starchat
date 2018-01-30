@@ -6,6 +6,7 @@ package com.getjenny.analyzer.utils
 
 import java.util.regex.PatternSyntaxException
 
+import scala.util.Try
 import scala.util.control.NonFatal
 import scala.util.matching._
 import scalaz.Scalaz._
@@ -23,18 +24,19 @@ import scalaz.Scalaz._
 class PatternExtractionRegex(declaration: String) extends
   PatternExtraction(declaration) {
 
-  val pattern_extraction_field_regex = """(?:\[([\w\d\.\_]{1,256}(?:\s{0,8},\s{0,8}[\w\d\.\_]{1,256})*)\])(\(.*\))""".r
+  val patternExtractionFieldRegex: Regex =
+    """(?:\[([\w\d\.\_]{1,256}(?:\s{0,8},\s{0,8}[\w\d\.\_]{1,256})*)\])(\(.*\))""".r
   //"es. [group1,group2, group3]((?:[1-9]+)-(?:[0-9]+)(?: (?:[1-9]+)-(?:[0-9]+))*)"
 
-  val regex_components: Map[String, String] = try {
+  val regexComponents: Try[Map[String, String]] = Try {
     declaration match {
-      case pattern_extraction_field_regex(groups, regex) =>
+      case patternExtractionFieldRegex(groups, regex) =>
         Map[String, String]("groups" -> groups, "regex" -> regex)
       case _ =>
         throw PatternExtractionDeclarationParsingException("Parsing of regular expression specification(" +
           declaration + ")")
     }
-  } catch {
+  } recover {
     case e: PatternExtractionDeclarationParsingException =>
       val message = "Cannot parse the string with [<groups>+](<regex>): " + e.message
       throw PatternExtractionDeclarationParsingException(message, e)
@@ -44,14 +46,15 @@ class PatternExtractionRegex(declaration: String) extends
     case e: PatternExtractionBadSpecificationException =>
       val message = "Bad specification of the pattern matching expression: " + e.message
       throw PatternExtractionDeclarationParsingException(message, e)
+    case NonFatal(e) =>
+      val message = "Unknown error matching expression: " + e.getMessage
+      throw PatternExtractionDeclarationParsingException(message, e)
   }
 
-  val groups: Array[String] = regex_components.getOrElse("groups", "").split(",")
-  val expression_declaration: String = regex_components.getOrElse("regex", "")
+  val groups: Array[String] = regexComponents.get.getOrElse("groups", "").split(",")
+  val expressionDeclaration: String = regexComponents.get.getOrElse("regex", "")
 
-  val regular_expression: Regex = try {
-    new Regex(expression_declaration, groups: _*)
-  } catch {
+  val regularExpression: Try[Regex] = Try(Regex(expressionDeclaration, groups: _*)) recover {
     case e: PatternSyntaxException =>
       throw PatternExtractionParsingException("Regex parsing exception: Description(" + e.getDescription
         + ") Index(" + e.getIndex + ") Message(" + e.getMessage + ") Pattern(" + e.getPattern + ")", e)
@@ -60,8 +63,8 @@ class PatternExtractionRegex(declaration: String) extends
   }
 
   def evaluate(input: String): Map[String, String] = {
-    if (expression_declaration.nonEmpty && groups.nonEmpty) {
-      val matchIterator = regular_expression.findAllMatchIn(input)
+    if (expressionDeclaration.nonEmpty && groups.nonEmpty) {
+      val matchIterator = regularExpression.get.findAllMatchIn(input)
       if (matchIterator.nonEmpty) {
         val capturedPatterns = matchIterator.map(m => {
           val groupNames = m.groupNames.toList
@@ -77,11 +80,11 @@ class PatternExtractionRegex(declaration: String) extends
         capturedPatterns
       } else {
         throw PatternExtractionNoMatchException("No match: regex_declaration(" +
-          expression_declaration + ") groups(" + groups + ") input(" + input + ")")
+          expressionDeclaration + ") groups(" + groups + ") input(" + input + ")")
       }
     } else {
       throw PatternExtractionBadSpecificationException("regex_declaration(" +
-        expression_declaration + ") or groups(" + groups + ") are empty")
+        expressionDeclaration + ") or groups(" + groups + ") are empty")
     }
   }
 }
