@@ -21,11 +21,13 @@ class BooleanNotOperator(child: List[Expression]) extends AbstractOperator(child
       if (child.nonEmpty)
         throw OperatorException("BooleanNotOperator: trying to add more than one expression.")
       new BooleanNotOperator(e :: child)
-    }
-    else child.head match {
-      case c: AbstractOperator =>
-        if (child.tail.nonEmpty) throw OperatorException("BooleanNotOperator: more than one child expression.")
-        new BooleanNotOperator(c.add(e, level - 1) :: child.tail)
+    } else child.headOption match {
+      case Some(c: AbstractOperator) =>
+        child.tailOption match {
+          case Some(_) =>
+            throw OperatorException("BooleanNotOperator: more than one child expression.")
+          case _ => new BooleanNotOperator(c.add(e, level - 1) :: child.tail)
+        }
       case _ => throw OperatorException("BooleanNotOperator: trying to add to smt else than an operator.")
     }
   }
