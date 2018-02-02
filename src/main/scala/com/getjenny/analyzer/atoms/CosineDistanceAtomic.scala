@@ -16,34 +16,50 @@ class CosineDistanceAnalyzer(val arguments: List[String], restricted_args: Map[S
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     // 1- tokenize
-    val tokens = query.split("\\W").filter(_ =/= "")
+    val queryTokens = query.split("\\W").filter(_ =/= "")
 
     // 2- for each argument try to match with the tokens and extract dimensions
     val matchList = arguments.flatMap(keyword => {
       val rx = {"""\b""" + keyword + """\b"""}.r
-      val matches = tokens.map(t => {
-        val match_list = rx.findAllIn(t).toList
-        (keyword, t, match_list.length)
+      queryTokens.map(token => {
+        val tokenMatches = rx.findAllIn(token).toList
+        (keyword, token, tokenMatches.length)
       })
-      matches
     })
 
-    val keywordGroups = matchList.groupBy(_._1).map(x => {
-      (x._1, x._2.map(c => c._2).distinct, x._2.map(c => c._3).sum)
-    }).filter(_._3 < 1).map(x => (x._1, x._2, 1)).toList // remove keywords with matches
-    val tokenGroups = matchList.groupBy(_._2).map(x => {
-      (x._1, x._2.map(c => c._1).distinct, x._2.map(c => c._3).sum)
-    }).toList
+    val keywordGroups = matchList.groupBy{case (keyword, _, _) => keyword}.map { // group by keyword
+      case (keyword, tokenList) =>
+        (
+          keyword,
+          tokenList.map{case(_, token, _) => token}.distinct, // distinct tokens
+          tokenList.map{case(_, _, tokenMatchesLength) => tokenMatchesLength}.sum // num of matches
+        )
+    }.filter{case (_, _, totalTokenMatches) => totalTokenMatches < 1} // remove keywords with matches
+      .map{case(keyword, tokenList, _) => (keyword, tokenList, 1)}.toList
 
-    val analyzerItems = (keywordGroups ::: tokenGroups).map(x => (x._1, x._3))
-    val queryWordCount = tokens.map(t => (t,1)).groupBy(_._1).map(x => (x._1, x._2.map(c => c._2).sum))
+    val tokenGroups = matchList.groupBy{case (_, token, _) => token}
+      .map{case(token, tokenList) =>
+        (
+          token,
+          tokenList.map{case(keyword, _, _) => keyword}.distinct,
+          tokenList.map{case(_, _, totalTokenMatches) => totalTokenMatches}.sum
+        )
+      }.toList
+
+    val analyzerItems = (keywordGroups ::: tokenGroups)
+      .map{case(item, _, matchCount) => (item, matchCount)}
+    val queryWordCount = queryTokens.map{token => (token,1)}
+      .groupBy{case(token, _) => token}
+      .map{case(token, occurrences) =>
+        (token, occurrences.map{case(_, totOccurrences) => totOccurrences}.sum)
+      }
     val queryTerms = analyzerItems.map { case (word, _) =>
       val occ = queryWordCount.getOrElse(word, 0)
       (word, occ)
     }
 
-    val queryVector = queryTerms.map(x => x._2.toDouble).toVector
-    val analyzerVector = analyzerItems.map(x => x._2.toDouble).toVector
+    val queryVector = queryTerms.map{case(_, occ) => occ.toDouble}.toVector
+    val analyzerVector = analyzerItems.map{case(_, occ) => occ.toDouble}.toVector
 
     //println("DEBUG: " + analyzer_items)
     //println("DEBUG: " + query_terms)

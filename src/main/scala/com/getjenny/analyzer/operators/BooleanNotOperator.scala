@@ -1,8 +1,6 @@
 package com.getjenny.analyzer.operators
 
 import com.getjenny.analyzer.expressions._
-import scalaz._
-import Scalaz._
 
 /** Not Operator
   *
@@ -14,29 +12,24 @@ import Scalaz._
   */
 
 class BooleanNotOperator(child: List[Expression]) extends AbstractOperator(child: List[Expression]) {
-  require(child.lengthCompare(1) === 0, "BooleanNotOperator can only have one Expression")
+  require(child.length <= 1, "BooleanNotOperator can only have one Expression")
   override def toString: String = "booleanNot(" + child + ")"
   def add(e: Expression, level: Int = 0): AbstractOperator = {
-    if (level === 0) {
+    if (level == 0) {
       if (child.nonEmpty)
         throw OperatorException("BooleanNotOperator: trying to add more than one expression.")
       new BooleanNotOperator(e :: child)
-    } else child.headOption match {
-      case Some(c: AbstractOperator) =>
-        child.tailOption match {
-          case Some(_) =>
-            throw OperatorException("BooleanNotOperator: more than one child expression.")
-          case _ => new BooleanNotOperator(c.add(e, level - 1) :: child.tail)
-        }
+    }
+    else child.head match {
+      case c: AbstractOperator =>
+        if (child.tail.nonEmpty) throw OperatorException("BooleanNotOperator: more than one child expression.")
+        new BooleanNotOperator(c.add(e, level - 1) :: child.tail)
       case _ => throw OperatorException("BooleanNotOperator: trying to add to smt else than an operator.")
     }
   }
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val res = child.headOption match {
-      case Some(arg) => arg.matches(query, data)
-      case _ => throw OperatorException("BooleanNotOperator: inner expression is empty")
-    }
+    val res = child.head.matches(query, data)
     Result(score=1 - res.score, data = res.data)
   }
 }

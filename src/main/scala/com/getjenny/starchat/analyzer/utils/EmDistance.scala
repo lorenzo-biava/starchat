@@ -9,12 +9,12 @@ import com.getjenny.starchat.services._
   */
 
 object EmDistance {
-  val termService = TermService
+  val termService: TermService.type = TermService
 
-  val emptyVec = Vector.fill(300){0.0}
+  val emptyVec: Vector[Double] = Vector.fill(300){0.0}
 
-  implicit class Crosstable[X](xs: Traversable[X]) {
-    def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
+  implicit class CrossTable[X](xs: Traversable[X]) {
+    def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
   }
 
   //reduced EMD
@@ -51,10 +51,23 @@ object EmDistance {
       case _ => 0.0d
     }
 
-    val words1 = vectors1.groupBy(_._1).map(x =>
-      (x._1, (x._2.length.toDouble, x._2.head._2.asInstanceOf[Vector[Double]])))
-    val words2 = vectors2.groupBy(_._1).map(x =>
-      (x._1, (x._2.length.toDouble, x._2.head._2.asInstanceOf[Vector[Double]])))
+    val words1 = vectors1.groupBy{case(term, _) => term}
+      .map{case(term, termVectorPair) =>
+        val termFirstEntryVector = termVectorPair.headOption match {
+          case Some(vectorPair) => vectorPair._2
+          case _ => emptyVec
+        }
+        (term, (termVectorPair.length.toDouble, termFirstEntryVector))
+      }
+
+    val words2 = vectors2.groupBy{case(term, _) => term}
+      .map{case(term, termVectorPair) =>
+        val termFirstEntryVector = termVectorPair.headOption match {
+          case Some(vectorPair) => vectorPair._2
+          case _ => emptyVec
+        }
+        (term, (termVectorPair.length.toDouble, termFirstEntryVector))
+      }
 
     if (words1.isEmpty && words2.isEmpty) {
       (1.0, 1.0, 1.0)
@@ -99,26 +112,28 @@ object EmDistance {
   }
 
   def distanceEuclidean(indexName: String, text1: String, text2: String): Double = {
-    val emdDist = distanceText(indexName =  indexName, text1 = text1, text2 = text2, euclideanDist)
-    val score = (1.0 / (1 + emdDist._1)) * (emdDist._2 * emdDist._3)
+    val (distanceScore, reliabilityFactor1, reliabilityFactor2) =
+      distanceText(indexName =  indexName, text1 = text1, text2 = text2, euclideanDist)
+    val score = (1.0 / (1 + distanceScore)) * (reliabilityFactor1 * reliabilityFactor2)
     score
   }
 
   def distanceCosine(indexName: String, text1: String, text2: String): Double = {
-    val emdDist = distanceText(indexName = indexName, text1 = text1, text2 = text2, cosineDist)
-    val score = (1.0 / (1 + emdDist._1)) * (emdDist._2 * emdDist._3)
+    val (distanceScore, reliabilityFactor1, reliabilityFactor2) =
+      distanceText(indexName = indexName, text1 = text1, text2 = text2, cosineDist)
+    val score = (1.0 / (1 + distanceScore)) * (reliabilityFactor1 * reliabilityFactor2)
     score
   }
 
   def distanceEuclidean(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms]): Double = {
-    val emdDist = distance(textTerms1, textTerms2, euclideanDist)
-    val score = (1.0 / (1 + emdDist._1)) * (emdDist._2 * emdDist._3)
+    val (distanceScore, reliabilityFactor1, reliabilityFactor2) = distance(textTerms1, textTerms2, euclideanDist)
+    val score = (1.0 / (1 + distanceScore)) * (reliabilityFactor1 * reliabilityFactor2)
     score
   }
 
   def distanceCosine(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms]): Double = {
-    val emdDist = distance(textTerms1, textTerms2, cosineDist)
-    val score = (1.0 / (1 + emdDist._1)) * (emdDist._2 * emdDist._3)
+    val (distanceScore, reliabilityFactor1, reliabilityFactor2) = distance(textTerms1, textTerms2, cosineDist)
+    val score = (1.0 / (1 + distanceScore )) * (reliabilityFactor1 * reliabilityFactor2)
     score
   }
 
