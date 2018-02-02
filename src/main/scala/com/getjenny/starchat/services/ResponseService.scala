@@ -14,7 +14,7 @@ import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.control.NonFatal
+import scala.util.{Success, Failure, Try}
 import scalaz.Scalaz._
 
 case class ResponseServiceException(message: String = "", cause: Throwable = None.orNull)
@@ -72,7 +72,7 @@ object ResponseService {
     }
 
     val returnState: Option[ResponseRequestOutOperationResult] = Option {
-      if (!returnValue.isEmpty) {
+      if (returnValue.nonEmpty) {
         // there is a state in return_value (eg the client asked for a state), no analyzers evaluation
         val state: Future[Option[SearchDTDocumentsResults]] =
           decisionTableService.read(indexName, List[String](returnValue))
@@ -191,19 +191,22 @@ object ResponseService {
               maxStateCount === 0 ||
                 traversedStateCount < maxStateCount // skip states already evaluated too much times
             }.map{case (stateName, runtimeAnalyzerItem) =>
-            val analyzerEvaluation = try {
-              val analyzer = runtimeAnalyzerItem.analyzer.analyzer
-              val evaluationRes = analyzer match {
-                case Some(t) => t.evaluate(userText, data = data)
-                case _ => throw AnalyzerEvaluationException("Analyzer is None")
-              }
-              log.debug("ResponseService: Evaluation of State(" +
-                stateName + ") Query(" + userText + ") Score(" + evaluationRes.toString + ")")
-              evaluationRes
-            } catch {
-              case NonFatal(e) =>
-                log.error("ResponseService: Evaluation of (" + stateName + ") : " + e.getMessage)
-                throw AnalyzerEvaluationException(e.getMessage, e)
+            val analyzerEvaluation = runtimeAnalyzerItem.analyzer.analyzer match {
+              case Some(starchatAnalyzer) =>
+                Try(starchatAnalyzer.evaluate(userText, data = data)) match {
+                  case Success(evalRes) =>
+                    log.debug("ResponseService: Evaluation of State(" +
+                      stateName + ") Query(" + userText + ") Score(" + evalRes.toString + ")")
+                    evalRes
+                  case Failure(e) =>
+                    val message = "ResponseService: Evaluation of (" + stateName + ") : " + e.getMessage
+                    log.error(message)
+                    throw AnalyzerEvaluationException(message, e)
+                }
+              case _ =>
+                val message = "ResponseService: analyzer is None (" + stateName + ")"
+                log.error(message)
+                throw AnalyzerEvaluationException(message)
             }
             val stateId = stateName
             (stateId, analyzerEvaluation)
@@ -217,55 +220,62 @@ object ResponseService {
         if(analyzerValues.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] =
             decisionTableService.read(indexName, analyzerValues.keys.toList)
-          val res : Option[SearchDTDocumentsResults] = Await.result(items, 30.seconds)
-          val docs = res.get.hits.par.map(item => {
-            val doc: DTDocument = item.document
-            val state = doc.state
-            val evaluationRes: Result = analyzerValues(state)
-            val maxStateCount: Int = doc.max_state_count
-            val analyzer: String = doc.analyzer
-            var bubble: String = doc.bubble
-            var actionInput: Map[String, String] = doc.action_input
-            val stateData: Map[String, String] = doc.state_data
+          Await.result(items, 30.seconds) match {
+            case Some(docResults) =>
+              val aaa = docResults.hits.par.map(item => {
+                val doc: DTDocument = item.document
+                val state = doc.state
+                val evaluationRes: Result = analyzerValues(state)
+                val maxStateCount: Int = doc.max_state_count
+                val analyzer: String = doc.analyzer
+                var bubble: String = doc.bubble
+                var actionInput: Map[String, String] = doc.action_input
+                val stateData: Map[String, String] = doc.state_data
 
-            for ((key, value) <- data.extracted_variables) {
-              bubble = bubble.replaceAll("%" + key + "%", value)
-              actionInput = doc.action_input map { case (ki, vi) =>
-                val newValue: String = vi.replaceAll("%" + key + "%", value)
-                (ki, newValue)
-              }
-            }
+                for ((key, value) <- data.extracted_variables) {
+                  bubble = bubble.replaceAll("%" + key + "%", value)
+                  actionInput = doc.action_input map { case (ki, vi) =>
+                    val newValue: String = vi.replaceAll("%" + key + "%", value)
+                    (ki, newValue)
+                  }
+                }
 
-            for ((key, value) <- evaluationRes.data.extracted_variables) {
-              bubble = bubble.replaceAll("%" + key + "%", value)
-              actionInput = doc.action_input map { case (ki, vi) =>
-                val newValue: String = vi.replaceAll("%" + key + "%", value)
-                (ki, newValue)
-              }
-            }
+                for ((key, value) <- evaluationRes.data.extracted_variables) {
+                  bubble = bubble.replaceAll("%" + key + "%", value)
+                  actionInput = doc.action_input map { case (ki, vi) =>
+                    val newValue: String = vi.replaceAll("%" + key + "%", value)
+                    (ki, newValue)
+                  }
+                }
 
-            val cleanedData =
-              data.extracted_variables ++
-                evaluationRes.data.extracted_variables
-                  .filter{case (key, _) => !(key matches "\\A__temp__.*")}
+                val cleanedData =
+                  data.extracted_variables ++
+                    evaluationRes.data.extracted_variables
+                      .filter{case (key, _) => !(key matches "\\A__temp__.*")}
 
-            val traversedStatesUpdated: List[String] = traversedStates ++ List(state)
-            val responseItem: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
-              state = state,
-              max_state_count = maxStateCount,
-              traversed_states = traversedStatesUpdated,
-              analyzer = analyzer,
-              bubble = bubble,
-              action = doc.action,
-              data = cleanedData,
-              action_input = actionInput,
-              state_data = stateData,
-              success_value = doc.success_value,
-              failure_value = doc.failure_value,
-              score = evaluationRes.score)
-            responseItem
-          }).toList.sortWith(_.score > _.score)
-          ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{docs}) // success
+                val traversedStatesUpdated: List[String] = traversedStates ++ List(state)
+                val responseItem: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
+                  state = state,
+                  max_state_count = maxStateCount,
+                  traversed_states = traversedStatesUpdated,
+                  analyzer = analyzer,
+                  bubble = bubble,
+                  action = doc.action,
+                  data = cleanedData,
+                  action_input = actionInput,
+                  state_data = stateData,
+                  success_value = doc.success_value,
+                  failure_value = doc.failure_value,
+                  score = evaluationRes.score)
+                responseItem
+              }).toList.sortWith(_.score > _.score)
+              ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option{aaa}) // success
+            case _ =>
+              val message = "ResponseService: could not read states: from index(" +
+                indexName + ") " +  analyzerValues.keys.mkString(",")
+              log.error(message)
+              throw AnalyzerEvaluationException(message)
+          }
         } else {
           ResponseRequestOutOperationResult(ReturnMessageData(204, ""), Option{List.empty[ResponseRequestOut]})
         }

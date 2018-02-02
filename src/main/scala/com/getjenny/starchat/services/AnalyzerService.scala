@@ -7,7 +7,7 @@ package com.getjenny.starchat.services
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Data}
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.analyzer.analyzers._
+import com.getjenny.starchat.analyzer.analyzers.StarchatAnalyzer
 import com.getjenny.starchat.entities._
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.transport.TransportClient
@@ -21,7 +21,6 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
 
@@ -63,7 +62,7 @@ object AnalyzerService {
 
     val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
     if(refreshIndex.failed_shards_n > 0) {
-      throw new AnalyzerServiceException("DecisionTable : index refresh failed: (" + indexName + ")")
+      throw AnalyzerServiceException("DecisionTable : index refresh failed: (" + indexName + ")")
     }
 
     val scrollResp : SearchResponse = client.prepareSearch().setIndices(getIndexName(indexName))
@@ -130,18 +129,17 @@ object AnalyzerService {
 
   def buildAnalyzers(indexName: String, analyzersMap: mutable.LinkedHashMap[String, DecisionTableRuntimeItem]):
   mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
-    val result = analyzersMap.map{ case(stateId, runtimeItem) => {
+    val result = analyzersMap.map{ case(stateId, runtimeItem) =>
       val executionOrder = runtimeItem.executionOrder
       val maxStateCounter = runtimeItem.maxStateCounter
       val analyzerDeclaration = runtimeItem.analyzer.declaration
       val queriesTerms = runtimeItem.queries
       val (analyzer : Option[StarchatAnalyzer], message: String) = if (analyzerDeclaration =/= "") {
-        try {
-          val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
-          val analyzerObject = new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)
-          (Some(analyzerObject), "Analyzer successfully built: " + stateId)
-        } catch {
-          case NonFatal(e) =>
+        val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
+        Try(new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)) match {
+          case Success(analyzerObject) =>
+            (Some(analyzerObject), "Analyzer successfully built: " + stateId)
+          case Failure(e) =>
             val msg = "Error building analyzer (" + stateId + ") declaration(" + analyzerDeclaration + "): " + e.getMessage
             log.error(msg)
             (None, msg)
@@ -160,7 +158,7 @@ object AnalyzerService {
           ),
         queries = queriesTerms)
       (stateId, decisionTableRuntimeItem)
-    }}.filter(_._2.analyzer.build)
+    }.filter(_._2.analyzer.build)
     result
   }
 
@@ -173,7 +171,10 @@ object AnalyzerService {
 
     if (propagate) {
       val result: Try[Option[Long]] =
-        Await.ready(systemService.setDTReloadTimestamp(indexName, refresh = 1), 60.seconds).value.get
+        Await.ready(systemService.setDTReloadTimestamp(indexName, refresh = 1), 60.seconds).value match {
+          case Some(res) => res
+          case _ => throw AnalyzerServiceException("Couldn't retrieve the ReloadTimestamp, it was empty")
+        }
       result match {
         case Success(t) =>
           val ts: Long = t.getOrElse(0)
@@ -202,30 +203,28 @@ object AnalyzerService {
     analyzers
   }
 
-  def evaluateAnalyzer(indexName: String, analyzer_request: AnalyzerEvaluateRequest):
+  def evaluateAnalyzer(indexName: String, analyzerRequest: AnalyzerEvaluateRequest):
   Future[Option[AnalyzerEvaluateResponse]] = {
     val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
-    val analyzer = Try(new StarchatAnalyzer(analyzer_request.analyzer, restrictedArgs))
+    val analyzer = Try(new StarchatAnalyzer(analyzerRequest.analyzer, restrictedArgs))
     val response = analyzer match {
       case Failure(exception) =>
         log.error("error during evaluation of analyzer: " + exception.getMessage)
         throw exception
       case Success(result) =>
-        val dataInternal = if (analyzer_request.data.isDefined) {
-          val data = analyzer_request.data.get
+        val dataInternal = analyzerRequest.data match {
+          case Some(data) =>
+            // prepare search result for search analyzer
+            val analyzersInternalData =
+              decisionTableService.resultsToMap(indexName,
+                decisionTableService.searchDtQueries(indexName, analyzerRequest.query))
 
-          // prepare search result for search analyzer
-          val analyzersInternalData =
-            decisionTableService.resultsToMap(indexName,
-              decisionTableService.searchDtQueries(indexName, analyzer_request.query))
-
-          AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
-            data = analyzersInternalData)
-        } else {
-          AnalyzersData()
+            AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
+              data = analyzersInternalData)
+          case _ => AnalyzersData()
         }
 
-        val evalRes = result.evaluate(analyzer_request.query, dataInternal)
+        val evalRes = result.evaluate(analyzerRequest.query, dataInternal)
         val returnData = if(evalRes.data.extracted_variables.nonEmpty || evalRes.data.item_list.nonEmpty) {
           val dataInternal = evalRes.data
           Option { Data(item_list = dataInternal.item_list, extracted_variables =
@@ -247,10 +246,17 @@ object AnalyzerService {
     if( ! AnalyzerService.analyzersMap.contains(indexName) ||
       AnalyzerService.analyzersMap(indexName).analyzerMap.isEmpty) {
       val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzer(indexName), 60.seconds).value.get
+        Await.ready(loadAnalyzer(indexName), 60.seconds).value match {
+          case Some(loadRes) => loadRes
+          case _ => throw AnalyzerServiceException("Loading operation returned an empty result")
+        }
       result match {
         case Success(t) =>
-          log.info("analyzers loaded: " + t.get.num_of_entries)
+          val numOfEntries = t match {
+            case Some(nOfEntries) => nOfEntries
+            case _ => 0
+          }
+          log.info("analyzers loaded: " + numOfEntries)
           SystemService.dtReloadTimestamp = 0
         case Failure(e) =>
           log.error("can't load analyzers: " + e.toString)
