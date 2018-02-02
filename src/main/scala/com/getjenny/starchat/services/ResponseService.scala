@@ -17,6 +17,9 @@ import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 import scalaz.Scalaz._
 
+case class ResponseServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 /**
   * Implements response functionalities
   */
@@ -76,7 +79,10 @@ object ResponseService {
         val res: Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
         res match {
           case Some(searchDocRes) =>
-            val doc: DTDocument = searchDocRes.hits.head.document
+            val doc: DTDocument = searchDocRes.hits.headOption match {
+              case Some(searchRes) => searchRes.document
+              case _ => throw ResponseServiceException("Document was empty")
+            }
             val state: String = doc.state
             val maxStateCount: Int = doc.max_state_count
             val analyzer: String = doc.analyzer
@@ -125,7 +131,10 @@ object ResponseService {
         }
 
         if (searchDtDocumentsResults.total > 0) {
-          val doc: DTDocument = searchDtDocumentsResults.hits.head.document
+          val doc: DTDocument = searchDtDocumentsResults.hits.headOption match {
+            case Some(searchRes) => searchRes.document
+            case _ => throw ResponseServiceException("Document was empty")
+          }
           val state: String = doc.state
           val maxStateCount: Int = doc.max_state_count
           val analyzer: String = doc.analyzer
@@ -200,10 +209,10 @@ object ResponseService {
             (stateId, analyzerEvaluation)
           }.toList
             .filter{case(_, analyzerEvaluation) => analyzerEvaluation.score > threshold}
-              .sortWith{
-                case((_, analyzerEvaluation1), (_, analyzerEvaluation2)) =>
-                  analyzerEvaluation1.score > analyzerEvaluation2.score
-              }.take(maxResults).toMap
+            .sortWith{
+              case((_, analyzerEvaluation1), (_, analyzerEvaluation2)) =>
+                analyzerEvaluation1.score > analyzerEvaluation2.score
+            }.take(maxResults).toMap
 
         if(analyzerValues.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] =
@@ -237,7 +246,8 @@ object ResponseService {
 
             val cleanedData =
               data.extracted_variables ++
-                evaluationRes.data.extracted_variables.filter(item => !(item._1 matches "\\A__temp__.*"))
+                evaluationRes.data.extracted_variables
+                  .filter{case (key, _) => !(key matches "\\A__temp__.*")}
 
             val traversedStatesUpdated: List[String] = traversedStates ++ List(state)
             val responseItem: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,

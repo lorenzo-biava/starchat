@@ -183,14 +183,22 @@ object AnalyzerService {
   }
 
   def getDTAnalyzerMap(indexName: String) : Future[Option[DTAnalyzerMap]] = {
-    val analyzers = Future(Option(DTAnalyzerMap(AnalyzerService.analyzersMap(indexName).analyzerMap.map(x => {
-      val dtAnalyzer = DTAnalyzerItem(x._2.analyzer.declaration, x._2.analyzer.build, x._2.executionOrder)
-      (x._1, dtAnalyzer)
-    }).toMap)))
+    val analyzers = Future(Option(DTAnalyzerMap(AnalyzerService.analyzersMap(indexName).analyzerMap
+      .map{
+        case(stateName, dtRuntimeItem) =>
+          val dtAnalyzer =
+            DTAnalyzerItem(
+              dtRuntimeItem.analyzer.declaration,
+              dtRuntimeItem.analyzer.build,
+              dtRuntimeItem.executionOrder
+            )
+          (stateName, dtAnalyzer)
+      }.toMap)))
     analyzers
   }
 
-  def evaluateAnalyzer(indexName: String, analyzer_request: AnalyzerEvaluateRequest): Future[Option[AnalyzerEvaluateResponse]] = {
+  def evaluateAnalyzer(indexName: String, analyzer_request: AnalyzerEvaluateRequest):
+  Future[Option[AnalyzerEvaluateResponse]] = {
     val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
     val analyzer = Try(new StarchatAnalyzer(analyzer_request.analyzer, restrictedArgs))
     val response = analyzer match {

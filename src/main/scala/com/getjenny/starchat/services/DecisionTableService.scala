@@ -31,6 +31,9 @@ import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
 
+case class DecisionTableServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
@@ -199,14 +202,17 @@ object DecisionTableService {
         })
 
     val searchResult: Try[Option[SearchDTDocumentsResults]] =
-      Await.ready(this.search(indexName, dtDocumentSearch), 10.seconds).value.get
+      Await.ready(this.search(indexName, dtDocumentSearch), 10.seconds).value match {
+        case Some(c) => c
+        case _ => throw DecisionTableServiceException("Search resulted in an empty data structure")
+      }
     val foundDocuments = searchResult match {
       case Success(t) =>
         t
       case Failure(e) =>
         val message = "ResponseService search"
         log.error(message + " : " + e.getMessage)
-        throw new Exception(message, e)
+        throw DecisionTableServiceException(message, e)
     }
     foundDocuments
   }
