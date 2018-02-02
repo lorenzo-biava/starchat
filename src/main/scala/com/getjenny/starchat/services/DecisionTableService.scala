@@ -41,8 +41,9 @@ object DecisionTableService {
   val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  val queriesScoreMode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
-    "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
+  val queriesScoreMode: Map[String, ScoreMode] =
+    Map[String, ScoreMode]("min" -> ScoreMode.Min,
+      "max" -> ScoreMode.Max, "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def getIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.dtIndexSuffix)
@@ -217,16 +218,15 @@ object DecisionTableService {
     foundDocuments
   }
 
-  def resultsToMap(indexName: String, results: Option[SearchDTDocumentsResults]): Map[String, Any] = {
-    val searchResultsMap: Map[String, Any] = if (results.isEmpty || results.get.hits.isEmpty) {
-      Map.empty[String, Any]
-    } else {
-      val m: Map[String, (Float, SearchDTDocument)] = results.get.hits.map(doc => {
-        (doc.document.state, (doc.score, doc))
-      }).toMap
-      Map("dt_queries_search_result" -> Option{m})
+  def resultsToMap(results: Option[SearchDTDocumentsResults]): Map[String, Any] = {
+    results match {
+      case Some(searchRes) =>
+        val m: Map[String, (Float, SearchDTDocument)] = searchRes.hits.map(doc => {
+          (doc.document.state, (doc.score, doc))
+        }).toMap
+        Map("dt_queries_search_result" -> Option{m})
+      case _ => Map.empty[String, (Float, SearchDTDocument)]
     }
-    searchResultsMap
   }
 
   def create(indexName: String, document: DTDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {

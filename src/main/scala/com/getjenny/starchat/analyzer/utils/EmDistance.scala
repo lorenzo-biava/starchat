@@ -24,7 +24,7 @@ object EmDistance {
     val vectors1 = textTerms1 match {
       case Some(t) => {
         t.terms match {
-          case Some(terms) => terms.terms.map (e => (e.term, e.vector.get) )
+          case Some(terms) => terms.terms.map (e => (e.term, e.vector.getOrElse(emptyVec)) )
           case _ => List.empty[(String, Vector[Double])]
         }
       }
@@ -34,7 +34,7 @@ object EmDistance {
     val vectors2 = textTerms2 match {
       case Some(t) => {
         t.terms match {
-          case Some(terms) => terms.terms.map (e => (e.term, e.vector.get) )
+          case Some(terms) => terms.terms.map (e => (e.term, e.vector.getOrElse(emptyVec)) )
           case _ => List.empty[(String, Vector[Double])]
         }
       }

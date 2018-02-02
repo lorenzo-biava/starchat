@@ -158,7 +158,7 @@ object AnalyzerService {
           ),
         queries = queriesTerms)
       (stateId, decisionTableRuntimeItem)
-    }.filter(_._2.analyzer.build)
+    }.filter{case (_, decisionTableRuntimeItem) => decisionTableRuntimeItem.analyzer.build}
     result
   }
 
@@ -216,8 +216,9 @@ object AnalyzerService {
           case Some(data) =>
             // prepare search result for search analyzer
             val analyzersInternalData =
-              decisionTableService.resultsToMap(indexName,
-                decisionTableService.searchDtQueries(indexName, analyzerRequest.query))
+              decisionTableService.resultsToMap(
+                decisionTableService.searchDtQueries(indexName, analyzerRequest.query)
+              )
 
             AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
               data = analyzersInternalData)

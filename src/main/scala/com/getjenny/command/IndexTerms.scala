@@ -15,7 +15,7 @@ import scala.collection.immutable.Map
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
-import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
 
 object IndexTerms extends JsonSupport {
@@ -58,18 +58,18 @@ object IndexTerms extends JsonSupport {
 
     termTextEntries.drop(skiplines).foreach(entry => {
       val splitted = entry.split(" ")
-      val term_text = splitted.headOption.getOrElse("")
-      val term_vector = try {
-        splitted.tail.map(e => e.toDouble).toVector
-      } catch {
-        case NonFatal(e) => println("Error: " + e.getMessage)
-        Vector.empty[Double]
+      val termText = splitted.headOption.getOrElse("")
+      val termVector = Try(splitted.tail.map(e => e.toDouble).toVector) match {
+        case Success(tVec) => tVec
+        case Failure(e) =>
+          println("Error: " + e.getMessage)
+          Vector.empty[Double]
       }
 
-      if (term_vector.length =/= vecsize) {
+      if (termVector.length =/= vecsize) {
         println("Error: file row does not contains a consistent vector Row(" + entry + ")")
       } else {
-        val term = Term(term = term_text,
+        val term = Term(term = termText,
           synonyms = None: Option[Map[String, Double]],
           antonyms = None: Option[Map[String, Double]],
           tags = None: Option[String],
@@ -77,7 +77,7 @@ object IndexTerms extends JsonSupport {
           frequency_base = None: Option[Double],
           frequency_stem = None: Option[Double],
           score = None: Option[Double],
-          vector = Option{term_vector})
+          vector = Option{termVector})
 
         val terms = Terms(terms = List(term))
         val entityFuture = Marshal(terms).to[MessageEntity]

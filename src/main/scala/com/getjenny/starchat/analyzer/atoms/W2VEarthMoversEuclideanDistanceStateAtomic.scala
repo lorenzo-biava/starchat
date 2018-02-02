@@ -46,8 +46,10 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], re
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val queriesVectors: List[Option[TextTerms]] = queriesSentences.get.queries.map(item => Option{item})
-
+  val queriesVectors: List[Option[TextTerms]] = queriesSentences match {
+    case Some(sentences) => sentences.queries.map(item => Option{item})
+    case _ => List.empty[Option[TextTerms]]
+  }
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val queryVectors = termService.textToVectors(indexName = indexName, text = query)
