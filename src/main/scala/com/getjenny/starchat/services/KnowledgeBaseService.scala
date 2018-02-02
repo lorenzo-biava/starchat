@@ -35,7 +35,7 @@ object KnowledgeBaseService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   val nested_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
-            "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
+    "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def getIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)
@@ -114,7 +114,7 @@ object KnowledgeBaseService {
 
     if(documentSearch.question_scored_terms.isDefined) {
       val queryTerms = QueryBuilders.boolQuery()
-          .should(QueryBuilders.matchQuery("question_scored_terms.term", documentSearch.question_scored_terms.get))
+        .should(QueryBuilders.matchQuery("question_scored_terms.term", documentSearch.question_scored_terms.get))
       val script: Script = new Script("doc[\"question_scored_terms.score\"].value")
       val scriptFunction = new ScriptScoreFunctionBuilder(script)
       val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(queryTerms, scriptFunction)
@@ -170,7 +170,7 @@ object KnowledgeBaseService {
       val questionNegative : Option[List[String]] = source.get("question_negative") match {
         case Some(t) =>
           val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-          .asScala.map(_.asScala.get("query")).filter(_.isDefined).map(_.get).toList
+            .asScala.map(_.asScala.get("query")).filter(_.isDefined).map(_.get).toList
           Option { res }
         case None => None: Option[List[String]]
       }
@@ -178,9 +178,9 @@ object KnowledgeBaseService {
       val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
         case Some(t) => Option {
           t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
-              .map(pair =>
-                (pair.getOrDefault("term", "").asInstanceOf[String],
-                  pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
+            .map(pair =>
+              (pair.getOrDefault("term", "").asInstanceOf[String],
+                pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
             .toList
         }
         case None => None : Option[List[(String, Double)]]
@@ -194,9 +194,9 @@ object KnowledgeBaseService {
       val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
         case Some(t) => Option {
           t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
-              .map(pair =>
-                (pair.getOrDefault("term", "").asInstanceOf[String],
-                  pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
+            .map(pair =>
+              (pair.getOrDefault("term", "").asInstanceOf[String],
+                pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
             .toList
         }
         case None => None : Option[List[(String, Double)]]
@@ -286,10 +286,10 @@ object KnowledgeBaseService {
     document.question_scored_terms match {
       case Some(t) =>
         val array = builder.startArray("question_scored_terms")
-        t.foreach(q => {
-          array.startObject().field("term", q._1)
-            .field("score", q._2).endObject()
-        })
+        t.foreach{case(term, score) =>
+          array.startObject().field("term", term)
+            .field("score", score).endObject()
+        }
         array.endArray()
       case None => ;
     }
@@ -299,10 +299,10 @@ object KnowledgeBaseService {
     document.answer_scored_terms match {
       case Some(t) =>
         val array = builder.startArray("answer_scored_terms")
-        t.foreach(q => {
-          array.startObject().field("term", q._1)
-            .field("score", q._2).endObject()
-        })
+        t.foreach{case(term, score) =>
+          array.startObject().field("term", term)
+            .field("score", score).endObject()
+        }
         array.endArray()
       case None => ;
     }
@@ -400,9 +400,10 @@ object KnowledgeBaseService {
     document.answer_scored_terms match {
       case Some(t) =>
         val array = builder.startArray("answer_scored_terms")
-        t.foreach(q => {
-          array.startObject().field("term", q._1).field("score", q._2).endObject()
-        })
+        t.foreach{
+          case(term, score) =>
+            array.startObject().field("term", term).field("score", score).endObject()
+        }
         array.endArray()
       case None => ;
     }
@@ -532,7 +533,7 @@ object KnowledgeBaseService {
       val questionNegative : Option[List[String]] = source.get("question_negative") match {
         case Some(t) =>
           val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-          .asScala.map(_.getOrDefault("query", None.orNull)).filter(_ =/= None.orNull).toList
+            .asScala.map(_.getOrDefault("query", None.orNull)).filter(_ =/= None.orNull).toList
           Option { res }
         case None => None: Option[List[String]]
       }

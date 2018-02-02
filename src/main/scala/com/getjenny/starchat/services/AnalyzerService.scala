@@ -107,7 +107,12 @@ object AnalyzerService {
       val queriesTerms: List[TextTerms] = queries.map(q => {
         val queryTerms = termService.textToVectors(indexName, q)
         queryTerms
-      }).filter(_.nonEmpty).map(x => x.get)
+      }).filter(_.nonEmpty).map{
+        case(queryTerms) => queryTerms match {
+          case Some(textTerms) => textTerms
+          case _ => throw AnalyzerServiceException("TextTerms cannot be empty")
+        }
+      }
 
       val decisionTableRuntimeItem: DecisionTableRuntimeItem =
         DecisionTableRuntimeItem(executionOrder=executionOrder,
