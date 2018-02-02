@@ -120,6 +120,27 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
   }
 
   it should {
+    "return an HTTP code 200 when checking if a value does not exists in the traversed states list" in {
+      val evaluateRequest: AnalyzerEvaluateRequest =
+        AnalyzerEvaluateRequest(
+          query = "query",
+          analyzer = """bnot(hasTravState("three"))""",
+          data = Option{
+            Data(item_list=List("one", "two"), extracted_variables = Map.empty[String, String])
+          }
+        )
+
+      Post(s"/index_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val response = responseAs[AnalyzerEvaluateResponse]
+        response.build should be (true)
+        response.build_message should be ("success")
+        response.value should be (1)
+      }
+    }
+  }
+
+  it should {
     "return an HTTP code 200 when checking if the last value of the traversed states is correct" in {
       val evaluateRequest: AnalyzerEvaluateRequest =
         AnalyzerEvaluateRequest(
