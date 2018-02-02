@@ -485,93 +485,99 @@ object DecisionTableService {
     val client: TransportClient = elasticClient.getClient()
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
-    ids.nonEmpty match {
-      case true => // a list of specific ids was requested
-        multigetBuilder.add(getIndexName(indexName), elasticClient.dtIndexSuffix, ids:_*)
-        val response: MultiGetResponse = multigetBuilder.get()
+    if(ids.nonEmpty) {
+      // a list of specific ids was requested
+      multigetBuilder.add(getIndexName(indexName), elasticClient.dtIndexSuffix, ids: _*)
+      val response: MultiGetResponse = multigetBuilder.get()
 
-        val documents : Option[List[SearchDTDocument]] = Option { response.getResponses
-          .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
+      val documents: Option[List[SearchDTDocument]] = Option {
+        response.getResponses
+          .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case (e) =>
 
           val item: GetResponse = e.getResponse
 
-          val state : String = item.getId
+          val state: String = item.getId
 
-          val source : Map[String, Any] = item.getSource.asScala.toMap
+          val source: Map[String, Any] = item.getSource.asScala.toMap
 
-          val executionOrder : Int = source.get("execution_order") match {
+          val executionOrder: Int = source.get("execution_order") match {
             case Some(t) => t.asInstanceOf[Int]
             case None => 0
           }
 
-          val maxStateCount : Int = source.get("max_state_count") match {
+          val maxStateCount: Int = source.get("max_state_count") match {
             case Some(t) => t.asInstanceOf[Int]
             case None => 0
           }
 
-          val analyzer : String = source.get("analyzer") match {
+          val analyzer: String = source.get("analyzer") match {
             case Some(t) => t.asInstanceOf[String]
             case None => ""
           }
 
-          val queries : List[String] = source.get("queries") match {
+          val queries: List[String] = source.get("queries") match {
             case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-              .asScala.map{res => Some(res.getOrDefault("query", None.orNull))}
+              .asScala.map { res => Some(res.getOrDefault("query", None.orNull)) }
               .filter(_.isDefined).map(_.get).toList
             case None => List[String]()
           }
 
-          val bubble : String = source.get("bubble") match {
+          val bubble: String = source.get("bubble") match {
             case Some(t) => t.asInstanceOf[String]
             case None => ""
           }
 
-          val action : String = source.get("action") match {
+          val action: String = source.get("action") match {
             case Some(t) => t.asInstanceOf[String]
             case None => ""
           }
 
-          val actionInput : Map[String,String] = source.get("action_input") match {
-            case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
-            case None => Map[String,String]()
+          val actionInput: Map[String, String] = source.get("action_input") match {
+            case Some(t) => t.asInstanceOf[java.util.HashMap[String, String]].asScala.toMap
+            case None => Map[String, String]()
           }
 
-          val stateData : Map[String,String] = source.get("state_data") match {
-            case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
-            case None => Map[String,String]()
+          val stateData: Map[String, String] = source.get("state_data") match {
+            case Some(t) => t.asInstanceOf[java.util.HashMap[String, String]].asScala.toMap
+            case None => Map[String, String]()
           }
 
-          val successValue : String = source.get("success_value") match {
+          val successValue: String = source.get("success_value") match {
             case Some(t) => t.asInstanceOf[String]
             case None => ""
           }
 
-          val failureValue : String = source.get("failure_value") match {
+          val failureValue: String = source.get("failure_value") match {
             case Some(t) => t.asInstanceOf[String]
             case None => ""
           }
 
-          val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
+          val document: DTDocument = DTDocument(state = state, execution_order = executionOrder,
             max_state_count = maxStateCount,
             analyzer = analyzer, queries = queries, bubble = bubble,
             action = action, action_input = actionInput, state_data = stateData,
             success_value = successValue, failure_value = failureValue)
 
-          val searchDocument : SearchDTDocument = SearchDTDocument(score = .0f, document = document)
+          val searchDocument: SearchDTDocument = SearchDTDocument(score = .0f, document = document)
           searchDocument
-        }) }
+        })
+      }
 
-        val filteredDoc : List[SearchDTDocument] = documents.getOrElse(List[SearchDTDocument]())
+      val filteredDoc: List[SearchDTDocument] = documents.getOrElse(List[SearchDTDocument]())
 
-        val maxScore : Float = .0f
-        val total : Int = filteredDoc.length
-        val searchResults : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = maxScore,
-          hits = filteredDoc)
+      val maxScore: Float = .0f
+      val total: Int = filteredDoc.length
+      val searchResults: SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = maxScore,
+        hits = filteredDoc)
 
-        val searchResultsOption : Future[Option[SearchDTDocumentsResults]] = Future { Option { searchResults } }
-        searchResultsOption
-      case _ => // fetching all documents
-        getDTDocuments(indexName)
+      Future {
+        Option {
+          searchResults
+        }
+      }
+    } else {
+      // fetching all documents
+      getDTDocuments(indexName)
     }
   }
 

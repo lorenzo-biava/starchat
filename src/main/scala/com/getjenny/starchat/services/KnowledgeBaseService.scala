@@ -106,7 +106,7 @@ object KnowledgeBaseService {
       case _ => ;
     }
 
-    if(documentSearch.random.isDefined && documentSearch.random.get) {
+    if(documentSearch.random.isDefined && documentSearch.random.getOrElse(false)) {
       val randomBuilder = new RandomScoreFunctionBuilder().seed(RandomNumbers.getInt())
       val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(randomBuilder)
       boolQueryBuilder.must(functionScoreQuery)

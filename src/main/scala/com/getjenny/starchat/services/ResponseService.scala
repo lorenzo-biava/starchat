@@ -74,8 +74,58 @@ object ResponseService {
         val state: Future[Option[SearchDTDocumentsResults]] =
           decisionTableService.read(indexName, List[String](returnValue))
         val res: Option[SearchDTDocumentsResults] = Await.result(state, 30.seconds)
-        if (res.get.total > 0) {
-          val doc: DTDocument = res.get.hits.head.document
+        res match {
+          case Some(searchDocRes) =>
+            val doc: DTDocument = searchDocRes.hits.head.document
+            val state: String = doc.state
+            val maxStateCount: Int = doc.max_state_count
+            val analyzer: String = doc.analyzer
+            var bubble: String = doc.bubble
+            var actionInput: Map[String, String] = doc.action_input
+            val stateData: Map[String, String] = doc.state_data
+            if (data.extracted_variables.nonEmpty) {
+              for ((key, value) <- data.extracted_variables) {
+                bubble = bubble.replaceAll("%" + key + "%", value)
+                actionInput = doc.action_input map { case (ki, vi) =>
+                  val new_value: String = vi.replaceAll("%" + key + "%", value)
+                  (ki, new_value)
+                }
+              }
+            }
+
+            /* we do not update the traversed_states list, if the state is requested we just return it */
+            val traversedStatesUpdated: List[String] = traversedStates ++ List(state)
+            val responseData: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
+              state = state,
+              traversed_states = traversedStatesUpdated,
+              max_state_count = maxStateCount,
+              analyzer = analyzer,
+              bubble = bubble,
+              action = doc.action,
+              data = data.extracted_variables,
+              action_input = actionInput,
+              state_data = stateData,
+              success_value = doc.success_value,
+              failure_value = doc.failure_value,
+              score = 1.0d)
+
+            ResponseRequestOutOperationResult(ReturnMessageData(200, ""), Option {
+              List(responseData)
+            }) // success
+          case _ =>
+            ResponseRequestOutOperationResult(ReturnMessageData(500,
+              "Error during state retrieval"), None) // internal error
+        }
+
+        val searchDtDocumentsResults = res match {
+          case Some(searchDocRes) =>
+            searchDocRes
+          case _ =>
+            SearchDTDocumentsResults(total = 0, max_score = 0.0f, hits = List.empty[SearchDTDocument])
+        }
+
+        if (searchDtDocumentsResults.total > 0) {
+          val doc: DTDocument = searchDtDocumentsResults.hits.head.document
           val state: String = doc.state
           val maxStateCount: Int = doc.max_state_count
           val analyzer: String = doc.analyzer
@@ -148,7 +198,12 @@ object ResponseService {
             }
             val stateId = stateName
             (stateId, analyzerEvaluation)
-          }.toList.filter(_._2.score > threshold).sortWith(_._2.score > _._2.score).take(maxResults).toMap
+          }.toList
+            .filter{case(_, analyzerEvaluation) => analyzerEvaluation.score > threshold}
+              .sortWith{
+                case((_, analyzerEvaluation1), (_, analyzerEvaluation2)) =>
+                  analyzerEvaluation1.score > analyzerEvaluation2.score
+              }.take(maxResults).toMap
 
         if(analyzerValues.nonEmpty) {
           val items: Future[Option[SearchDTDocumentsResults]] =

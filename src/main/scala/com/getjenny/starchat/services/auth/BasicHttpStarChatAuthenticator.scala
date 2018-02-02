@@ -40,7 +40,10 @@ class BasicHttpStarChatAuthenticator(userService: AbstractUserService) extends A
   def authenticator(credentials: Credentials): Future[Option[User]] = {
     credentials match {
       case p@Credentials.Provided(id) =>
-        val userRequest = Await.ready(fetchUser(id), 5.seconds).value.get
+        val userRequest = Await.ready(fetchUser(id), 5.seconds).value match {
+          case Some(uReq) => uReq
+          case _ => throw AuthenticatorException("Could not retrieve credentials")
+        }
         userRequest match {
           case Success(user) =>
             val hasher = new Hasher(user.salt)
