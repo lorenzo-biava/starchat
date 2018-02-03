@@ -89,7 +89,7 @@ object EmDistance {
         val min_term = weightedWords1.map({ case((term2, (weight2, vector2))) =>
           val distance: Double = dist_f(vector1, vector2)
           (term1, term2, weight1, weight2, vector1, vector2, distance, weight1 * distance)
-        }).minBy(_._7)
+        }).minBy{case (_, _, _, _, _, _, distance, _) => distance}
         min_term._8
       }).map(x => math.abs(x)).sum
 
