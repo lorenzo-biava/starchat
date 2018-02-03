@@ -379,10 +379,10 @@ object KnowledgeBaseService {
     document.question_scored_terms match {
       case Some(t) =>
         val array = builder.startArray("question_scored_terms")
-        t.foreach(q => {
-          array.startObject().field("term", q._1)
-            .field("score", q._2).endObject()
-        })
+        t.foreach{case(term, score) =>
+          array.startObject().field("term", term)
+            .field("score", score).endObject()
+        }
         array.endArray()
       case None => ;
     }
@@ -560,7 +560,8 @@ object KnowledgeBaseService {
             t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
               .asScala.map(_.asScala.toMap)
               .map(term => (term.getOrElse("term", "").asInstanceOf[String],
-                term.getOrElse("score", 0.0).asInstanceOf[Double])).filter(_._1 =/= "").toList
+                term.getOrElse("score", 0.0).asInstanceOf[Double]))
+              .filter{case(term,_) => term =/= ""}.toList
           }
         case None => None : Option[List[(String, Double)]]
       }

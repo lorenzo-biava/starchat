@@ -53,11 +53,11 @@ class UserEsService extends AbstractUserService {
     builder.field("salt", user.salt)
 
     val permissions = builder.startObject("permissions")
-    user.permissions.foreach(x => {
-      val array = permissions.field(x._1).startArray()
-      x._2.foreach(p => { array.value(p)})
+    user.permissions.foreach{case(permIndexName, userPermissions) =>
+      val array = permissions.field(permIndexName).startArray()
+      userPermissions.foreach(p => { array.value(p)}) // for each permission
       array.endArray()
-    })
+    }
     permissions.endObject()
 
     builder.endObject()
@@ -106,11 +106,11 @@ class UserEsService extends AbstractUserService {
     user.permissions match {
       case Some(t) =>
         val permissions = builder.startObject("permissions")
-        user.permissions.getOrElse(Map.empty).foreach(x => {
-          val array = permissions.field(x._1).startArray()
-          x._2.foreach(p => { array.value(p)})
+        user.permissions.getOrElse(Map.empty).foreach{case(permIndexName, userPermissions) =>
+          val array = permissions.field(permIndexName).startArray()
+          userPermissions.foreach(p => { array.value(p)})
           array.endArray()
-        })
+        }
         permissions.endObject()
       case None => ;
     }
@@ -190,9 +190,10 @@ class UserEsService extends AbstractUserService {
       }
 
       val permissions: Map[String, Set[Permissions.Value]] = source.get("permissions") match {
-        case Some(t) => t.asInstanceOf[java.util.HashMap[String, java.util.List[String]]].asScala.map(x => {
-          (x._1, x._2.asScala.map(p => Permissions.getValue(p)).toSet)
-        }).toMap
+        case Some(t) => t.asInstanceOf[java.util.HashMap[String, java.util.List[String]]]
+          .asScala.map{case(permIndexName, userPermissions) =>
+          (permIndexName, userPermissions.asScala.map(permissionString => Permissions.getValue(permissionString)).toSet)
+        }.toMap
         case None => Map.empty[String, Set[Permissions.Value]]
       }
 

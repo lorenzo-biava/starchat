@@ -119,7 +119,12 @@ object AnalyzerService {
           analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=false, analyzer=None, message = "not built"),
           queries=queriesTerms)
       (state, decisionTableRuntimeItem)
-    }).filter(_._2.analyzer.declaration =/= "").sortWith(_._2.executionOrder < _._2.executionOrder)
+    }).filter{case (_, decisionTableRuntimeItem) => decisionTableRuntimeItem
+      .analyzer.declaration =/= ""}
+      .sortWith{
+        case ((_, decisionTableRuntimeItem1),(_, decisionTableRuntimeItem2)) =>
+          decisionTableRuntimeItem1.executionOrder < decisionTableRuntimeItem2.executionOrder
+      }
 
     analyzersData.foreach(x => {
       analyzersLHM += x

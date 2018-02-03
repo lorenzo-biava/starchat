@@ -27,11 +27,13 @@ class CronCleanDTService(implicit val executionContext: ExecutionContext) {
         if(dtMaxTables > 0 && analyzerService.analyzersMap.size < dtMaxTables ) {
           val exedingItems: Long = dtMaxTables - analyzerService.analyzersMap.size
           val itemsToRemove =
-            analyzerService.analyzersMap.toList.sortBy(_._2.lastEvaluationTimestamp).take(exedingItems.toInt)
-          itemsToRemove.foreach(item => {
-            log.info("removing decisin table: " + item._1)
-            analyzerService.analyzersMap.remove(item._1)
-          })
+            analyzerService.analyzersMap.toList.sortBy{
+              case (_, analyzer) => analyzer.lastEvaluationTimestamp
+            }.take(exedingItems.toInt)
+          itemsToRemove.foreach{case(state, _)=>
+            log.info("removing decisin table: " + state)
+            analyzerService.analyzersMap.remove(state)
+          }
         }
       case _ =>
         log.error("Unknown error cleaning decision tables")

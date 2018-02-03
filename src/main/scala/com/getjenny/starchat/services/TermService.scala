@@ -41,11 +41,11 @@ object TermService {
   }
 
   def payloadVectorToString[T](vector: Vector[T]): String = {
-    vector.zipWithIndex.map(x => x._2.toString + "|" + x._1.toString).mkString(" ")
+    vector.zipWithIndex.map{case(term, index) => index.toString + "|" + term.toString}.mkString(" ")
   }
 
   def payloadMapToString[T, U](payload: Map[T, U]): String = {
-    payload.map(x => x._1.toString + "|" + x._2.toString).mkString(" ")
+    payload.map{case(e1, e2) => e1.toString + "|" + e2.toString}.mkString(" ")
   }
 
   def payloadStringToDoubleVector(payload: String): Vector[Double] = {

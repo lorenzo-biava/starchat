@@ -49,9 +49,9 @@ trait TokenizersResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 val analyzers_description: Map[String, String] =
-                  TokenizersDescription.analyzers_map.map(e => {
-                    (e._1, e._2._2)
-                  })
+                  TokenizersDescription.analyzers_map.map{case(name, description) =>
+                    (name, description._2)
+                  }
                 val result: Option[Map[String, String]] = Option(analyzers_description)
                 completeResponse(StatusCodes.OK, StatusCodes.BadRequest, result)
               }

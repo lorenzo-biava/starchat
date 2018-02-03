@@ -28,7 +28,7 @@ class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String], restricted
   val termService: TermService.type = TermService
 
   implicit class Crosstable[X](xs: Traversable[X]) {
-    def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
+    def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
   }
 
   override def toString: String = "similarCosEmd(\"" + sentence + "\")"
