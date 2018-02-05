@@ -178,7 +178,7 @@ trait DecisionTableResource extends MyResource {
             storeUploadedFile("csv", tempDestination) {
               case (metadata, file) =>
                 val decisionTableService = DecisionTableService
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 10.seconds)
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
                 onCompleteWithBreaker(breaker)(decisionTableService.indexCSVFileIntoDecisionTable(indexName, file)) {
                   case Success(t) =>
                     file.delete()
@@ -232,7 +232,7 @@ trait DecisionTableResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 val analyzerService = AnalyzerService
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
                 onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzer(indexName, propagate = true)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
