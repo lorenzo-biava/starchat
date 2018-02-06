@@ -35,12 +35,17 @@ object CronReloadDTService  {
                   + dtReloadEntry.timestamp)
               }
 
-              analyzerService.analyzersMap.
-              if (dtReloadEntry.timestamp > 0 &&
-                dtReloadService.dtReloadTimestamp < dtReloadEntry.timestamp) {
+              val indexAnalyzers: Option[ActiveAnalyzers] =
+                analyzerService.analyzersMap.get(dtReloadEntry.indexName)
+              val localReloadTimestamp = indexAnalyzers match {
+                case Some(ts) => ts.lastReloadingTimestamp
+                case _ => dtReloadService.DT_RELOAD_TIMESTAMP_DEFAULT
+              }
+
+              if (dtReloadEntry.timestamp > 0 && localReloadTimestamp < dtReloadEntry.timestamp) {
                 val reloadResult: Try[Option[DTAnalyzerLoad]] =
                   Await.ready(
-                    analyzerService.loadAnalyzer(indexName = dtReloadEntry.indexName, propagate = false), 60.seconds
+                    analyzerService.loadAnalyzer(indexName = dtReloadEntry.indexName), 60.seconds
                   ).value.getOrElse(
                     Failure(
                       throw new Exception("ReloadAnalyzersTickActor: getting an empty response reloading analyzers"))
@@ -48,7 +53,8 @@ object CronReloadDTService  {
                 reloadResult match {
                   case Success(_) =>
                     log.info("Analyzer loaded for index(" + dtReloadEntry + "), remote ts: " + dtReloadEntry )
-                    dtReloadService.dtReloadTimestamp = dtReloadEntry.timestamp
+                    analyzerService.analyzersMap(dtReloadEntry.indexName)
+                      .lastReloadingTimestamp = dtReloadEntry.timestamp
                   case Failure(e) =>
                     log.error("unable to load analyzers for index(" +
                       dtReloadEntry + ") from the cron job" + e.getMessage)
@@ -64,7 +70,7 @@ object CronReloadDTService  {
   def reloadAnalyzers(): Unit = {
     if (systemIndexManagementService.elasticClient.dtReloadCheckFrequency > 0) {
       val reloadDecisionTableActorRef =
-        SCActorSystem.system.actorOf(Props(classOf[ReloadAnalyzersTickActor], this))
+        SCActorSystem.system.actorOf(Props(new ReloadAnalyzersTickActor))
       val delay: Int = if(systemIndexManagementService.elasticClient.dtReloadCheckDelay >= 0) {
         systemIndexManagementService.elasticClient.dtReloadCheckDelay
       } else {

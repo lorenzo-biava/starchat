@@ -25,7 +25,6 @@ import scalaz.Scalaz._
 
 object  DtReloadService {
   val DT_RELOAD_TIMESTAMP_DEFAULT : Long = -1
-//  var dtReloadTimestamp: Long = DT_RELOAD_TIMESTAMP_DEFAULT
   private[this] val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
@@ -34,7 +33,7 @@ object  DtReloadService {
   }
 
   def setDTReloadTimestamp(indexName: String, refresh: Int = 0):
-      Future[Option[DtReloadTimestamp]] = Future {
+  Future[Option[DtReloadTimestamp]] = Future {
     val dtReloadDocId: String = indexName
     val timestamp: Long = System.currentTimeMillis
 
@@ -103,7 +102,7 @@ object  DtReloadService {
     val dtReloadTimestamps : List[DtReloadTimestamp] = scrollResp.getHits.getHits.toList.map({ timestampEntry =>
       val item: SearchHit = timestampEntry
       val docId : String = item.getId // the id is the index name
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+    val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
       val timestamp : Long = source.get("state_refresh_ts") match {
         case Some(t) => t.asInstanceOf[Long]

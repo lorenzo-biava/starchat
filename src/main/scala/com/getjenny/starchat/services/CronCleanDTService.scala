@@ -42,7 +42,7 @@ object CronCleanDTService {
 
   def cleanDecisionTables(): Unit = {
     val reloadDecisionTableActorRef =
-      SCActorSystem.system.actorOf(Props(classOf[CleanDecisionTablesTickActor], this))
+      SCActorSystem.system.actorOf(Props(new CleanDecisionTablesTickActor))
 
     SCActorSystem.system.scheduler.schedule(
       0 seconds,

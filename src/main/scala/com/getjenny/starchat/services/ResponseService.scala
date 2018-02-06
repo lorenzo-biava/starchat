@@ -37,7 +37,7 @@ object ResponseService {
   Future[Option[ResponseRequestOutOperationResult]] = Future {
 
     if(! AnalyzerService.analyzersMap.contains(indexName)) {
-      val message = "Analyzers map for index(" + indexName + ") is not present, triggering reloading"
+      val message = "Decision table not ready for index(" + indexName + "), triggering reloading, please retry later"
       log.debug(message)
       cronReloadDTService.reloadAnalyzersOnce()
       throw ResponseServiceDTNotLoadedException(message)
@@ -62,7 +62,11 @@ object ResponseService {
       traversedStates.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
 
     // refresh last_used timestamp
-    AnalyzerService.analyzersMap(indexName).lastEvaluationTimestamp = System.currentTimeMillis
+    Try{AnalyzerService.analyzersMap(indexName).lastEvaluationTimestamp = System.currentTimeMillis} match {
+      case Success(_) => ;
+      case Failure(e) =>
+        throw ResponseServiceException("could not update the last evaluation timestamp for: " + indexName, e)
+    }
 
     // prepare search result for search analyzer
     val analyzersInternalData =
