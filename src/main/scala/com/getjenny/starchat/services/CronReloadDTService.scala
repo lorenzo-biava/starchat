@@ -30,11 +30,6 @@ object CronReloadDTService  {
         dtReloadService.allDTReloadTimestamp match {
           case Some(indices) =>
             indices.foreach { dtReloadEntry =>
-              if (dtReloadEntry.timestamp > 0) {
-                log.info("dt reload timestamp for index(" + dtReloadEntry.indexName + "): "
-                  + dtReloadEntry.timestamp)
-              }
-
               val indexAnalyzers: Option[ActiveAnalyzers] =
                 analyzerService.analyzersMap.get(dtReloadEntry.indexName)
               val localReloadTimestamp = indexAnalyzers match {
@@ -43,6 +38,9 @@ object CronReloadDTService  {
               }
 
               if (dtReloadEntry.timestamp > 0 && localReloadTimestamp < dtReloadEntry.timestamp) {
+                log.info("dt reloading, timestamp for sindex(" + dtReloadEntry.indexName + "): "
+                  + dtReloadEntry.timestamp)
+
                 val reloadResult: Try[Option[DTAnalyzerLoad]] =
                   Await.ready(
                     analyzerService.loadAnalyzer(indexName = dtReloadEntry.indexName), 60.seconds
