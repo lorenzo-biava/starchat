@@ -405,14 +405,14 @@ object DecisionTableService {
     val client: TransportClient = elasticClient.getClient()
 
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
-    val scroll_resp : SearchResponse = client.prepareSearch(getIndexName(index_name))
+    val scrollResp : SearchResponse = client.prepareSearch(getIndexName(index_name))
       .setTypes(elasticClient.dtIndexSuffix)
       .setQuery(qb)
       .setScroll(new TimeValue(60000))
       .setSize(10000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
-    val decisiontableContent : List[SearchDTDocument] = scroll_resp.getHits.getHits.toList.map({ e =>
+    val decisionTableContent : List[SearchDTDocument] = scrollResp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
       val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
@@ -480,9 +480,9 @@ object DecisionTableService {
     }).sortBy(_.document.state)
 
     val maxScore : Float = .0f
-    val total : Int = decisiontableContent.length
+    val total : Int = decisionTableContent.length
     val searchResults : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = maxScore,
-      hits = decisiontableContent)
+      hits = decisionTableContent)
 
     Future{Option{searchResults}}
   }

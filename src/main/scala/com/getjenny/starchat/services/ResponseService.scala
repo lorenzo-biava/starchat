@@ -14,10 +14,13 @@ import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.{Success, Failure, Try}
+import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
 
 case class ResponseServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
+case class ResponseServiceDTNotLoadedException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 /**
@@ -28,13 +31,16 @@ object ResponseService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val termService: TermService.type = TermService
   val decisionTableService: DecisionTableService.type = DecisionTableService
+  val cronReloadDTService: CronReloadDTService.type = CronReloadDTService
 
   def getNextResponse(indexName: String, request: ResponseRequestIn):
   Future[Option[ResponseRequestOutOperationResult]] = Future {
 
     if(! AnalyzerService.analyzersMap.contains(indexName)) {
-      log.debug("Analyzers map for index(" + indexName + ") is not present, fetching and building")
-      AnalyzerService.initializeAnalyzers(indexName)
+      val message = "Analyzers map for index(" + indexName + ") is not present, triggering reloading"
+      log.debug(message)
+      cronReloadDTService.reloadAnalyzersOnce()
+      throw ResponseServiceDTNotLoadedException(message)
     }
 
     // calculate and return the ResponseRequestOut
