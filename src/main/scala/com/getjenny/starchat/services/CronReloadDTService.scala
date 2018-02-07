@@ -21,13 +21,14 @@ object CronReloadDTService  {
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
   private[this] val systemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
+  private[this] var updateTimestamp: Long = 0
 
   val tickMessage = "tick"
 
   class ReloadAnalyzersTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
       case `tickMessage` =>
-        dtReloadService.allDTReloadTimestamp match {
+        dtReloadService.allDTReloadTimestamp(Some(updateTimestamp)) match {
           case Some(indices) =>
             indices.foreach { dtReloadEntry =>
               val indexAnalyzers: Option[ActiveAnalyzers] =
@@ -38,18 +39,19 @@ object CronReloadDTService  {
               }
 
               if (dtReloadEntry.timestamp > 0 && localReloadTimestamp < dtReloadEntry.timestamp) {
-                log.info("dt reloading, timestamp for sindex(" + dtReloadEntry.indexName + "): "
+                log.info("dt reloading, timestamp for index(" + dtReloadEntry.indexName + "): "
                   + dtReloadEntry.timestamp)
 
                 val reloadResult: Try[Option[DTAnalyzerLoad]] =
                   Await.ready(
-                    analyzerService.loadAnalyzer(indexName = dtReloadEntry.indexName), 60.seconds
+                    analyzerService.loadAnalyzers(indexName = dtReloadEntry.indexName), 60.seconds
                   ).value.getOrElse(
                     Failure(
                       throw new Exception("ReloadAnalyzersTickActor: getting an empty response reloading analyzers"))
                   )
+                updateTimestamp = math.max(updateTimestamp, localReloadTimestamp)
                 reloadResult match {
-                  case Success(_) =>
+                  case Success(relRes) =>
                     log.info("Analyzer loaded for index(" + dtReloadEntry + "), remote ts: " + dtReloadEntry )
                     analyzerService.analyzersMap(dtReloadEntry.indexName)
                       .lastReloadingTimestamp = dtReloadEntry.timestamp

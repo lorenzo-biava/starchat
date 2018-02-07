@@ -168,7 +168,7 @@ object AnalyzerService {
     result
   }
 
-  def loadAnalyzer(indexName: String, propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
+  def loadAnalyzers(indexName: String, propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
     val analyzerMap = buildAnalyzers(indexName, getAnalyzers(indexName))
     val dtAnalyzerLoad = DTAnalyzerLoad(num_of_entries=analyzerMap.size)
     val activeAnalyzers: ActiveAnalyzers = ActiveAnalyzers(analyzerMap = analyzerMap,
@@ -258,7 +258,7 @@ object AnalyzerService {
     if( ! AnalyzerService.analyzersMap.contains(indexName) ||
       AnalyzerService.analyzersMap(indexName).analyzerMap.isEmpty) {
       val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzer(indexName), 60.seconds).value match {
+        Await.ready(loadAnalyzers(indexName), 60.seconds).value match {
           case Some(loadRes) => loadRes
           case _ => throw AnalyzerServiceException("Loading operation returned an empty result")
         }

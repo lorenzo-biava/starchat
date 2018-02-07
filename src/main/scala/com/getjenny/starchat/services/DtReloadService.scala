@@ -14,9 +14,10 @@ import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.search.SearchHit
+
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -88,14 +89,18 @@ object  DtReloadService {
     Option {DtReloadTimestamp(indexName = indexName, timestamp = timestamp)}
   }
 
-  def allDTReloadTimestamp : Option[List[DtReloadTimestamp]] = {
+  def allDTReloadTimestamp(minTimestamp: Option[Long] = None) : Option[List[DtReloadTimestamp]] = {
     val client: TransportClient = elasticClient.getClient()
+    val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
+    minTimestamp match {
+      case Some(minTs) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("state_refresh_ts").gt(minTs))
+      case _ => ;
+    }
 
-    val qb : QueryBuilder = QueryBuilders.matchAllQuery()
     val scrollResp : SearchResponse = client.prepareSearch(getIndexName())
       .setTypes(elasticClient.systemRefreshDtIndexSuffix)
-      .setQuery(qb)
-      .addSort("state_refresh_ts", SortOrder.DESC)
+      .setQuery(boolQueryBuilder)
+      .addSort("", SortOrder.DESC)
       .setScroll(new TimeValue(60000))
       .setSize(10000).get()
 

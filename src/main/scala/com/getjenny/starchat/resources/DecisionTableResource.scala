@@ -234,7 +234,7 @@ trait DecisionTableResource extends MyResource {
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 val analyzerService = AnalyzerService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
-                onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzer(indexName, propagate = true)) {
+                onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzers(indexName, propagate = true)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
