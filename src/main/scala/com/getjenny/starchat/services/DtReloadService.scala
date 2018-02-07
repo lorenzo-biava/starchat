@@ -100,7 +100,7 @@ object  DtReloadService {
     val scrollResp : SearchResponse = client.prepareSearch(getIndexName())
       .setTypes(elasticClient.systemRefreshDtIndexSuffix)
       .setQuery(boolQueryBuilder)
-      .addSort("", SortOrder.DESC)
+      .addSort("state_refresh_ts", SortOrder.DESC)
       .setScroll(new TimeValue(60000))
       .setSize(10000).get()
 
