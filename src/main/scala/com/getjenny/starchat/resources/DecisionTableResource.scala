@@ -12,9 +12,10 @@ import akka.http.scaladsl.server.directives.FileInfo
 import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
-import com.getjenny.starchat.services.{AnalyzerService, DecisionTableService, ResponseService}
+import com.getjenny.starchat.services.{AnalyzerService, DecisionTableService, ResponseService, ResponseServiceDTNotLoadedException}
 
 import scala.concurrent.duration._
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 import scalaz.Scalaz._
 
@@ -233,7 +234,7 @@ trait DecisionTableResource extends MyResource {
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 val analyzerService = AnalyzerService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
-                onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzer(indexName, propagate = true)) {
+                onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzers(indexName, propagate = true)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
@@ -295,16 +296,30 @@ trait DecisionTableResource extends MyResource {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(responseService.getNextResponse(indexName, response_request)) {
                     case Failure(e) =>
-                      log.error("index(" + indexName + ") DecisionTableResource: Unable to complete the request: " + e.getMessage)
-                      completeResponse(StatusCodes.BadRequest,
-                        Option {
-                          ResponseRequestOutOperationResult(
-                            ReturnMessageData(code = 109, message = e.getMessage),
+                      e match {
+                        case rsDtNotLoadedE: ResponseServiceDTNotLoadedException =>
+                          completeResponse(StatusCodes.ResetContent,
                             Option {
-                              List.empty[ResponseRequestOut]
-                            })
-                        }
-                      )
+                              ResponseRequestOutOperationResult(
+                                ReturnMessageData(code = 109, message = rsDtNotLoadedE.getMessage),
+                                Option {
+                                  List.empty[ResponseRequestOut]
+                                })
+                            }
+                          )
+                        case NonFatal(nonFatalE) =>
+                          log.error("index(" + indexName +
+                            ") DecisionTableResource: Unable to complete the request: " + nonFatalE.getMessage)
+                          completeResponse(StatusCodes.BadRequest,
+                            Option {
+                              ResponseRequestOutOperationResult(
+                                ReturnMessageData(code = 110, message = e.getMessage),
+                                Option {
+                                  List.empty[ResponseRequestOut]
+                                })
+                            }
+                          )
+                      }
                     case Success(response_value) =>
                       response_value match {
                         case Some(t) =>
@@ -318,7 +333,7 @@ trait DecisionTableResource extends MyResource {
                           completeResponse(StatusCodes.BadRequest,
                             Option {
                               ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 110, message = "unable to complete the response"),
+                                ReturnMessageData(code = 111, message = "unable to complete the response"),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })

@@ -1,6 +1,6 @@
 {
   "mappings": {
-    "system": {
+    "refresh_decisiontable": {
       "properties": {
         "state_refresh_ts": {
           "type": "long"

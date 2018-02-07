@@ -40,7 +40,8 @@ case class DecisionTableRuntimeItem(executionOrder: Int,
 
 case class ActiveAnalyzers(
                             var analyzerMap : mutable.LinkedHashMap[String, DecisionTableRuntimeItem],
-                            var lastEvaluationTimestamp: Long
+                            var lastEvaluationTimestamp: Long = -1,
+                            var lastReloadingTimestamp: Long = -1
                           )
 
 object AnalyzerService {
@@ -50,7 +51,7 @@ object AnalyzerService {
   val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
   val termService: TermService.type = TermService
   val decisionTableService: DecisionTableService.type = DecisionTableService
-  val systemService: SystemService.type = SystemService
+  val dtReloadService: DtReloadService.type = DtReloadService
 
   def getIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.dtIndexSuffix)
@@ -167,26 +168,31 @@ object AnalyzerService {
     result
   }
 
-  def loadAnalyzer(indexName: String, propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
+  def loadAnalyzers(indexName: String, propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
     val analyzerMap = buildAnalyzers(indexName, getAnalyzers(indexName))
     val dtAnalyzerLoad = DTAnalyzerLoad(num_of_entries=analyzerMap.size)
     val activeAnalyzers: ActiveAnalyzers = ActiveAnalyzers(analyzerMap = analyzerMap,
-      lastEvaluationTimestamp = 0)
+      lastEvaluationTimestamp = 0, lastReloadingTimestamp = 0)
     AnalyzerService.analyzersMap(indexName) = activeAnalyzers
 
     if (propagate) {
-      val result: Try[Option[Long]] =
-        Await.ready(systemService.setDTReloadTimestamp(indexName, refresh = 1), 60.seconds).value match {
-          case Some(res) => res
-          case _ => throw AnalyzerServiceException("Couldn't retrieve the ReloadTimestamp, it was empty")
-        }
-      result match {
-        case Success(t) =>
-          val ts: Long = t.getOrElse(0)
-          log.debug("setting dt reload timestamp to: " + ts)
-          SystemService.dtReloadTimestamp = ts
+      Try(dtReloadService.setDTReloadTimestamp(indexName, refresh = 1)) match {
+        case Success(reloadTsFuture) =>
+          reloadTsFuture.onComplete{
+            case Success(dtReloadTimestamp) =>
+              val ts = dtReloadTimestamp
+                .getOrElse(DtReloadTimestamp(indexName, dtReloadService.DT_RELOAD_TIMESTAMP_DEFAULT))
+              log.debug("setting dt reload timestamp to: " + ts.timestamp)
+              activeAnalyzers.lastReloadingTimestamp = ts.timestamp
+            case Failure(e) =>
+              val message = "unable to set dt reload timestamp" + e.getMessage
+              log.error(message)
+              throw AnalyzerServiceException(message)
+          }
         case Failure(e) =>
-          log.error("unable to set dt reload timestamp" + e.getMessage)
+          val message = "unable to set dt reload timestamp" + e.getMessage
+          log.error(message)
+          throw AnalyzerServiceException(message)
       }
     }
 
@@ -252,7 +258,7 @@ object AnalyzerService {
     if( ! AnalyzerService.analyzersMap.contains(indexName) ||
       AnalyzerService.analyzersMap(indexName).analyzerMap.isEmpty) {
       val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzer(indexName), 60.seconds).value match {
+        Await.ready(loadAnalyzers(indexName), 60.seconds).value match {
           case Some(loadRes) => loadRes
           case _ => throw AnalyzerServiceException("Loading operation returned an empty result")
         }
@@ -263,7 +269,6 @@ object AnalyzerService {
             case _ => 0
           }
           log.info("analyzers loaded: " + numOfEntries)
-          SystemService.dtReloadTimestamp = 0
         case Failure(e) =>
           log.error("can't load analyzers: " + e.toString)
       }

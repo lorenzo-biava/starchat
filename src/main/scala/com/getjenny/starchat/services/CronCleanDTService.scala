@@ -13,11 +13,11 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class CronCleanDTService(implicit val executionContext: ExecutionContext) {
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val analyzerService: AnalyzerService.type = AnalyzerService
-  val systemService: SystemService.type = SystemService
-  val dtMaxTables: Long = config.getLong("es.dt_max_tables")
+object CronCleanDTService {
+  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val analyzerService: AnalyzerService.type = AnalyzerService
+  private[this] val dtMaxTables: Long = config.getLong("es.dt_max_tables")
 
   val tickMessage = "tick"
 
@@ -42,7 +42,7 @@ class CronCleanDTService(implicit val executionContext: ExecutionContext) {
 
   def cleanDecisionTables(): Unit = {
     val reloadDecisionTableActorRef =
-      SCActorSystem.system.actorOf(Props(classOf[CleanDecisionTablesTickActor], this))
+      SCActorSystem.system.actorOf(Props(new CleanDecisionTablesTickActor))
 
     SCActorSystem.system.scheduler.schedule(
       0 seconds,
@@ -50,4 +50,10 @@ class CronCleanDTService(implicit val executionContext: ExecutionContext) {
       reloadDecisionTableActorRef,
       tickMessage)
   }
+
+  def reloadAnalyzersOnce(): Unit = {
+    val updateEventsActorRef = SCActorSystem.system.actorOf(Props(new CleanDecisionTablesTickActor))
+    SCActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, tickMessage)
+  }
+
 }

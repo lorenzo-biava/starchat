@@ -14,10 +14,13 @@ import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.{Success, Failure, Try}
+import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
 
 case class ResponseServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
+case class ResponseServiceDTNotLoadedException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 /**
@@ -28,13 +31,16 @@ object ResponseService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val termService: TermService.type = TermService
   val decisionTableService: DecisionTableService.type = DecisionTableService
+  val cronReloadDTService: CronReloadDTService.type = CronReloadDTService
 
   def getNextResponse(indexName: String, request: ResponseRequestIn):
   Future[Option[ResponseRequestOutOperationResult]] = Future {
 
     if(! AnalyzerService.analyzersMap.contains(indexName)) {
-      log.debug("Analyzers map for index(" + indexName + ") is not present, fetching and building")
-      AnalyzerService.initializeAnalyzers(indexName)
+      val message = "Decision table not ready for index(" + indexName + "), triggering reloading, please retry later"
+      log.debug(message)
+      cronReloadDTService.reloadAnalyzersOnce()
+      throw ResponseServiceDTNotLoadedException(message)
     }
 
     // calculate and return the ResponseRequestOut
@@ -56,7 +62,11 @@ object ResponseService {
       traversedStates.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
 
     // refresh last_used timestamp
-    AnalyzerService.analyzersMap(indexName).lastEvaluationTimestamp = System.currentTimeMillis
+    Try{AnalyzerService.analyzersMap(indexName).lastEvaluationTimestamp = System.currentTimeMillis} match {
+      case Success(_) => ;
+      case Failure(e) =>
+        throw ResponseServiceException("could not update the last evaluation timestamp for: " + indexName, e)
+    }
 
     // prepare search result for search analyzer
     val analyzersInternalData =
