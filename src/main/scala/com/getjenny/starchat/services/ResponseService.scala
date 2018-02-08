@@ -65,7 +65,9 @@ object ResponseService {
     Try{AnalyzerService.analyzersMap(indexName).lastEvaluationTimestamp = System.currentTimeMillis} match {
       case Success(_) => ;
       case Failure(e) =>
-        throw ResponseServiceException("could not update the last evaluation timestamp for: " + indexName, e)
+        val message = "could not update the last evaluation timestamp for: " + indexName
+        log.error(message)
+        throw ResponseServiceException(message, e)
     }
 
     // prepare search result for search analyzer
