@@ -30,6 +30,8 @@ object CronReloadDTService  {
       case `tickMessage` =>
         dtReloadService.allDTReloadTimestamp(Some(updateTimestamp)) match {
           case Some(indices) =>
+            //TODO: if indices is empty, fetch entries from the list of indices or insert entry on
+            //  indices when a getNextRequest is performed
             indices.foreach { dtReloadEntry =>
               val indexAnalyzers: Option[ActiveAnalyzers] =
                 analyzerService.analyzersMap.get(dtReloadEntry.indexName)

@@ -308,12 +308,15 @@ trait DecisionTableResource extends MyResource {
                             }
                           )
                         case NonFatal(nonFatalE) =>
-                          log.error("index(" + indexName +
-                            ") DecisionTableResource: Unable to complete the request: " + nonFatalE.getMessage)
+                          val message = "index(" + indexName + ") DecisionTableResource: " + "" +
+                            "Unable to complete the request: " + nonFatalE.getMessage +
+                            " : cause(" + nonFatalE.getCause.getMessage + ") " +
+                            nonFatalE.getStackTrace.map(x => x.toString).mkString(";")
+                          log.error(message = message)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
                               ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 110, message = e.getMessage),
+                                ReturnMessageData(code = 110, message = message),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })
