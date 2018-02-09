@@ -13,7 +13,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
-import scalaz.Scalaz._
 
 object CronReloadDTService  {
   implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
@@ -28,10 +27,12 @@ object CronReloadDTService  {
   class ReloadAnalyzersTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
       case `tickMessage` =>
-        dtReloadService.allDTReloadTimestamp(Some(updateTimestamp)) match {
+        val maxItemsIndexesToUpdate: Long = if (analyzerService.dtMaxTables > analyzerService.analyzersMap.size) {
+          analyzerService.dtMaxTables - analyzerService.analyzersMap.size
+        } else 0L
+
+        dtReloadService.allDTReloadTimestamp(Some(updateTimestamp), Some(maxItemsIndexesToUpdate)) match {
           case Some(indices) =>
-            //TODO: if indices is empty, fetch entries from the list of indices or insert entry on
-            //  indices when a getNextRequest is performed
             indices.foreach { dtReloadEntry =>
               val indexAnalyzers: Option[ActiveAnalyzers] =
                 analyzerService.analyzersMap.get(dtReloadEntry.indexName)
@@ -45,11 +46,9 @@ object CronReloadDTService  {
                   + dtReloadEntry.timestamp)
 
                 val reloadResult: Try[Option[DTAnalyzerLoad]] =
-                  Await.ready(
-                    analyzerService.loadAnalyzers(indexName = dtReloadEntry.indexName), 60.seconds
-                  ).value.getOrElse(
-                    Failure(
-                      throw new Exception("ReloadAnalyzersTickActor: getting an empty response reloading analyzers"))
+                  Await.ready(analyzerService.loadAnalyzers(indexName = dtReloadEntry.indexName), 60.seconds)
+                    .value.getOrElse(Failure(
+                    throw new Exception("ReloadAnalyzersTickActor: getting an empty response reloading analyzers"))
                   )
                 updateTimestamp = math.max(updateTimestamp, localReloadTimestamp)
                 reloadResult match {

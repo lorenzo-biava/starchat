@@ -89,7 +89,8 @@ object  DtReloadService {
     Option {DtReloadTimestamp(indexName = indexName, timestamp = timestamp)}
   }
 
-  def allDTReloadTimestamp(minTimestamp: Option[Long] = None) : Option[List[DtReloadTimestamp]] = {
+  def allDTReloadTimestamp(minTimestamp: Option[Long] = None,
+                           maxItems: Option[Long] = None): Option[List[DtReloadTimestamp]] = {
     val client: TransportClient = elasticClient.getClient()
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
     minTimestamp match {
@@ -102,7 +103,7 @@ object  DtReloadService {
       .setQuery(boolQueryBuilder)
       .addSort("state_refresh_ts", SortOrder.DESC)
       .setScroll(new TimeValue(60000))
-      .setSize(10000).get()
+      .setSize(maxItems.getOrElse(0L).toInt).get()
 
     val dtReloadTimestamps : List[DtReloadTimestamp] = scrollResp.getHits.getHits.toList.map({ timestampEntry =>
       val item: SearchHit = timestampEntry

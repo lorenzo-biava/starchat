@@ -7,7 +7,6 @@ package com.getjenny.starchat.services
 import akka.actor.{Actor, Props}
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.services.DecisionTableElasticClient.config
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -17,15 +16,15 @@ object CronCleanDTService {
   implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
-  private[this] val dtMaxTables: Long = config.getLong("es.dt_max_tables")
 
   val tickMessage = "tick"
 
   class CleanDecisionTablesTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
       case `tickMessage` =>
-        if(dtMaxTables > 0 && analyzerService.analyzersMap.size > dtMaxTables ) {
-          val exceedingItems: Long = dtMaxTables - analyzerService.analyzersMap.size
+        if(analyzerService.dtMaxTables > 0 &&
+          analyzerService.analyzersMap.size > analyzerService.dtMaxTables ) {
+          val exceedingItems: Long = analyzerService.dtMaxTables - analyzerService.analyzersMap.size
           val itemsToRemove =
             analyzerService.analyzersMap.toList.sortBy{
               case (_, analyzer) => analyzer.lastEvaluationTimestamp

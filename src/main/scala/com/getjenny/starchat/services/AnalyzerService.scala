@@ -45,13 +45,13 @@ case class ActiveAnalyzers(
                           )
 
 object AnalyzerService {
-
   var analyzersMap : mutable.Map[String, ActiveAnalyzers] = mutable.Map.empty[String, ActiveAnalyzers]
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
-  val termService: TermService.type = TermService
-  val decisionTableService: DecisionTableService.type = DecisionTableService
-  val dtReloadService: DtReloadService.type = DtReloadService
+  private[this] val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
+  private[this] val termService: TermService.type = TermService
+  private[this] val decisionTableService: DecisionTableService.type = DecisionTableService
+  private[this] val dtReloadService: DtReloadService.type = DtReloadService
+  val dtMaxTables: Long = elasticClient.config.getLong("es.dt_max_tables")
 
   def getIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.dtIndexSuffix)
