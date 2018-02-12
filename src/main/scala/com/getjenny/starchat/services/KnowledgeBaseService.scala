@@ -31,11 +31,11 @@ import scala.concurrent.Future
 import scalaz.Scalaz._
 
 object KnowledgeBaseService {
-  val elasticClient = KnowledgeBaseElasticClient
+  val elasticClient: KnowledgeBaseElasticClient.type = KnowledgeBaseElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  val nested_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
-    "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
+  val nested_score_mode: Map[String, ScoreMode] = Map[String, ScoreMode]("min" -> ScoreMode.Min,
+    "max" -> ScoreMode.Max, "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def getIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)

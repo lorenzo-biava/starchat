@@ -3,7 +3,6 @@ package com.getjenny.starchat.services
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 23/08/17.
   */
-
 import akka.actor.{Actor, Props}
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
