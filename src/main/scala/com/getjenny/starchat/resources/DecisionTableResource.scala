@@ -218,7 +218,7 @@ trait DecisionTableResource extends MyResource {
                     t
                   })
                 case Failure(e) =>
-                  log.error("index(" + indexName + ") route=decisionTableAnalyzerRoutes method=GET: " + e.getMessage)
+                  log.error("index(" + indexName + ") route=decisionTableAsyncReloadRoutes method=POST: " + e.getMessage)
                   completeResponse(StatusCodes.BadRequest,
                     Option {
                       ReturnMessageData(code = 106, message = e.getMessage)
