@@ -23,12 +23,14 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
+import com.roundeights.hasher.Implicits._
 
 case class AnalyzerServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 case class AnalyzerItem(declaration: String,
                         analyzer: Option[StarchatAnalyzer],
+                        checksum: String,
                         build: Boolean,
                         message: String)
 
@@ -117,7 +119,10 @@ object AnalyzerService {
       val decisionTableRuntimeItem: DecisionTableRuntimeItem =
         DecisionTableRuntimeItem(executionOrder=executionOrder,
           maxStateCounter=maxStateCounter,
-          analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=false, analyzer=None, message = "not built"),
+          analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=false,
+            analyzer=None,
+            checksum="",
+            message = "not built"),
           queries=queriesTerms)
       (state, decisionTableRuntimeItem)
     }).filter{case (_, decisionTableRuntimeItem) => decisionTableRuntimeItem
@@ -133,34 +138,55 @@ object AnalyzerService {
     analyzersLHM
   }
 
-  def buildAnalyzers(indexName: String, analyzersMap: mutable.LinkedHashMap[String, DecisionTableRuntimeItem]):
+  private[this] case class BuildAnalyzerResult(analyzer : Option[StarchatAnalyzer], checksum: String, message: String)
+
+  def buildAnalyzers(indexName: String,
+                     analyzersMap: mutable.LinkedHashMap[String, DecisionTableRuntimeItem],
+                     incremental: Boolean = true):
   mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
+    val indexAnalyzers = AnalyzerService.analyzersMap.getOrElse(indexName,
+      ActiveAnalyzers(mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]))
     val result = analyzersMap.map{ case(stateId, runtimeItem) =>
       val executionOrder = runtimeItem.executionOrder
       val maxStateCounter = runtimeItem.maxStateCounter
       val analyzerDeclaration = runtimeItem.analyzer.declaration
       val queriesTerms = runtimeItem.queries
-      val (analyzer : Option[StarchatAnalyzer], message: String) = if (analyzerDeclaration =/= "") {
-        val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
-        Try(new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)) match {
-          case Success(analyzerObject) =>
-            (Some(analyzerObject), "Analyzer successfully built: " + stateId)
-          case Failure(e) =>
-            val msg = "Error building analyzer (" + stateId + ") declaration(" + analyzerDeclaration + "): " + e.getMessage
-            log.error(msg)
-            (None, msg)
+      val buildAnalyzerResult: BuildAnalyzerResult =
+        if (analyzerDeclaration =/= "") {
+          val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
+          val checksum = (indexName + stateId + runtimeItem.toString).sha512
+          val inPlaceAnalyzer = indexAnalyzers.analyzerMap.get(stateId) match {
+            case Some(t) => t.analyzer
+            case _ => AnalyzerItem(declaration = "", analyzer = None, checksum = "", build = false, message = "")
+          }
+          if(incremental && inPlaceAnalyzer.build && inPlaceAnalyzer.build && inPlaceAnalyzer.checksum === checksum) {
+            BuildAnalyzerResult(inPlaceAnalyzer.analyzer, checksum, "Analyzer already built: " + stateId)
+          } else {
+            Try(new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)) match {
+              case Success(analyzerObject) =>
+                BuildAnalyzerResult(Some(analyzerObject), checksum, "Analyzer successfully built: " + stateId)
+              case Failure(e) =>
+                val msg = "Error building analyzer index(" + indexName + ") state(" + stateId +
+                  ") declaration(" + analyzerDeclaration + "): " + e.getMessage
+                log.error(msg)
+                BuildAnalyzerResult(None, "", msg)
+            }
+          }
+        } else {
+          val msg = "index(" + indexName + ") : state(" + stateId + ") : analyzer declaration is empty"
+          log.debug(msg)
+          BuildAnalyzerResult(None, "", msg)
         }
-      } else {
-        val msg = "analyzer declaration is empty"
-        log.debug(msg)
-        (None, msg)
-      }
 
       val decisionTableRuntimeItem = DecisionTableRuntimeItem(executionOrder=executionOrder,
         maxStateCounter = maxStateCounter,
         analyzer =
           AnalyzerItem(
-            declaration=analyzerDeclaration, build=analyzer.isDefined, analyzer=analyzer, message = message
+            declaration = analyzerDeclaration,
+            build = buildAnalyzerResult.analyzer.isDefined,
+            analyzer = buildAnalyzerResult.analyzer,
+            checksum = buildAnalyzerResult.checksum,
+            message = buildAnalyzerResult.message
           ),
         queries = queriesTerms)
       (stateId, decisionTableRuntimeItem)
@@ -168,8 +194,10 @@ object AnalyzerService {
     result
   }
 
-  def loadAnalyzers(indexName: String, propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
-    val analyzerMap = buildAnalyzers(indexName, getAnalyzers(indexName))
+  def loadAnalyzers(indexName: String, incremental: Boolean = true,
+                    propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
+    val analyzerMap = buildAnalyzers(indexName = indexName,
+      analyzersMap = getAnalyzers(indexName), incremental = incremental)
     val dtAnalyzerLoad = DTAnalyzerLoad(num_of_entries=analyzerMap.size)
     val activeAnalyzers: ActiveAnalyzers = ActiveAnalyzers(analyzerMap = analyzerMap,
       lastEvaluationTimestamp = 0, lastReloadingTimestamp = 0)
@@ -258,7 +286,7 @@ object AnalyzerService {
     if( ! AnalyzerService.analyzersMap.contains(indexName) ||
       AnalyzerService.analyzersMap(indexName).analyzerMap.isEmpty) {
       val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzers(indexName), 60.seconds).value match {
+        Await.ready(loadAnalyzers(indexName = indexName), 60.seconds).value match {
           case Some(loadRes) => loadRes
           case _ => throw AnalyzerServiceException("Loading operation returned an empty result")
         }

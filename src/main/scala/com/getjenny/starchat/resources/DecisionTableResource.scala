@@ -232,19 +232,23 @@ trait DecisionTableResource extends MyResource {
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                val analyzerService = AnalyzerService
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
-                onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzers(indexName, propagate = true)) {
-                  case Success(t) =>
-                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                  case Failure(e) =>
-                    log.error("index(" + indexName + ") route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
-                    completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        ReturnMessageData(code = 107, message = e.getMessage)
+                parameters("propagate".as[Boolean] ? true,
+                  "incremental".as[Boolean] ? true) { (propagate, incremental) =>
+                  val analyzerService = AnalyzerService
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
+                  onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzers(indexName = indexName,
+                    incremental = incremental, propagate = propagate)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
                       })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 107, message = e.getMessage)
+                        })
+                  }
                 }
               }
             }
