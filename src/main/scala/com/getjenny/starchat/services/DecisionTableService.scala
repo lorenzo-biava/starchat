@@ -99,6 +99,8 @@ object DecisionTableService {
 
         val state : String = item.getId
 
+        val version: Option[Long] = Some(item.getVersion)
+
         val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
         val executionOrder: Int = source.get("execution_order") match {
@@ -162,7 +164,9 @@ object DecisionTableService {
           max_state_count = maxStateCount,
           analyzer = analyzer, queries = queries, bubble = bubble,
           action = action, action_input = actionInput, state_data = stateData,
-          success_value = successValue, failure_value = failureValue)
+          success_value = successValue, failure_value = failureValue,
+          version = version
+        )
 
         val searchDocument : SearchDTDocument = SearchDTDocument(score = item.getScore, document = document)
         searchDocument
@@ -415,6 +419,7 @@ object DecisionTableService {
     val decisionTableContent : List[SearchDTDocument] = scrollResp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
+      val version: Option[Long] = Some(item.getVersion)
       val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
       val executionOrder : Int = source.get("execution_order") match {
@@ -473,7 +478,9 @@ object DecisionTableService {
         max_state_count = maxStateCount,
         analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = actionInput, state_data = stateData,
-        success_value = successValue, failure_value = failureValue)
+        success_value = successValue, failure_value = failureValue,
+        version = version
+      )
 
       val searchDocument : SearchDTDocument = SearchDTDocument(score = .0f, document = document)
       searchDocument
@@ -501,6 +508,8 @@ object DecisionTableService {
           .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case (e) =>
 
           val item: GetResponse = e.getResponse
+
+          val version: Option[Long] = Some(item.getVersion)
 
           val state: String = item.getId
 
@@ -562,7 +571,9 @@ object DecisionTableService {
             max_state_count = maxStateCount,
             analyzer = analyzer, queries = queries, bubble = bubble,
             action = action, action_input = actionInput, state_data = stateData,
-            success_value = successValue, failure_value = failureValue)
+            success_value = successValue, failure_value = failureValue,
+            version = version
+          )
 
           val searchDocument: SearchDTDocument = SearchDTDocument(score = .0f, document = document)
           searchDocument

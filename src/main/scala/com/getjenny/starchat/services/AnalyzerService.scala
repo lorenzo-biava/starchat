@@ -23,21 +23,22 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
-import com.roundeights.hasher.Implicits._
 
 case class AnalyzerServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 case class AnalyzerItem(declaration: String,
                         analyzer: Option[StarchatAnalyzer],
-                        checksum: String,
                         build: Boolean,
                         message: String)
 
-case class DecisionTableRuntimeItem(executionOrder: Int,
-                                    maxStateCounter: Int,
-                                    analyzer: AnalyzerItem,
-                                    queries: List[TextTerms]
+case class DecisionTableRuntimeItem(executionOrder: Int = -1,
+                                    maxStateCounter: Int = -1,
+                                    analyzer: AnalyzerItem = AnalyzerItem(
+                                      declaration = "", analyzer = None, build = false, message = ""
+                                    ),
+                                    version: Long = -1L,
+                                    queries: List[TextTerms] = List.empty[TextTerms]
                                    )
 
 case class ActiveAnalyzers(
@@ -81,6 +82,7 @@ object AnalyzerService {
     val analyzersData : List[(String, DecisionTableRuntimeItem)] = scrollResp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
+      val version : Long = item.getVersion
       val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
       val analyzerDeclaration : String = source.get("analyzer") match {
@@ -120,10 +122,10 @@ object AnalyzerService {
         DecisionTableRuntimeItem(executionOrder=executionOrder,
           maxStateCounter=maxStateCounter,
           analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=false,
-            analyzer=None,
-            checksum="",
-            message = "not built"),
-          queries=queriesTerms)
+            analyzer = None,
+            message = "Analyzer indes(" + indexName + ") state(" + state + ") not built"),
+          queries=queriesTerms,
+          version = version)
       (state, decisionTableRuntimeItem)
     }).filter{case (_, decisionTableRuntimeItem) => decisionTableRuntimeItem
       .analyzer.declaration =/= ""}
@@ -138,7 +140,7 @@ object AnalyzerService {
     analyzersLHM
   }
 
-  private[this] case class BuildAnalyzerResult(analyzer : Option[StarchatAnalyzer], checksum: String, message: String)
+  private[this] case class BuildAnalyzerResult(analyzer : Option[StarchatAnalyzer], version: Long, message: String)
 
   def buildAnalyzers(indexName: String,
                      analyzersMap: mutable.LinkedHashMap[String, DecisionTableRuntimeItem],
@@ -151,31 +153,29 @@ object AnalyzerService {
       val maxStateCounter = runtimeItem.maxStateCounter
       val analyzerDeclaration = runtimeItem.analyzer.declaration
       val queriesTerms = runtimeItem.queries
+      val version: Long = runtimeItem.version
       val buildAnalyzerResult: BuildAnalyzerResult =
         if (analyzerDeclaration =/= "") {
           val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
-          val checksum = (indexName + stateId + runtimeItem.toString).sha512
-          val inPlaceAnalyzer = indexAnalyzers.analyzerMap.get(stateId) match {
-            case Some(t) => t.analyzer
-            case _ => AnalyzerItem(declaration = "", analyzer = None, checksum = "", build = false, message = "")
-          }
-          if(incremental && inPlaceAnalyzer.build && inPlaceAnalyzer.build && inPlaceAnalyzer.checksum === checksum) {
-            BuildAnalyzerResult(inPlaceAnalyzer.analyzer, checksum, "Analyzer already built: " + stateId)
+          val inPlaceAnalyzer: DecisionTableRuntimeItem =
+            indexAnalyzers.analyzerMap.getOrElse(stateId, DecisionTableRuntimeItem())
+          if(incremental && inPlaceAnalyzer.version > 0 && inPlaceAnalyzer.version === version) {
+            BuildAnalyzerResult(inPlaceAnalyzer.analyzer.analyzer, version, "Analyzer already built: " + stateId)
           } else {
             Try(new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)) match {
               case Success(analyzerObject) =>
-                BuildAnalyzerResult(Some(analyzerObject), checksum, "Analyzer successfully built: " + stateId)
+                BuildAnalyzerResult(Some(analyzerObject), version, "Analyzer successfully built: " + stateId)
               case Failure(e) =>
                 val msg = "Error building analyzer index(" + indexName + ") state(" + stateId +
                   ") declaration(" + analyzerDeclaration + "): " + e.getMessage
                 log.error(msg)
-                BuildAnalyzerResult(None, "", msg)
+                BuildAnalyzerResult(None, -1L, msg)
             }
           }
         } else {
           val msg = "index(" + indexName + ") : state(" + stateId + ") : analyzer declaration is empty"
           log.debug(msg)
-          BuildAnalyzerResult(None, "", msg)
+          BuildAnalyzerResult(None, -1L, msg)
         }
 
       val decisionTableRuntimeItem = DecisionTableRuntimeItem(executionOrder=executionOrder,
@@ -185,9 +185,9 @@ object AnalyzerService {
             declaration = analyzerDeclaration,
             build = buildAnalyzerResult.analyzer.isDefined,
             analyzer = buildAnalyzerResult.analyzer,
-            checksum = buildAnalyzerResult.checksum,
             message = buildAnalyzerResult.message
           ),
+        version = version,
         queries = queriesTerms)
       (stateId, decisionTableRuntimeItem)
     }.filter{case (_, decisionTableRuntimeItem) => decisionTableRuntimeItem.analyzer.build}
