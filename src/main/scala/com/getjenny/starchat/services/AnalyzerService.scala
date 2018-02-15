@@ -43,8 +43,8 @@ case class DecisionTableRuntimeItem(executionOrder: Int = -1,
 
 case class ActiveAnalyzers(
                             var analyzerMap : mutable.LinkedHashMap[String, DecisionTableRuntimeItem],
-                            var lastEvaluationTimestamp: Long = -1,
-                            var lastReloadingTimestamp: Long = -1
+                            var lastEvaluationTimestamp: Long = -1L,
+                            var lastReloadingTimestamp: Long = -1L
                           )
 
 object AnalyzerService {
@@ -71,10 +71,10 @@ object AnalyzerService {
 
     val scrollResp : SearchResponse = client.prepareSearch().setIndices(getIndexName(indexName))
       .setTypes(elasticClient.dtIndexSuffix)
-      .setQuery(qb)
       .setFetchSource(Array("state", "execution_order", "max_state_counter",
         "analyzer", "queries"), Array.empty[String])
       .setScroll(new TimeValue(60000))
+      .setVersion(true)
       .setSize(1000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
@@ -124,7 +124,7 @@ object AnalyzerService {
           analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=false,
             analyzer = None,
             message = "Analyzer indes(" + indexName + ") state(" + state + ") not built"),
-          queries=queriesTerms,
+          queries = queriesTerms,
           version = version)
       (state, decisionTableRuntimeItem)
     }).filter{case (_, decisionTableRuntimeItem) => decisionTableRuntimeItem
@@ -146,9 +146,9 @@ object AnalyzerService {
                      analyzersMap: mutable.LinkedHashMap[String, DecisionTableRuntimeItem],
                      incremental: Boolean = true):
   mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
-    val indexAnalyzers = AnalyzerService.analyzersMap.getOrElse(indexName,
+    val inPlaceIndexAnalyzers = AnalyzerService.analyzersMap.getOrElse(indexName,
       ActiveAnalyzers(mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]))
-    val result = analyzersMap.map{ case(stateId, runtimeItem) =>
+    val result = analyzersMap.map { case(stateId, runtimeItem) =>
       val executionOrder = runtimeItem.executionOrder
       val maxStateCounter = runtimeItem.maxStateCounter
       val analyzerDeclaration = runtimeItem.analyzer.declaration
@@ -158,16 +158,23 @@ object AnalyzerService {
         if (analyzerDeclaration =/= "") {
           val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
           val inPlaceAnalyzer: DecisionTableRuntimeItem =
-            indexAnalyzers.analyzerMap.getOrElse(stateId, DecisionTableRuntimeItem())
+            inPlaceIndexAnalyzers.analyzerMap.getOrElse(stateId, DecisionTableRuntimeItem())
           if(incremental && inPlaceAnalyzer.version > 0 && inPlaceAnalyzer.version === version) {
+            val msg = "Analyzer already built index(" + indexName + ") state(" + stateId +
+              ") version(" + version + ":" + inPlaceAnalyzer.version + ")"
+            log.debug(msg)
             BuildAnalyzerResult(inPlaceAnalyzer.analyzer.analyzer, version, "Analyzer already built: " + stateId)
           } else {
             Try(new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)) match {
               case Success(analyzerObject) =>
-                BuildAnalyzerResult(Some(analyzerObject), version, "Analyzer successfully built: " + stateId)
+                val msg = "Analyzer successfully built index(" + indexName + ") state(" + stateId +
+                  ") version(" + version + ":" + inPlaceAnalyzer.version + ")"
+                log.debug(msg)
+                BuildAnalyzerResult(Some(analyzerObject), version, msg)
               case Failure(e) =>
                 val msg = "Error building analyzer index(" + indexName + ") state(" + stateId +
-                  ") declaration(" + analyzerDeclaration + "): " + e.getMessage
+                  ") declaration(" + analyzerDeclaration +
+                  ") version(" + version + ":" + inPlaceAnalyzer.version + ") : " + e.getMessage
                 log.error(msg)
                 BuildAnalyzerResult(None, -1L, msg)
             }

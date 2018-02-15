@@ -53,6 +53,7 @@ object DecisionTableService {
     val client: TransportClient = elasticClient.getClient()
     val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
       .setTypes(elasticClient.dtIndexSuffix)
+      .setVersion(true)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val minScore = documentSearch.min_score.getOrElse(
@@ -412,6 +413,7 @@ object DecisionTableService {
     val scrollResp : SearchResponse = client.prepareSearch(getIndexName(index_name))
       .setTypes(elasticClient.dtIndexSuffix)
       .setQuery(qb)
+      .setVersion(true)
       .setScroll(new TimeValue(60000))
       .setSize(10000).get()
 
