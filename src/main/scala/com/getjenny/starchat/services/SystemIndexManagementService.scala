@@ -12,6 +12,7 @@ import com.getjenny.starchat.entities.{IndexManagementResponse, _}
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
 
 import scala.collection.JavaConverters._
@@ -19,12 +20,22 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
 
+
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
 object SystemIndexManagementService {
   val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+
+  val analyzerJsonPath: String = "/index_management/json_index_spec/system/analyzer.json"
+  val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
+  val analyzerJson: String = analyzerJsonIs match {
+    case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
+    case _ =>
+      val message = "Check the file: (" + analyzerJsonPath + ")"
+      throw new FileNotFoundException(message)
+  }
 
   val schemaFiles: List[JsonIndexFiles] = List[JsonIndexFiles](
     JsonIndexFiles(path = "/index_management/json_index_spec/system/user.json",
@@ -52,6 +63,7 @@ object SystemIndexManagementService {
 
       val createIndexRes: CreateIndexResponse =
         client.admin().indices().prepareCreate(fullIndexName)
+          .setSettings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON))
           .setSource(schemaJson, XContentType.JSON).get()
 
       item.indexSuffix + "(" + fullIndexName + ", " + createIndexRes.isAcknowledged.toString + ")"
