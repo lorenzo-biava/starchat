@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 trait TermResource extends MyResource {
 
-  def termRoutes: Route =
+  def termRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "term") { indexName =>
       val termService = TermService
       path(Segment) { operation: String =>
@@ -53,7 +53,7 @@ trait TermResource extends MyResource {
                   entity(as[TermIdsRequest]) { request_data =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(Future {
-                      termService.getTerm(indexName, request_data)
+                      termService.getTermsById(indexName, request_data)
                     }) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
@@ -145,7 +145,7 @@ trait TermResource extends MyResource {
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 operation match {
                   case "term" =>
-                    entity(as[Term]) { requestData =>
+                    entity(as[SearchTerm]) { requestData =>
                       val termService = TermService
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       onCompleteWithBreaker(breaker)(termService.searchTerm(indexName, requestData)) {
@@ -182,4 +182,5 @@ trait TermResource extends MyResource {
           }
         }
     }
+  }
 }

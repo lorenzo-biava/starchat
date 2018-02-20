@@ -19,12 +19,12 @@ import com.getjenny.analyzer.expressions.Data
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
-import scala.util.{Try, Success, Failure}
 
+import scala.util.{Failure, Success, Try}
 import scala.collection.immutable
 import scala.collection.immutable.Map
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 object SimilarityTest extends JsonSupport {
 
@@ -46,9 +46,9 @@ object SimilarityTest extends JsonSupport {
                            )
 
   private[this] def execute(params: Params) {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     val skipLines = params.skipLines
 

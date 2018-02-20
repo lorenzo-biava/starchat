@@ -14,7 +14,7 @@ import com.getjenny.starchat.services.AnalyzerService
 import scala.util.{Failure, Success}
 
 trait AnalyzersPlaygroundResource extends MyResource {
-  def analyzersPlaygroundRoutes: Route =
+  def analyzersPlaygroundRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "analyzers_playground") { indexName =>
       pathEnd {
         post {
@@ -41,4 +41,5 @@ trait AnalyzersPlaygroundResource extends MyResource {
         }
       }
     }
+  }
 }

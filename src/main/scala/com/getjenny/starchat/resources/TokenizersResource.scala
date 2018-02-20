@@ -15,7 +15,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 trait TokenizersResource extends MyResource {
-  def esTokenizersRoutes: Route =
+  def esTokenizersRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "tokenizers") { indexName =>
       pathEnd {
         post {
@@ -49,7 +49,7 @@ trait TokenizersResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 val analyzers_description: Map[String, String] =
-                  TokenizersDescription.analyzers_map.map{case(name, description) =>
+                  TokenizersDescription.analyzers_map.map { case (name, description) =>
                     (name, description._2)
                   }
                 val result: Option[Map[String, String]] = Option(analyzers_description)
@@ -60,4 +60,5 @@ trait TokenizersResource extends MyResource {
         }
       }
     }
+  }
 }

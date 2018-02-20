@@ -13,7 +13,7 @@ import scopt.OptionParser
 import scala.collection.immutable
 import scala.collection.immutable.Map
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
@@ -32,9 +32,9 @@ object IndexTerms extends JsonSupport {
   )
 
   private[this] def execute(params: Params) {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
     
     val vecsize = params.vecsize
     val skiplines = params.skiplines
@@ -70,14 +70,7 @@ object IndexTerms extends JsonSupport {
         println("Error: file row does not contains a consistent vector Row(" + entry + ")")
       } else {
         val term = Term(term = termText,
-          synonyms = None: Option[Map[String, Double]],
-          antonyms = None: Option[Map[String, Double]],
-          tags = None: Option[String],
-          features = None: Option[Map[String, String]],
-          frequency_base = None: Option[Double],
-          frequency_stem = None: Option[Double],
-          score = None: Option[Double],
-          vector = Option{termVector})
+          vector = Some{termVector})
 
         val terms = Terms(terms = List(term))
         val entityFuture = Marshal(terms).to[MessageEntity]

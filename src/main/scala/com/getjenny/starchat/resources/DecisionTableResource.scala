@@ -10,6 +10,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.pattern.CircuitBreaker
+import com.getjenny.analyzer.analyzers.AnalyzerEvaluationException
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services._
@@ -26,7 +27,7 @@ trait DecisionTableResource extends MyResource {
   private[this] val responseService: ResponseService.type = ResponseService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
 
-  def decisionTableRoutes: Route =
+  def decisionTableRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable") { indexName =>
       pathEnd {
         post {
@@ -166,12 +167,13 @@ trait DecisionTableResource extends MyResource {
             }
         }
     }
+  }
 
 
   def tempDestination(fileInfo: FileInfo): File =
     File.createTempFile("DecisionTableCSV", ".csv")
 
-  def decisionTableUploadCSVRoutes: Route =
+  def decisionTableUploadCSVRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable_upload_csv") { indexName =>
       pathEnd {
         authenticateBasicAsync(realm = authRealm,
@@ -189,7 +191,7 @@ trait DecisionTableResource extends MyResource {
                     })
                   case Failure(e) =>
                     log.error("index(" + indexName + ") route=decisionTableUploadCSVRoutes method=POST: " + e.getMessage)
-                    if(file.exists()) {
+                    if (file.exists()) {
                       file.delete()
                     }
                     completeResponse(StatusCodes.BadRequest,
@@ -202,8 +204,9 @@ trait DecisionTableResource extends MyResource {
         }
       }
     }
+  }
 
-  def decisionTableAsyncReloadRoutes: Route =
+  def decisionTableAsyncReloadRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable_async_reload") { indexName =>
       pathEnd {
         post {
@@ -229,8 +232,9 @@ trait DecisionTableResource extends MyResource {
         }
       }
     }
+  }
 
-  def decisionTableAnalyzerRoutes: Route =
+  def decisionTableAnalyzerRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable_analyzer") { indexName =>
       pathEnd {
         get {
@@ -281,8 +285,9 @@ trait DecisionTableResource extends MyResource {
           }
       }
     }
+  }
 
-  def decisionTableSearchRoutes: Route =
+  def decisionTableSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable_search") { indexName =>
       pathEnd {
         post {
@@ -310,8 +315,9 @@ trait DecisionTableResource extends MyResource {
         }
       }
     }
+  }
 
-  def decisionTableResponseRequestRoutes: Route =
+  def decisionTableResponseRequestRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "get_next_response") { indexName =>
       pathEnd {
         post {
@@ -335,6 +341,19 @@ trait DecisionTableResource extends MyResource {
                                 })
                             }
                           )
+                        case e @ (_: ResponseServiceDocumentNotFoundException | _: AnalyzerEvaluationException) =>
+                          val message = "index(" + indexName + ") DecisionTableResource: " +
+                            "Unable to complete the request: " + e.getMessage
+                          log.error(message = message)
+                          completeResponse(StatusCodes.BadRequest,
+                            Option {
+                              ResponseRequestOutOperationResult(
+                                ReturnMessageData(code = 110, message = message),
+                                Option {
+                                  List.empty[ResponseRequestOut]
+                                })
+                            }
+                          )
                         case NonFatal(nonFatalE) =>
                           val message = "index(" + indexName + ") DecisionTableResource: " +
                             "Unable to complete the request: " + nonFatalE.getMessage +
@@ -343,7 +362,7 @@ trait DecisionTableResource extends MyResource {
                           completeResponse(StatusCodes.BadRequest,
                             Option {
                               ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 110, message = message),
+                                ReturnMessageData(code = 111, message = message),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })
@@ -363,7 +382,7 @@ trait DecisionTableResource extends MyResource {
                           completeResponse(StatusCodes.BadRequest,
                             Option {
                               ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 111, message = "unable to complete the response"),
+                                ReturnMessageData(code = 112, message = "unable to complete the response"),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })
@@ -377,5 +396,6 @@ trait DecisionTableResource extends MyResource {
         }
       }
     }
+  }
 }
 

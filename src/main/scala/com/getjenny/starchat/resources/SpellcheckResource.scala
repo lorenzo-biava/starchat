@@ -15,7 +15,7 @@ import scala.util.{Failure, Success}
 
 trait SpellcheckResource extends MyResource {
 
-  def spellcheckRoutes: Route =
+  def spellcheckRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "spellcheck") { indexName =>
       val spellcheckService = SpellcheckService
       pathPrefix("terms") {
@@ -44,4 +44,5 @@ trait SpellcheckResource extends MyResource {
         }
       }
     }
+  }
 }

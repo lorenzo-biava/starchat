@@ -3,15 +3,15 @@ package com.getjenny.starchat.services
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 23/08/17.
   */
+
 import akka.actor.{Actor, Props}
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.entities._
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 object CronReloadDTService  {
   implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
@@ -44,20 +44,20 @@ object CronReloadDTService  {
                 log.info("dt reloading, timestamp for index(" + dtReloadEntry.indexName + "): "
                   + dtReloadEntry.timestamp)
 
-                val reloadResult: Try[Option[DTAnalyzerLoad]] =
-                  Await.ready(analyzerService.loadAnalyzers(indexName = dtReloadEntry.indexName), 60.seconds)
-                    .value.getOrElse(Failure(
-                    throw new Exception("ReloadAnalyzersTickActor: getting an empty response reloading analyzers"))
-                  )
-                updateTimestamp = math.max(updateTimestamp, localReloadTimestamp)
-                reloadResult match {
+                analyzerService.loadAnalyzers(indexName = dtReloadEntry.indexName).onComplete {
                   case Success(relRes) =>
-                    log.info("Analyzer loaded for index(" + dtReloadEntry + "), remote ts: " + dtReloadEntry )
-                    analyzerService.analyzersMap(dtReloadEntry.indexName)
-                      .lastReloadingTimestamp = dtReloadEntry.timestamp
+                    relRes match {
+                      case Some(res) =>
+                        updateTimestamp = math.max(updateTimestamp, localReloadTimestamp)
+                        log.info("Analyzer loaded for index(" + dtReloadEntry + "), res(" + res +
+                          ") remote ts: " + dtReloadEntry )
+                        analyzerService.analyzersMap(dtReloadEntry.indexName)
+                          .lastReloadingTimestamp = dtReloadEntry.timestamp
+                      case _ => log.error("ReloadAnalyzersTickActor: getting an empty response reloading analyzers")
+                    }
                   case Failure(e) =>
-                    log.error("unable to load analyzers for index(" +
-                      dtReloadEntry + ") from the cron job" + e.getMessage)
+                    log.error("unable to load analyzers for index(" + dtReloadEntry +
+                      ") from the cron job" + e.getMessage)
                 }
               }
             }

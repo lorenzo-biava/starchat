@@ -15,7 +15,7 @@ import scala.util.{Failure, Success}
 
 trait IndexManagementResource extends MyResource {
 
-  def postIndexManagementCreateRoutes: Route =
+  def postIndexManagementCreateRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash
       ~ "index_management" ~ Slash ~ """create""") {
       (indexName) =>
@@ -39,8 +39,9 @@ trait IndexManagementResource extends MyResource {
           }
         }
     }
+  }
 
-  def postIndexManagementRefreshRoutes: Route =
+  def postIndexManagementRefreshRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
       Slash ~ "index_management" ~ Slash ~ """refresh""") {
       (indexName) =>
@@ -64,8 +65,9 @@ trait IndexManagementResource extends MyResource {
           }
         }
     }
+  }
 
-  def putIndexManagementRoutes: Route = {
+  def putIndexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
       Slash ~ """([A-Za-z0-9_]+)""".r ~ Slash ~ "index_management") {
       (indexName, language) =>
@@ -93,7 +95,7 @@ trait IndexManagementResource extends MyResource {
     }
   }
 
-  def indexManagementRoutes: Route = {
+  def indexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "index_management") {
       (indexName) =>
         val indexManagementService = IndexManagementService

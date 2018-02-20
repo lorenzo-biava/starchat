@@ -19,8 +19,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scalaz.Scalaz._
 
@@ -287,29 +286,6 @@ object AnalyzerService {
     }
 
     Future { Option { response } }
-  }
-
-  def initializeAnalyzers(indexName: String): Unit = {
-    if( ! AnalyzerService.analyzersMap.contains(indexName) ||
-      AnalyzerService.analyzersMap(indexName).analyzerMap.isEmpty) {
-      val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzers(indexName = indexName), 60.seconds).value match {
-          case Some(loadRes) => loadRes
-          case _ => throw AnalyzerServiceException("Loading operation returned an empty result")
-        }
-      result match {
-        case Success(t) =>
-          val numOfEntries = t match {
-            case Some(nOfEntries) => nOfEntries
-            case _ => 0
-          }
-          log.info("analyzers loaded: " + numOfEntries)
-        case Failure(e) =>
-          log.error("can't load analyzers: " + e.toString)
-      }
-    } else {
-      log.info("analyzers already loaded")
-    }
   }
 
 }

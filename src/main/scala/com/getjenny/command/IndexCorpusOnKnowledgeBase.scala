@@ -19,7 +19,7 @@ import scopt.OptionParser
 
 import scala.collection.immutable
 import scala.collection.immutable.List
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.io.Source
 
@@ -43,9 +43,9 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
   }
 
   private[this] def execute(params: Params) {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     val vecsize = 0
     val skiplines = params.skiplines

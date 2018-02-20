@@ -15,7 +15,7 @@ import scala.util.{Failure, Success}
 
 trait KnowledgeBaseResource extends MyResource {
 
-  def knowledgeBaseRoutes: Route =
+  def knowledgeBaseRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "knowledgebase") { indexName =>
       val knowledgeBaseService = KnowledgeBaseService
       pathEnd {
@@ -147,8 +147,9 @@ trait KnowledgeBaseResource extends MyResource {
             }
         }
     }
+  }
 
-  def knowledgeBaseSearchRoutes: Route =
+  def knowledgeBaseSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "knowledgebase_search") { indexName =>
       pathEnd {
         post {
@@ -177,4 +178,5 @@ trait KnowledgeBaseResource extends MyResource {
         }
       }
     }
+  }
 }

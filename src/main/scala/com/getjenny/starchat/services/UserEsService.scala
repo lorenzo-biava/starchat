@@ -25,6 +25,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scalaz.Scalaz._
 
+case class UserEsServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
@@ -172,21 +175,25 @@ class UserEsService extends AbstractUserService {
       val getBuilder: GetRequestBuilder = client.prepareGet(indexName, elasticClient.userIndexSuffix, id)
 
       val response: GetResponse = getBuilder.get()
-      val source = response.getSource.asScala.toMap
+      val source = if(response.getSource != None.orNull) {
+        response.getSource.asScala.toMap
+      } else {
+        throw UserEsServiceException("Cannot find user: " + id)
+      }
 
       val userId: String = source.get("id") match {
         case Some(t) => t.asInstanceOf[String]
-        case None => ""
+        case None => throw UserEsServiceException("User id field is empty for: " + id)
       }
 
       val password: String = source.get("password") match {
         case Some(t) => t.asInstanceOf[String]
-        case None => ""
+        case None => throw UserEsServiceException("Password is empty for the user: " + id)
       }
 
       val salt: String = source.get("salt") match {
         case Some(t) => t.asInstanceOf[String]
-        case None => ""
+        case None => throw UserEsServiceException("Salt is empty for the user: " + id)
       }
 
       val permissions: Map[String, Set[Permissions.Value]] = source.get("permissions") match {
@@ -194,9 +201,9 @@ class UserEsService extends AbstractUserService {
           .asScala.map{case(permIndexName, userPermissions) =>
           (permIndexName, userPermissions.asScala.map(permissionString => Permissions.getValue(permissionString)).toSet)
         }.toMap
-        case None => Map.empty[String, Set[Permissions.Value]]
+        case None =>
+          throw UserEsServiceException("Permissions list is empty for the user: " + id)
       }
-
       User(id = userId, password = password, salt = salt, permissions = permissions)
     }
   }

@@ -212,6 +212,7 @@ object DecisionTableService {
         case Some(c) => c
         case _ => throw DecisionTableServiceException("Search resulted in an empty data structure")
       }
+
     val foundDocuments = searchResult match {
       case Success(t) =>
         t

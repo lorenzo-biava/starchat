@@ -2,15 +2,14 @@ package com.getjenny.starchat.services.auth
 
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.directives.Credentials
+import com.getjenny.starchat.SCActorSystem
+import com.getjenny.starchat.entities._
+import com.getjenny.starchat.services._
 import com.roundeights.hasher.Implicits._
 import com.typesafe.config.{Config, ConfigFactory}
-import com.getjenny.starchat.services._
-import com.getjenny.starchat.entities._
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
-import com.getjenny.starchat.SCActorSystem
+import scala.concurrent.Future
 
 class BasicHttpStarChatAuthenticator(userService: AbstractUserService) extends AbstractStarChatAuthenticator {
   val config: Config = ConfigFactory.load()
@@ -40,26 +39,15 @@ class BasicHttpStarChatAuthenticator(userService: AbstractUserService) extends A
   def authenticator(credentials: Credentials): Future[Option[User]] = {
     credentials match {
       case p@Credentials.Provided(id) =>
-        val userRequest = Await.ready(fetchUser(id), 5.seconds).value match {
-          case Some(uReq) => uReq
-          case _ => throw AuthenticatorException("Could not retrieve credentials")
-        }
-        userRequest match {
-          case Success(user) =>
-            val hasher = new Hasher(user.salt)
-            if (p.verify(secret = user.password, hasher = hasher.hasher)) {
-              Future {
-                Some(user)
-              }
-            } else {
-              val message = "Authentication failed for the user: " + "user.id with password(" + user.password + ")"
-              log.error(message)
-              Future.successful(None)
-            }
-          case Failure(e) =>
-            val message: String = "unable to match credentials"
+        fetchUser(id) map { user =>
+          val hasher = new Hasher(user.salt)
+          if (p.verify(secret = user.password, hasher = hasher.hasher)) {
+            Some(user)
+          } else {
+            val message = "Authentication failed for the user: " + "user.id with password(" + user.password + ")"
             log.error(message)
-            Future.successful(None)
+            None
+          }
         }
       case _ => Future.successful(None)
     }

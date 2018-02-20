@@ -17,7 +17,7 @@ import com.getjenny.starchat.services.FileToDTDocuments
 import scopt.OptionParser
 
 import scala.collection.immutable
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 
 object IndexDecisionTable extends JsonSupport {
@@ -34,9 +34,9 @@ object IndexDecisionTable extends JsonSupport {
                            )
 
   private[this] def execute(params: Params) {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     val vecsize = 0
     val skiplines = params.skiplines

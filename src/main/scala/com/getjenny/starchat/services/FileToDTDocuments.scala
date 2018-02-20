@@ -11,7 +11,7 @@ import com.getjenny.starchat.entities.DTDocument
 import com.getjenny.starchat.serializers.JsonSupport
 
 import scala.collection.immutable.{List, Map}
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scalaz.Scalaz._
 
@@ -19,10 +19,9 @@ object FileToDTDocuments extends JsonSupport {
 
   def getDTDocumentsFromCSV(log: LoggingAdapter, file: File, skiplines: Int = 1, separator: Char = ','):
   List[DTDocument] = {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
-
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     val refnumcol = 11
     val fileReader = new FileReader(file)
@@ -70,6 +69,7 @@ object FileToDTDocuments extends JsonSupport {
           success_value = entry(9),
           failure_value = entry(10)
         )
+
         document
       }
     }).toList
