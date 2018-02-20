@@ -189,7 +189,7 @@ object DecisionTableService {
     searchResultsOption
   }
 
-  def searchDtQueries(indexName: String, userText: String): Option[SearchDTDocumentsResults] = {
+  def searchDtQueries(indexName: String, userText: String): Future[Option[SearchDTDocumentsResults]] = {
     val dtDocumentSearch: DTDocumentSearch =
       DTDocumentSearch(from = Option {
         0
@@ -207,21 +207,10 @@ object DecisionTableService {
           userText
         })
 
-    val searchResult: Try[Option[SearchDTDocumentsResults]] =
-      Await.ready(this.search(indexName, dtDocumentSearch), 10.seconds).value match {
-        case Some(c) => c
-        case _ => throw DecisionTableServiceException("Search resulted in an empty data structure")
-      }
-
-    val foundDocuments = searchResult match {
-      case Success(t) =>
-        t
-      case Failure(e) =>
-        val message = "ResponseService search"
-        log.error(message + " : " + e.getMessage)
-        throw DecisionTableServiceException(message, e)
+    this.search(indexName, dtDocumentSearch).map {
+      case Some(results) => Some(results)
+      case _ => throw DecisionTableServiceException("Search resulted in an empty data structure")
     }
-    foundDocuments
   }
 
   def resultsToMap(results: Option[SearchDTDocumentsResults]): Map[String, Any] = {

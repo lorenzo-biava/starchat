@@ -94,11 +94,11 @@ object EmDistance {
       }).map(x => math.abs(x)).sum
 
       val dist = math.max(workFromUtoV, workFromVtoU)
-      println("Info: work_from_u_to_v("
+      /*println("Info: work_from_u_to_v("
         + workFromUtoV + ") work_from_v_to_u(" + workFromVtoU + ") dist(" + dist + ")"
         + " reliability_factor1(" + reliabilityFactor1 + ")"
         + " reliability_factor2(" + reliabilityFactor2 + ")"
-      )
+      )*/
       (dist, reliabilityFactor1, reliabilityFactor2)
     }
   }

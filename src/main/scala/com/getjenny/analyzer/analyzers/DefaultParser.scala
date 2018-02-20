@@ -36,7 +36,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
     */
   def evaluate(sentence: String, data: AnalyzersData = AnalyzersData()): Result = {
     val res = operator.evaluate(query = sentence, data = data)
-    if (res.score > 0) println("DEBUG: DefaultParser: '" + this + "' evaluated to " + res)
+    //if (res.score > 0) println("DEBUG: DefaultParser: '" + this + "' evaluated to " + res)
     res
   }
 

@@ -21,8 +21,8 @@ class KeywordAtomic(val arguments: List[String], restricted_args: Map[String, St
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val freq = rx.findAllIn(query).toList.length
     val queryLength = """\S+""".r.findAllIn(query).toList.length
-    if (freq > 0) println("DEBUG: KeywordAtomic: '" + keyword + "' found " + freq +
-      " times in " + query + " (length=" + queryLength + ").")
+    //if (freq > 0) println("DEBUG: KeywordAtomic: '" + keyword + "' found " + freq +
+    //  " times in " + query + " (length=" + queryLength + ").")
     val score = if(queryLength.toDouble > 0)
       freq.toDouble / queryLength.toDouble
     else

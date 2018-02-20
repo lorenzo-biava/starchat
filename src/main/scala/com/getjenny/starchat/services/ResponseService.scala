@@ -73,13 +73,11 @@ object ResponseService {
     }
 
     // prepare search result for search analyzer
-    val analyzersInternalData =
-      decisionTableService.resultsToMap(
-        decisionTableService.searchDtQueries(indexName, userText)
-      )
-
-    val data: AnalyzersData = AnalyzersData(extracted_variables = variables, item_list = traversedStates,
-      data = analyzersInternalData)
+    val searchResAnalyzers = decisionTableService.searchDtQueries(indexName, userText).map(searchRes => {
+      val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
+      AnalyzersData(extracted_variables = variables, item_list = traversedStates,
+        data = analyzersInternalData)
+    })
 
     val returnValue: String = request.values match {
       case Some(t) =>
@@ -87,10 +85,10 @@ object ResponseService {
       case _ => ""
     }
 
-    val returnState: Future[Option[ResponseRequestOutOperationResult]] = {
+    val returnState: Future[Option[ResponseRequestOutOperationResult]] = searchResAnalyzers.map( data => {
       if (returnValue.nonEmpty) {
         // there is a state in return_value (eg the client asked for a state), no analyzers evaluation
-        decisionTableService.read(indexName, List[String](returnValue)) map {
+        decisionTableService.read(indexName, List[String](returnValue)).map {
           case Some(searchDocRes) =>
             val doc: DTDocument = searchDocRes.hits.headOption match {
               case Some(searchRes) => searchRes.document
@@ -102,6 +100,7 @@ object ResponseService {
             var bubble: String = doc.bubble
             var actionInput: Map[String, String] = doc.action_input
             val stateData: Map[String, String] = doc.state_data
+
             if (data.extracted_variables.nonEmpty) {
               for ((key, value) <- data.extracted_variables) {
                 bubble = bubble.replaceAll("%" + key + "%", value)
@@ -132,10 +131,8 @@ object ResponseService {
                 List(responseData)
               })) // success
           case _ =>
-            Some(
-              ResponseRequestOutOperationResult(ReturnMessageData(500,
-                "Error during state retrieval"), None)) // internal error
-        }
+            Some(ResponseRequestOutOperationResult(
+              ReturnMessageData(500, "Error during state retrieval"), None))} // internal error
       } else {
         // No states in the return values
         val maxResults: Int = request.max_results.getOrElse(2)
@@ -148,7 +145,7 @@ object ResponseService {
               val maxStateCount = runtimeAnalyzerItem.maxStateCounter
               maxStateCount === 0 ||
                 traversedStateCount < maxStateCount // skip states already evaluated too much times
-            }.map { case (stateName, runtimeAnalyzerItem) =>
+            }.map{ case (stateName, runtimeAnalyzerItem) =>
             val analyzerEvaluation = runtimeAnalyzerItem.analyzer.analyzer match {
               case Some(starchatAnalyzer) =>
                 Try(starchatAnalyzer.evaluate(userText, data = data)) match {
@@ -241,7 +238,7 @@ object ResponseService {
           }))
         }
       }
-    }
+    }).flatten
     returnState
   }
 }

@@ -252,40 +252,36 @@ object AnalyzerService {
   Future[Option[AnalyzerEvaluateResponse]] = {
     val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
     val analyzer = Try(new StarchatAnalyzer(analyzerRequest.analyzer, restrictedArgs))
-    val response = analyzer match {
+
+    analyzer match {
       case Failure(exception) =>
         log.error("error during evaluation of analyzer: " + exception.getMessage)
         throw exception
       case Success(result) =>
-        val dataInternal = analyzerRequest.data match {
+        analyzerRequest.data match {
           case Some(data) =>
             // prepare search result for search analyzer
-            val analyzersInternalData =
-              decisionTableService.resultsToMap(
-                decisionTableService.searchDtQueries(indexName, analyzerRequest.query)
-              )
-
-            AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
-              data = analyzersInternalData)
-          case _ => AnalyzersData()
+            decisionTableService.searchDtQueries(indexName, analyzerRequest.query).map(searchRes => {
+              val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
+              val dataInternal = AnalyzersData(item_list = data.item_list,
+                extracted_variables = data.extracted_variables, data = analyzersInternalData)
+              val evalRes = result.evaluate(analyzerRequest.query, dataInternal)
+              val returnData = if(evalRes.data.extracted_variables.nonEmpty || evalRes.data.item_list.nonEmpty) {
+                val dataInternal = evalRes.data
+                Some(Data(item_list = dataInternal.item_list, extracted_variables = dataInternal.extracted_variables))
+              } else {
+                Option.empty[Data]
+              }
+              Some(AnalyzerEvaluateResponse(build = true,
+                value = evalRes.score, data = returnData, build_message = "success"))
+            })
+          case _ =>
+            Future{
+              Some(AnalyzerEvaluateResponse(build = true,
+                value = 0.0, data = Option.empty[Data], build_message = "success"))
+            }
         }
-
-        val evalRes = result.evaluate(analyzerRequest.query, dataInternal)
-        val returnData = if(evalRes.data.extracted_variables.nonEmpty || evalRes.data.item_list.nonEmpty) {
-          val dataInternal = evalRes.data
-          Option { Data(item_list = dataInternal.item_list, extracted_variables =
-            dataInternal.extracted_variables
-          ) }
-        } else {
-          None: Option[Data]
-        }
-
-        val analyzerResponse = AnalyzerEvaluateResponse(build = true,
-          value = evalRes.score, data = returnData, build_message = "success")
-        analyzerResponse
     }
-
-    Future { Option { response } }
   }
 
 }

@@ -8,11 +8,11 @@ import java.io.InputStream
 import java.security.{KeyStore, SecureRandom}
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
-import akka.util.Timeout
 
-import scala.concurrent.duration._
+import scala.concurrent.ExecutionContextExecutor
 
 case class Parameters(
          http_enable: Boolean,
@@ -48,15 +48,10 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
   assert(params.nonEmpty)
 
   /* creation of the akka actor system which handle concurrent requests */
-  implicit val system = SCActorSystem.system
-
+  implicit val system: ActorSystem = SCActorSystem.system
   /* "The Materializer is a factory for stream execution engines, it is the thing that makes streams run" */
-  implicit val materializer = ActorMaterializer()
-
-  implicit val executionContext = system.dispatcher
-  implicit val timeout = Timeout(10.seconds)
-
-  val api = routes
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   if (params.get.https_enable) {
     val password: Array[Char] = params.get.https_cert_pass.toCharArray
@@ -80,7 +75,7 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
     sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
     val https: HttpsConnectionContext = ConnectionContext.https(sslContext)
 
-    Http().bindAndHandle(handler = api, interface = params.get.https_host, port = params.get.https_port,
+    Http().bindAndHandle(handler = routes, interface = params.get.https_host, port = params.get.https_port,
       connectionContext = https, log = system.log) map { binding =>
       system.log.info(s"REST (HTTPS) interface bound to ${binding.localAddress}")
     } recover { case ex =>
@@ -90,7 +85,8 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
   }
 
   if((! params.get.https_enable) || params.get.http_enable) {
-     Http().bindAndHandle(handler = api, interface = params.get.http_host,
+
+     Http().bindAndHandle(handler = routes, interface = params.get.http_host,
        port = params.get.http_port, log = system.log) map { binding =>
       system.log.info(s"REST (HTTP) interface bound to ${binding.localAddress}")
     } recover { case ex =>

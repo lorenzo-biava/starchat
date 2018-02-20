@@ -33,13 +33,13 @@ trait RestInterface extends Resources {
   lazy val systemService = DtReloadService
 
   val routes: Route = LoggingEntities.logRequestAndResult(rootAPIsRoutes) ~
-    LoggingEntities.logRequestAndResult(knowledgeBaseRoutes) ~
-    LoggingEntities.logRequestAndResultB64(knowledgeBaseSearchRoutes) ~
-    LoggingEntities.logRequestAndResultB64(decisionTableRoutes) ~
-    LoggingEntities.logRequestAndResultB64(decisionTableUploadCSVRoutes) ~
-    LoggingEntities.logRequestAndResultB64(decisionTableSearchRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(knowledgeBaseRoutes) ~
+    LoggingEntities.logRequestAndResult(knowledgeBaseSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(decisionTableRoutes) ~
+    LoggingEntities.logRequestAndResult(decisionTableUploadCSVRoutes) ~
+    LoggingEntities.logRequestAndResult(decisionTableSearchRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableAsyncReloadRoutes) ~
-    LoggingEntities.logRequestAndResultB64(decisionTableResponseRequestRoutes) ~
+    LoggingEntities.logRequestAndResult(decisionTableResponseRequestRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableAnalyzerRoutes) ~
     LoggingEntities.logRequestAndResult(postIndexManagementCreateRoutes) ~
     LoggingEntities.logRequestAndResult(postIndexManagementRefreshRoutes) ~

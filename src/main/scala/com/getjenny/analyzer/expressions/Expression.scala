@@ -15,7 +15,7 @@ abstract class Expression {
   def matches(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val res = this.evaluate(query, data)
     val bool: Double = if(res.score > matchThreshold) 1.0 else 0.0
-    if (bool === 1.0d) println("DEBUG: Expression: " + this + " matches " + query)
+    //if (bool === 1.0d) println("DEBUG: Expression: " + this + " matches " + query)
     Result(score = bool, data = res.data)
   } // read a sentence and tells if there is any match
 }

@@ -7,7 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 object StarChatCircuitBreaker {
-  def getCircuitBreaker(maxFailure: Int = 10, callTimeout: FiniteDuration = 10.seconds,
+  def getCircuitBreaker(maxFailure: Int = 32, callTimeout: FiniteDuration = 10.seconds,
                         resetTimeout: FiniteDuration = 2.seconds): CircuitBreaker = {
     val breaker = new CircuitBreaker(scheduler = SCActorSystem.system.scheduler,
       maxFailures = maxFailure,
