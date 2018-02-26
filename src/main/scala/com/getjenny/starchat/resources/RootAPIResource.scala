@@ -19,7 +19,7 @@ trait RootAPIResource extends MyResource {
     pathPrefix("") {
       pathEnd {
         get {
-          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(maxFailure = 2, callTimeout = 1.second)
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(maxFailure = 5, callTimeout = 5.second)
           onCompleteWithBreaker(breaker)(Future {
             None
           }) {

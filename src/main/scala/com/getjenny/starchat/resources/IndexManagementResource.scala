@@ -11,6 +11,7 @@ import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.IndexManagementService
 
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 trait IndexManagementResource extends MyResource {
@@ -25,7 +26,8 @@ trait IndexManagementResource extends MyResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+              val breaker: CircuitBreaker = StarChatCircuitBreaker
+                .getCircuitBreaker(maxFailure = 10, callTimeout = 20.seconds)
               onCompleteWithBreaker(breaker)(indexManagementService.createIndex(indexName)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                   t

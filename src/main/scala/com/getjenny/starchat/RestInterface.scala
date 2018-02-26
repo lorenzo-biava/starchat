@@ -32,7 +32,7 @@ trait RestInterface extends Resources {
   lazy val cronCleanDTService = CronCleanDTService
   lazy val systemService = DtReloadService
 
-  val routes: Route = LoggingEntities.logRequestAndResult(rootAPIsRoutes) ~
+  val routes: Route = rootAPIsRoutes ~
     LoggingEntities.logRequestAndResultReduced(knowledgeBaseRoutes) ~
     LoggingEntities.logRequestAndResult(knowledgeBaseSearchRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableRoutes) ~
