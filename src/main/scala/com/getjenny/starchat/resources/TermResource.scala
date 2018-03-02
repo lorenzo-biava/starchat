@@ -171,8 +171,7 @@ trait TermResource extends StarChatResource {
           get {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { (user) =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              authorizeAsync(_ => authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 operation match {
                   case "term" =>
                     entity(as[SearchTerm]) { requestData =>

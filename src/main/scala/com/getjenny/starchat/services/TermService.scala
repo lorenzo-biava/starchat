@@ -436,12 +436,14 @@ object TermService {
   def searchTerm(indexName: String, term: SearchTerm) : Future[Option[TermsResults]] = Future {
     val client: TransportClient = elastiClient.getClient()
 
-    val term_field_name = TokenizersDescription.analyzers_map.get(term.analyzer.getOrElse("")) match {
-      case Some(a) => "term" + "." + a._1
-      case _ =>
-        throw TermServiceException("esTokenizer: analyzer not found or not supported: (" +
-          term.analyzer.getOrElse("") + ")")
-    }
+    val analyzer_name = term.analyzer.getOrElse("space_punctuation")
+    val term_field_name =
+      TokenizersDescription.analyzers_map.get(analyzer_name) match {
+        case Some(a) => "term." + a
+        case _ =>
+          throw TermServiceException("searchTerm: analyzer not found or not supported: (" +
+            term.analyzer.getOrElse("") + ")")
+      }
 
     val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
       .setTypes(elastiClient.termIndexSuffix)
@@ -563,13 +565,9 @@ object TermService {
     val terms: Terms = Terms(terms=documents)
 
     val maxScore : Float = searchResponse.getHits.getMaxScore
-    val total : Int = terms.terms.length
-    val searchResults : TermsResults = TermsResults(total = total, max_score = maxScore,
-      hits = terms)
-
-    Option {
-      searchResults
-    }
+    Some(
+      TermsResults(total = terms.terms.length, max_score = maxScore, hits = terms)
+    )
   }
 
   //given a text, return all the matching terms
@@ -578,9 +576,9 @@ object TermService {
     val client: TransportClient = elastiClient.getClient()
 
     val term_field_name = TokenizersDescription.analyzers_map.get(analyzer) match {
-      case Some(a) => "term" + "." + a._1
+      case Some(a) => "term." + analyzer
       case _ =>
-        throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + analyzer + ")")
+        throw TermServiceException("search: analyzer not found or not supported: (" + analyzer + ")")
     }
 
     val searchBuilder : SearchRequestBuilder = client.prepareSearch()
@@ -662,13 +660,9 @@ object TermService {
     val terms: Terms = Terms(terms=documents)
 
     val maxScore : Float = searchResponse.getHits.getMaxScore
-    val total : Int = terms.terms.length
-    val searchResults : TermsResults = TermsResults(total = total, max_score = maxScore,
-      hits = terms)
-
-    Option {
-      searchResults
-    }
+    Some(
+      TermsResults(total = terms.terms.length, max_score = maxScore, hits = terms)
+    )
   }
 
   def esTokenizer(indexName: String, query: TokenizerQueryRequest) : Option[TokenizerResponse] = {
