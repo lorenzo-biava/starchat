@@ -13,7 +13,7 @@ import com.getjenny.starchat.services.KnowledgeBaseService
 
 import scala.util.{Failure, Success}
 
-trait KnowledgeBaseResource extends MyResource {
+trait KnowledgeBaseResource extends StarChatResource {
 
   def knowledgeBaseRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "knowledgebase") { indexName =>
@@ -21,7 +21,7 @@ trait KnowledgeBaseResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
               parameters("refresh".as[Int] ? 0) { refresh =>
@@ -55,7 +55,7 @@ trait KnowledgeBaseResource extends MyResource {
         } ~
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 parameters("ids".as[String].*) { ids =>
@@ -78,7 +78,7 @@ trait KnowledgeBaseResource extends MyResource {
           } ~
           delete {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -101,7 +101,7 @@ trait KnowledgeBaseResource extends MyResource {
         path(Segment) { id =>
           put {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("refresh".as[Int] ? 0) { refresh =>

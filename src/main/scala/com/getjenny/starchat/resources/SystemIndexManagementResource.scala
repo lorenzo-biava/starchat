@@ -13,7 +13,7 @@ import com.getjenny.starchat.services.SystemIndexManagementService
 
 import scala.util.{Failure, Success}
 
-trait SystemIndexManagementResource extends MyResource {
+trait SystemIndexManagementResource extends StarChatResource {
 
 
   def systemGetIndexesRoutes: Route = handleExceptions(routesExceptionHandler) {
@@ -22,7 +22,7 @@ trait SystemIndexManagementResource extends MyResource {
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -49,7 +49,7 @@ trait SystemIndexManagementResource extends MyResource {
       path(Segment) { operation: String =>
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               operation match {
@@ -87,7 +87,7 @@ trait SystemIndexManagementResource extends MyResource {
         pathEnd {
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -105,7 +105,7 @@ trait SystemIndexManagementResource extends MyResource {
           } ~
             delete {
               authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { user =>
+                authenticator = authenticator.authenticator) { (user) =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -123,7 +123,7 @@ trait SystemIndexManagementResource extends MyResource {
             } ~
             put {
               authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { user =>
+                authenticator = authenticator.authenticator) { (user) =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()

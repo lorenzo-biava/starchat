@@ -9,6 +9,10 @@
             "raw": {
               "type": "keyword"
             },
+            "space_punctuation": {
+              "type": "text",
+              "analyzer": "jenny_space_punctuation_analyzer"
+            },
             "base": {
               "type": "text",
               "analyzer": "jenny_base_analyzer"

@@ -14,7 +14,7 @@ import com.getjenny.starchat.services.IndexManagementService
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-trait IndexManagementResource extends MyResource {
+trait IndexManagementResource extends StarChatResource {
 
   def postIndexManagementCreateRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash
@@ -26,16 +26,51 @@ trait IndexManagementResource extends MyResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-              val breaker: CircuitBreaker = StarChatCircuitBreaker
-                .getCircuitBreaker(maxFailure = 10, callTimeout = 20.seconds)
-              onCompleteWithBreaker(breaker)(indexManagementService.createIndex(indexName)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                  t
-                })
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Option {
-                    IndexManagementResponse(message = e.getMessage)
+              parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker
+                  .getCircuitBreaker(maxFailure = 10, callTimeout = 20.seconds)
+                onCompleteWithBreaker(breaker)(
+                  indexManagementService.createIndex(indexName = indexName, indexSuffix = indexSuffix)
+                ) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
                   })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    })
+                }
+              }
+            }
+          }
+        }
+    }
+  }
+
+  def postIndexManagementOpenCloseRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
+      Slash ~ "index_management" ~ Slash ~ """(open|close)""".r) {
+      (indexName, operation) =>
+        val indexManagementService = IndexManagementService
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(
+                  indexManagementService.openCloseIndex(indexName = indexName, indexSuffix = indexSuffix,
+                                   operation = operation)
+                ) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
+                  })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    })
+                }
               }
             }
           }
@@ -53,15 +88,19 @@ trait IndexManagementResource extends MyResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.refreshIndexes(indexName)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                  t
-                })
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Option {
-                    IndexManagementResponse(message = e.getMessage)
+              parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(
+                  indexManagementService.refreshIndexes(indexName = indexName, indexSuffix = indexSuffix)
+                ) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
                   })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    })
+                }
               }
             }
           }
@@ -71,8 +110,8 @@ trait IndexManagementResource extends MyResource {
 
   def putIndexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
-      Slash ~ """([A-Za-z0-9_]+)""".r ~ Slash ~ "index_management") {
-      (indexName, language) =>
+      Slash ~ """([A-Za-z0-9_]{1,256})""".r ~ Slash ~ "index_management" ~ Slash ~ """(mappings|settings)""".r) {
+      (indexName, language, mappingOrSettings) =>
         val indexManagementService = IndexManagementService
         pathEnd {
           put {
@@ -80,15 +119,24 @@ trait IndexManagementResource extends MyResource {
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(indexManagementService.updateIndex(indexName, language)) {
-                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                    t
-                  })
-                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                    Option {
-                      IndexManagementResponse(message = e.getMessage)
+                parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(
+                    mappingOrSettings match {
+                      case "mappings" => indexManagementService.updateIndexMappings(indexName = indexName,
+                        indexSuffix = indexSuffix, language = language)
+                      case "settings" => indexManagementService.updateIndexSettings(indexName = indexName,
+                        indexSuffix = indexSuffix, language = language)
+                    }
+                  ) {
+                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
                     })
+                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        IndexManagementResponse(message = e.getMessage)
+                      })
+                  }
                 }
               }
             }
@@ -107,26 +155,11 @@ trait IndexManagementResource extends MyResource {
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(indexManagementService.checkIndex(indexName)) {
-                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                    t
-                  })
-                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                    Option {
-                      IndexManagementResponse(message = e.getMessage)
-                    })
-                }
-              }
-            }
-          } ~
-            delete {
-              authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { user =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(indexManagementService.removeIndex(indexName)) {
+                  onCompleteWithBreaker(breaker)(
+                    indexManagementService.checkIndex(indexName = indexName, indexSuffix = indexSuffix)
+                  ) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })
@@ -134,6 +167,29 @@ trait IndexManagementResource extends MyResource {
                       Option {
                         IndexManagementResponse(message = e.getMessage)
                       })
+                  }
+                }
+              }
+            }
+          } ~
+            delete {
+              authenticateBasicAsync(realm = authRealm,
+                authenticator = authenticator.authenticator) { (user) =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                  parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(
+                      indexManagementService.removeIndex(indexName = indexName, indexSuffix = indexSuffix)
+                    ) {
+                      case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
+                      })
+                      case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          IndexManagementResponse(message = e.getMessage)
+                        })
+                    }
                   }
                 }
               }

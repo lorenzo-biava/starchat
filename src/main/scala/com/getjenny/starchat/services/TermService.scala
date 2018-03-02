@@ -4,6 +4,8 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/17.
   */
 
+import java.io.{FileNotFoundException, InputStream}
+
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
@@ -24,6 +26,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.io.Source
 import scalaz.Scalaz._
 
 case class TermServiceException(message: String = "", cause: Throwable = None.orNull)
@@ -94,6 +97,70 @@ object TermService {
       termTuple
     }).toMap
     m
+  }
+
+  private[this] def extractSyns(lemma:String, synset: Array[String]): Option[Map[String, Double]] = {
+    val syns = synset.filter(_ =/= lemma).map(synLemma => (synLemma, 0.5d)).toMap
+    if(syns.isEmpty) {
+      Option.empty[Map[String, Double]]
+    } else {
+      Some(syns)
+    }
+  }
+
+  def indexDefaultSynonyms(indexName: String, groupSize: Int = 2000, refresh: Int = 0) : Future[Option[ReturnMessageData]] = Future {
+    // extract language from index name
+    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
+    val indexPatterns = indexName match {
+      case indexLanguageRegex(index_pattern, language_pattern, arbitrary_pattern) =>
+        (index_pattern, language_pattern, arbitrary_pattern)
+      case _ => throw new Exception("index name is not well formed")
+    }
+    val language: String = indexPatterns._2
+    val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.txt"
+    val synonymsIs: Option[InputStream] = Some(getClass.getResourceAsStream(synonymsPath))
+    val analyzerSource: Source = synonymsIs match {
+      case Some(stream) => Source.fromInputStream(stream, "utf-8")
+      case _ =>
+        val message = "Check the file: (" + synonymsPath + ")"
+        throw new FileNotFoundException(message)
+    }
+
+    val results = analyzerSource.getLines.grouped(groupSize).map(group => {
+      val termList = group.par.map(entry => {
+        val (typeAndLemma, synSet) = entry.split(",").splitAt(2)
+        val (category, lemma) = (typeAndLemma.head, typeAndLemma.last)
+        category match {
+          case "SYN" =>
+            extractSyns(lemma, synSet) match {
+              case Some(syns) =>
+                Some(Term(term = lemma, synonyms = Some(syns)))
+              case _ => Option.empty[Term]
+            }
+          case "ANT" =>
+            extractSyns(lemma, synSet) match {
+              case Some(syns) =>
+                Some(Term(term = lemma, antonyms = Some(syns)))
+              case _ => Option.empty[Term]
+            }
+          case _ => Option.empty[Term]
+        }
+      }).filter(_.nonEmpty).map(t => t.get).toList
+      Terms(terms = termList)
+    }).filter(_.terms.nonEmpty).map(terms => {
+      updateTerm(indexName = indexName, terms = terms, refresh = refresh) match {
+        case Some(t) =>
+          log.info(s"Successfully indexed block of $groupSize synonyms")
+          true
+        case _ =>
+          log.error(s"Failed indexed block of $groupSize synonyms")
+          false
+      }
+    })
+    val success = results.count(_ == true)
+    val failure = results.count(_ == false)
+    Some(ReturnMessageData(code=100, message = s"Indexed synonyms," +
+      s" blocks of $groupSize items => success($success) failures($failure)"))
   }
 
   def indexTerm(indexName: String, terms: Terms, refresh: Int) : Future[Option[IndexDocumentListResult]] = Future {
@@ -238,7 +305,11 @@ object TermService {
     Option {Terms(terms=documents)}
   }
 
-  def updateTerm(indexName: String, terms: Terms, refresh: Int) : Future[Option[UpdateDocumentListResult]] = Future {
+  def updateTermFuture(indexName: String, terms: Terms, refresh: Int) : Future[Option[UpdateDocumentListResult]] = Future {
+    updateTerm(indexName, terms, refresh)
+  }
+
+  def updateTerm(indexName: String, terms: Terms, refresh: Int) : Option[UpdateDocumentListResult] = {
     val client: TransportClient = elastiClient.getClient()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
@@ -288,6 +359,7 @@ object TermService {
 
       bulkRequest.add(client.prepareUpdate().setIndex(getIndexName(indexName))
         .setType(elastiClient.termIndexSuffix)
+        .setDocAsUpsert(true)
         .setId(term.term)
         .setDoc(builder))
     })
@@ -364,6 +436,13 @@ object TermService {
   def searchTerm(indexName: String, term: SearchTerm) : Future[Option[TermsResults]] = Future {
     val client: TransportClient = elastiClient.getClient()
 
+    val term_field_name = TokenizersDescription.analyzers_map.get(term.analyzer.getOrElse("")) match {
+      case Some(a) => "term" + "." + a._1
+      case _ =>
+        throw TermServiceException("esTokenizer: analyzer not found or not supported: (" +
+          term.analyzer.getOrElse("") + ")")
+    }
+
     val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
       .setTypes(elastiClient.termIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
@@ -372,7 +451,7 @@ object TermService {
 
     term.term match {
       case Some(term_property) =>
-        boolQueryBuilder.must(QueryBuilders.termQuery("term.base", term_property))
+        boolQueryBuilder.must(QueryBuilders.termQuery(term_field_name, term_property))
       case _ => ;
     }
 
@@ -494,8 +573,15 @@ object TermService {
   }
 
   //given a text, return all the matching terms
-  def search(indexName: String, text: String): Future[Option[TermsResults]] = Future {
+  def search(indexName: String, text: String,
+             analyzer: String = "space_punctuation"): Future[Option[TermsResults]] = Future {
     val client: TransportClient = elastiClient.getClient()
+
+    val term_field_name = TokenizersDescription.analyzers_map.get(analyzer) match {
+      case Some(a) => "term" + "." + a._1
+      case _ =>
+        throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + analyzer + ")")
+    }
 
     val searchBuilder : SearchRequestBuilder = client.prepareSearch()
       .setIndices(getIndexName(indexName))
@@ -503,7 +589,7 @@ object TermService {
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
-    boolQueryBuilder.should(QueryBuilders.matchQuery("term.base", text))
+    boolQueryBuilder.should(QueryBuilders.matchQuery(term_field_name, text))
     searchBuilder.setQuery(boolQueryBuilder)
 
     val searchResponse : SearchResponse = searchBuilder
@@ -586,10 +672,10 @@ object TermService {
   }
 
   def esTokenizer(indexName: String, query: TokenizerQueryRequest) : Option[TokenizerResponse] = {
-    val analyzer = query.tokenizer
-    val isSupported: Boolean = TokenizersDescription.analyzers_map.isDefinedAt(analyzer)
-    if(! isSupported) {
-      throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + analyzer + ")")
+    val analyzer = TokenizersDescription.analyzers_map.get(query.tokenizer) match {
+      case Some(a) => a._1
+      case _ =>
+        throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + query.tokenizer + ")")
     }
 
     val client: TransportClient = elastiClient.getClient()
@@ -617,9 +703,10 @@ object TermService {
     response
   }
 
-  def textToVectors(indexName: String, text: String, analyzer: String = "stop", unique: Boolean = false):
-  Option[TextTerms] = {
-    val analyzerRequest = TokenizerQueryRequest(tokenizer = analyzer, text = text)
+  def textToVectors(indexName: String, text: String, analyzer: String = "stop",
+                    unique: Boolean = false): Option[TextTerms] = {
+    val analyzerRequest =
+      TokenizerQueryRequest(tokenizer = analyzer, text = text) // analyzer is checked by esTokenizer
     val analyzersResponse = esTokenizer(indexName, analyzerRequest)
 
     val fullTokenList = analyzersResponse match {

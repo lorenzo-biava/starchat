@@ -13,13 +13,13 @@ import com.getjenny.starchat.services.AnalyzerService
 
 import scala.util.{Failure, Success}
 
-trait AnalyzersPlaygroundResource extends MyResource {
+trait AnalyzersPlaygroundResource extends StarChatResource {
   def analyzersPlaygroundRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "analyzers_playground") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[AnalyzerEvaluateRequest]) { request =>

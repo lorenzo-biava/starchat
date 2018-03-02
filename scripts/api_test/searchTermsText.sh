@@ -2,5 +2,6 @@
 
 PORT=${1:-8888}
 INDEX_NAME=${2:-index_english_0}
+QUERY=${3:-"term2 मरा'ी'"}
 curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
-  -H "Content-Type: application/json" -X GET http://localhost:${PORT}/${INDEX_NAME}/term/text -d 'term2 मराठी'
+  -H "Content-Type: application/json" -X GET http://localhost:${PORT}/${INDEX_NAME}/term/text -d "${QUERY}"

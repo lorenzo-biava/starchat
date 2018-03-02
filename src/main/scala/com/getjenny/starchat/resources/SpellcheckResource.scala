@@ -13,7 +13,7 @@ import com.getjenny.starchat.services.SpellcheckService
 
 import scala.util.{Failure, Success}
 
-trait SpellcheckResource extends MyResource {
+trait SpellcheckResource extends StarChatResource {
 
   def spellcheckRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "spellcheck") { indexName =>
@@ -22,7 +22,7 @@ trait SpellcheckResource extends MyResource {
         pathEnd {
           post {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 entity(as[SpellcheckTermsRequest]) { request =>

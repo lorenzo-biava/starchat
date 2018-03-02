@@ -3,6 +3,12 @@
   "index.requests.cache.enable": true,
   "analysis":
   {
+    "tokenizer": {
+      "space_punctuation": {
+        "type": "pattern",
+        "pattern": "[ |.,!?:;()\\[\\]\\{\\}]"
+      }
+    },
     "char_filter":
     {
       "&_to_and": {
@@ -55,6 +61,11 @@
       "jenny_raw_analyzer":
       {
         "tokenizer":    "keyword",
+        "filter":       [ "lowercase"]
+      },
+      "jenny_space_punctuation_analyzer":
+      {
+        "tokenizer":    "space_punctuation",
         "filter":       [ "lowercase"]
       },
       "jenny_base_analyzer":

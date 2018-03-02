@@ -13,7 +13,7 @@ import com.getjenny.starchat.services.LanguageGuesserService
 
 import scala.util.{Failure, Success}
 
-trait LanguageGuesserResource extends MyResource {
+trait LanguageGuesserResource extends StarChatResource {
 
   def languageGuesserRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "language_guesser") { indexName =>
@@ -21,7 +21,7 @@ trait LanguageGuesserResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[LanguageGuesserRequestIn]) { request_data =>
@@ -46,7 +46,7 @@ trait LanguageGuesserResource extends MyResource {
         path(Segment) { language: String =>
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()

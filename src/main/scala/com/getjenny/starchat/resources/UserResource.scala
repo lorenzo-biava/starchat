@@ -14,7 +14,7 @@ import com.getjenny.starchat.services.{AbstractUserService, UserService}
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-trait UserResource extends MyResource {
+trait UserResource extends StarChatResource {
 
   private[this] val userService: AbstractUserService = UserService.service
 
@@ -22,7 +22,7 @@ trait UserResource extends MyResource {
     pathPrefix("user") {
       post {
         authenticateBasicAsync(realm = authRealm,
-          authenticator = authenticator.authenticator) { user =>
+          authenticator = authenticator.authenticator) { (user) =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {
             entity(as[User]) { user_entity =>
@@ -48,7 +48,7 @@ trait UserResource extends MyResource {
       path(Segment) { id =>
         put {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               entity(as[UserUpdate]) { user_entity =>
@@ -76,7 +76,7 @@ trait UserResource extends MyResource {
       path(Segment) { id =>
         delete {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -101,7 +101,7 @@ trait UserResource extends MyResource {
       path(Segment) { id =>
         get {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -126,7 +126,7 @@ trait UserResource extends MyResource {
       path(Segment) { id =>
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               entity(as[UserUpdate]) { user_entity =>

@@ -14,13 +14,13 @@ import com.getjenny.starchat.services.TermService
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-trait TokenizersResource extends MyResource {
+trait TokenizersResource extends StarChatResource {
   def esTokenizersRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "tokenizers") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
               entity(as[TokenizerQueryRequest]) { request_data =>
@@ -45,7 +45,7 @@ trait TokenizersResource extends MyResource {
         } ~ {
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 val analyzers_description: Map[String, String] =

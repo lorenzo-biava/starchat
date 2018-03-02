@@ -20,7 +20,7 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 import scalaz.Scalaz._
 
-trait DecisionTableResource extends MyResource {
+trait DecisionTableResource extends StarChatResource {
 
   private[this] val decisionTableService: DecisionTableService.type = DecisionTableService
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
@@ -32,7 +32,7 @@ trait DecisionTableResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
               parameters("refresh".as[Int] ? 0) { refresh =>
@@ -55,7 +55,7 @@ trait DecisionTableResource extends MyResource {
         } ~
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
@@ -94,7 +94,7 @@ trait DecisionTableResource extends MyResource {
           } ~
           delete {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -117,7 +117,7 @@ trait DecisionTableResource extends MyResource {
         path(Segment) { id =>
           put {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 entity(as[DTDocumentUpdate]) { update =>
@@ -211,7 +211,7 @@ trait DecisionTableResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -239,7 +239,7 @@ trait DecisionTableResource extends MyResource {
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -260,7 +260,7 @@ trait DecisionTableResource extends MyResource {
         } ~
           post {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+              authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("propagate".as[Boolean] ? true,
@@ -292,7 +292,7 @@ trait DecisionTableResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[DTDocumentSearch]) { docsearch =>
@@ -322,7 +322,7 @@ trait DecisionTableResource extends MyResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
+            authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[ResponseRequestIn]) {
