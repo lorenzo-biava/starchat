@@ -19,6 +19,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
+import scalaz.Scalaz._
 
 case class SystemIndexManagementServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -53,7 +54,7 @@ object SystemIndexManagementService {
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
-        case Some(t) => t == item.indexSuffix
+        case Some(t) => t === item.indexSuffix
         case _ => true
       }
     }).map(item => {
@@ -91,7 +92,7 @@ object SystemIndexManagementService {
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
-        case Some(t) => t == item.indexSuffix
+        case Some(t) => t === item.indexSuffix
         case _ => true
       }
     }).map(item => {
@@ -114,7 +115,7 @@ object SystemIndexManagementService {
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
-        case Some(t) => t == item.indexSuffix
+        case Some(t) => t === item.indexSuffix
         case _ => true
       }
     }).map(item => {
@@ -134,7 +135,7 @@ object SystemIndexManagementService {
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
-        case Some(t) => t == item.indexSuffix
+        case Some(t) => t === item.indexSuffix
         case _ => true
       }
     }).map(item => {
@@ -164,7 +165,7 @@ object SystemIndexManagementService {
   def refreshIndexes(indexSuffix: Option[String] = None) : Future[Option[RefreshIndexResults]] = Future {
     val operationsResults: List[RefreshIndexResult] = schemaFiles.filter(item => {
       indexSuffix match {
-        case Some(t) => t == item.indexSuffix
+        case Some(t) => t === item.indexSuffix
         case _ => true
       }
     }).map(item => {

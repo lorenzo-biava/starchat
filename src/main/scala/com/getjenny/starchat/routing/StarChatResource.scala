@@ -12,6 +12,7 @@ import com.getjenny.starchat.serializers.JsonSupport
 import com.getjenny.starchat.services.UserEsServiceException
 import com.getjenny.starchat.services.auth.{AbstractStarChatAuthenticator, StarChatAuthenticator}
 import com.typesafe.config.{Config, ConfigFactory}
+import org.elasticsearch.index.IndexNotFoundException
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
@@ -26,6 +27,13 @@ trait StarChatResource extends Directives with JsonSupport {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   val routesExceptionHandler = ExceptionHandler {
+    case e: IndexNotFoundException =>
+      extractUri { uri =>
+        log.error("uri(" + uri + ") index error: " + e)
+        respondWithDefaultHeader(defaultHeader) {
+          complete(StatusCodes.BadRequest)
+        }
+      }
     case e: TimeoutException =>
       extractUri { uri =>
         log.error("uri(" + uri + ") request timeout: " + e)
@@ -35,7 +43,7 @@ trait StarChatResource extends Directives with JsonSupport {
       }
     case e: UserEsServiceException =>
       extractUri { uri =>
-        log.error("uri(" + uri + ") Unauthorizes: " + e)
+        log.error("uri(" + uri + ") Unauthorized: " + e)
         respondWithDefaultHeader(defaultHeader) {
           complete(StatusCodes.Unauthorized)
         }

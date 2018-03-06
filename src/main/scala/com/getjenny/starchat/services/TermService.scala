@@ -111,12 +111,13 @@ object TermService {
   def indexDefaultSynonyms(indexName: String, groupSize: Int = 2000, refresh: Int = 0) : Future[Option[ReturnMessageData]] = Future {
     // extract language from index name
     val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-    val indexPatterns = indexName match {
-      case indexLanguageRegex(index_pattern, language_pattern, arbitrary_pattern) =>
-        (index_pattern, language_pattern, arbitrary_pattern)
+
+    val (_, language, _) = indexName match {
+      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
+        (indexPattern, languagePattern, arbitraryPattern)
       case _ => throw new Exception("index name is not well formed")
     }
-    val language: String = indexPatterns._2
+
     val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.txt"
     val synonymsIs: Option[InputStream] = Some(getClass.getResourceAsStream(synonymsPath))
     val analyzerSource: Source = synonymsIs match {
@@ -149,16 +150,16 @@ object TermService {
       Terms(terms = termList)
     }).filter(_.terms.nonEmpty).map(terms => {
       updateTerm(indexName = indexName, terms = terms, refresh = refresh) match {
-        case Some(t) =>
-          log.info(s"Successfully indexed block of $groupSize synonyms")
+        case Some(updateDocumentListResult) =>
+          log.info(s"Successfully indexed block of $groupSize synonyms : " + updateDocumentListResult.data.length)
           true
         case _ =>
           log.error(s"Failed indexed block of $groupSize synonyms")
           false
       }
     })
-    val success = results.count(_ == true)
-    val failure = results.count(_ == false)
+    val success = results.count(_ === true)
+    val failure = results.count(_ === false)
     Some(ReturnMessageData(code=100, message = s"Indexed synonyms," +
       s" blocks of $groupSize items => success($success) failures($failure)"))
   }
