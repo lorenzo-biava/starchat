@@ -130,7 +130,7 @@ object TermService {
     val results = analyzerSource.getLines.grouped(groupSize).map(group => {
       val termList = group.par.map(entry => {
         val (typeAndLemma, synSet) = entry.split(",").splitAt(2)
-        val (category, lemma) = (typeAndLemma.head, typeAndLemma.last)
+        val (category, lemma) = (typeAndLemma.headOption.getOrElse(""), typeAndLemma.lastOption.getOrElse(""))
         category match {
           case "SYN" =>
             extractSyns(lemma, synSet) match {
@@ -146,7 +146,7 @@ object TermService {
             }
           case _ => Option.empty[Term]
         }
-      }).filter(_.nonEmpty).map(t => t.get).toList
+      }).filter(_.nonEmpty).map(term => term.get).toList
       Terms(terms = termList)
     }).filter(_.terms.nonEmpty).map(terms => {
       updateTerm(indexName = indexName, terms = terms, refresh = refresh) match {
@@ -668,7 +668,7 @@ object TermService {
 
   def esTokenizer(indexName: String, query: TokenizerQueryRequest) : Option[TokenizerResponse] = {
     val analyzer = TokenizersDescription.analyzers_map.get(query.tokenizer) match {
-      case Some(a) => a._1
+      case Some((analyzerEsName, _)) => analyzerEsName
       case _ =>
         throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + query.tokenizer + ")")
     }
