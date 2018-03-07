@@ -89,7 +89,7 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
      Http().bindAndHandle(handler = routes, interface = params.get.http_host,
        port = params.get.http_port, log = system.log) map { binding =>
       system.log.info(s"REST (HTTP) interface bound to ${binding.localAddress}")
-    } recover { case eX =>
+    } recover { case eX: Exception =>
       system.log.error(s"REST (HTTP) interface could not bind to ${params.get.http_host}:${params.get.http_port}",
         eX.getMessage)
     }

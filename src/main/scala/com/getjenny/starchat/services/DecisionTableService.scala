@@ -532,7 +532,7 @@ object DecisionTableService {
 
           val queries: List[String] = source.get("queries") match {
             case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-              .asScala.map { res => Some(res.getOrElseDefault("query", None)) }
+              .asScala.map { res => Some(res.getOrDefault("query", None.orNull)) }
               .filter(_.nonEmpty).map(_.get).toList
             case None => List[String]()
           }
