@@ -106,34 +106,42 @@ object KnowledgeBaseService {
       case _ => ;
     }
 
-    if(documentSearch.random.isDefined && documentSearch.random.getOrElse(false)) {
-      val randomBuilder = new RandomScoreFunctionBuilder().seed(RandomNumbers.getInt())
-      val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(randomBuilder)
-      boolQueryBuilder.must(functionScoreQuery)
+    documentSearch.random.filter(identity) match {
+      case Some(true) =>
+        val randomBuilder = new RandomScoreFunctionBuilder().seed(RandomNumbers.getInt())
+        val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(randomBuilder)
+        boolQueryBuilder.must(functionScoreQuery)
+      case _ => ;
     }
 
-    if(documentSearch.question_scored_terms.isDefined) {
-      val queryTerms = QueryBuilders.boolQuery()
-        .should(QueryBuilders.matchQuery("question_scored_terms.term", documentSearch.question_scored_terms.get))
-      val script: Script = new Script("doc[\"question_scored_terms.score\"].value")
-      val scriptFunction = new ScriptScoreFunctionBuilder(script)
-      val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(queryTerms, scriptFunction)
+    documentSearch.question_scored_terms match {
+      case Some(questionScoredTerms) =>
+        val queryTerms = QueryBuilders.boolQuery()
+          .should(QueryBuilders.matchQuery("question_scored_terms.term", questionScoredTerms))
+        val script: Script = new Script("doc[\"question_scored_terms.score\"].value")
+        val scriptFunction = new ScriptScoreFunctionBuilder(script)
+        val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(queryTerms, scriptFunction)
 
-      val nestedQuery: QueryBuilder = QueryBuilders.nestedQuery(
-        "question_scored_terms",
-        functionScoreQuery,
-        nested_score_mode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Total)
-      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100))
-
-      boolQueryBuilder.should(nestedQuery)
+        val nestedQuery: QueryBuilder = QueryBuilders.nestedQuery(
+          "question_scored_terms",
+          functionScoreQuery,
+          nested_score_mode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Total)
+        ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100))
+        boolQueryBuilder.should(nestedQuery)
+      case _ => ;
     }
 
-    if(documentSearch.answer.isDefined) {
-      boolQueryBuilder.must(QueryBuilders.matchQuery("answer.stem", documentSearch.answer.get))
+    documentSearch.answer match {
+      case Some(value) =>
+        boolQueryBuilder.must(QueryBuilders.matchQuery("answer.stem", value))
+      case _ => ;
     }
 
-    if(documentSearch.conversation.isDefined)
-      boolQueryBuilder.must(QueryBuilders.matchQuery("conversation", documentSearch.conversation.get))
+    documentSearch.conversation match {
+      case Some(value) =>
+        boolQueryBuilder.must(QueryBuilders.matchQuery("conversation", value))
+      case _ => ;
+    }
 
     searchBuilder.setQuery(boolQueryBuilder)
 
@@ -170,7 +178,7 @@ object KnowledgeBaseService {
       val questionNegative : Option[List[String]] = source.get("question_negative") match {
         case Some(t) =>
           val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-            .asScala.map(_.asScala.get("query")).filter(_.isDefined).map(_.get).toList
+            .asScala.map(_.asScala.get("query")).filter(_.nonEmpty).map(_.get).toList
           Option { res }
         case None => None: Option[List[String]]
       }

@@ -184,12 +184,17 @@ object AnalyzerService {
           BuildAnalyzerResult(None, -1L, msg)
         }
 
+      val analyzerBuildResult = buildAnalyzerResult.analyzer match {
+        case Some(_) => true
+        case _ => false
+      }
+
       val decisionTableRuntimeItem = DecisionTableRuntimeItem(executionOrder=executionOrder,
         maxStateCounter = maxStateCounter,
         analyzer =
           AnalyzerItem(
             declaration = analyzerDeclaration,
-            build = buildAnalyzerResult.analyzer.isDefined,
+            build = analyzerBuildResult,
             analyzer = buildAnalyzerResult.analyzer,
             message = buildAnalyzerResult.message
           ),

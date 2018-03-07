@@ -78,9 +78,9 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
     Http().bindAndHandle(handler = routes, interface = params.get.https_host, port = params.get.https_port,
       connectionContext = https, log = system.log) map { binding =>
       system.log.info(s"REST (HTTPS) interface bound to ${binding.localAddress}")
-    } recover { case ex =>
+    } recover { case eX =>
       system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.https_host}:${params.get.https_port}",
-        ex.getMessage)
+        eX.getMessage)
     }
   }
 
@@ -89,9 +89,9 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
      Http().bindAndHandle(handler = routes, interface = params.get.http_host,
        port = params.get.http_port, log = system.log) map { binding =>
       system.log.info(s"REST (HTTP) interface bound to ${binding.localAddress}")
-    } recover { case ex =>
+    } recover { case eX =>
       system.log.error(s"REST (HTTP) interface could not bind to ${params.get.http_host}:${params.get.http_port}",
-        ex.getMessage)
+        eX.getMessage)
     }
   }
 

@@ -72,6 +72,12 @@ trait StarChatResource extends Directives with JsonSupport {
     }
   }
 
+  def completeResponse[A: ToEntityMarshaller](statusCode: StatusCode, data: A): Route = {
+    respondWithDefaultHeader(defaultHeader) {
+      complete(statusCode, data)
+    }
+  }
+
   def completeResponse[A: ToEntityMarshaller](statusCodeOk: StatusCode, statusCodeFailed: StatusCode,
                                               data: Option[A]): Route = {
     data match {
@@ -83,4 +89,12 @@ trait StarChatResource extends Directives with JsonSupport {
         complete(statusCodeFailed)
     }
   }
+
+  def completeResponse[A: ToEntityMarshaller](statusCodeOk: StatusCode, statusCodeFailed: StatusCode,
+                                              data: A): Route = {
+    respondWithDefaultHeader(defaultHeader) {
+      complete(statusCodeOk, data)
+    }
+  }
+
 }

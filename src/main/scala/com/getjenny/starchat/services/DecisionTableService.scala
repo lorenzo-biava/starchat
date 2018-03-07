@@ -67,23 +67,31 @@ object DecisionTableService {
     searchBuilder.setMinScore(minScore)
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
-    if (documentSearch.state.isDefined)
-      boolQueryBuilder.must(QueryBuilders.termQuery("state", documentSearch.state.get))
 
-    if (documentSearch.execution_order.isDefined)
-      boolQueryBuilder.must(QueryBuilders.matchQuery("execution_order", documentSearch.state.get))
+    documentSearch.state match {
+      case Some(value) => boolQueryBuilder.must(QueryBuilders.termQuery("state", value))
+      case _ => ;
+    }
 
-    if(documentSearch.queries.isDefined) {
-      val nestedQuery: QueryBuilder = QueryBuilders.nestedQuery(
-        "queries",
-        QueryBuilders.boolQuery()
-          .must(QueryBuilders.matchQuery("queries.query.stem_bm25", documentSearch.queries.get))
-          .should(QueryBuilders.matchPhraseQuery("queries.query.raw", documentSearch.queries.get)
-            .boost(1 + (minScore * boostExactMatchFactor))
-          ),
-        queriesScoreMode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Max)
-      ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100))
-      boolQueryBuilder.must(nestedQuery)
+    documentSearch.execution_order match {
+      case Some(value) =>
+        boolQueryBuilder.must(QueryBuilders.matchQuery("execution_order", value))
+      case _ => ;
+    }
+
+    documentSearch.queries match {
+      case Some(value) =>
+        val nestedQuery: QueryBuilder = QueryBuilders.nestedQuery(
+          "queries",
+          QueryBuilders.boolQuery()
+            .must(QueryBuilders.matchQuery("queries.query.stem_bm25", value))
+            .should(QueryBuilders.matchPhraseQuery("queries.query.raw", value)
+              .boost(1 + (minScore * boostExactMatchFactor))
+            ),
+          queriesScoreMode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Max)
+        ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100))
+        boolQueryBuilder.must(nestedQuery)
+      case _ => ;
     }
 
     searchBuilder.setQuery(boolQueryBuilder)
@@ -432,7 +440,7 @@ object DecisionTableService {
       val queries : List[String] = source.get("queries") match {
         case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
           .asScala.map(query =>
-          query.asScala.get("query")).filter(_.isDefined).toList.map(_.get)
+          query.asScala.get("query")).filter(_.nonEmpty).toList.map(_.get)
         case None => List[String]()
       }
 
@@ -524,8 +532,8 @@ object DecisionTableService {
 
           val queries: List[String] = source.get("queries") match {
             case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-              .asScala.map { res => Some(res.getOrDefault("query", None.orNull)) }
-              .filter(_.isDefined).map(_.get).toList
+              .asScala.map { res => Some(res.getOrElseDefault("query", None)) }
+              .filter(_.nonEmpty).map(_.get).toList
             case None => List[String]()
           }
 

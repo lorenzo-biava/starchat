@@ -148,12 +148,8 @@ trait DecisionTableResource extends StarChatResource {
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(decisionTableService.delete(indexName, id, refresh)) {
-                      case Success(t) =>
-                        if (t.isDefined) {
-                          completeResponse(StatusCodes.OK, t)
-                        } else {
-                          completeResponse(StatusCodes.BadRequest, t)
-                        }
+                      case Success(opRes) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, opRes)
                       case Failure(e) =>
                         log.error("index(" + indexName + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
                         completeResponse(StatusCodes.BadRequest,

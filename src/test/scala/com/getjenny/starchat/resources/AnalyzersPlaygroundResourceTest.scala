@@ -201,7 +201,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         response.build should be (true)
         response.build_message should be ("success")
         response.value should be (1)
-        response.data.isDefined should be (true)
+        response.data.nonEmpty should be (true)
         response.data.getOrElse(Data()).extracted_variables.exists(_ == ("month.0", "11")) should be (true)
         response.data.getOrElse(Data()).extracted_variables.exists(_ == ("day.0", "31")) should be (true)
         response.data.getOrElse(Data()).extracted_variables.exists(_ == ("year.0", "1900")) should be (true)
