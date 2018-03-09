@@ -139,7 +139,6 @@ trait TermResource extends StarChatResource {
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[TermIdsRequest]) { request_data =>
-                    val termService = TermService
                     if (request_data.ids.nonEmpty) {
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       onCompleteWithBreaker(breaker)(termService.delete(indexName, request_data, refresh)) {
@@ -177,7 +176,6 @@ trait TermResource extends StarChatResource {
                   authenticator.hasPermissions(user, indexName, Permissions.write)) {
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     entity(as[Terms]) { request_data =>
-                      val termService = TermService
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       onCompleteWithBreaker(breaker)(termService.updateTermFuture(indexName, request_data, refresh)) {
                         case Success(t) =>
@@ -202,7 +200,6 @@ trait TermResource extends StarChatResource {
                 operation match {
                   case "term" =>
                     entity(as[SearchTerm]) { requestData =>
-                      val termService = TermService
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       onCompleteWithBreaker(breaker)(
                         termService.searchTerm(indexName = indexName, term = requestData)
@@ -220,7 +217,6 @@ trait TermResource extends StarChatResource {
                     }
                   case "text" =>
                     entity(as[String]) { requestData =>
-                      val termService = TermService
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       parameters("analyzer".as[String] ? "space_punctuation") { analyzer =>
                         onCompleteWithBreaker(breaker)(
