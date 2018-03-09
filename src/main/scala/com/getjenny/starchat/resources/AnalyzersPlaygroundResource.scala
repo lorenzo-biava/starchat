@@ -1,7 +1,7 @@
 package com.getjenny.starchat.resources
 
 /**
-  * Created by angelo on 07/04/17.
+  * Created by Angelo Leto <angelo@getjenny.com> on 07/04/17.
   */
 
 import akka.http.scaladsl.model.StatusCodes
@@ -14,6 +14,8 @@ import com.getjenny.starchat.services.AnalyzerService
 import scala.util.{Failure, Success}
 
 trait AnalyzersPlaygroundResource extends StarChatResource {
+  private[this] val analyzerService: AnalyzerService.type = AnalyzerService
+
   def analyzersPlaygroundRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "analyzers_playground") { indexName =>
       pathEnd {
@@ -23,7 +25,6 @@ trait AnalyzersPlaygroundResource extends StarChatResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[AnalyzerEvaluateRequest]) { request =>
-                val analyzerService = AnalyzerService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(analyzerService.evaluateAnalyzer(indexName, request)) {
                   case Success(value) =>

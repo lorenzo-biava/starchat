@@ -8,6 +8,7 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.RandomNumbers
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
+import com.getjenny.starchat.services.TermService._
 import org.apache.lucene.search.join._
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
@@ -15,6 +16,7 @@ import org.elasticsearch.action.index.IndexResponse
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
 import org.elasticsearch.index.query.functionscore._
@@ -631,6 +633,126 @@ object KnowledgeBaseService {
 
     val searchResultsOption : Future[Option[SearchKBDocumentsResults]] = Future { Option { searchResults } }
     searchResultsOption
+  }
+
+  def allDocuments(index_name: String, keepAlive: Long = 60000): Iterator[KBDocument] = {
+    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    val client: TransportClient = elastiClient.getClient()
+
+    var scrollResp: SearchResponse = client
+      .prepareSearch(getIndexName(index_name))
+      .setScroll(new TimeValue(keepAlive))
+      .setQuery(qb)
+      .setSize(100).get()
+
+    val iterator = Iterator.continually{
+      val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
+
+        val id : String = e.getId
+        val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
+
+        val conversation : String = source.get("conversation") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val indexInConversation : Option[Int] = source.get("index_in_conversation") match {
+          case Some(t) => Option { t.asInstanceOf[Int] }
+          case None => None : Option[Int]
+        }
+
+        val question : String = source.get("question") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val questionNegative : Option[List[String]] = source.get("question_negative") match {
+          case Some(t) =>
+            val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+              .asScala.map(_.getOrDefault("query", None.orNull)).filter(_ =/= None.orNull).toList
+            Option { res }
+          case None => None: Option[List[String]]
+        }
+
+        val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
+          case Some(t) =>
+            Option {
+              t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map(_.asScala.toMap)
+                .map(term => (term.getOrElse("term", "").asInstanceOf[String],
+                  term.getOrElse("score", 0.0).asInstanceOf[Double])).filter { case (term, _) => term =/= "" }.toList
+            }
+          case None => None : Option[List[(String, Double)]]
+        }
+
+        val answer : String = source.get("answer") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
+          case Some(t) =>
+            Option {
+              t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map(_.asScala.toMap)
+                .map(term => (term.getOrElse("term", "").asInstanceOf[String],
+                  term.getOrElse("score", 0.0).asInstanceOf[Double]))
+                .filter{case(term,_) => term =/= ""}.toList
+            }
+          case None => None : Option[List[(String, Double)]]
+        }
+
+        val verified : Boolean = source.get("verified") match {
+          case Some(t) => t.asInstanceOf[Boolean]
+          case None => false
+        }
+
+        val topics : Option[String] = source.get("topics") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => None : Option[String]
+        }
+
+        val dclass : Option[String] = source.get("dclass") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => None : Option[String]
+        }
+
+        val doctype : String = source.get("doctype") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => doctypes.normal
+        }
+
+        val state : Option[String] = source.get("state") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => None : Option[String]
+        }
+
+        val status : Int = source.get("status") match {
+          case Some(t) => t.asInstanceOf[Int]
+          case None => 0
+        }
+
+        KBDocument(id = id, conversation = conversation,
+          index_in_conversation = indexInConversation,
+          question = question,
+          question_negative = questionNegative,
+          question_scored_terms = questionScoredTerms,
+          answer = answer,
+          answer_scored_terms = answerScoredTerms,
+          verified = verified,
+          topics = topics,
+          dclass = dclass,
+          doctype = doctype,
+          state = state,
+          status = status)
+      })
+
+      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId)
+        .setScroll(new TimeValue(keepAlive)).execute().actionGet()
+      (documents, documents.nonEmpty)
+    }.takeWhile{case (_, docNonEmpty) => docNonEmpty}
+      .flatMap{case (doc, _) => doc}
+    iterator
   }
 
 }

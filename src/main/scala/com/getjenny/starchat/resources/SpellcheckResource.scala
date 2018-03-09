@@ -1,7 +1,7 @@
 package com.getjenny.starchat.resources
 
 /**
-  * Created by angelo on 21/04/17.
+  * Created by Angelo Leto <angelo@getjenny.com> on 21/04/17.
   */
 
 import akka.http.scaladsl.model.StatusCodes
@@ -15,9 +15,10 @@ import scala.util.{Failure, Success}
 
 trait SpellcheckResource extends StarChatResource {
 
+  private[this] val spellcheckService: SpellcheckService.type = SpellcheckService
+
   def spellcheckRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "spellcheck") { indexName =>
-      val spellcheckService = SpellcheckService
       pathPrefix("terms") {
         pathEnd {
           post {

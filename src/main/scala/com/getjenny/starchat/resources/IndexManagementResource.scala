@@ -16,11 +16,12 @@ import scala.util.{Failure, Success}
 
 trait IndexManagementResource extends StarChatResource {
 
+  private[this] val indexManagementService: IndexManagementService.type = IndexManagementService
+
   def postIndexManagementCreateRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash
       ~ "index_management" ~ Slash ~ """create""") {
       (indexName) =>
-        val indexManagementService = IndexManagementService
         post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
@@ -51,7 +52,6 @@ trait IndexManagementResource extends StarChatResource {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
       Slash ~ "index_management" ~ Slash ~ """(open|close)""".r) {
       (indexName, operation) =>
-        val indexManagementService = IndexManagementService
         post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
@@ -61,7 +61,7 @@ trait IndexManagementResource extends StarChatResource {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(
                   indexManagementService.openCloseIndex(indexName = indexName, indexSuffix = indexSuffix,
-                                   operation = operation)
+                    operation = operation)
                 ) {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                     t
@@ -82,7 +82,6 @@ trait IndexManagementResource extends StarChatResource {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
       Slash ~ "index_management" ~ Slash ~ """refresh""") {
       (indexName) =>
-        val indexManagementService = IndexManagementService
         post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
@@ -112,7 +111,6 @@ trait IndexManagementResource extends StarChatResource {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
       Slash ~ """([A-Za-z0-9_]{1,256})""".r ~ Slash ~ "index_management" ~ Slash ~ """(mappings|settings)""".r) {
       (indexName, language, mappingOrSettings) =>
-        val indexManagementService = IndexManagementService
         pathEnd {
           put {
             authenticateBasicAsync(realm = authRealm,
@@ -148,7 +146,6 @@ trait IndexManagementResource extends StarChatResource {
   def indexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "index_management") {
       (indexName) =>
-        val indexManagementService = IndexManagementService
         pathEnd {
           get {
             authenticateBasicAsync(realm = authRealm,

@@ -34,6 +34,7 @@ trait RestInterface extends Resources {
 
   val routes: Route = rootAPIsRoutes ~
     LoggingEntities.logRequestAndResultReduced(knowledgeBaseRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(knowledgeBaseStreamRoutes) ~
     LoggingEntities.logRequestAndResult(knowledgeBaseSearchRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableUploadCSVRoutes) ~
@@ -50,6 +51,7 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResult(systemGetIndexesRoutes) ~
     LoggingEntities.logRequestAndResult(languageGuesserRoutes) ~
     LoggingEntities.logRequestAndResultReduced(termRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(termStreamRoutes) ~
     LoggingEntities.logRequestAndResult(esTokenizersRoutes) ~
     LoggingEntities.logRequestAndResult(analyzersPlaygroundRoutes) ~
     LoggingEntities.logRequestAndResult(spellcheckRoutes) ~

@@ -4,7 +4,10 @@ package com.getjenny.starchat.serializers
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
+import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.stream.scaladsl.Flow
+import akka.util.ByteString
 import com.getjenny.analyzer.expressions.Data
 import com.getjenny.starchat.entities._
 import spray.json._
@@ -12,6 +15,15 @@ import spray.json._
 import scalaz.Scalaz._
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+  private[this] val start: ByteString = ByteString.empty
+  private[this] val sep: ByteString = ByteString("\n")
+  private[this] val end: ByteString = ByteString.empty
+
+  implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
+    EntityStreamingSupport.json(1024 * 1024) // max object size 1MB
+      .withFramingRendererFlow(Flow[ByteString].intersperse(start, sep, end).asJava)
+      .withParallelMarshalling(parallelism = 8, unordered = true)
+
   implicit val responseMessageDataFormat = jsonFormat2(ReturnMessageData)
   implicit val responseRequestUserInputFormat = jsonFormat2(ResponseRequestInUserInput)
   implicit val responseRequestInputValuesFormat = jsonFormat2(ResponseRequestInValues)

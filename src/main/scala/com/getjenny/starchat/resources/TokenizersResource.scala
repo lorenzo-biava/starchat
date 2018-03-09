@@ -1,7 +1,7 @@
 package com.getjenny.starchat.resources
 
 /**
-  * Created by angelo on 03/04/17.
+  * Created by Angelo Leto <angelo@getjenny.com> on 03/04/17.
   */
 
 import akka.http.scaladsl.model.StatusCodes
@@ -15,6 +15,8 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 trait TokenizersResource extends StarChatResource {
+  private[this] val termService: TermService.type = TermService
+
   def esTokenizersRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "tokenizers") { indexName =>
       pathEnd {
@@ -24,7 +26,6 @@ trait TokenizersResource extends StarChatResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
               entity(as[TokenizerQueryRequest]) { request_data =>
-                val termService = TermService
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(Future {
                   termService.esTokenizer(indexName, request_data)

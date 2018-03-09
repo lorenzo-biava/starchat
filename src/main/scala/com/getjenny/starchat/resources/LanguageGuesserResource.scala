@@ -15,9 +15,10 @@ import scala.util.{Failure, Success}
 
 trait LanguageGuesserResource extends StarChatResource {
 
+  private[this] val languageGuesserService: LanguageGuesserService.type = LanguageGuesserService
+
   def languageGuesserRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "language_guesser") { indexName =>
-      val languageGuesserService = LanguageGuesserService
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

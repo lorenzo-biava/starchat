@@ -4,9 +4,11 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 12/03/17.
   */
 
+import akka.NotUsed
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.pattern.CircuitBreaker
+import akka.stream.scaladsl.Source
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.TermService
@@ -17,9 +19,34 @@ import scala.util.{Failure, Success}
 
 trait TermResource extends StarChatResource {
 
+  private[this] val termService: TermService.type = TermService
+
+  def termStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix(
+      """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
+        """stream""" ~ Slash ~
+        """term""") { indexName =>
+      pathEnd {
+        get {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.stream)) {
+              extractMethod { method =>
+                val entryIterator = termService.allDocuments(indexName)
+                val entries: Source[Term, NotUsed] =
+                  Source.fromIterator(() => entryIterator)
+                complete(entries)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   def termRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "term") { indexName =>
-      val termService = TermService
       path(Segment) { operation: String =>
         post {
           operation match {

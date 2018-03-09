@@ -15,6 +15,7 @@ import org.elasticsearch.action.delete.DeleteRequestBuilder
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
@@ -724,6 +725,87 @@ object TermService {
       None: Option[TextTerms]
     }
     returnValue
+  }
+
+  def allDocuments(index_name: String, keepAlive: Long = 60000): Iterator[Term] = {
+    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    val client: TransportClient = elastiClient.getClient()
+
+    var scrollResp: SearchResponse = client
+      .prepareSearch(getIndexName(index_name))
+      .setScroll(new TimeValue(keepAlive))
+      .setQuery(qb)
+      .setSize(100).get()
+
+    val iterator = Iterator.continually{
+      val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
+        val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
+
+        val term : String = source.get("term") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToMapStringDouble(value)}
+          case None => None: Option[Map[String, Double]]
+        }
+
+        val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToMapStringDouble(value)}
+          case None => None: Option[Map[String, Double]]
+        }
+
+        val tags : Option[String] = source.get("tags") match {
+          case Some(t) => Option {t.asInstanceOf[String]}
+          case None => None: Option[String]
+        }
+
+        val features : Option[Map[String, String]] = source.get("features") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToMapStringString(value)}
+          case None => None: Option[Map[String, String]]
+        }
+
+        val frequencyBase : Option[Double] = source.get("frequency_base") match {
+          case Some(t) => Option {t.asInstanceOf[Double]}
+          case None => None: Option[Double]
+        }
+
+        val frequencyStem : Option[Double] = source.get("frequency_stem") match {
+          case Some(t) => Option {t.asInstanceOf[Double]}
+          case None => None: Option[Double]
+        }
+
+        val vector : Option[Vector[Double]] = source.get("vector") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToDoubleVector(value)}
+          case None => None: Option[Vector[Double]]
+        }
+
+        Term(term = term,
+          synonyms = synonyms,
+          antonyms = antonyms,
+          tags = tags,
+          features = features,
+          frequency_base = frequencyBase,
+          frequency_stem = frequencyStem,
+          vector = vector,
+          score = None: Option[Double])
+      })
+
+      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId)
+        .setScroll(new TimeValue(keepAlive)).execute().actionGet()
+      (documents, documents.nonEmpty)
+    }.takeWhile{case (_, docNonEmpty) => docNonEmpty}
+      .flatMap{case (doc, _) => doc}
+    iterator
   }
 
 }
