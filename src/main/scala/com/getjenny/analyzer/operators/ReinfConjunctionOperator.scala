@@ -40,7 +40,7 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
           )
         )
       } else {
-        val val1 = l.head.evaluate(query)
+        val val1 = l.head.evaluate(query, data)
         val val2 = reinfConjunction(l.tail)
 //        println("SCORE_NOT_NIL: " + (val1.score * 1.1) * val2.score + "(" + val1.score + ")" + "(" + val2.score + ")")
         Result(score = (val1.score * 1.1) * val2.score,

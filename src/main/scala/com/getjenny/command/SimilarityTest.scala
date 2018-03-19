@@ -195,3 +195,4 @@ object SimilarityTest extends JsonSupport {
     }
   }
 }
+
