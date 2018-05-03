@@ -5,43 +5,38 @@ package com.getjenny.starchat.analyzer.utils
   */
 
 import com.getjenny.analyzer.util.VectorUtils._
-import com.getjenny.analyzer.atoms.AbstractAtomic
 import com.getjenny.starchat.entities._
-
-import scala.concurrent.{Await, ExecutionContext, Future}
 import com.getjenny.starchat.services._
 
-import scala.concurrent.duration._
-import scala.concurrent._
-import ExecutionContext.Implicits.global
-
 object TextToVectorsTools {
-  val termService = TermService
-  val empty_vec = Vector.fill(300){0.0}
+  val termService: TermService.type = TermService
+  val emptyVec: Vector[Double] = Vector.fill(300){0.0}
 
   implicit class Crosstable[X](xs: Traversable[X]) {
-    def cross[Y](ys: Traversable[Y]) = for { x <- xs; y <- ys } yield (x, y)
+    def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
   }
 
    def getSumOfTermsVectors(terms: Option[TextTerms]): (Vector[Double], Double) = {
-    val text_vectors = terms
-    val vector = text_vectors match {
+    val textVectors = terms
+    val vector = textVectors match {
       case Some(t) => {
-        val vectors = t.terms.get.terms.map(e => e.vector.get).toVector
-        val sentence_vector =
-          if (vectors.length > 0) sumArrayOfArrays(vectors) else empty_vec
-        val reliability_factor =
-          text_vectors.get.terms_found_n.toDouble / text_vectors.get.text_terms_n.toDouble
-        (sentence_vector, reliability_factor)
+        val vectors = t.terms match {
+          case Some(k) => k.terms.map(e => e.vector.getOrElse(emptyVec)).toVector
+          case _ => Vector.empty[Vector[Double]]
+        }
+        val sentenceVector = if (vectors.nonEmpty) sumArrayOfArrays(vectors) else emptyVec
+        val reliabilityFactor =
+          t.terms_found_n.toDouble / t.text_terms_n.toDouble
+        (sentenceVector, reliabilityFactor)
       }
-      case _ => (empty_vec, 0.0) //default dimension
+      case _ => (emptyVec, 0.0) //default dimension
     }
     vector
   }
 
-  def getSumOfVectorsFromText(text: String): (Vector[Double], Double) = {
-    val text_vectors = termService.textToVectors(text)
-    val vector = getSumOfTermsVectors(text_vectors)
+  def getSumOfVectorsFromText(index_name: String, text: String): (Vector[Double], Double) = {
+    val textVectors = termService.textToVectors(index_name, text)
+    val vector = getSumOfTermsVectors(textVectors)
     vector
   }
 

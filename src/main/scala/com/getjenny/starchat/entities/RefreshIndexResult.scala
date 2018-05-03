@@ -10,8 +10,11 @@ case class FailedShard(index_name: String,
                        status: Int
                        )
 
-case class RefreshIndexResult(failed_shards_n: Int,
+case class RefreshIndexResult(index_name: String,
+                             failed_shards_n: Int,
                              successful_shards_n: Int,
                              total_shards_n: Int,
                              failed_shards: List[FailedShard]
                              )
+
+case class RefreshIndexResults(results: List[RefreshIndexResult])

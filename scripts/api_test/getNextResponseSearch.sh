@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-QUERY=${1:-"cannot access account"}
+QUERY=${1:-"how to install starchat"}
 PORT=${2:-8888}
-curl -v -H "Content-Type: application/json" -X POST http://localhost:${PORT}/get_next_response -d "{
+INDEX_NAME=${3:-index_english_0}
+curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
+ -H "Content-Type: application/json" -X POST http://localhost:${PORT}/${INDEX_NAME}/get_next_response -d "{
 	\"conversation_id\": \"1234\",
 	\"user_input\": { \"text\": \"${QUERY}\" },
 	\"values\": {

@@ -1,6 +1,6 @@
 package com.getjenny.starchat.analyzer.atoms
 
-import com.getjenny.analyzer.atoms.AbstractAtomic
+import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 
 /**
@@ -12,8 +12,13 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
   * @param arguments of the state to be checked
   */
 
-class LastTravStateIsAtomic(val arguments: List[String]) extends AbstractAtomic {
-  val name = arguments(0)
+class LastTravStateIsAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
+  val name: String = arguments.headOption match {
+    case Some(t) => t
+    case _ =>
+      throw ExceptionAtomic("lastTravStateIs requires an argument")
+  }
+
   override def toString: String = "lastTravStateIs"
   val isEvaluateNormalized: Boolean = true
 
@@ -24,10 +29,13 @@ class LastTravStateIsAtomic(val arguments: List[String]) extends AbstractAtomic 
     * @return Result with 1.0 if the last state is <name> score = 0.0 otherwise
     */
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    if(data.item_list.nonEmpty && data.item_list.last == name) {
-      Result(score = 1.0)
-    } else {
-      Result(score = 0.0)
+    data.item_list.lastOption match {
+      case Some(t) =>
+        t match {
+          case `name` => Result(score = 1.0)
+          case _ => Result(score = 0.0)
+        }
+      case _ => Result(score = 0.0)
     }
   }
 }

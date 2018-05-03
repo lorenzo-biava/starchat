@@ -7,22 +7,21 @@ package com.getjenny.starchat.services
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities.{LanguageGuesserInformations, LanguageGuesserRequestIn, LanguageGuesserRequestOut}
-
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext
 import org.apache.tika.langdetect.OptimaizeLangDetector
-import org.apache.tika.language.detect.LanguageDetector
-import org.apache.tika.language.detect.LanguageResult
+import org.apache.tika.language.detect.{LanguageDetector, LanguageResult}
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Implements functions, eventually used by LanguageGuesserResource
   */
 object LanguageGuesserService {
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  def guess_language(request_data: LanguageGuesserRequestIn): Future[Option[LanguageGuesserRequestOut]] = Future {
+  def guessLanguage(indexName: String, requestData: LanguageGuesserRequestIn):
+  Future[Option[LanguageGuesserRequestOut]] = Future {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()
-    val result: LanguageResult = detector.detect(request_data.input_text)
+    val result: LanguageResult = detector.detect(requestData.input_text)
 
     Option {
       LanguageGuesserRequestOut(result.getLanguage, result.getRawScore,
@@ -32,14 +31,14 @@ object LanguageGuesserService {
     }
   }
 
-  def get_languages(language_code: String /*ISO 639-1 name for language*/):
+  def getLanguages(indexName: String, languageCode: String /*ISO 639-1 name for language*/):
       Future[Option[LanguageGuesserInformations]] = Future {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()
-    val has_model: Boolean = detector.hasModel(language_code)
+    val hasModel: Boolean = detector.hasModel(languageCode)
     Option {
       LanguageGuesserInformations(
         Map[String,Map[String,Boolean]](
-        "languages" -> Map[String, Boolean](language_code -> has_model))
+        "languages" -> Map[String, Boolean](languageCode -> hasModel))
       )
     }
   }

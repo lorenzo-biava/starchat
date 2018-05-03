@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
 PORT=${1:-8888}
+INDEX_NAME=${2:-index_english_0}
+
 # state is also used as ID (see updateRowDT.sh)
-curl -v -H "Content-Type: application/json" -X POST http://localhost:${PORT}/decisiontable -d '{
+curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
+  -H "Content-Type: application/json" -X POST http://localhost:${PORT}/${INDEX_NAME}/decisiontable -d '{
 	"state": "further_details_access_question",
         "max_state_count": 0,
         "execution_order": 0,

@@ -5,9 +5,9 @@ package com.getjenny.starchat.services
   */
 
 object IndexManagementClient extends ElasticClient {
-  val sys_type_name: String = config.getString("es.sys_type_name")
-  val dt_type_name: String = config.getString("es.dt_type_name")
-  val kb_type_name: String = config.getString("es.kb_type_name")
-  val term_type_name: String = config.getString("es.term_type_name")
-  val enable_delete_index: Boolean = config.getBoolean("es.enable_delete_index")
+  val sysRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
+  val dtIndexSuffix: String = config.getString("es.dt_index_suffix")
+  val kbIndexSuffix: String = config.getString("es.kb_index_suffix")
+  val termIndexSuffix: String = config.getString("es.term_index_suffix")
+  val enableDeleteIndex: Boolean = config.getBoolean("es.enable_delete_application_index")
 }

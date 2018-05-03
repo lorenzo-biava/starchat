@@ -16,5 +16,6 @@ case class DTDocument(state: String,
                       action_input: Map[String, String],
                       state_data: Map[String, String],
                       success_value: String,
-                      failure_value: String
+                      failure_value: String,
+                      version: Option[Long] = Some(0L)
                      )

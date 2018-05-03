@@ -10,14 +10,17 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
   *
   * @param arguments regular expression
   */
-class RegularExpressionAtomic(arguments: List[String]) extends AbstractAtomic {
+class RegularExpressionAtomic(arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
   /**
     * A Regex
     */
-  val re = arguments(0)
+  val re = arguments.headOption match {
+    case Some(t) => t
+    case _ => throw ExceptionAtomic("RegularExpressionAtomic: must have one argument")
+  }
   override def toString: String = "regex(\"" + re + "\")"
   val isEvaluateNormalized: Boolean = false
-  private val rx = re.r
+  private[this] val rx = re.r
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val score = rx.findAllIn(query).toList.length

@@ -4,21 +4,15 @@ package com.getjenny.starchat
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
-import scala.concurrent.duration._
-import akka.actor._
-import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
-import akka.util.Timeout
 import java.io.InputStream
-import java.security.{ SecureRandom, KeyStore }
-import javax.net.ssl.{ SSLContext, TrustManagerFactory, KeyManagerFactory }
+import java.security.{KeyStore, SecureRandom}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.server.{ Route, Directives }
-import akka.http.scaladsl.{ ConnectionContext, HttpsConnectionContext, Http }
+import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
-import com.typesafe.sslconfig.akka.AkkaSSLConfig
-import com.typesafe.config.ConfigFactory
+
+import scala.concurrent.ExecutionContextExecutor
 
 case class Parameters(
          http_enable: Boolean,
@@ -31,8 +25,6 @@ case class Parameters(
          https_cert_pass: String)
 
 class StarChatService(parameters: Option[Parameters] = None) extends RestInterface {
-  val config = ConfigFactory.load()
-
   val params: Option[Parameters] = if(parameters.nonEmpty) {
     parameters
   } else {
@@ -56,15 +48,10 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
   assert(params.nonEmpty)
 
   /* creation of the akka actor system which handle concurrent requests */
-  implicit val system = SCActorSystem.system
-
+  implicit val system: ActorSystem = SCActorSystem.system
   /* "The Materializer is a factory for stream execution engines, it is the thing that makes streams run" */
-  implicit val materializer = ActorMaterializer()
-
-  implicit val executionContext = system.dispatcher
-  implicit val timeout = Timeout(10.seconds)
-
-  val api = routes
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   if (params.get.https_enable) {
     val password: Array[Char] = params.get.https_cert_pass.toCharArray
@@ -75,7 +62,7 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
     val keystore: InputStream = getClass.getResourceAsStream(keystore_path)
     //val keystore: InputStream = getClass.getClassLoader.getResourceAsStream(keystore_path)
 
-    require(keystore != null, "Keystore required!")
+    require(keystore != None.orNull, "Keystore required!")
     ks.load(keystore, password)
 
     val keyManagerFactory: KeyManagerFactory = KeyManagerFactory.getInstance("SunX509")
@@ -88,30 +75,29 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
     sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
     val https: HttpsConnectionContext = ConnectionContext.https(sslContext)
 
-    Http().bindAndHandle(handler = api, interface = params.get.https_host, port = params.get.https_port,
+    Http().bindAndHandle(handler = routes, interface = params.get.https_host, port = params.get.https_port,
       connectionContext = https, log = system.log) map { binding =>
       system.log.info(s"REST (HTTPS) interface bound to ${binding.localAddress}")
-    } recover { case ex =>
-      system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.http_host}:${params.get.http_port}",
-        ex.getMessage)
+    } recover { case eX =>
+      system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.https_host}:${params.get.https_port}",
+        eX.getMessage)
     }
   }
 
   if((! params.get.https_enable) || params.get.http_enable) {
-     Http().bindAndHandle(handler = api, interface = params.get.http_host,
+
+     Http().bindAndHandle(handler = routes, interface = params.get.http_host,
        port = params.get.http_port, log = system.log) map { binding =>
       system.log.info(s"REST (HTTP) interface bound to ${binding.localAddress}")
-    } recover { case ex =>
+    } recover { case eX: Exception =>
       system.log.error(s"REST (HTTP) interface could not bind to ${params.get.http_host}:${params.get.http_port}",
-        ex.getMessage)
+        eX.getMessage)
     }
   }
 
-  /* try to initialize the analyzers, elasticsearch must be up and running */
-  analyzerService.initializeAnalyzers()
-
   /* activate cron jobs for data synchronization */
-  cronJobService.reloadDecisionTable()
+  cronReloadDTService.reloadAnalyzers()
+  cronCleanDTService.cleanDecisionTables()
 }
 
 object Main extends App {

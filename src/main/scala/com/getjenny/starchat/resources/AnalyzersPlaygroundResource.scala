@@ -1,43 +1,46 @@
 package com.getjenny.starchat.resources
 
 /**
-  * Created by angelo on 07/04/17.
+  * Created by Angelo Leto <angelo@getjenny.com> on 07/04/17.
   */
 
-import akka.event.{Logging, LoggingAdapter}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.AnalyzerService
-import akka.http.scaladsl.model.StatusCodes
-import akka.pattern.CircuitBreaker
-import com.getjenny.starchat.SCActorSystem
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
-trait AnalyzersPlaygroundResource extends MyResource {
+trait AnalyzersPlaygroundResource extends StarChatResource {
+  private[this] val analyzerService: AnalyzerService.type = AnalyzerService
 
-  def analyzersPlaygroundRoutes: Route = pathPrefix("analyzers_playground") {
-    pathEnd {
-      post {
-        entity(as[AnalyzerEvaluateRequest]) { request =>
-          val analyzerService = AnalyzerService
-          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-          onCompleteWithBreaker(breaker)(analyzerService.evaluateAnalyzer(request)) {
-            case Success(value) =>
-              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, value)
-            case Failure(e) =>
-              log.error("route=analyzersPlaygroundRoutes method=POST: " + e.getMessage)
-              completeResponse(StatusCodes.BadRequest,
-                Option{ReturnMessageData(code = 100, message = e.getMessage)})
+  def analyzersPlaygroundRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "analyzers_playground") { indexName =>
+      pathEnd {
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { (user) =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              entity(as[AnalyzerEvaluateRequest]) { request =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(analyzerService.evaluateAnalyzer(indexName, request)) {
+                  case Success(value) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, value)
+                  case Failure(e) =>
+                    log.error("index(" + indexName + ") route=analyzersPlaygroundRoutes method=POST: " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 100, message = e.getMessage)
+                      })
+                }
+              }
+            }
           }
         }
       }
     }
   }
 }
-
-
-

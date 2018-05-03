@@ -4,66 +4,65 @@ package com.getjenny.command
   * Created by angelo on 11/04/17.
   */
 
-import akka.http.scaladsl.model.HttpRequest
+import java.io.{File, FileReader, FileWriter}
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.ActorMaterializer
 import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import akka.stream.ActorMaterializer
+import au.com.bytecode.opencsv.CSVWriter
+import breeze.io.CSVReader
+import com.getjenny.analyzer.expressions.Data
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
-import breeze.io.CSVReader
-import au.com.bytecode.opencsv.CSVWriter
 
-import scala.concurrent.Await
+import scala.util.{Failure, Success, Try}
 import scala.collection.immutable
-import scala.collection.immutable.{List, Map}
-import java.io.{File, FileReader, FileWriter}
-import com.getjenny.analyzer.expressions.Data
+import scala.collection.immutable.Map
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 object SimilarityTest extends JsonSupport {
 
-  private case class Params(
+  private[this] case class Params(
                             host: String = "http://localhost:8888",
+                            indexName: String = "index_0",
                             path: String = "/analyzers_playground",
-                            inputfile: String = "pairs.csv",
-                            outputfile: String = "output.csv",
+                            inputFile: String = "pairs.csv",
+                            outputFile: String = "output.csv",
                             analyzer: String = "keyword(\"test\")",
-                            item_list: Seq[String] = Seq.empty[String],
+                            itemList: Seq[String] = Seq.empty[String],
                             variables: Map[String, String] = Map.empty[String, String],
-                            text1_index: Int = 3,
-                            text2_index: Int = 4,
+                            text1Index: Int = 3,
+                            text2Index: Int = 4,
                             separator: Char = ',',
-                            skiplines: Int = 1,
+                            skipLines: Int = 1,
                             timeout: Int = 60,
-                            header_kv: Seq[String] = Seq.empty[String]
+                            headerKv: Seq[String] = Seq.empty[String]
                            )
 
-  private def doCalcAnalyzer(params: Params) {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
+  private[this] def execute(params: Params) {
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    val vecsize = 0
-    val skiplines = params.skiplines
+    val skipLines = params.skipLines
 
-    val base_url = params.host + params.path
-    val file = new File(params.inputfile)
-    val file_reader = new FileReader(file)
-    lazy val term_text_entries = CSVReader.read(input=file_reader, separator=params.separator,
-      quote = '"', skipLines=skiplines)
+    val baseUrl = params.host + "/" + params.indexName + params.path
+    val file = new File(params.inputFile)
+    val fileReader = new FileReader(file)
+    lazy val termTextEntries = CSVReader.read(input=fileReader, separator=params.separator,
+      quote = '"', skipLines=skipLines)
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
-      val headers: Seq[RawHeader] = params.header_kv.map(x => {
-        val header_opt = x.split(":")
-        val key = header_opt(0)
-        val value = header_opt(1)
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
+      val headers: Seq[RawHeader] = params.headerKv.map(x => {
+        val headerOpt = x.split(":")
+        val key = headerOpt(0)
+        val value = headerOpt(1)
         RawHeader(key, value)
       }) ++ Seq(RawHeader("application", "json"))
       headers.to[immutable.Seq]
@@ -73,14 +72,14 @@ object SimilarityTest extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
-    val out_file = new File(params.outputfile)
-    val file_writer = new FileWriter(out_file)
-    val output_csv = new CSVWriter(file_writer, params.separator, '"')
+    val outFile = new File(params.outputFile)
+    val fileWriter = new FileWriter(outFile)
+    val outputCsv = new CSVWriter(fileWriter, params.separator, '"')
 
-    term_text_entries.foreach(entry => {
+    termTextEntries.foreach(entry => {
 
-      val text1 = entry(params.text1_index).toString
-      val text2 = entry(params.text2_index).toString
+      val text1 = entry(params.text1Index).toString
+      val text2 = entry(params.text2Index).toString
       val escaped_text1 = text1.replace("\"", "\\\"")
       val escaped_text2 = text2.replace("\"", "\\\"")
 
@@ -89,15 +88,15 @@ object SimilarityTest extends JsonSupport {
       val evaluate_request = AnalyzerEvaluateRequest(
         analyzer = analyzer,
         query = text2,
-        data = Option{ Data(extracted_variables = params.variables, item_list = params.item_list.toList) }
+        data = Option{ Data(extracted_variables = params.variables, item_list = params.itemList.toList) }
       )
 
-      val entity_future = Marshal(evaluate_request).to[MessageEntity]
-      val entity = Await.result(entity_future, 10.second)
+      val entityFuture = Marshal(evaluate_request).to[MessageEntity]
+      val entity = Await.result(entityFuture, 10.second)
       val responseFuture: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(
           method = HttpMethods.POST,
-          uri = base_url,
+          uri = baseUrl,
           headers = httpHeader,
           entity = entity))
       val result = Await.result(responseFuture, timeout)
@@ -105,11 +104,20 @@ object SimilarityTest extends JsonSupport {
         case StatusCodes.OK => {
           val response =
             Unmarshal(result.entity).to[AnalyzerEvaluateResponse]
-          val value = response.value.get.get
+          val value = response.value match {
+            case Some(evalResponse) => evalResponse match {
+              case Success(t) => t
+              case Failure(e) => AnalyzerEvaluateResponse(
+                build = false, value = 0.0, build_message = "Failed evaluating response", data = None)
+            }
+            case _ =>
+              AnalyzerEvaluateResponse(
+                build = false, value = 0.0, build_message = "Response is empty", data = None)
+          }
           val score = value.value.toString
           val input_csv_fields = entry.toArray
           val csv_line = input_csv_fields ++ Array(score)
-          output_csv.writeNext(csv_line)
+          outputCsv.writeNext(csv_line)
         }
         case _ =>
           println("failed running analyzer(" + evaluate_request.analyzer
@@ -127,12 +135,12 @@ object SimilarityTest extends JsonSupport {
       help("help").text("prints this usage text")
       opt[String]("inputfile")
         .text(s"the path of the csv file with sentences" +
-          s"  default: ${defaultParams.inputfile}")
-        .action((x, c) => c.copy(inputfile = x))
+          s"  default: ${defaultParams.inputFile}")
+        .action((x, c) => c.copy(inputFile = x))
       opt[String]("outputfile")
         .text(s"the path of the output csv file" +
-          s"  default: ${defaultParams.outputfile}")
-        .action((x, c) => c.copy(outputfile = x))
+          s"  default: ${defaultParams.outputFile}")
+        .action((x, c) => c.copy(outputFile = x))
       opt[String]("host")
         .text(s"*Chat base url" +
           s"  default: ${defaultParams.host}")
@@ -145,41 +153,46 @@ object SimilarityTest extends JsonSupport {
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")
         .action((x, c) => c.copy(path = x))
+      opt[String]("index_name")
+        .text(s"the index_name, e.g. index_XXX" +
+          s"  default: ${defaultParams.indexName}")
+        .action((x, c) => c.copy(indexName = x))
       opt[Seq[String]]("item_list")
         .text(s"list of string representing the traversed states" +
-          s"  default: ${defaultParams.item_list}")
-        .action((x, c) => c.copy(item_list = x))
+          s"  default: ${defaultParams.itemList}")
+        .action((x, c) => c.copy(itemList = x))
       opt[Map[String, String]]("variables")
         .text(s"set of variables to be used by the analyzers" +
           s"  default: ${defaultParams.variables}")
         .action((x, c) => c.copy(variables = x))
       opt[Int]("text1_index")
         .text(s"the index of the text1 element" +
-          s"  default: ${defaultParams.text1_index}")
-        .action((x, c) => c.copy(text1_index = x))
+          s"  default: ${defaultParams.text1Index}")
+        .action((x, c) => c.copy(text1Index = x))
        opt[Int]("text2_index")
         .text(s"the index of the text2 element" +
-          s"  default: ${defaultParams.text2_index}")
-        .action((x, c) => c.copy(text2_index = x))
+          s"  default: ${defaultParams.text2Index}")
+        .action((x, c) => c.copy(text2Index = x))
       opt[Int]("timeout")
         .text(s"the timeout in seconds of each insert operation" +
           s"  default: ${defaultParams.timeout}")
         .action((x, c) => c.copy(timeout = x))
       opt[Int]("skiplines")
         .text(s"skip the first N lines from vector file" +
-          s"  default: ${defaultParams.skiplines}")
-        .action((x, c) => c.copy(skiplines = x))
+          s"  default: ${defaultParams.skipLines}")
+        .action((x, c) => c.copy(skipLines = x))
       opt[Seq[String]]("header_kv")
         .text(s"header key-value pair, as key1:value1,key2:value2" +
-          s"  default: ${defaultParams.header_kv}")
-        .action((x, c) => c.copy(header_kv = x))
+          s"  default: ${defaultParams.headerKv}")
+        .action((x, c) => c.copy(headerKv = x))
     }
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doCalcAnalyzer(params)
+        execute(params)
       case _ =>
         sys.exit(1)
     }
   }
 }
+

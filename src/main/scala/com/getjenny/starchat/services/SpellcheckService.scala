@@ -4,48 +4,49 @@ package com.getjenny.starchat.services
   * Created by angelo on 21/04/17.
   */
 
-import com.getjenny.starchat.entities._
-import scala.concurrent.ExecutionContext
-import scala.collection.immutable.List
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.action.search.SearchResponse
-import scala.collection.JavaConverters._
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
-import akka.http.scaladsl.model.StatusCodes
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
-
+import com.getjenny.starchat.entities._
+import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.search.suggest.SuggestBuilder
-import org.elasticsearch.search.suggest.term.TermSuggestionBuilder
-import org.elasticsearch.search.suggest.term.TermSuggestion
+import org.elasticsearch.search.suggest.term.{TermSuggestion, TermSuggestionBuilder}
+
+import scala.collection.JavaConverters._
+import scala.collection.immutable.List
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object SpellcheckService {
-  val elastic_client = KnowledgeBaseElasticClient
+  val elasticClient = KnowledgeBaseElasticClient
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def termsSuggester(request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+    indexName + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)
+  }
 
-    val suggestion_builder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
-    suggestion_builder.maxEdits(2)
+  def termsSuggester(indexName: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
+    val client: TransportClient = elasticClient.getClient()
+
+    val suggestionBuilder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
+    suggestionBuilder.maxEdits(2)
       .prefixLength(request.prefix_length)
       .minDocFreq(request.min_doc_freq)
 
-    val suggest_builder: SuggestBuilder = new SuggestBuilder()
-    suggest_builder.setGlobalText(request.text)
-      .addSuggestion("suggestions", suggestion_builder)
+    val suggestBuilder: SuggestBuilder = new SuggestBuilder()
+    suggestBuilder.setGlobalText(request.text)
+      .addSuggestion("suggestions", suggestionBuilder)
 
-    val search_builder = client.prepareSearch(elastic_client.index_name)
-      .suggest(suggest_builder)
+    val searchBuilder = client.prepareSearch(getIndexName(indexName))
+      .setTypes(elasticClient.kbIndexSuffix)
+      .suggest(suggestBuilder)
 
-    val search_response : SearchResponse = search_builder
+    val searchResponse : SearchResponse = searchBuilder
       .execute()
       .actionGet()
 
     val suggestions: List[SpellcheckToken] =
-      search_response.getSuggest.getSuggestion[TermSuggestion]("suggestions")
+      searchResponse.getSuggest.getSuggestion[TermSuggestion]("suggestions")
       .getEntries.asScala.toList.map({ case(e) =>
         val item: TermSuggestion.Entry = e
         val text = item.getText.toString
@@ -60,10 +61,10 @@ object SpellcheckService {
             )
             option
         })
-        val spellcheck_token =
+        val spellcheckToken =
           SpellcheckToken(text = text, offset = offset, length = length,
             options = options)
-        spellcheck_token
+        spellcheckToken
     })
 
     val response = SpellcheckTermsResponse(tokens = suggestions)

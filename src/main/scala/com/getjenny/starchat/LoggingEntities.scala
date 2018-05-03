@@ -1,53 +1,80 @@
-package com.getjenny.starchat.resources
+package com.getjenny.starchat
 
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
-import akka.event.{Logging}
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-import akka.http.scaladsl.server.directives.DebuggingDirectives
-import akka.http.scaladsl.server.directives.LogEntry
-import akka.http.scaladsl.model.{HttpRequest}
-import akka.http.scaladsl.server.RouteResult
 import java.util.Base64
+
+import akka.event.Logging
+import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry}
+import akka.http.scaladsl.server.{Directive0, RouteResult}
+import com.typesafe.config.{Config, ConfigFactory}
 
 object LoggingEntities {
   val config: Config = ConfigFactory.load()
-  val index_name: String = config.getString("es.index_name")
 
-  def requestMethodAndResponseStatusReduced(req: HttpRequest): RouteResult => Option[LogEntry] = {
-    case RouteResult.Complete(res) =>
-      Some(LogEntry("Index(" + index_name + ") ReqUri(" + req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
-        Logging.InfoLevel))
-    case _ ⇒ None
+  def address(remoteAddress: RemoteAddress): String = remoteAddress.toIP match {
+    case Some(addr) => addr.ip.getHostAddress
+    case _ => "unknown ip"
   }
 
-  def requestMethodAndResponseStatus(req: HttpRequest): RouteResult => Option[LogEntry] = {
+  def requestMethodAndResponseStatusReduced(remoteAddress: RemoteAddress)
+                                           (req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("Index(" + index_name + ") ReqUri(" + req.uri + ")" +
+      Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" +
+        req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
+        Logging.InfoLevel))
+    case RouteResult.Rejected(rejections) => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") Rejected: " + rejections.mkString(", "), Logging.DebugLevel))
+    case _ => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") : Unknown RouteResult", Logging.ErrorLevel))
+  }
+
+  def requestMethodAndResponseStatus(remoteAddress: RemoteAddress)
+                                    (req: HttpRequest): RouteResult => Option[LogEntry] = {
+    case RouteResult.Complete(res) =>
+      Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" + req.uri + ")" +
         " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
         " ReqEntity(" + req.entity.httpEntity + ") ResEntity(" + res.entity + ") "
         , Logging.InfoLevel))
-    case _ ⇒ None
+    case RouteResult.Rejected(rejections) => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") Rejected: " + rejections.mkString(", "), Logging.DebugLevel))
+    case _ => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") : Unknown RouteResult", Logging.ErrorLevel))
   }
 
-  def requestMethodAndResponseStatusB64(req: HttpRequest): RouteResult => Option[LogEntry] = {
+  def requestMethodAndResponseStatusB64(remoteAddress: RemoteAddress)
+                                       (req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("Index(" + index_name + ") ReqUri(" + req.uri + ")" +
+      Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" + req.uri + ")" +
         " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
         " ReqEntity(" + req.entity + ")" +
         " ReqB64Entity(" + Base64.getEncoder.encodeToString(req.entity.toString.getBytes) + ")" +
         " ResEntity(" + res.entity + ")" +
         " ResB64Entity(" + Base64.getEncoder.encodeToString(res.entity.toString.getBytes) + ")", Logging.InfoLevel))
-    case _ ⇒ None
+    case RouteResult.Rejected(rejections) => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") Rejected: " + rejections.mkString(", "), Logging.DebugLevel))
+    case _ => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") : Unknown RouteResult", Logging.ErrorLevel))
   }
 
-  val logRequestAndResult = DebuggingDirectives.logRequestResult(requestMethodAndResponseStatus _)
-  val logRequestAndResultB64 = DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusB64 _)
-  val logRequestAndResultReduced = DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusReduced _)
+  val logRequestAndResult: Directive0 =
+    extractClientIP.flatMap { ip =>
+      DebuggingDirectives.logRequestResult(requestMethodAndResponseStatus(ip) _)
+    }
 
+  val logRequestAndResultB64: Directive0 =
+    extractClientIP.flatMap { ip =>
+      DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusB64(ip) _)
+    }
+
+  val logRequestAndResultReduced: Directive0 =
+    extractClientIP.flatMap { ip =>
+      DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusReduced(ip) _)
+    }
 }
 
 

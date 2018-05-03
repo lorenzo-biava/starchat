@@ -1,65 +1,61 @@
 package com.getjenny.starchat.services
 
-import com.getjenny.starchat.entities.DTDocument
-import akka.http.scaladsl.unmarshalling.Unmarshal
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import breeze.io.CSVReader
-
-import scala.concurrent.Await
-import scala.collection.immutable.{List, Map}
 import java.io.{File, FileReader}
 
-import akka.stream.ActorMaterializer
 import akka.actor.ActorSystem
-import akka.event.{Logging, LoggingAdapter}
+import akka.event.LoggingAdapter
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.ActorMaterializer
+import breeze.io.CSVReader
+import com.getjenny.starchat.entities.DTDocument
 import com.getjenny.starchat.serializers.JsonSupport
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.immutable.{List, Map}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.duration._
+import scalaz.Scalaz._
 
 object FileToDTDocuments extends JsonSupport {
 
   def getDTDocumentsFromCSV(log: LoggingAdapter, file: File, skiplines: Int = 1, separator: Char = ','):
   List[DTDocument] = {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
-
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     val refnumcol = 11
-    val file_reader = new FileReader(file)
-    lazy val file_entries = CSVReader.read(input=file_reader, separator=separator,
+    val fileReader = new FileReader(file)
+    lazy val fileEntries = CSVReader.read(input=fileReader, separator=separator,
       quote = '"', skipLines=skiplines)
 
-    val dtdocuments: List[DTDocument] = file_entries.map(entry => {
-      if (entry.length != refnumcol) {
+    val dtDocuments: List[DTDocument] = fileEntries.map(entry => {
+      if (entry.length =/= refnumcol) {
         val message = "file row is not consistent  Row(" + entry.toString + ")"
         throw new Exception(message)
       } else {
 
-        val queries_csv_string = entry(4)
-        val action_input_csv_string = entry(7)
-        val state_data_csv_string = entry(8)
+        val queriesCsvString = entry(4)
+        val actionInputCsvString = entry(7)
+        val stateDataCsvString = entry(8)
 
-        val queries_future: Future[List[String]] = queries_csv_string match {
+        val queriesFuture: Future[List[String]] = queriesCsvString match {
           case "" => Future { List.empty[String] }
-          case _ => Unmarshal(queries_csv_string).to[List[String]]
+          case _ => Unmarshal(queriesCsvString).to[List[String]]
         }
 
-        val action_input_future: Future[Map[String, String]] = action_input_csv_string match {
+        val actionInputFuture: Future[Map[String, String]] = actionInputCsvString match {
           case "" => Future { Map.empty[String, String] }
-          case _ => Unmarshal(action_input_csv_string).to[Map[String, String]]
+          case _ => Unmarshal(actionInputCsvString).to[Map[String, String]]
         }
 
-        val state_data_future: Future[Map[String, String]] = state_data_csv_string match {
+        val stateDataFuture: Future[Map[String, String]] = stateDataCsvString match {
           case "" => Future { Map.empty[String, String] }
-          case _ => Unmarshal(state_data_csv_string).to[Map[String, String]]
+          case _ => Unmarshal(stateDataCsvString).to[Map[String, String]]
         }
 
-        val queries = Await.result(queries_future, 10.second)
-        val action_input = Await.result(action_input_future, 10.second)
-        val state_data = Await.result(state_data_future, 10.second)
+        val queries = Await.result(queriesFuture, 10.second)
+        val actionInput = Await.result(actionInputFuture, 10.second)
+        val stateData = Await.result(stateDataFuture, 10.second)
 
         val document = DTDocument(state = entry(0),
           execution_order = entry(1).toInt,
@@ -68,14 +64,15 @@ object FileToDTDocuments extends JsonSupport {
           queries = queries,
           bubble = entry(5),
           action = entry(6),
-          action_input = action_input,
-          state_data = state_data,
+          action_input = actionInput,
+          state_data = stateData,
           success_value = entry(9),
           failure_value = entry(10)
         )
+
         document
       }
-    }).toList.filter(_ != null)
-    dtdocuments
+    }).toList
+    dtDocuments
   }
 }

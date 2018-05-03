@@ -4,230 +4,288 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-import akka.actor.ActorSystem
-import com.getjenny.starchat.entities._
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.collection.immutable.{List, Map}
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.common.unit._
-
-import scala.collection.mutable
-import scala.collection.mutable.LinkedHashMap
-import scala.collection.JavaConverters._
-import scala.concurrent.duration._
-import org.elasticsearch.search.SearchHit
-import com.getjenny.starchat.analyzer.analyzers._
-import com.getjenny.analyzer.expressions.{Data, AnalyzersData}
-import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
-import akka.event.Logging._
+import com.getjenny.analyzer.expressions.{AnalyzersData, Data}
 import com.getjenny.starchat.SCActorSystem
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import com.getjenny.analyzer.expressions.Result
+import com.getjenny.starchat.analyzer.analyzers.StarchatAnalyzer
+import com.getjenny.starchat.entities._
+import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.unit._
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.search.SearchHit
+
+import scala.collection.JavaConverters._
+import scala.collection.immutable.{List, Map}
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
+import scalaz.Scalaz._
+
+case class AnalyzerServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
 
 case class AnalyzerItem(declaration: String,
-                         analyzer: StarchatAnalyzer,
-                         build: Boolean,
-                         message: String)
+                        analyzer: Option[StarchatAnalyzer],
+                        build: Boolean,
+                        message: String)
 
-case class DecisionTableRuntimeItem(execution_order: Int,
-                                    max_state_counter: Int,
-                                    analyzer: AnalyzerItem,
-                                    queries: List[TextTerms]
+case class DecisionTableRuntimeItem(executionOrder: Int = -1,
+                                    maxStateCounter: Int = -1,
+                                    analyzer: AnalyzerItem = AnalyzerItem(
+                                      declaration = "", analyzer = None, build = false, message = ""
+                                    ),
+                                    version: Long = -1L,
+                                    queries: List[TextTerms] = List.empty[TextTerms]
                                    )
 
+case class ActiveAnalyzers(
+                            var analyzerMap : mutable.LinkedHashMap[String, DecisionTableRuntimeItem],
+                            var lastEvaluationTimestamp: Long = -1L,
+                            var lastReloadingTimestamp: Long = -1L
+                          )
+
 object AnalyzerService {
-
-  var analyzer_map : mutable.LinkedHashMap[String, DecisionTableRuntimeItem] =
-    mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]
-
+  var analyzersMap : mutable.Map[String, ActiveAnalyzers] = mutable.Map.empty[String, ActiveAnalyzers]
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val elastic_client = DecisionTableElasticClient
-  val termService = TermService
-  val decisionTableService = DecisionTableService
-  val systemService = SystemService
+  private[this] val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
+  private[this] val termService: TermService.type = TermService
+  private[this] val decisionTableService: DecisionTableService.type = DecisionTableService
+  private[this] val dtReloadService: DtReloadService.type = DtReloadService
+  val dtMaxTables: Long = elasticClient.config.getLong("es.dt_max_tables")
 
-  def getAnalyzers: mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
-    val client: TransportClient = elastic_client.get_client()
+  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+    indexName + "." + suffix.getOrElse(elasticClient.dtIndexSuffix)
+  }
+
+  def getAnalyzers(indexName: String): mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
+    val client: TransportClient = elasticClient.getClient()
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
 
-    val refresh_index = elastic_client.refresh_index()
-    if(refresh_index.failed_shards_n > 0) {
-      throw new Exception("DecisionTable : index refresh failed: (" + elastic_client.index_name + ")")
+    val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+    if(refreshIndex.failed_shards_n > 0) {
+      throw AnalyzerServiceException("DecisionTable : index refresh failed: (" + indexName + ")")
     }
 
-    val scroll_resp : SearchResponse = client.prepareSearch(elastic_client.index_name)
-      .setTypes(elastic_client.type_name)
-      .setQuery(qb)
+    val scrollResp : SearchResponse = client.prepareSearch().setIndices(getIndexName(indexName))
+      .setTypes(elasticClient.dtIndexSuffix)
       .setFetchSource(Array("state", "execution_order", "max_state_counter",
         "analyzer", "queries"), Array.empty[String])
       .setScroll(new TimeValue(60000))
+      .setVersion(true)
       .setSize(1000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
     val analyzersLHM = mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]
-    val analyzers_data : List[(String, DecisionTableRuntimeItem)] = scroll_resp.getHits.getHits.toList.map({ e =>
+    val analyzersData : List[(String, DecisionTableRuntimeItem)] = scrollResp.getHits.getHits.toList.map({ e =>
       val item: SearchHit = e
       val state : String = item.getId
-      val source : Map[String, Any] = item.getSource.asScala.toMap
+      val version : Long = item.getVersion
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-      val analyzer_declaration : String = source.get("analyzer") match {
+      val analyzerDeclaration : String = source.get("analyzer") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
 
-     val execution_order : Int = source.get("execution_order") match {
+      val executionOrder : Int = source.get("execution_order") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
       }
 
-      val max_state_counter : Int = source.get("max_state_counter") match {
+      val maxStateCounter : Int = source.get("max_state_counter") match {
         case Some(t) => t.asInstanceOf[Int]
         case None => 0
       }
 
       val queries : List[String] = source.get("queries") match {
         case Some(t) =>
-          val query_array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
+          val queryArray = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
             .map(q_e => q_e.get("query"))
-          query_array
+          queryArray
         case None => List[String]()
       }
 
-      val queries_terms: List[TextTerms] = queries.map(q => {
-        val query_terms = termService.textToVectors(q)
-        query_terms
-      }).filter(_.nonEmpty).map(x => x.get)
+      val queriesTerms: List[TextTerms] = queries.map(q => {
+        val queryTerms = termService.textToVectors(indexName, q)
+        queryTerms
+      }).filter(_.nonEmpty).map{
+        case(queryTerms) => queryTerms match {
+          case Some(textTerms) => textTerms
+          case _ => throw AnalyzerServiceException("TextTerms cannot be empty")
+        }
+      }
 
-      val decisionTableRuntimeItem: DecisionTableRuntimeItem = DecisionTableRuntimeItem(execution_order=execution_order,
-        max_state_counter=max_state_counter,
-        analyzer=AnalyzerItem(declaration=analyzer_declaration, build=false, analyzer=null, message = "not built"),
-        queries=queries_terms)
+      val decisionTableRuntimeItem: DecisionTableRuntimeItem =
+        DecisionTableRuntimeItem(executionOrder=executionOrder,
+          maxStateCounter=maxStateCounter,
+          analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=false,
+            analyzer = None,
+            message = "Analyzer indes(" + indexName + ") state(" + state + ") not built"),
+          queries = queriesTerms,
+          version = version)
       (state, decisionTableRuntimeItem)
-    }).filter(_._2.analyzer.declaration != "").sortWith(_._2.execution_order < _._2.execution_order)
+    }).filter{case (_, decisionTableRuntimeItem) => decisionTableRuntimeItem
+      .analyzer.declaration =/= ""}
+      .sortWith{
+        case ((_, decisionTableRuntimeItem1),(_, decisionTableRuntimeItem2)) =>
+          decisionTableRuntimeItem1.executionOrder < decisionTableRuntimeItem2.executionOrder
+      }
 
-    analyzers_data.foreach(x => {
+    analyzersData.foreach(x => {
       analyzersLHM += x
     })
     analyzersLHM
   }
 
-  def buildAnalyzers(analyzers_map: mutable.LinkedHashMap[String, DecisionTableRuntimeItem]):
-                  mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
-    val result = analyzers_map.map(item => {
-      val execution_order = item._2.execution_order
-      val max_state_counter = item._2.max_state_counter
-      val analyzer_declaration = item._2.analyzer.declaration
-      val queries_terms = item._2.queries
-      val (analyzer : StarchatAnalyzer, message: String) = if (analyzer_declaration != "") {
-        try {
-          val analyzer_object = new StarchatAnalyzer(analyzer_declaration)
-          (analyzer_object, "Analyzer successfully built: " + item._1)
-        } catch {
-          case e: Exception =>
-            val msg = "Error building analyzer (" + item._1 + ") declaration(" + analyzer_declaration + "): " + e.getMessage
-            log.error(msg)
-            (null, msg)
+  private[this] case class BuildAnalyzerResult(analyzer : Option[StarchatAnalyzer], version: Long, message: String)
+
+  def buildAnalyzers(indexName: String,
+                     analyzersMap: mutable.LinkedHashMap[String, DecisionTableRuntimeItem],
+                     incremental: Boolean = true):
+  mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
+    val inPlaceIndexAnalyzers = AnalyzerService.analyzersMap.getOrElse(indexName,
+      ActiveAnalyzers(mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]))
+    val result = analyzersMap.map { case(stateId, runtimeItem) =>
+      val executionOrder = runtimeItem.executionOrder
+      val maxStateCounter = runtimeItem.maxStateCounter
+      val analyzerDeclaration = runtimeItem.analyzer.declaration
+      val queriesTerms = runtimeItem.queries
+      val version: Long = runtimeItem.version
+      val buildAnalyzerResult: BuildAnalyzerResult =
+        if (analyzerDeclaration =/= "") {
+          val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
+          val inPlaceAnalyzer: DecisionTableRuntimeItem =
+            inPlaceIndexAnalyzers.analyzerMap.getOrElse(stateId, DecisionTableRuntimeItem())
+          if(incremental && inPlaceAnalyzer.version > 0 && inPlaceAnalyzer.version === version) {
+            val msg = "Analyzer already built index(" + indexName + ") state(" + stateId +
+              ") version(" + version + ":" + inPlaceAnalyzer.version + ")"
+            log.debug(msg)
+            BuildAnalyzerResult(inPlaceAnalyzer.analyzer.analyzer, version, "Analyzer already built: " + stateId)
+          } else {
+            Try(new StarchatAnalyzer(analyzerDeclaration, restrictedArgs)) match {
+              case Success(analyzerObject) =>
+                val msg = "Analyzer successfully built index(" + indexName + ") state(" + stateId +
+                  ") version(" + version + ":" + inPlaceAnalyzer.version + ")"
+                log.debug(msg)
+                BuildAnalyzerResult(Some(analyzerObject), version, msg)
+              case Failure(e) =>
+                val msg = "Error building analyzer index(" + indexName + ") state(" + stateId +
+                  ") declaration(" + analyzerDeclaration +
+                  ") version(" + version + ":" + inPlaceAnalyzer.version + ") : " + e.getMessage
+                log.error(msg)
+                BuildAnalyzerResult(None, -1L, msg)
+            }
+          }
+        } else {
+          val msg = "index(" + indexName + ") : state(" + stateId + ") : analyzer declaration is empty"
+          log.debug(msg)
+          BuildAnalyzerResult(None, -1L, msg)
         }
-      } else {
-        val msg = "analyzer declaration is empty"
-        log.debug(msg)
-        (null, msg)
+
+      val analyzerBuildResult = buildAnalyzerResult.analyzer match {
+        case Some(_) => true
+        case _ => false
       }
 
-      val build = analyzer != null
-
-      val decisionTableRuntimeItem = DecisionTableRuntimeItem(execution_order=execution_order,
-        max_state_counter=max_state_counter,
-        analyzer=AnalyzerItem(declaration=analyzer_declaration, build=build, analyzer=analyzer, message = message),
-        queries=queries_terms)
-      (item._1, decisionTableRuntimeItem)
-    }).filter(_._2.analyzer.build)
+      val decisionTableRuntimeItem = DecisionTableRuntimeItem(executionOrder=executionOrder,
+        maxStateCounter = maxStateCounter,
+        analyzer =
+          AnalyzerItem(
+            declaration = analyzerDeclaration,
+            build = analyzerBuildResult,
+            analyzer = buildAnalyzerResult.analyzer,
+            message = buildAnalyzerResult.message
+          ),
+        version = version,
+        queries = queriesTerms)
+      (stateId, decisionTableRuntimeItem)
+    }.filter{case (_, decisionTableRuntimeItem) => decisionTableRuntimeItem.analyzer.build}
     result
   }
 
-  def loadAnalyzer(propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
-    AnalyzerService.analyzer_map = getAnalyzers
-    AnalyzerService.analyzer_map = buildAnalyzers(AnalyzerService.analyzer_map)
-    val dt_analyzer_load = DTAnalyzerLoad(num_of_entries=AnalyzerService.analyzer_map.size)
+  def loadAnalyzers(indexName: String, incremental: Boolean = true,
+                    propagate: Boolean = false) : Future[Option[DTAnalyzerLoad]] = Future {
+    val analyzerMap = buildAnalyzers(indexName = indexName,
+      analyzersMap = getAnalyzers(indexName), incremental = incremental)
+    val dtAnalyzerLoad = DTAnalyzerLoad(num_of_entries=analyzerMap.size)
+    val activeAnalyzers: ActiveAnalyzers = ActiveAnalyzers(analyzerMap = analyzerMap,
+      lastEvaluationTimestamp = 0, lastReloadingTimestamp = 0)
+    AnalyzerService.analyzersMap(indexName) = activeAnalyzers
 
     if (propagate) {
-      val result: Try[Option[Long]] =
-        Await.ready(systemService.setDTReloadTimestamp(refresh = 1), 60.seconds).value.get
-      result match {
-        case Success(t) =>
-          val ts: Long = t.getOrElse(0)
-          log.debug("setting dt reload timestamp to: " + ts)
-          SystemService.dt_reload_timestamp = ts
+      Try(dtReloadService.setDTReloadTimestamp(indexName, refresh = 1)) match {
+        case Success(reloadTsFuture) =>
+          reloadTsFuture.onComplete{
+            case Success(dtReloadTimestamp) =>
+              val ts = dtReloadTimestamp
+                .getOrElse(DtReloadTimestamp(indexName, dtReloadService.DT_RELOAD_TIMESTAMP_DEFAULT))
+              log.debug("setting dt reload timestamp to: " + ts.timestamp)
+              activeAnalyzers.lastReloadingTimestamp = ts.timestamp
+            case Failure(e) =>
+              val message = "unable to set dt reload timestamp" + e.getMessage
+              log.error(message)
+              throw AnalyzerServiceException(message)
+          }
         case Failure(e) =>
-          log.error("unable to set dt reload timestamp" + e.getMessage)
+          val message = "unable to set dt reload timestamp" + e.getMessage
+          log.error(message)
+          throw AnalyzerServiceException(message)
       }
     }
 
-    Option {dt_analyzer_load}
+    Option {dtAnalyzerLoad}
   }
 
-  def getDTAnalyzerMap : Future[Option[DTAnalyzerMap]] = {
-    val analyzers = Future(Option(DTAnalyzerMap(AnalyzerService.analyzer_map.map(x => {
-      val dt_analyzer = DTAnalyzerItem(x._2.analyzer.declaration, x._2.analyzer.build, x._2.execution_order)
-      (x._1, dt_analyzer)
-    }).toMap)))
+  def getDTAnalyzerMap(indexName: String) : Future[Option[DTAnalyzerMap]] = {
+    val analyzers = Future(Option(DTAnalyzerMap(AnalyzerService.analyzersMap(indexName).analyzerMap
+      .map{
+        case(stateName, dtRuntimeItem) =>
+          val dtAnalyzer =
+            DTAnalyzerItem(
+              dtRuntimeItem.analyzer.declaration,
+              dtRuntimeItem.analyzer.build,
+              dtRuntimeItem.executionOrder
+            )
+          (stateName, dtAnalyzer)
+      }.toMap)))
     analyzers
   }
 
-  def evaluateAnalyzer(analyzer_request: AnalyzerEvaluateRequest): Future[Option[AnalyzerEvaluateResponse]] = {
-    val analyzer = Try(new StarchatAnalyzer(analyzer_request.analyzer))
-    val response = analyzer match {
+  def evaluateAnalyzer(indexName: String, analyzerRequest: AnalyzerEvaluateRequest):
+  Future[Option[AnalyzerEvaluateResponse]] = {
+    val restrictedArgs: Map[String, String] = Map("index_name" -> indexName)
+    val analyzer = Try(new StarchatAnalyzer(analyzerRequest.analyzer, restrictedArgs))
+
+    analyzer match {
       case Failure(exception) =>
         log.error("error during evaluation of analyzer: " + exception.getMessage)
         throw exception
       case Success(result) =>
-        val data_internal = if (analyzer_request.data.isDefined) {
-          val data = analyzer_request.data.get
-
-          // prepare search result for search analyzer
-          val analyzers_internal_data =
-            decisionTableService.resultsToMap(decisionTableService.search_dt_queries(analyzer_request.query))
-
-          AnalyzersData(item_list = data.item_list, extracted_variables = data.extracted_variables,
-            data = analyzers_internal_data)
-        } else {
-          AnalyzersData()
+        analyzerRequest.data match {
+          case Some(data) =>
+            // prepare search result for search analyzer
+            decisionTableService.searchDtQueries(indexName, analyzerRequest.query).map(searchRes => {
+              val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
+              val dataInternal = AnalyzersData(item_list = data.item_list,
+                extracted_variables = data.extracted_variables, data = analyzersInternalData)
+              val evalRes = result.evaluate(analyzerRequest.query, dataInternal)
+              val returnData = if(evalRes.data.extracted_variables.nonEmpty || evalRes.data.item_list.nonEmpty) {
+                val dataInternal = evalRes.data
+                Some(Data(item_list = dataInternal.item_list, extracted_variables = dataInternal.extracted_variables))
+              } else {
+                Option.empty[Data]
+              }
+              Some(AnalyzerEvaluateResponse(build = true,
+                value = evalRes.score, data = returnData, build_message = "success"))
+            })
+          case _ =>
+            Future{
+              Some(AnalyzerEvaluateResponse(build = true,
+                value = 0.0, data = Option.empty[Data], build_message = "success"))
+            }
         }
-
-        val eval_res = result.evaluate(analyzer_request.query, data_internal)
-        val return_data = if(eval_res.data.extracted_variables.nonEmpty || eval_res.data.item_list.nonEmpty) {
-          val data_internal = eval_res.data
-          Option { Data(item_list = data_internal.item_list, extracted_variables = data_internal.extracted_variables) }
-        } else {
-          None: Option[Data]
-        }
-
-        val analyzer_response = AnalyzerEvaluateResponse(build = true,
-          value = eval_res.score, data = return_data, build_message = "success")
-        analyzer_response
-    }
-
-    Future { Option { response } }
-  }
-
-  def initializeAnalyzers(): Unit = {
-    if (AnalyzerService.analyzer_map == mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]) {
-      val result: Try[Option[DTAnalyzerLoad]] =
-        Await.ready(loadAnalyzer(), 60.seconds).value.get
-      result match {
-        case Success(t) =>
-          log.info("analyzers loaded: " + t.get.num_of_entries)
-          SystemService.dt_reload_timestamp = 0
-        case Failure(e) =>
-          log.error("can't load analyzers: " + e.toString)
-      }
-    } else {
-      log.info("analyzers already loaded")
     }
   }
 

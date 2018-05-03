@@ -4,76 +4,195 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 19/12/16.
   */
 
-import akka.event.{Logging, LoggingAdapter}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
-
-import scala.concurrent.{Await, Future}
-import akka.http.scaladsl.model.StatusCodes
 import com.getjenny.starchat.services.IndexManagementService
 
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
-import akka.pattern.CircuitBreaker
+import scala.util.{Failure, Success}
 
-trait IndexManagementResource extends MyResource {
+trait IndexManagementResource extends StarChatResource {
 
-  def indexManagementRoutes: Route = pathPrefix("index_management") {
-    val indexManagementService = IndexManagementService
-    path(Segment) { operation: String =>
-      post
-      {
-        {
-          operation match {
-            case "refresh" =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.refresh_index()) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Option { IndexManagementResponse(message = e.getMessage) } )
+  private[this] val indexManagementService: IndexManagementService.type = IndexManagementService
+
+  def postIndexManagementCreateRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash
+      ~ "index_management" ~ Slash ~ """create""") {
+      (indexName) =>
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker
+                  .getCircuitBreaker(maxFailure = 10, callTimeout = 20.seconds)
+                onCompleteWithBreaker(breaker)(
+                  indexManagementService.createIndex(indexName = indexName, indexSuffix = indexSuffix)
+                ) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
+                  })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    })
+                }
               }
-            case "create" =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(indexManagementService.create_index()) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Option { IndexManagementResponse(message = e.getMessage) })
-              }
-            case _ => completeResponse(StatusCodes.BadRequest,
-              Option{IndexManagementResponse(message = "Operation not supported: " + operation)})
+            }
           }
         }
-      }
-    } ~
-    pathEnd {
-      get {
-        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-        onCompleteWithBreaker(breaker)(indexManagementService.check_index()) {
-          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
-          case Failure(e) => completeResponse(StatusCodes.BadRequest,
-            Option{IndexManagementResponse(message = e.getMessage)})
+    }
+  }
+
+  def postIndexManagementOpenCloseRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
+      Slash ~ "index_management" ~ Slash ~ """(open|close)""".r) {
+      (indexName, operation) =>
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(
+                  indexManagementService.openCloseIndex(indexName = indexName, indexSuffix = indexSuffix,
+                    operation = operation)
+                ) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
+                  })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    })
+                }
+              }
+            }
+          }
         }
-      } ~
-      delete {
-        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-        onCompleteWithBreaker(breaker)(indexManagementService.remove_index()) {
-          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
-          case Failure(e) => completeResponse(StatusCodes.BadRequest,
-            Option{IndexManagementResponse(message = e.getMessage)})
+    }
+  }
+
+  def postIndexManagementRefreshRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
+      Slash ~ "index_management" ~ Slash ~ """refresh""") {
+      (indexName) =>
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(
+                  indexManagementService.refreshIndexes(indexName = indexName, indexSuffix = indexSuffix)
+                ) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
+                  })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    })
+                }
+              }
+            }
+          }
         }
-      } ~
-      put {
-        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-        onCompleteWithBreaker(breaker)(indexManagementService.update_index()) {
-          case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
-          case Failure(e) => completeResponse(StatusCodes.BadRequest,
-            Option{IndexManagementResponse(message = e.getMessage)})
+    }
+  }
+
+  def putIndexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
+      Slash ~ """([A-Za-z0-9_]{1,256})""".r ~ Slash ~ "index_management" ~ Slash ~ """(mappings|settings)""".r) {
+      (indexName, language, mappingOrSettings) =>
+        pathEnd {
+          put {
+            authenticateBasicAsync(realm = authRealm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(
+                    mappingOrSettings match {
+                      case "mappings" => indexManagementService.updateIndexMappings(indexName = indexName,
+                        indexSuffix = indexSuffix, language = language)
+                      case "settings" => indexManagementService.updateIndexSettings(indexName = indexName,
+                        indexSuffix = indexSuffix, language = language)
+                    }
+                  ) {
+                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        IndexManagementResponse(message = e.getMessage)
+                      })
+                  }
+                }
+              }
+            }
+          }
         }
-      }
+    }
+  }
+
+  def indexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "index_management") {
+      (indexName) =>
+        pathEnd {
+          get {
+            authenticateBasicAsync(realm = authRealm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, indexName, Permissions.read)) {
+                parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(
+                    indexManagementService.checkIndex(indexName = indexName, indexSuffix = indexSuffix)
+                  ) {
+                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        IndexManagementResponse(message = e.getMessage)
+                      })
+                  }
+                }
+              }
+            }
+          } ~
+            delete {
+              authenticateBasicAsync(realm = authRealm,
+                authenticator = authenticator.authenticator) { (user) =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                  parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(
+                      indexManagementService.removeIndex(indexName = indexName, indexSuffix = indexSuffix)
+                    ) {
+                      case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
+                      })
+                      case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          IndexManagementResponse(message = e.getMessage)
+                        })
+                    }
+                  }
+                }
+              }
+            }
+        }
     }
   }
 }
-
-
 

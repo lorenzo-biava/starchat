@@ -4,59 +4,54 @@ package com.getjenny.command
   * Created by angelo on 29/03/17.
   */
 
-import akka.http.scaladsl.model.HttpRequest
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.ActorMaterializer
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.unmarshalling.Unmarshal
-
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-
-import com.getjenny.starchat.serializers.JsonSupport
-import com.getjenny.starchat.entities._
-import scopt.OptionParser
-import breeze.io.CSVReader
-import scala.util.Try
-
-import com.roundeights.hasher.Implicits._
-
-import scala.concurrent.Await
-import scala.collection.immutable
-import scala.collection.immutable.{List, Map}
-import java.io.{File, FileReader, Reader, FileInputStream, InputStreamReader}
+import java.io._
 import java.util.Base64
 
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.stream.ActorMaterializer
+import breeze.io.CSVReader
+import com.getjenny.starchat.entities._
+import com.getjenny.starchat.serializers.JsonSupport
+import com.roundeights.hasher.Implicits._
+import scopt.OptionParser
+
+import scala.collection.immutable
+import scala.collection.immutable.{List, Map}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.duration._
+import scala.util.Try
+
 object IndexKnowledgeBase extends JsonSupport {
-  private case class Params(
+  private[this] case class Params(
                              host: String = "http://localhost:8888",
+                             indexName: String = "index_0",
                              path: String = "/knowledgebase",
-                             questions_path: Option[String] = None: Option[String],
-                             answers_path: Option[String] = None: Option[String],
-                             associations_path: Option[String] = None: Option[String],
+                             questionsPath: Option[String] = None: Option[String],
+                             answersPath: Option[String] = None: Option[String],
+                             associationsPath: Option[String] = None: Option[String],
                              base64: Boolean = false,
                              separator: Char = ';',
                              timeout: Int = 60,
-                             header_kv: Seq[String] = Seq.empty[String]
+                             headerKv: Seq[String] = Seq.empty[String]
                            )
 
-  private def decodeBase64(in: String): String = {
-    val decoded_bytes = Base64.getDecoder.decode(in)
-    val decoded = new String(decoded_bytes, "UTF-8")
+  private[this] def decodeBase64(in: String): String = {
+    val decodedBytes = Base64.getDecoder.decode(in)
+    val decoded = new String(decodedBytes, "UTF-8")
     decoded
   }
 
-  private def load_data(params: Params, transform: String => String):
+  private[this] def loadData(params: Params, transform: String => String):
       List[Map[String, String]] = {
-    val questions_input_stream: Reader = new InputStreamReader(new FileInputStream(params.questions_path.get), "UTF-8")
-    lazy val questions_entries = CSVReader.read(input = questions_input_stream, separator = params.separator,
+    val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.questionsPath.get), "UTF-8")
+    lazy val questionsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,
       quote = '"', skipLines = 0)
 
-    val questions_map = questions_entries.zipWithIndex.map(entry => {
+    val questionsMap = questionsEntries.zipWithIndex.map(entry => {
       if (entry._1.size < 2) {
         println("Error [questions] with line: " + entry._2)
         (entry._2, false, "", "")
@@ -67,11 +62,11 @@ object IndexKnowledgeBase extends JsonSupport {
       }
     }).filter(_._2).map(x => (x._3, x._4)).toMap
 
-    val answers_input_stream: Reader = new InputStreamReader(new FileInputStream(params.answers_path.get), "UTF-8")
-    lazy val answers_entries = CSVReader.read(input = answers_input_stream, separator = params.separator,
+    val answersInputStream: Reader = new InputStreamReader(new FileInputStream(params.answersPath.get), "UTF-8")
+    lazy val answersEntries = CSVReader.read(input = answersInputStream, separator = params.separator,
       quote = '"', skipLines = 0)
 
-    val answer_map = answers_entries.zipWithIndex.map(entry => {
+    val answerMap = answersEntries.zipWithIndex.map(entry => {
       if (entry._1.size < 2) {
         println("Error [answers] with line: " + entry._2)
         (entry._2, false, "", "")
@@ -82,16 +77,16 @@ object IndexKnowledgeBase extends JsonSupport {
       }
     }).filter(_._2).map(x => (x._3, x._4)).toMap
 
-    val file_assoc = new File(params.associations_path.get)
-    val file_reader_assoc = new FileReader(file_assoc)
-    lazy val association_entries = CSVReader.read(input = file_reader_assoc, separator = params.separator,
+    val fileAssoc = new File(params.associationsPath.get)
+    val fileReaderAssoc = new FileReader(fileAssoc)
+    lazy val associationEntries = CSVReader.read(input = fileReaderAssoc, separator = params.separator,
       quote = '"', skipLines = 1)
 
-    val conv_pairs = association_entries.map(entry => {
+    val convPairs = associationEntries.map(entry => {
       val question_id = entry(0)
       val answer_id = entry(3)
-      val question = Try(questions_map(question_id)).getOrElse("")
-      val answer = Try(answer_map(answer_id)).getOrElse("")
+      val question = Try(questionsMap(question_id)).getOrElse("")
+      val answer = Try(answerMap(answer_id)).getOrElse("")
       val val_map = Map(
         "conversation_id" -> entry(1),
         "question_id" -> question_id,
@@ -102,26 +97,26 @@ object IndexKnowledgeBase extends JsonSupport {
       )
       val_map
     })
-    conv_pairs.toList
+    convPairs.toList
   }
 
-  private def doIndexConversationPairs(params: Params) {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
+  private def execute(params: Params) {
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     val vecsize = 0
 
-    val base_url = params.host + params.path
+    val baseUrl = params.host + "/" + params.indexName + params.path
 
-    val conv_items = if (params.base64) {
-      load_data(params, decodeBase64)
+    val convItems = if (params.base64) {
+      loadData(params, decodeBase64)
     } else {
-      load_data(params, identity)
+      loadData(params, identity)
     }
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.length > 0) {
-      val headers: Seq[RawHeader] = params.header_kv.map(x => {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.length > 0) {
+      val headers: Seq[RawHeader] = params.headerKv.map(x => {
         val header_opt = x.split(":")
         val key = header_opt(0)
         val value = header_opt(1)
@@ -134,10 +129,10 @@ object IndexKnowledgeBase extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
-    conv_items.foreach(entry => {
+    convItems.foreach(entry => {
       val id: String = entry.toString().sha256
 
-      val kb_document: KBDocument = KBDocument(
+      val kbDocument: KBDocument = KBDocument(
         id = id,
         conversation = entry("conversation_id"),
         index_in_conversation =  Option { entry("position").toInt },
@@ -146,27 +141,25 @@ object IndexKnowledgeBase extends JsonSupport {
         question_scored_terms = None: Option[List[(String, Double)]],
         answer = entry("answer"),
         answer_scored_terms = None: Option[List[(String, Double)]],
-        verified = false,
         topics = None: Option[String],
         dclass = None: Option[String],
         doctype = doctypes.normal,
         state = None: Option[String],
-        status = 0
       )
 
-      val entity_future = Marshal(kb_document).to[MessageEntity]
+      val entity_future = Marshal(kbDocument).to[MessageEntity]
       val entity = Await.result(entity_future, 10.second)
       val responseFuture: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(
           method = HttpMethods.POST,
-          uri = base_url,
+          uri = baseUrl,
           headers = httpHeader,
           entity = entity))
       val result = Await.result(responseFuture, timeout)
       result.status match {
-        case StatusCodes.Created | StatusCodes.OK => println("indexed: " + kb_document.id +
-          " conv(" + kb_document.conversation + ")" +
-          " position(" + kb_document.index_in_conversation.get + ")" +
+        case StatusCodes.Created | StatusCodes.OK => println("indexed: " + kbDocument.id +
+          " conv(" + kbDocument.conversation + ")" +
+          " position(" + kbDocument.index_in_conversation.get + ")" +
           " q_id(" + entry("question_id") + ")" +
           " a_id(" + entry("answer_id") + ")")
         case _ =>
@@ -183,21 +176,25 @@ object IndexKnowledgeBase extends JsonSupport {
       help("help").text("prints this usage text")
       opt[String]("questions_path")
         .text(s"path of the file with questions, format: <question_id>;<question>" +
-          s"  default: ${defaultParams.questions_path}")
-        .action((x, c) => c.copy(questions_path = Option(x)))
+          s"  default: ${defaultParams.questionsPath}")
+        .action((x, c) => c.copy(questionsPath = Option(x)))
       opt[String]("answers_path")
         .text(s"path of the file with answers, format: <answer_id>;<answer>" +
-          s"  default: ${defaultParams.answers_path}")
-        .action((x, c) => c.copy(answers_path = Option(x)))
+          s"  default: ${defaultParams.answersPath}")
+        .action((x, c) => c.copy(answersPath = Option(x)))
       opt[String]("associations_path")
         .text(s"path of the file with answers in format: " +
             "<question_id>;<conversation_id>;<pos. in conv.>;<answer_id>" +
-          s"  default: ${defaultParams.associations_path}")
-        .action((x, c) => c.copy(associations_path = Option(x)))
+          s"  default: ${defaultParams.associationsPath}")
+        .action((x, c) => c.copy(associationsPath = Option(x)))
       opt[String]("host")
         .text(s"*Chat base url" +
           s"  default: ${defaultParams.host}")
         .action((x, c) => c.copy(host = x))
+      opt[String]("index_name")
+        .text(s"the index_name, e.g. index_XXX" +
+          s"  default: ${defaultParams.indexName}")
+        .action((x, c) => c.copy(indexName = x))
       opt[String]("path")
         .text(s"the service path" +
           s"  default: ${defaultParams.path}")
@@ -212,13 +209,13 @@ object IndexKnowledgeBase extends JsonSupport {
         .action((x, c) => c.copy(base64 = x))
       opt[Seq[String]]("header_kv")
         .text(s"header key-value pair, as key1:value1,key2:value2" +
-          s"  default: ${defaultParams.header_kv}")
-        .action((x, c) => c.copy(header_kv = x))
+          s"  default: ${defaultParams.headerKv}")
+        .action((x, c) => c.copy(headerKv = x))
     }
 
     parser.parse(args, defaultParams) match {
       case Some(params) =>
-        doIndexConversationPairs(params)
+        execute(params)
       case _ =>
         sys.exit(1)
     }

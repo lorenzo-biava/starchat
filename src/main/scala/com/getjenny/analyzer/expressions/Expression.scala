@@ -7,6 +7,7 @@ package com.getjenny.analyzer.expressions
   *
   * Created by mal on 20/02/2017.
   */
+import scalaz.Scalaz._
 
 abstract class Expression {
   /**
@@ -16,21 +17,12 @@ abstract class Expression {
     */
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result // read a sentence and produce a score (the higher, the more confident)
 
-  /**
-    * In case of boolean logic, the threshold above which it says the state should be triggered
-    */
-  val match_threshold = 0.0
-
-  /**
-    *
-    * @param query see AbstractAtomic or AbstractOperator
-    * @param data the Map exchanged between StarChat and the other services
-    * @return Should the state be triggered true/false
-    */
+  // In case of boolean logic, the threshold above which it says the state should be triggered
+  val matchThreshold = 0.0
   def matches(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val res = this.evaluate(query, data)
-    val bool = if(res.score > match_threshold) 1.0 else 0.0
-    if (bool == 1) println("DEBUG: Expression: " + this + " matches " + query)
+    val bool: Double = if(res.score > matchThreshold) 1.0 else 0.0
+    //if (bool === 1.0d) println("DEBUG: Expression: " + this + " matches " + query)
     Result(score = bool, data = res.data)
   } // read a sentence and tells if there is any match
 }

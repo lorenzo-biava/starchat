@@ -2,7 +2,7 @@ version: "3.2"
 services:
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:5.6.4
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
     restart: unless-stopped
     command: elasticsearch
     ports:
@@ -42,14 +42,17 @@ services:
       - "elasticsearch:getjenny-es"
 
   manaus:
-    image: elegansio/manaus:1.0.8
+    image: elegansio/manaus:2.0.1
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
     volumes:
       - ./manaus/data:/manaus/data
       - ./manaus/log:/manaus/log
-    command: ["/manaus/scripts/wait-for-it.sh", "getjenny-es", "9200", "5", "/manaus/bin/continuous-keywords-update", "--temp_data_folder", "/manaus/data", "--host_map", "getjenny-es=9300", "--interval_sec", "14400", "--word_frequencies", "/manaus/statistics_data/english/word_frequency.tsv", "--cluster_name", "starchat", "--index_name", "jenny-en-0"]
+    command: ["/manaus/scripts/wait-for-it.sh", "getjenny-es", "9200", "5", "/manaus/bin/continuous-keywords-update-all-indexes", "--temp_data_folder", "manaus/data", "--host_map", "getjenny-es=9300", "--interval_sec", "5", "--word_frequencies", "manaus/statistics_data", "--cluster_name", "starchat"]      
     links:
       - "starchat:starchat"
-      - "starchat2:starchat2"
       - "elasticsearch:getjenny-es"
-

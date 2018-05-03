@@ -3,6 +3,9 @@ package com.getjenny.analyzer.atoms
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.utils._
 
+import scala.util.Try
+import scala.util.control.NonFatal
+
 /**
   * Created by angelo on 26/06/17.
   */
@@ -10,15 +13,18 @@ import com.getjenny.analyzer.utils._
 /** Analyzer for the extraction of dates from queries
   * @param arguments
   */
-class MatchDateDDMMYYYYAtomic(val arguments: List[String]) extends AbstractAtomic {
-  val prefix = arguments(0)
+class MatchDateDDMMYYYYAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
+  val prefix = arguments.headOption match {
+    case Some(t) => t
+    case _ => throw ExceptionAtomic("MatchDateDDMMYYYYAtomic: must have one argument")
+  }
   override def toString: String = "matchDateDDMMYYYY(" + prefix + ")"
   val isEvaluateNormalized: Boolean = true
   val regex = """[""" + prefix + """day,""" + prefix + """month,""" + prefix + """year]""" +
     """(?:(?:[^0-9]+|\A)(0[1-9]|[12][0-9]|3[01])(?:[- \/\.])(0[1-9]|1[012])(?:[- \/\.])((?:19|20)\d\d)(?:[^0-9]+|$))"""
 
   /** PatternExtractionRegex is a pattern extraction utility class */
-  val regex_extractor = new PatternExtractionRegex(regex)
+  val regexExtractor = new PatternExtractionRegex(regex)
 
   /** Extract one or more dates from the query. If the query contains the pattern it returns a score = 1.0 and
     *   put the pattern into the extracted_variables dictionary.
@@ -29,17 +35,14 @@ class MatchDateDDMMYYYYAtomic(val arguments: List[String]) extends AbstractAtomi
     * @return Result with 1.0 the date on extracted_variables if the pattern matches, score = 0.0 otherwise
     */
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val res = try {
-      Result(
-        score = 1.0,
-        AnalyzersData(item_list = data.item_list, extracted_variables = regex_extractor.evaluate(query))
-      )
-    } catch {
-      case e: PatternExtractionNoMatchException =>
+    val res = Try(Result(score = 1.0,
+        AnalyzersData(item_list = data.item_list, extracted_variables = regexExtractor.evaluate(query))
+      )) recover {
+      case _: PatternExtractionNoMatchException =>
         Result(score=0)
-      case e: Exception =>
+      case NonFatal(e) =>
         throw ExceptionAtomic("Parsing of regular expression specification(" + regex + "), query(" + query + ")", e)
     }
-    res
+    res.get
   }
 }
