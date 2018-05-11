@@ -55,7 +55,7 @@ object AnalyzerService {
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
   val dtMaxTables: Long = elasticClient.config.getLong("es.dt_max_tables")
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+  private[this] def getIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.dtIndexSuffix)
   }
 

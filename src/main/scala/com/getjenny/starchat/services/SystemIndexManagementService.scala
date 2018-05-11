@@ -29,18 +29,18 @@ case class SystemIndexManagementServiceException(message: String = "", cause: Th
   */
 object SystemIndexManagementService {
   val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  val analyzerJsonPath: String = "/index_management/json_index_spec/system/analyzer.json"
-  val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
-  val analyzerJson: String = analyzerJsonIs match {
+  private[this] val analyzerJsonPath: String = "/index_management/json_index_spec/system/analyzer.json"
+  private[this] val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
+  private[this] val analyzerJson: String = analyzerJsonIs match {
     case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
     case _ =>
       val message = "Check the file: (" + analyzerJsonPath + ")"
       throw new FileNotFoundException(message)
   }
 
-  val schemaFiles: List[JsonMappingAnalyzersIndexFiles] = List[JsonMappingAnalyzersIndexFiles](
+  private[this] val schemaFiles: List[JsonMappingAnalyzersIndexFiles] = List[JsonMappingAnalyzersIndexFiles](
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/system/user.json",
       updatePath = "/index_management/json_index_spec/system/update/user.json",
       indexSuffix = elasticClient.userIndexSuffix),

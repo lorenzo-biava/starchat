@@ -37,24 +37,72 @@ case class TermServiceException(message: String = "", cause: Throwable = None.or
   * Implements functions, eventually used by TermResource
   */
 object TermService {
-  val elastiClient: TermClient.type = TermClient
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val elasticClient: TermClient.type = TermClient
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
-    indexName + "." + suffix.getOrElse(elastiClient.termIndexSuffix)
+  /** Extract language from index name
+    *
+    * @param indexName the full index name
+    * @return a tuple with the two component of the index (language, arbitrary pattern)
+    */
+  private[this] def languageFromIndex(indexName: String): (String, String) = {
+    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
+
+    val (_, language, arbitrary) = indexName match {
+      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
+        (indexPattern, languagePattern, arbitraryPattern)
+      case _ => throw new Exception("index name is not well formed")
+    }
+    (language, arbitrary)
   }
 
-  def payloadVectorToString[T](vector: Vector[T]): String = {
+  /** calculate and return the full index name
+    *
+    * @param indexName the index name
+    * @param suffix the suffix name
+    * @return the full index name made of indexName and Suffix
+    */
+  private[this] def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+    indexName + "." + suffix.getOrElse(elasticClient.termIndexSuffix)
+  }
+
+  private[this] def getCommonIndexName(indexName: String, suffix: Option[String] = None): String = {
+    val arbitraryPattern = elasticClient.commonIndexArbitraryPattern
+    val (language, _) = languageFromIndex(indexName)
+    val commonIndexName = "index_" + language + "_" + arbitraryPattern
+    commonIndexName + "." + suffix.getOrElse(elasticClient.termIndexSuffix)
+  }
+
+
+  /** transform a vector of numerical values to a string payload which can be stored on Elasticsearch
+    *
+    * @param vector a vector of values
+    * @tparam T the type of the Vector
+    * @return a string with the payload <value index>|<value>
+    */
+  private[this] def payloadVectorToString[T](vector: Vector[T]): String = {
     vector.zipWithIndex.map{case(term, index) => index.toString + "|" + term.toString}.mkString(" ")
   }
 
-  def payloadMapToString[T, U](payload: Map[T, U]): String = {
+  /** transform a Key,Value map to a string payload which can be stored on Elasticsearch
+    *
+    * @param payload the map of values
+    * @tparam T the type of the key
+    * @tparam U the type of the value
+    * @return a string with the payload <value index>|<value>
+    */
+  private[this] def payloadMapToString[T, U](payload: Map[T, U]): String = {
     payload.map{case(e1, e2) => e1.toString + "|" + e2.toString}.mkString(" ")
   }
 
-  def payloadStringToDoubleVector(payload: String): Vector[Double] = {
+  /** transform a payload string (non sparse vector) to a Double vector
+    *
+    * @param payload the payload <value index>|<value>
+    * @return a double vector
+    */
+  private[this] def payloadStringToDoubleVector(payload: String): Vector[Double] = {
     val vector: Vector[Double] = payload.split(" ").map(x => {
-      val termTuple = x.split("\\|") match {
+      val termTuple: Double = x.split("\\|") match {
         case Array(_, value) => value.toDouble
         case _ =>
           throw TermServiceException("unable to convert payload string to double vector")
@@ -64,7 +112,12 @@ object TermService {
     vector
   }
 
-  def payloadStringToMapStringDouble(payload: String): Map[String, Double] = {
+  /** transform a payload string (non sparse vector) to a key, value Map[String, Double]
+    *
+    * @param payload the payload <value index>|<value>
+    * @return a key, value map
+    */
+  private[this] def payloadStringToMapStringDouble(payload: String): Map[String, Double] = {
     val m: Map[String, Double] = payload.split(" ").map(x => {
       val termTuple = x.split("\\|") match {
         case Array(key, value) => (key, value.toDouble)
@@ -76,7 +129,12 @@ object TermService {
     m
   }
 
-  def payloadStringToMapIntDouble(payload: String): Map[Int, Double] = {
+  /** transform a payload string (non sparse vector) to a key, double value Map[Int, Double]
+    *
+    * @param payload the payload <value index>|<value>
+    * @return a key, value map
+    */
+  private[this] def payloadStringToMapIntDouble(payload: String): Map[Int, Double] = {
     val m: Map[Int, Double] = payload.split(" ").map(x => {
       val termTuple = x.split("\\|") match {
         case Array(index, value) => (index.toInt, value.toDouble)
@@ -88,7 +146,12 @@ object TermService {
     m
   }
 
-  def payloadStringToMapStringString(payload: String): Map[String, String] = {
+  /** transform a payload string (non sparse vector) to a key, value Map[String, String]
+    *
+    * @param payload the payload <value index>|<value>
+    * @return a key, value map
+    */
+  private[this] def payloadStringToMapStringString(payload: String): Map[String, String] = {
     val m: Map[String, String] = payload.split(" ").map(x => {
       val termTuple = x.split("\\|") match {
         case Array(key, value) => (key, value)
@@ -100,7 +163,13 @@ object TermService {
     m
   }
 
-  private[this] def extractSyns(lemma:String, synset: Array[String]): Option[Map[String, Double]] = {
+  /** extract synonyms for a term
+    *
+    * @param lemma the lemma for which extract synonyms
+    * @param synset the set of synonyms
+    * @return the synonyms for the terms
+    */
+  private[this] def extractSyns(lemma: String, synset: Array[String]): Option[Map[String, Double]] = {
     val syns = synset.filter(_ =/= lemma).map(synLemma => (synLemma, 0.5d)).toMap
     if(syns.isEmpty) {
       Option.empty[Map[String, Double]]
@@ -109,16 +178,16 @@ object TermService {
     }
   }
 
-  def indexDefaultSynonyms(indexName: String, groupSize: Int = 2000, refresh: Int = 0) : Future[Option[ReturnMessageData]] = Future {
-    // extract language from index name
-    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-
-    val (_, language, _) = indexName match {
-      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
-        (indexPattern, languagePattern, arbitraryPattern)
-      case _ => throw new Exception("index name is not well formed")
-    }
-
+  /** Populate synonyms from resource file (a default synonyms list)
+    *
+    * @param indexName name of the index
+    * @param groupSize a group size used to call a bulk indexing operation on ElasticSearch
+    * @param refresh whether to call an index update on ElasticSearch or not
+    * @return a return message with the number of successfully and failed indexing operations
+    */
+  def indexDefaultSynonyms(indexName: String, groupSize: Int = 2000,
+                           refresh: Int = 0) : Future[Option[ReturnMessageData]] = Future {
+    val (language, _) = languageFromIndex(indexName)
     val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.txt"
     val synonymsIs: Option[InputStream] = Some(getClass.getResourceAsStream(synonymsPath))
     val analyzerSource: Source = synonymsIs match {
@@ -165,8 +234,15 @@ object TermService {
       s" blocks of $groupSize items => success($success) failures($failure)"))
   }
 
+  /** index terms on Elasticsearch
+    *
+    * @param indexName the index name
+    * @param terms the terms
+    * @param refresh whether to call an index update on ElasticSearch or not
+    * @return list of indexing responses
+    */
   def indexTerm(indexName: String, terms: Terms, refresh: Int) : Future[Option[IndexDocumentListResult]] = Future {
-    val client: TransportClient = elastiClient.getClient()
+    val client: TransportClient = elasticClient.getClient()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
@@ -214,7 +290,7 @@ object TermService {
       builder.endObject()
 
       val indexTermReq = client.prepareIndex().setIndex(getIndexName(indexName))
-        .setType(elastiClient.termIndexSuffix)
+        .setType(elasticClient.termIndexSuffix)
         .setId(term.term)
         .setSource(builder)
 
@@ -235,11 +311,18 @@ object TermService {
     }
   }
 
-  def getTermsById(indexName: String, terms_request: TermIdsRequest) : Option[Terms] = {
-    val client: TransportClient = elastiClient.getClient()
-    val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multigetBuilder.add(getIndexName(indexName), elastiClient.termIndexSuffix, terms_request.ids:_*)
-    val response: MultiGetResponse = multigetBuilder.get()
+  /** fetch one or more terms from Elasticsearch
+    *
+    * @param indexName the index name
+    * @param termsRequest the ids of the terms to be fetched
+    * @return fetched terms
+    */
+  def getTermsById(indexName: String,
+                   termsRequest: TermIdsRequest) : Option[Terms] = {
+    val client: TransportClient = elasticClient.getClient()
+    val multiGetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
+    multiGetBuilder.add(getIndexName(indexName), elasticClient.termIndexSuffix, termsRequest.ids:_*)
+    val response: MultiGetResponse = multiGetBuilder.get()
     val documents : List[Term] = response.getResponses.toList
       .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case(e) =>
       val item: GetResponse = e.getResponse
@@ -304,15 +387,58 @@ object TermService {
         score = None: Option[Double])
     })
 
-    Option {Terms(terms=documents)}
+    documents match {
+      case Nil => None
+      case _ => Some(Terms(terms=documents))
+    }
   }
 
+  /** fetch one or more terms from Elasticsearch
+    *
+    * @param indexName the index name
+    * @param termsRequest the ids of the terms to be fetched
+    * @param searchMode whether to use the common terms table or the index specific terms table.
+    *                   By default it searches only on the common terms table
+    * @return fetched terms
+    */
+  def getTermsByIdFuture(indexName: String,
+                         termsRequest: TermIdsRequest,
+                         searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON_ONLY) : Future[Option[Terms]] = Future {
+    val fetchedTerms = searchMode match {
+      case TermSearchModes.TERMS_COMMON_ONLY =>
+        val commonIndexName = getCommonIndexName(indexName)
+        getTermsById(commonIndexName, termsRequest)
+      case TermSearchModes.TERMS_IDXSPECIFIC_ONLY =>
+        getTermsById(indexName, termsRequest)
+      case _ =>
+        throw TermServiceException("Term : searchMode mode is unknown : " + searchMode.toString)
+    }
+    fetchedTerms match {
+      case Some(terms) => Some(terms)
+      case _ => None
+    }
+  }
+
+  /** update terms using a Future
+    *
+    * @param indexName index name
+    * @param terms terms to update
+    * @param refresh whether to call an index update on ElasticSearch or not
+    * @return result of the update operations
+    */
   def updateTermFuture(indexName: String, terms: Terms, refresh: Int) : Future[Option[UpdateDocumentListResult]] = Future {
     updateTerm(indexName, terms, refresh)
   }
 
-  def updateTerm(indexName: String, terms: Terms, refresh: Int) : Option[UpdateDocumentListResult] = {
-    val client: TransportClient = elastiClient.getClient()
+  /** update terms, synchronous function
+    *
+    * @param indexName index name
+    * @param terms terms to update
+    * @param refresh whether to call an index update on ElasticSearch or not
+    * @return result of the update operations
+    */
+  private[this] def updateTerm(indexName: String, terms: Terms, refresh: Int) : Option[UpdateDocumentListResult] = {
+    val client: TransportClient = elasticClient.getClient()
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
@@ -360,7 +486,7 @@ object TermService {
       builder.endObject()
 
       bulkRequest.add(client.prepareUpdate().setIndex(getIndexName(indexName))
-        .setType(elastiClient.termIndexSuffix)
+        .setType(elasticClient.termIndexSuffix)
         .setDocAsUpsert(true)
         .setId(term.term)
         .setDoc(builder))
@@ -369,7 +495,7 @@ object TermService {
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh =/= 0) {
-      val refreshIndex = elastiClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw TermServiceException("Term : index refresh failed: (" + indexName + ")")
       }
@@ -387,8 +513,13 @@ object TermService {
     }
   }
 
+  /** delete all the terms in a table
+    *
+    * @param indexName index name
+    * @return a DeleteDocumentsResult with the status of the delete operation
+    */
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elastiClient.getClient()
+    val client: TransportClient = elasticClient.getClient()
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -402,22 +533,29 @@ object TermService {
     Option {result}
   }
 
+  /** delete one or more terms
+    *
+    * @param indexName index name
+    * @param termGetRequest the list of term ids to delete
+    * @param refresh whether to call an index update on ElasticSearch or not
+    * @return DeleteDocumentListResult with the result of term delete operations
+    */
   def delete(indexName: String, termGetRequest: TermIdsRequest, refresh: Int):
   Future[Option[DeleteDocumentListResult]] = Future {
-    val client: TransportClient = elastiClient.getClient()
+    val client: TransportClient = elasticClient.getClient()
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
     termGetRequest.ids.foreach( id => {
       val deleteRequest: DeleteRequestBuilder = client.prepareDelete()
         .setIndex(getIndexName(indexName))
-        .setType(elastiClient.termIndexSuffix)
+        .setType(elasticClient.termIndexSuffix)
         .setId(id)
       bulkRequest.add(deleteRequest)
     })
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh =/= 0) {
-      val refreshIndex = elastiClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw TermServiceException("Term : index refresh failed: (" + indexName + ")")
       }
@@ -435,8 +573,14 @@ object TermService {
     }
   }
 
-  def searchTerm(indexName: String, term: SearchTerm) : Future[Option[TermsResults]] = Future {
-    val client: TransportClient = elastiClient.getClient()
+  /** search terms
+    *
+    * @param indexName index name
+    * @param term search data structure
+    * @return the retrieved terms
+    */
+  def searchTerm(indexName: String, term: SearchTerm) : Option[TermsResults] = {
+    val client: TransportClient = elasticClient.getClient()
 
     val analyzer_name = term.analyzer.getOrElse("space_punctuation")
     val term_field_name =
@@ -448,7 +592,7 @@ object TermService {
       }
 
     val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
-      .setTypes(elastiClient.termIndexSuffix)
+      .setTypes(elasticClient.termIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
@@ -572,20 +716,52 @@ object TermService {
     )
   }
 
-  //given a text, return all the matching terms
+  /** search terms on Elasticsearch
+    *
+    * @param indexName the index name
+    * @param term term search data structure
+    * @param searchMode whether to use the common terms table or the index specific terms table.
+    *                   By default it searches only on the common terms table
+    * @return fetched terms
+    */
+  def searchTermFuture(indexName: String,
+         term: SearchTerm,
+         searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON_ONLY): Future[Option[TermsResults]] = Future {
+    val fetchedTerms = searchMode match {
+      case TermSearchModes.TERMS_COMMON_ONLY =>
+        val commonIndexName = getCommonIndexName(indexName)
+        searchTerm(commonIndexName, term)
+      case TermSearchModes.TERMS_IDXSPECIFIC_ONLY =>
+        searchTerm(indexName, term)
+      case _ =>
+        throw TermServiceException("Term : searchMode mode is unknown : " + searchMode.toString)
+    }
+    fetchedTerms match {
+      case Some(terms) => Some(terms)
+      case _ => None
+    }
+  }
+
+  /** given a text, return all the matching terms
+    *
+    * @param indexName index term
+    * @param text input text
+    * @param analyzer the analyzer name to be used for text tokenization
+    * @return the terms found
+    */
   def search(indexName: String, text: String,
-             analyzer: String = "space_punctuation"): Future[Option[TermsResults]] = Future {
-    val client: TransportClient = elastiClient.getClient()
+             analyzer: String = "space_punctuation"): Option[TermsResults] = {
+    val client: TransportClient = elasticClient.getClient()
 
     val term_field_name = TokenizersDescription.analyzers_map.get(analyzer) match {
-      case Some(a) => "term." + analyzer
+      case Some(anlrz) => "term." + analyzer
       case _ =>
         throw TermServiceException("search: analyzer not found or not supported: (" + analyzer + ")")
     }
 
     val searchBuilder : SearchRequestBuilder = client.prepareSearch()
       .setIndices(getIndexName(indexName))
-      .setTypes(elastiClient.termIndexSuffix)
+      .setTypes(elasticClient.termIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
@@ -667,6 +843,39 @@ object TermService {
     )
   }
 
+  /** given a text, return all the matching terms
+    *
+    * @param indexName index term
+    * @param text input text
+    * @param analyzer the analyzer name to be used for text tokenization
+    * @return fetched terms
+    */
+  def searchFuture(indexName: String,
+                   text: String,
+                   analyzer: String = "space_punctuation",
+                   searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON_ONLY
+                   ) : Future[Option[TermsResults]] = Future {
+    val fetchedTerms = searchMode match {
+      case TermSearchModes.TERMS_COMMON_ONLY =>
+        val commonIndexName = getCommonIndexName(indexName)
+        search(commonIndexName, text, analyzer)
+      case TermSearchModes.TERMS_IDXSPECIFIC_ONLY =>
+        search(indexName, text, analyzer)
+      case _ =>
+        throw TermServiceException("Term : getTermsById mode is unknown : " + searchMode.toString)
+    }
+    fetchedTerms match {
+      case Some(terms) => Some(terms)
+      case _ => None
+    }
+  }
+
+  /** tokenize a text
+    *
+    * @param indexName index name
+    * @param query a TokenizerQueryRequest with the text to tokenize
+    * @return a TokenizerResponse with the result of the tokenization
+    */
   def esTokenizer(indexName: String, query: TokenizerQueryRequest) : Option[TokenizerResponse] = {
     val analyzer = TokenizersDescription.analyzers_map.get(query.tokenizer) match {
       case Some((analyzerEsName, _)) => analyzerEsName
@@ -674,7 +883,7 @@ object TermService {
         throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + query.tokenizer + ")")
     }
 
-    val client: TransportClient = elastiClient.getClient()
+    val client: TransportClient = elasticClient.getClient()
 
     val analyzerBuilder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.text)
     analyzerBuilder.setAnalyzer(analyzer)
@@ -699,6 +908,14 @@ object TermService {
     response
   }
 
+  /** tokenize a sentence and extract term vectors for each token
+    *
+    * @param indexName index name
+    * @param text input text
+    * @param analyzer analyzer name
+    * @param unique if true exclude from results duplicated terms
+    * @return the TextTerms
+    */
   def textToVectors(indexName: String, text: String, analyzer: String = "stop",
                     unique: Boolean = false): Option[TextTerms] = {
     val analyzerRequest =
@@ -727,9 +944,15 @@ object TermService {
     returnValue
   }
 
+  /** fetch all documents and serve them through an iterator
+    *
+    * @param index_name index name
+    * @param keepAlive the keep alive timeout for the ElasticSearch document scroller
+    * @return an iterator for Items
+    */
   def allDocuments(index_name: String, keepAlive: Long = 60000): Iterator[Term] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    val client: TransportClient = elastiClient.getClient()
+    val client: TransportClient = elasticClient.getClient()
 
     var scrollResp: SearchResponse = client
       .prepareSearch(getIndexName(index_name))

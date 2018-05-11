@@ -29,15 +29,15 @@ case class IndexManagementServiceException(message: String = "", cause: Throwabl
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
 object IndexManagementService {
-  val elasticClient: IndexManagementClient.type = IndexManagementClient
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val elasticClient: IndexManagementClient.type = IndexManagementClient
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def analyzerFiles(language: String): JsonMappingAnalyzersIndexFiles =
+  private[this] def analyzerFiles(language: String): JsonMappingAnalyzersIndexFiles =
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/" + language + "/analyzer.json",
       updatePath = "/index_management/json_index_spec/" + language + "/update/analyzer.json",
       indexSuffix = "")
 
-  val schemaFiles: List[JsonMappingAnalyzersIndexFiles] = List[JsonMappingAnalyzersIndexFiles](
+  private[this] val schemaFiles: List[JsonMappingAnalyzersIndexFiles] = List[JsonMappingAnalyzersIndexFiles](
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/state.json",
       updatePath = "/index_management/json_index_spec/general/update/state.json",
       indexSuffix = elasticClient.dtIndexSuffix),

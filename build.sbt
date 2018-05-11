@@ -5,16 +5,22 @@ name := "StarChat"
 
 organization := "com.getjenny"
 
-crossScalaVersions := Seq("2.12.4")
+crossScalaVersions := Seq("2.12.6")
 
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
   Resolver.bintrayRepo("hseeberger", "maven"))
 
+resolvers +=
+  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+resolvers +=
+  "Sonatype OSS Releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+
 libraryDependencies ++= {
-  val AkkaHttpVersion	= "10.1.0"
-  val AkkaVersion	= "2.5.8"
+  val AkkaHttpVersion	= "10.1.1"
+  val AkkaVersion	= "2.5.12"
   val BreezeVersion	= "0.13.2"
-  val ESClientVersion	= "6.2.3"
+  val ESClientVersion	= "6.2.4"
   val Log4JVersion	= "2.9.1"
   val LogbackVersion	= "1.2.3"
   val ParboiledVersion	= "2.1.4"
@@ -23,7 +29,9 @@ libraryDependencies ++= {
   val ScalazVersion	= "7.2.18"
   val ScoptVersion	= "3.7.0"
   val TikaVersion	= "1.17"
+  val ManausLibVersion = "1.0.0-rc0"
   Seq(
+    "com.getjenny" %% "manaus-lib" % ManausLibVersion,
     "ch.qos.logback" % "logback-classic" % LogbackVersion,
     "com.github.scopt" %% "scopt" % ScoptVersion,
     "com.roundeights" %% "hasher" % RoundeightsHasherVersion,
@@ -36,7 +44,6 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
     "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
     "com.typesafe.akka" %% "akka-testkit" % AkkaVersion,
-    "com.typesafe.akka" %% "akka-typed" % AkkaVersion,
     "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
     "org.apache.logging.log4j" % "log4j-core" % Log4JVersion,
     "org.apache.tika" % "tika-app" % TikaVersion,
@@ -51,7 +58,7 @@ libraryDependencies ++= {
     "org.scalanlp" %% "breeze-natives" % BreezeVersion,
     "org.scalatest" %% "scalatest" % ScalatestVersion % "test",
     "org.scalaz" %% "scalaz-core" % ScalazVersion
-   )
+  )
 }
 
 scalacOptions += "-deprecation"
@@ -87,7 +94,7 @@ dockerRepository := Some("elegansio")
 
 //dockerImageCreationTask := (publishLocal in Docker).value
 composeNoBuild := true
-composeFile := "docker-starchat/docker-compose.test.yml" 
+composeFile := "docker-starchat/docker-compose.test.yml"
 
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")
@@ -101,7 +108,7 @@ logBuffered in Test := false
 mappings in Universal ++= {
   // copy configuration files to config directory
   directory("scripts") ++
-  contentOf("src/main/resources").toMap.mapValues("config/" + _).toSeq
+    contentOf("src/main/resources").toMap.mapValues("config/" + _).toSeq
 }
 
 scriptClasspath := Seq("../config/") ++ scriptClasspath.value

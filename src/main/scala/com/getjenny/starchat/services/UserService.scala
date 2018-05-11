@@ -3,7 +3,7 @@ package com.getjenny.starchat.services
 import com.typesafe.config.{Config, ConfigFactory}
 
 
-object UserService {
+object    UserService {
   val config: Config = ConfigFactory.load ()
   val authCredentialStoreString: String = config.getString ("starchat.auth_credential_store")
   val authCredentialStore: SupportedAuthCredentialStoreImpl.Value =

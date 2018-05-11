@@ -38,14 +38,14 @@ case class DecisionTableServiceException(message: String = "", cause: Throwable 
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
 object DecisionTableService {
-  val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  val queriesScoreMode: Map[String, ScoreMode] =
+  private[this] val queriesScoreMode: Map[String, ScoreMode] =
     Map[String, ScoreMode]("min" -> ScoreMode.Min,
       "max" -> ScoreMode.Max, "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+  private[this] def getIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.dtIndexSuffix)
   }
 

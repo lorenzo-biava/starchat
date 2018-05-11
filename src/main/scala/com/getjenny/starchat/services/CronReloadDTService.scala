@@ -21,7 +21,7 @@ object CronReloadDTService  {
   private[this] val systemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
   private[this] var updateTimestamp: Long = 0
 
-  val tickMessage = "tick"
+  private[this] val tickMessage = "tick"
 
   class ReloadAnalyzersTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {

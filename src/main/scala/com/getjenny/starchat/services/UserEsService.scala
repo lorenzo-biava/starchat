@@ -32,15 +32,15 @@ case class UserEsServiceException(message: String = "", cause: Throwable = None.
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
 class UserEsService extends AbstractUserService {
-  val config: Config = ConfigFactory.load()
-  val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val indexName: String = elasticClient.indexName + "." + elasticClient.userIndexSuffix
+  private[this] val config: Config = ConfigFactory.load()
+  private[this] val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val indexName: String = elasticClient.indexName + "." + elasticClient.userIndexSuffix
 
-  val admin: String = config.getString("starchat.basic_http_es.admin")
-  val password: String = config.getString("starchat.basic_http_es.password")
-  val salt: String = config.getString("starchat.basic_http_es.salt")
-  val admin_user = User(id = admin, password = password, salt = salt,
+  private[this] val admin: String = config.getString("starchat.basic_http_es.admin")
+  private[this] val password: String = config.getString("starchat.basic_http_es.password")
+  private[this] val salt: String = config.getString("starchat.basic_http_es.salt")
+  private[this] val admin_user = User(id = admin, password = password, salt = salt,
     permissions = Map("admin" -> Set(Permissions.admin)))
 
   def create(user: User): Future[IndexDocumentResult] = Future {
@@ -199,7 +199,7 @@ class UserEsService extends AbstractUserService {
       val permissions: Map[String, Set[Permissions.Value]] = source.get("permissions") match {
         case Some(t) => t.asInstanceOf[java.util.HashMap[String, java.util.List[String]]]
           .asScala.map{case(permIndexName, userPermissions) =>
-          (permIndexName, userPermissions.asScala.map(permissionString => Permissions.getValue(permissionString)).toSet)
+          (permIndexName, userPermissions.asScala.map(permissionString => Permissions.value(permissionString)).toSet)
         }.toMap
         case None =>
           throw UserEsServiceException("Permissions list is empty for the user: " + id)

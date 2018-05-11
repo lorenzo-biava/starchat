@@ -637,7 +637,7 @@ object KnowledgeBaseService {
 
   def allDocuments(index_name: String, keepAlive: Long = 60000): Iterator[KBDocument] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    val client: TransportClient = elastiClient.getClient()
+    val client: TransportClient = elasticClient.getClient()
 
     var scrollResp: SearchResponse = client
       .prepareSearch(getIndexName(index_name))

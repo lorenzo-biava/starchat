@@ -18,10 +18,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object SpellcheckService {
-  val elasticClient = KnowledgeBaseElasticClient
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val elasticClient = KnowledgeBaseElasticClient
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+  private[this] def getIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)
   }
 

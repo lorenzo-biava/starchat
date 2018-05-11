@@ -11,6 +11,7 @@ import akka.util.ByteString
 import com.getjenny.analyzer.expressions.Data
 import com.getjenny.starchat.entities._
 import spray.json._
+import akka.http.scaladsl.unmarshalling.Unmarshaller
 
 import scalaz.Scalaz._
 
@@ -86,9 +87,26 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
         case _ => throw DeserializationException("Permission string expected")
       }
   }
+
+  implicit object TermSearchModeJsonFormat extends JsonFormat[TermSearchModes.Value] {
+    def write(obj: TermSearchModes.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): TermSearchModes.Value = json match {
+      case JsString(str) =>
+        TermSearchModes.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("TermSearchMode string is invalid")
+        }
+      case _ => throw DeserializationException("TermSearchMode string expected")
+    }
+  }
+
   implicit val userFormat = jsonFormat4(User)
   implicit val userUpdateFormat = jsonFormat3(UserUpdate)
   implicit val dtReloadTimestamp = jsonFormat2(DtReloadTimestamp)
   implicit val openCloseIndexFormat = jsonFormat5(OpenCloseIndex)
 
+  implicit val TermSearchMarshalling:
+    Unmarshaller[String, TermSearchModes.Value] = Unmarshaller.strict[String, TermSearchModes.Value] { searchMode =>
+    TermSearchModes.value(searchMode)
+  }
 }
