@@ -71,7 +71,12 @@ object IndexManagementService {
         throw new FileNotFoundException(message)
     }
 
-    val operationsMessage: List[String] = schemaFiles.map(item => {
+    val operationsMessage: List[String] = schemaFiles.filter(item => {
+      indexSuffix match {
+        case Some(t) => t === item.indexSuffix
+        case _ => true
+      }
+    }).map(item => {
       val jsonInStream: Option[InputStream] = Option{getClass.getResourceAsStream(item.path)}
 
       val schemaJson: String = jsonInStream match {

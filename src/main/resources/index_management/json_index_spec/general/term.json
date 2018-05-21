@@ -29,12 +29,12 @@
         },
         "synonyms": {
           "type": "text",
-          "term_vector": "with_positions_offsets_payloads",
+          "term_vector": "with_positions_offsets",
           "analyzer": "jenny_delimited_double"
         },
         "antonyms": {
           "type": "text",
-          "term_vector": "with_positions_offsets_payloads",
+          "term_vector": "with_positions_offsets",
           "analyzer": "jenny_delimited_double"
         },
         "tags": {
@@ -55,7 +55,7 @@
         },
         "vector": {
           "type": "text",
-          "term_vector": "with_positions_offsets_payloads",
+          "term_vector": "with_positions_offsets",
           "analyzer": "jenny_delimited_double"
         }
       }

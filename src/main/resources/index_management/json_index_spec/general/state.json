@@ -37,6 +37,11 @@
                   "type": "keyword",
                   "ignore_above": 1092232766
                 },
+                "freq": {
+                  "type": "text",
+                  "analyzer": "jenny_base_analyzer",
+                  "similarity": "scripted_term_freq"
+                },
                 "base": {
                   "type": "text",
                   "analyzer": "jenny_base_analyzer"
@@ -94,7 +99,7 @@
         },
         "query_vectors": {
           "type": "text",
-          "term_vector": "with_positions_offsets_payloads",
+          "term_vector": "with_positions_offsets",
           "analyzer": "jenny_delimited_double"
         },
         "bubble": {

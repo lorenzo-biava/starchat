@@ -73,7 +73,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val spellcheckTokenSuggestionsFormat = jsonFormat3(SpellcheckTokenSuggestions)
   implicit val spellcheckTokenFormat = jsonFormat4(SpellcheckToken)
   implicit val spellcheckTermsResponseFormat = jsonFormat1(SpellcheckTermsResponse)
-  implicit val spellcheckTermsRequestFormat = jsonFormat3(SpellcheckTermsRequest)
+  implicit val spellcheckTermsRequestFormat = jsonFormat4(SpellcheckTermsRequest)
   implicit val responseRequestOutOperationResultFormat = jsonFormat2(ResponseRequestOutOperationResult)
 
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
@@ -109,4 +109,14 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     Unmarshaller[String, TermSearchModes.Value] = Unmarshaller.strict[String, TermSearchModes.Value] { searchMode =>
     TermSearchModes.value(searchMode)
   }
+
+  implicit val TermCountFieldsMarshalling:
+    Unmarshaller[String, TermCountFields.Value] =
+    Unmarshaller.strict[String, TermCountFields.Value] { termCountField =>
+      TermCountFields.value(termCountField)
+  }
+
+  implicit val termCountFormat = jsonFormat2(TermCount)
+  implicit val totalTermsFormat = jsonFormat3(TotalTerms)
+  implicit val dictSizeFormat = jsonFormat3(DictSize)
 }

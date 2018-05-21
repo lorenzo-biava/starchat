@@ -60,9 +60,19 @@
               "type": "keyword",
               "ignore_above": 10922
             },
+            "freq": {
+              "type": "text",
+              "analyzer": "jenny_base_analyzer",
+              "similarity": "scripted_term_freq"
+            },
             "base": {
               "type": "text",
               "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_base_analyzer"
+            },
+            "base_length": {
+              "type":     "token_count",
               "analyzer": "jenny_base_analyzer"
             },
             "base_bm25": {
@@ -73,6 +83,11 @@
             "stop": {
               "type": "text",
               "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_stop_analyzer"
+            },
+            "stop_length": {
+              "type":     "token_count",
               "analyzer": "jenny_stop_analyzer"
             },
             "stop_bm25": {
@@ -83,6 +98,11 @@
             "stem": {
               "type": "text",
               "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_stem_analyzer"
+            },
+            "stem_length": {
+              "type":     "token_count",
               "analyzer": "jenny_stem_analyzer"
             },
             "stem_bm25": {
@@ -127,8 +147,19 @@
                   "type": "keyword",
                   "ignore_above": 10922
                 },
+                "freq": {
+                  "type": "text",
+                  "analyzer": "jenny_base_analyzer",
+                  "similarity": "scripted_term_freq"
+                },
                 "base": {
                   "type": "text",
+                  "fielddata": true,
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_base_analyzer"
+                },
+                "base_length": {
+                  "type":     "token_count",
                   "analyzer": "jenny_base_analyzer"
                 },
                 "base_bm25": {
@@ -138,6 +169,12 @@
                 },
                 "stop": {
                   "type": "text",
+                  "fielddata": true,
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_stop_analyzer"
+                },
+                "stop_length": {
+                  "type":     "token_count",
                   "analyzer": "jenny_stop_analyzer"
                 },
                 "stop_bm25": {
@@ -147,6 +184,12 @@
                 },
                 "stem": {
                   "type": "text",
+                  "fielddata": true,
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_stem_analyzer"
+                },
+                "stem_length": {
+                  "type":     "token_count",
                   "analyzer": "jenny_stem_analyzer"
                 },
                 "stem_bm25": {
@@ -184,7 +227,7 @@
         },
         "question_vector": {
           "type": "text",
-          "term_vector": "with_positions_offsets_payloads",
+          "term_vector": "with_positions_offsets",
           "analyzer": "jenny_delimited_double"
         },
         "question_scored_terms": {
@@ -208,9 +251,19 @@
               "type": "keyword",
               "ignore_above": 10922
             },
+            "freq": {
+              "type": "text",
+              "analyzer": "jenny_base_analyzer",
+              "similarity": "scripted_term_freq"
+            },
             "base": {
               "type": "text",
               "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_space_punctuation_analyzer"
+            },
+            "base_length": {
+              "type":     "token_count",
               "analyzer": "jenny_base_analyzer"
             },
             "base_bm25": {
@@ -221,6 +274,11 @@
             "stop": {
               "type": "text",
               "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_stop_analyzer"
+            },
+            "stop_length": {
+              "type":     "token_count",
               "analyzer": "jenny_stop_analyzer"
             },
             "stop_bm25": {
@@ -231,6 +289,11 @@
             "stem": {
               "type": "text",
               "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_stem_analyzer"
+            },
+            "stem_length": {
+              "type":     "token_count",
               "analyzer": "jenny_stem_analyzer"
             },
             "stem_bm25": {
@@ -266,7 +329,7 @@
         },
         "answer_vector": {
           "type": "text",
-          "term_vector": "with_positions_offsets_payloads",
+          "term_vector": "with_positions_offsets",
           "analyzer": "jenny_delimited_double"
         },
         "answer_scored_terms": {

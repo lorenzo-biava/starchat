@@ -26,7 +26,7 @@ import scala.io.Source
 object IndexCorpusOnKnowledgeBase extends JsonSupport {
   private[this] case class Params(
                              host: String = "http://localhost:8888",
-                             indexName: String = "index_0",
+                             indexName: String = "index_english_0",
                              path: String = "/knowledgebase",
                              inputfile: Option[String] = None: Option[String],
                              base64: Boolean = false,

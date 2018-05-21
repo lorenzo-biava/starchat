@@ -9,7 +9,7 @@ curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
 	"index_in_conversation": 1,
 	"question": "thank you",
         "question_negative": ["ok, I will not talk with you anymore", "thank you anyway"],
-	"answer": "you are welcome!",
+	"answer": "you are welcome! you very welcome!",
 	"question_scored_terms": [
 		[
 			"currently",

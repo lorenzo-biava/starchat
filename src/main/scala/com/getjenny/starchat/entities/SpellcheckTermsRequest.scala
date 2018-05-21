@@ -7,6 +7,7 @@ package com.getjenny.starchat.entities
 case class SpellcheckTermsRequest(
   text: String,
   prefix_length: Int = 3,
-  min_doc_freq: Int = 1
+  min_doc_freq: Int = 1,
+  max_edit: Int = 2
 )
 

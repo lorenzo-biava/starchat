@@ -8,7 +8,6 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.RandomNumbers
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.services.TermService._
 import org.apache.lucene.search.join._
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
@@ -25,7 +24,9 @@ import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryActio
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.script._
 import org.elasticsearch.search.SearchHit
-
+import org.elasticsearch.search.aggregations.AggregationBuilders
+import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
+import org.elasticsearch.search.aggregations.metrics.sum.Sum
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -40,13 +41,107 @@ object KnowledgeBaseService {
     "max" -> ScoreMode.Max, "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def getIndexName(indexName: String, suffix: Option[String] = None): String = {
-    indexName + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)
+    indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
+  }
+
+  def dictSize(indexName: String): DictSize = {
+    val client: TransportClient = elasticClient.getClient()
+
+    val questionAgg = AggregationBuilders.cardinality("question_term_count").field("question.base")
+    val answerAgg = AggregationBuilders.cardinality("answer_term_count").field("answer.base")
+
+    val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
+      .setTypes(elasticClient.indexSuffix)
+      .setSize(0)
+      .setQuery(QueryBuilders.matchAllQuery)
+      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+      .addAggregation(questionAgg)
+      .addAggregation(answerAgg)
+      .execute.actionGet
+
+    val totalHits = aggregationQueryRes.getHits.totalHits
+
+    val questionAggRes: Cardinality = aggregationQueryRes.getAggregations.get("question_term_count")
+    val answerAggRes: Cardinality = aggregationQueryRes.getAggregations.get("answer_term_count")
+
+    DictSize(numDocs = totalHits,
+      question = questionAggRes.getValue,
+      answer = answerAggRes.getValue)
+  }
+
+  def dictSizeFuture(indexName: String): Future[DictSize] = Future {
+    dictSize(indexName)
+  }
+
+  def totalTerms(indexName: String): TotalTerms = {
+    val client: TransportClient = elasticClient.getClient()
+
+    val questionAgg = AggregationBuilders.sum("question_term_count").field("question.base_length")
+    val answerAgg = AggregationBuilders.sum("answer_term_count").field("answer.base_length")
+
+    val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
+      .setTypes(elasticClient.indexSuffix)
+      .setSize(0)
+      .setQuery(QueryBuilders.matchAllQuery)
+      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+      .addAggregation(questionAgg)
+      .addAggregation(answerAgg)
+      .execute.actionGet
+
+    val totalHits = aggregationQueryRes.getHits.totalHits
+
+    val questionAggRes: Sum = aggregationQueryRes.getAggregations.get("question_term_count")
+    val answerAggRes: Sum = aggregationQueryRes.getAggregations.get("answer_term_count")
+
+    TotalTerms(numDocs = totalHits,
+      question = questionAggRes.getValue.toLong,
+      answer = answerAggRes.getValue.toLong)
+  }
+
+  def totalTermsFuture(indexName: String): Future[TotalTerms] = Future {
+    totalTerms(indexName)
+  }
+
+  def countTerm(indexName: String,
+                field: TermCountFields.Value = TermCountFields.question, term: String): TermCount = {
+    val client: TransportClient = elasticClient.getClient()
+
+    val script: Script = new Script("_score")
+
+    val agg = AggregationBuilders.sum("countTerms").script(script)
+
+    val esFieldName: String = field match {
+      case TermCountFields.question => "question.freq"
+      case TermCountFields.answer => "answer.freq"
+    }
+
+    val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
+      .must(QueryBuilders.matchQuery(esFieldName, term))
+
+    val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
+      .setTypes(elasticClient.indexSuffix)
+      .setSize(0)
+      .setQuery(boolQueryBuilder)
+      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+      .addAggregation(agg)
+      .execute.actionGet
+
+    val totalHits = aggregationQueryRes.getHits.totalHits
+
+    val aggRes: Sum = aggregationQueryRes.getAggregations.get("countTerms")
+
+    TermCount(numDocs = totalHits,
+      count = aggRes.getValue.toLong)
+  }
+
+  def countTermFuture(indexName: String, field: TermCountFields.Value, term: String): Future[TermCount] = Future {
+    countTerm(indexName, field, term)
   }
 
   def search(indexName: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elasticClient.getClient()
     val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
-      .setTypes(elasticClient.kbIndexSuffix)
+      .setTypes(elasticClient.indexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     searchBuilder.setMinScore(documentSearch.min_score.getOrElse(
@@ -341,7 +436,7 @@ object KnowledgeBaseService {
     val json: String = builder.string()
     val client: TransportClient = elasticClient.getClient()
     val response: IndexResponse =
-      client.prepareIndex().setIndex(getIndexName(indexName)).setType(elasticClient.kbIndexSuffix)
+      client.prepareIndex().setIndex(getIndexName(indexName)).setType(elasticClient.indexSuffix)
         .setId(document.id)
         .setSource(json, XContentType.JSON).get()
 
@@ -452,7 +547,7 @@ object KnowledgeBaseService {
 
     val client: TransportClient = elasticClient.getClient()
     val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
-      .setType(elasticClient.kbIndexSuffix).setId(id)
+      .setType(elasticClient.indexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
@@ -491,7 +586,7 @@ object KnowledgeBaseService {
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.getClient()
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
-      .setType(elasticClient.kbIndexSuffix).setId(id).get()
+      .setType(elasticClient.indexSuffix).setId(id).get()
 
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refreshIndex(getIndexName(indexName))
@@ -513,7 +608,7 @@ object KnowledgeBaseService {
   def read(indexName: String, ids: List[String]): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elasticClient.getClient()
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multigetBuilder.add(getIndexName(indexName), elasticClient.kbIndexSuffix, ids:_*)
+    multigetBuilder.add(getIndexName(indexName), elasticClient.indexSuffix, ids:_*)
     val response: MultiGetResponse = multigetBuilder.get()
 
     val documents : Option[List[SearchKBDocument]] = Option { response.getResponses

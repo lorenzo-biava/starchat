@@ -5,7 +5,7 @@ package com.getjenny.starchat.services
   */
 
 object KnowledgeBaseElasticClient extends ElasticClient {
-  val kbIndexSuffix: String = config.getString("es.kb_index_suffix")
+  val indexSuffix: String = config.getString("es.kb_index_suffix")
   val queryMinThreshold : Float = config.getDouble("es.kb_query_min_threshold").toFloat
   val queriesScoreMode: String = config.getString("es.kb_nested_score_mode").toLowerCase
   val questionNegativeMinimumMatch: String = config.getString("es.kb_question_negative_minimum_match")

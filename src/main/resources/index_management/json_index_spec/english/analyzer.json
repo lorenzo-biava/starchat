@@ -1,6 +1,14 @@
 {
   "index.queries.cache.enabled": true,
   "index.requests.cache.enable": true,
+  "similarity": {
+    "scripted_term_freq": {
+      "type": "scripted",
+      "script": {
+        "source": "return doc.freq ;"
+      }
+    }
+  },
   "analysis":
   {
     "tokenizer": {
