@@ -50,7 +50,9 @@ object KnowledgeBaseService {
     val questionAgg = AggregationBuilders.cardinality("question_term_count").field("question.base")
     val answerAgg = AggregationBuilders.cardinality("answer_term_count").field("answer.base")
 
-    val script: Script = new Script("doc[\"question.base\"].value + \" \" + doc[\"answer.base\"].value")
+    val scriptBody = "def qnList = new ArrayList(doc[\"question.base\"].getValues()) ; " +
+      "List anList = doc[\"answer.base\"].getValues() ; qnList.addAll(anList) ; return qnList ;"
+    val script: Script = new Script(scriptBody)
     val totalAgg = AggregationBuilders.cardinality("total_term_count").script(script)
 
     val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
