@@ -1,8 +1,9 @@
+package com.getjenny.analyzer.atoms
+
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 03/03/17.
   */
 
-import com.getjenny.analyzer.atoms._
 import org.scalatest._
 
 class AtomsTest extends FlatSpec with Matchers {
