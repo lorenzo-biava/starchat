@@ -118,5 +118,5 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val termCountFormat = jsonFormat2(TermCount)
   implicit val totalTermsFormat = jsonFormat3(TotalTerms)
-  implicit val dictSizeFormat = jsonFormat3(DictSize)
+  implicit val dictSizeFormat = jsonFormat4(DictSize)
 }

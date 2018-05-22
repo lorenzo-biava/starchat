@@ -50,6 +50,9 @@ object KnowledgeBaseService {
     val questionAgg = AggregationBuilders.cardinality("question_term_count").field("question.base")
     val answerAgg = AggregationBuilders.cardinality("answer_term_count").field("answer.base")
 
+    val script: Script = new Script("doc[\"question.base\"].value + \" \" + doc[\"answer.base\"].value")
+    val totalAgg = AggregationBuilders.cardinality("total_term_count").script(script)
+
     val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
       .setTypes(elasticClient.indexSuffix)
       .setSize(0)
@@ -57,16 +60,20 @@ object KnowledgeBaseService {
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
       .addAggregation(questionAgg)
       .addAggregation(answerAgg)
+      .addAggregation(totalAgg)
       .execute.actionGet
 
     val totalHits = aggregationQueryRes.getHits.totalHits
 
     val questionAggRes: Cardinality = aggregationQueryRes.getAggregations.get("question_term_count")
     val answerAggRes: Cardinality = aggregationQueryRes.getAggregations.get("answer_term_count")
+    val totalAggRes: Cardinality = aggregationQueryRes.getAggregations.get("total_term_count")
 
     DictSize(numDocs = totalHits,
       question = questionAggRes.getValue,
-      answer = answerAggRes.getValue)
+      answer = answerAggRes.getValue,
+      total = totalAggRes.getValue
+    )
   }
 
   def dictSizeFuture(indexName: String): Future[DictSize] = Future {
