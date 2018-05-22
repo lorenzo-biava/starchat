@@ -105,12 +105,12 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val dtReloadTimestamp = jsonFormat2(DtReloadTimestamp)
   implicit val openCloseIndexFormat = jsonFormat5(OpenCloseIndex)
 
-  implicit val TermSearchMarshalling:
+  implicit val termSearchMarshalling:
     Unmarshaller[String, TermSearchModes.Value] = Unmarshaller.strict[String, TermSearchModes.Value] { searchMode =>
     TermSearchModes.value(searchMode)
   }
 
-  implicit val TermCountFieldsMarshalling:
+  implicit val termCountFieldsMarshalling:
     Unmarshaller[String, TermCountFields.Value] =
     Unmarshaller.strict[String, TermCountFields.Value] { termCountField =>
       TermCountFields.value(termCountField)

@@ -9,5 +9,5 @@ import scalaz.Scalaz._
 object TermSearchModes extends Enumeration {
   type TermSearchMode = Value
   val TERMS_COMMON_ONLY, TERMS_IDXSPECIFIC_ONLY, unknown = Value
-  def value(TermSearchMode: String) = values.find(_.toString === TermSearchMode).getOrElse(unknown)
+  def value(termSearchMode: String) = values.find(_.toString === termSearchMode).getOrElse(unknown)
 }
