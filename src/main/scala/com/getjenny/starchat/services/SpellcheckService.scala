@@ -26,7 +26,7 @@ object SpellcheckService {
   }
 
   def termsSuggester(indexName: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
 
     val suggestionBuilder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
     suggestionBuilder.maxEdits(request.max_edit)

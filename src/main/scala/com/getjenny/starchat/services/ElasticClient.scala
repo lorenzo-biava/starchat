@@ -32,17 +32,17 @@ trait ElasticClient {
   val inetAddresses: List[TransportAddress] =
     hostMap.map{ case(k,v) => new TransportAddress(InetAddress.getByName(k), v) }.toList
 
-  var client : TransportClient = openClient()
+  private[this] var transportClient : TransportClient = open()
 
-  def openClient(): TransportClient = {
+  def open(): TransportClient = {
     val client: TransportClient = new PreBuiltTransportClient(settings)
       .addTransportAddresses(inetAddresses:_*)
     client
   }
 
-  def refreshIndex(index_name: String): RefreshIndexResult = {
+  def refresh(index_name: String): RefreshIndexResult = {
     val refreshRes: RefreshResponse =
-      client.admin().indices().prepareRefresh(index_name).get()
+      transportClient.admin().indices().prepareRefresh(index_name).get()
 
     val failedShards: List[FailedShard] = refreshRes.getShardFailures.map(item => {
       val failedShardItem = FailedShard(index_name = item.index,
@@ -63,11 +63,23 @@ trait ElasticClient {
     refreshIndexResult
   }
 
-  def getClient(): TransportClient = {
-    this.client
+  def client: TransportClient = {
+    this.transportClient
   }
 
-  def closeClient(client: TransportClient): Unit = {
+  def close(client: TransportClient): Unit = {
     client.close()
   }
+
+  val convLogsIndexSuffix: String = config.getString("es.conv_logs_index_suffix")
+  val dtIndexSuffix: String = config.getString("es.dt_index_suffix")
+  val kbIndexSuffix: String = config.getString("es.kb_index_suffix")
+  val statConvsIndexSuffix: String = config.getString("es.stat_convs_index_suffix")
+  val sysRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
+  val systemRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
+  val termIndexSuffix: String = config.getString("es.term_index_suffix")
+  val userIndexSuffix: String = config.getString("es.user_index_suffix")
+
+  val enableDeleteIndex: Boolean = config.getBoolean("es.enable_delete_application_index")
+  val enableDeleteSystemIndex: Boolean = config.getBoolean("es.enable_delete_system_index")
 }

@@ -42,7 +42,7 @@ object  DtReloadService {
     builder.field(elasticClient.dtReloadTimestampFieldName, timestamp)
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val response: UpdateResponse =
       client.prepareUpdate().setIndex(getIndexName())
         .setType(elasticClient.systemRefreshDtIndexSuffix)
@@ -54,7 +54,7 @@ object  DtReloadService {
     log.debug("dt reload timestamp response status: " + response.status())
 
     if (refresh =/= 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName())
+      val refreshIndex = elasticClient.refresh(getIndexName())
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("System: index refresh failed: (" + indexName + ")")
       }
@@ -65,7 +65,7 @@ object  DtReloadService {
 
   def getDTReloadTimestamp(indexName: String) : Future[Option[DtReloadTimestamp]] = Future {
     val dtReloadDocId: String = indexName
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val getBuilder: GetRequestBuilder = client.prepareGet()
       .setIndex(getIndexName())
       .setType(elasticClient.systemRefreshDtIndexSuffix)
@@ -91,7 +91,7 @@ object  DtReloadService {
 
   def allDTReloadTimestamp(minTimestamp: Option[Long] = None,
                            maxItems: Option[Long] = None): Option[List[DtReloadTimestamp]] = {
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
     minTimestamp match {
       case Some(minTs) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("state_refresh_ts").gt(minTs))

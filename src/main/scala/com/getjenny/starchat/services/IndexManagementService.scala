@@ -29,7 +29,7 @@ case class IndexManagementServiceException(message: String = "", cause: Throwabl
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
 object IndexManagementService {
-  private[this] val elasticClient: IndexManagementClient.type = IndexManagementClient
+  private[this] val elasticClient: IndexManagementElasticClient.type = IndexManagementElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   private[this] def analyzerFiles(language: String): JsonMappingAnalyzersIndexFiles =
@@ -43,15 +43,21 @@ object IndexManagementService {
       indexSuffix = elasticClient.dtIndexSuffix),
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/question.json",
       updatePath = "/index_management/json_index_spec/general/update/question.json",
+      indexSuffix = elasticClient.convLogsIndexSuffix),
+    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/question.json",
+      updatePath = "/index_management/json_index_spec/general/update/question.json",
+      indexSuffix = elasticClient.statConvsIndexSuffix),
+    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/question.json",
+      updatePath = "/index_management/json_index_spec/general/update/question.json",
       indexSuffix = elasticClient.kbIndexSuffix),
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/term.json",
       updatePath = "/index_management/json_index_spec/general/update/term.json",
       indexSuffix = elasticClient.termIndexSuffix)
   )
 
-  def createIndex(indexName: String,
-                  indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient()
+  def create(indexName: String,
+             indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+    val client: TransportClient = elasticClient.client
 
     // extract language from index name
     val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
@@ -101,9 +107,9 @@ object IndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def removeIndex(indexName: String,
-                  indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient()
+  def remove(indexName: String,
+             indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+    val client: TransportClient = elasticClient.client
 
     if (! elasticClient.enableDeleteIndex) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -130,9 +136,9 @@ object IndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def checkIndex(indexName: String,
-                 indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient()
+  def check(indexName: String,
+            indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+    val client: TransportClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -151,9 +157,9 @@ object IndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def openCloseIndex(indexName: String, indexSuffix: Option[String] = None,
-                     operation: String): Future[List[OpenCloseIndex]] = Future {
-    val client: TransportClient = elasticClient.getClient()
+  def openClose(indexName: String, indexSuffix: Option[String] = None,
+                operation: String): Future[List[OpenCloseIndex]] = Future {
+    val client: TransportClient = elasticClient.client
     schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t === item.indexSuffix
@@ -175,9 +181,9 @@ object IndexManagementService {
     })
   }
 
-  def updateIndexSettings(indexName: String, language: String,
-                          indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient()
+  def updateSettings(indexName: String, language: String,
+                     indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+    val client: TransportClient = elasticClient.client
 
     val analyzerJsonPath: String = analyzerFiles(language).updatePath
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
@@ -206,9 +212,9 @@ object IndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def updateIndexMappings(indexName: String, language: String,
-                          indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient()
+  def updateMappings(indexName: String, language: String,
+                     indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+    val client: TransportClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -240,8 +246,8 @@ object IndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def refreshIndexes(indexName: String,
-                     indexSuffix: Option[String] = None) : Future[Option[RefreshIndexResults]] = Future {
+  def refresh(indexName: String,
+              indexSuffix: Option[String] = None) : Future[Option[RefreshIndexResults]] = Future {
     val operationsResults: List[RefreshIndexResult] = schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t === item.indexSuffix
@@ -249,7 +255,7 @@ object IndexManagementService {
       }
     }).map(item => {
       val fullIndexName = indexName + "." + item.indexSuffix
-      val refreshIndexRes: RefreshIndexResult = elasticClient.refreshIndex(fullIndexName)
+      val refreshIndexRes: RefreshIndexResult = elasticClient.refresh(fullIndexName)
       if (refreshIndexRes.failed_shards_n > 0) {
         val indexRefreshMessage = item.indexSuffix + "(" + fullIndexName + ", " +
           refreshIndexRes.failed_shards_n + ")"

@@ -65,14 +65,14 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val response = client.prepareIndex().setIndex(indexName)
       .setCreate(true)
       .setType(elasticClient.userIndexSuffix)
       .setId(user.id)
       .setSource(builder).get()
 
-    val refreshIndex = elasticClient.refreshIndex(indexName)
+    val refreshIndex = elasticClient.refresh(indexName)
     if(refreshIndex.failed_shards_n > 0) {
       throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
@@ -120,13 +120,13 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val response: UpdateResponse = client.prepareUpdate().setIndex(indexName)
       .setType(elasticClient.userIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
-    val refresh_index = elasticClient.refreshIndex(indexName)
+    val refresh_index = elasticClient.refresh(indexName)
     if(refresh_index.failed_shards_n > 0) {
       throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
@@ -147,11 +147,11 @@ class UserEsService extends AbstractUserService {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val response: DeleteResponse = client.prepareDelete().setIndex(indexName)
       .setType(elasticClient.userIndexSuffix).setId(id).get()
 
-    val refreshIndex = elasticClient.refreshIndex(indexName)
+    val refreshIndex = elasticClient.refresh(indexName)
     if(refreshIndex.failed_shards_n > 0) {
       throw new Exception("User: index refresh failed: (" + indexName + ")")
     }
@@ -171,7 +171,7 @@ class UserEsService extends AbstractUserService {
       admin_user
     } else {
 
-      val client: TransportClient = elasticClient.getClient()
+      val client: TransportClient = elasticClient.client
       val getBuilder: GetRequestBuilder = client.prepareGet(indexName, elasticClient.userIndexSuffix, id)
 
       val response: GetResponse = getBuilder.get()
