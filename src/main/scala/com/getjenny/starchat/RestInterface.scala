@@ -10,12 +10,11 @@ import com.getjenny.starchat.services._
 
 import scala.concurrent.ExecutionContext
 
-trait Resources extends KnowledgeBaseResource with DecisionTableResource
-  with RootAPIResource with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
+trait RestInterface extends KnowledgeBaseResource with DecisionTableResource with RootAPIResource
+  with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
   with TermResource with TokenizersResource with AnalyzersPlaygroundResource
-  with SpellcheckResource with UserResource
+  with SpellcheckResource with UserResource with ConversationLogsResource with StatConversationsResource {
 
-trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
 
   lazy val knowledgeBaseService = KnowledgeBaseService
@@ -35,12 +34,24 @@ trait RestInterface extends Resources {
   lazy val statConversationsService = StatConversationsService
 
   val routes: Route = rootAPIsRoutes ~
-    LoggingEntities.logRequestAndResultReduced(knowledgeBaseRoutes) ~
-    LoggingEntities.logRequestAndResultReduced(knowledgeBaseStreamRoutes) ~
-    LoggingEntities.logRequestAndResult(knowledgeBaseSearchRoutes) ~
-    LoggingEntities.logRequestAndResult(totalTermsRoutes) ~
-    LoggingEntities.logRequestAndResult(dictSizeRoutes) ~
-    LoggingEntities.logRequestAndResult(termsCountRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(super[KnowledgeBaseResource].questionAnswerRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(super[KnowledgeBaseResource].questionAnswerStreamRoutes) ~
+    LoggingEntities.logRequestAndResult(super[KnowledgeBaseResource].questionAnswerSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(super[KnowledgeBaseResource].totalTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(super[KnowledgeBaseResource].dictSizeRoutes) ~
+    LoggingEntities.logRequestAndResult(super[KnowledgeBaseResource].termsCountRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(super[ConversationLogsResource].questionAnswerRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(super[ConversationLogsResource].questionAnswerStreamRoutes) ~
+    LoggingEntities.logRequestAndResult(super[ConversationLogsResource].questionAnswerSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(super[ConversationLogsResource].totalTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(super[ConversationLogsResource].dictSizeRoutes) ~
+    LoggingEntities.logRequestAndResult(super[ConversationLogsResource].termsCountRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(super[StatConversationsResource].questionAnswerRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(super[StatConversationsResource].questionAnswerStreamRoutes) ~
+    LoggingEntities.logRequestAndResult(super[StatConversationsResource].questionAnswerSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(super[StatConversationsResource].totalTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(super[StatConversationsResource].dictSizeRoutes) ~
+    LoggingEntities.logRequestAndResult(super[StatConversationsResource].termsCountRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableUploadCSVRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableSearchRoutes) ~
