@@ -25,10 +25,10 @@ libraryDependencies ++= {
   val LogbackVersion	= "1.2.3"
   val ParboiledVersion	= "2.1.4"
   val RoundeightsHasherVersion	= "1.2.0"
-  val ScalatestVersion	= "3.0.1"
+  val ScalatestVersion	= "3.0.5"
   val ScalazVersion	= "7.2.18"
   val ScoptVersion	= "3.7.0"
-  val TikaVersion	= "1.17"
+  val TikaVersion	= "1.18"
   val ManausLibVersion = "1.0.0-rc0"
   Seq(
     "com.getjenny" %% "manaus-lib" % ManausLibVersion,

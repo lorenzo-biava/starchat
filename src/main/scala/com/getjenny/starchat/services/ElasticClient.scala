@@ -40,9 +40,9 @@ trait ElasticClient {
     client
   }
 
-  def refresh(index_name: String): RefreshIndexResult = {
+  def refresh(indexName: String): RefreshIndexResult = {
     val refreshRes: RefreshResponse =
-      transportClient.admin().indices().prepareRefresh(index_name).get()
+      transportClient.admin().indices().prepareRefresh(indexName).get()
 
     val failedShards: List[FailedShard] = refreshRes.getShardFailures.map(item => {
       val failedShardItem = FailedShard(index_name = item.index,
@@ -54,7 +54,7 @@ trait ElasticClient {
     }).toList
 
     val refreshIndexResult =
-      RefreshIndexResult(index_name = index_name,
+      RefreshIndexResult(index_name = indexName,
         failed_shards_n = refreshRes.getFailedShards,
         successful_shards_n = refreshRes.getSuccessfulShards,
         total_shards_n = refreshRes.getTotalShards,
