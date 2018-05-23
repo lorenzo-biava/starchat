@@ -31,7 +31,7 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
   lazy val cronCleanDTService = CronCleanDTService
   lazy val systemService = DtReloadService
   lazy val conversationLogsService = ConversationLogsService
-  lazy val statTextService = StatConversationsService
+  lazy val statTextService = StatTextService
 
   val routes: Route = rootAPIsRoutes ~
     LoggingEntities.logRequestAndResultReduced(super[KnowledgeBaseResource].questionAnswerRoutes) ~

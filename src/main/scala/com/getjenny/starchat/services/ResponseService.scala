@@ -9,6 +9,7 @@ import com.getjenny.analyzer.analyzers._
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
+import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
 
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global

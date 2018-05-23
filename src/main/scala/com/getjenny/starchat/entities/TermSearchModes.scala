@@ -8,6 +8,6 @@ import scalaz.Scalaz._
 
 object TermSearchModes extends Enumeration {
   type TermSearchMode = Value
-  val TERMS_COMMON_ONLY, TERMS_IDXSPECIFIC_ONLY, unknown = Value
+  val TERMS_COMMON, TERMS_IDXSPECIFIC, unknown = Value
   def value(termSearchMode: String) = values.find(_.toString === termSearchMode).getOrElse(unknown)
 }

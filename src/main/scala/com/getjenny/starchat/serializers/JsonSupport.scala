@@ -110,6 +110,11 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     TermSearchModes.value(searchMode)
   }
 
+  implicit val statSearchMarshalling:
+    Unmarshaller[String, StatSearchModes.Value] = Unmarshaller.strict[String, StatSearchModes.Value] { searchMode =>
+    StatSearchModes.value(searchMode)
+  }
+
   implicit val termCountFieldsMarshalling:
     Unmarshaller[String, TermCountFields.Value] =
     Unmarshaller.strict[String, TermCountFields.Value] { termCountField =>

@@ -35,7 +35,7 @@ class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]
       case Some(searchResult) =>
         searchResult.get(state) match {
           case Some((referenceStateScore, _)) =>
-            val searchScoresSum = searchResult.map { case (_, (docScore, _)) => docScore }.sum + 1
+            val searchScoresSum = searchResult.map { case (_, (docScore, _)) => docScore }.max + 1
             referenceStateScore / searchScoresSum
           case _ => 0.0d
         }

@@ -9,6 +9,7 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Data}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.analyzer.analyzers.StarchatAnalyzer
 import com.getjenny.starchat.entities._
+import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.unit._

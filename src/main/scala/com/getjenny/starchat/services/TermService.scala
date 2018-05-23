@@ -9,6 +9,7 @@ import java.io.{FileNotFoundException, InputStream}
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
+import com.getjenny.starchat.services.esclient.TermElasticClient
 import org.elasticsearch.action.admin.indices.analyze.{AnalyzeRequestBuilder, AnalyzeResponse}
 import org.elasticsearch.action.bulk._
 import org.elasticsearch.action.delete.DeleteRequestBuilder
@@ -403,12 +404,12 @@ object TermService {
     */
   def getTermsByIdFuture(indexName: String,
                          termsRequest: TermIdsRequest,
-                         searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON_ONLY) : Future[Option[Terms]] = Future {
+                         searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON) : Future[Option[Terms]] = Future {
     val fetchedTerms = searchMode match {
-      case TermSearchModes.TERMS_COMMON_ONLY =>
+      case TermSearchModes.TERMS_COMMON =>
         val commonIndexName = getCommonIndexName(indexName)
         getTermsById(commonIndexName, termsRequest)
-      case TermSearchModes.TERMS_IDXSPECIFIC_ONLY =>
+      case TermSearchModes.TERMS_IDXSPECIFIC =>
         getTermsById(indexName, termsRequest)
       case _ =>
         throw TermServiceException("Term : searchMode mode is unknown : " + searchMode.toString)
@@ -726,12 +727,12 @@ object TermService {
     */
   def searchTermFuture(indexName: String,
          term: SearchTerm,
-         searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON_ONLY): Future[Option[TermsResults]] = Future {
+         searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON): Future[Option[TermsResults]] = Future {
     val fetchedTerms = searchMode match {
-      case TermSearchModes.TERMS_COMMON_ONLY =>
+      case TermSearchModes.TERMS_COMMON =>
         val commonIndexName = getCommonIndexName(indexName)
         searchTerm(commonIndexName, term)
-      case TermSearchModes.TERMS_IDXSPECIFIC_ONLY =>
+      case TermSearchModes.TERMS_IDXSPECIFIC =>
         searchTerm(indexName, term)
       case _ =>
         throw TermServiceException("Term : searchMode mode is unknown : " + searchMode.toString)
@@ -853,13 +854,13 @@ object TermService {
   def searchFuture(indexName: String,
                    text: String,
                    analyzer: String = "space_punctuation",
-                   searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON_ONLY
+                   searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON
                    ) : Future[Option[TermsResults]] = Future {
     val fetchedTerms = searchMode match {
-      case TermSearchModes.TERMS_COMMON_ONLY =>
+      case TermSearchModes.TERMS_COMMON =>
         val commonIndexName = getCommonIndexName(indexName)
         search(commonIndexName, text, analyzer)
-      case TermSearchModes.TERMS_IDXSPECIFIC_ONLY =>
+      case TermSearchModes.TERMS_IDXSPECIFIC =>
         search(indexName, text, analyzer)
       case _ =>
         throw TermServiceException("Term : getTermsById mode is unknown : " + searchMode.toString)

@@ -107,7 +107,7 @@ trait TermResource extends StarChatResource {
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
                   entity(as[TermIdsRequest]) { request_data =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    parameters("searchMode".as[TermSearchModes.Value] ? TermSearchModes.TERMS_COMMON_ONLY
+                    parameters("searchMode".as[TermSearchModes.Value] ? TermSearchModes.TERMS_COMMON
                     ) { searchMode =>
                       onCompleteWithBreaker(breaker)(
                         termService.getTermsByIdFuture(
@@ -208,7 +208,7 @@ trait TermResource extends StarChatResource {
                     entity(as[SearchTerm]) { requestData =>
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       parameters("analyzer".as[String] ? "space_punctuation",
-                      "searchMode".as[TermSearchModes.Value] ? TermSearchModes.TERMS_COMMON_ONLY
+                      "searchMode".as[TermSearchModes.Value] ? TermSearchModes.TERMS_COMMON
                       ) { (analyzer, searchMode) =>
                         onCompleteWithBreaker(breaker)(
                           termService.searchTermFuture(indexName = indexName,
@@ -231,7 +231,7 @@ trait TermResource extends StarChatResource {
                     entity(as[String]) { requestData =>
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       parameters("analyzer".as[String] ? "space_punctuation",
-                        "searchMode".as[TermSearchModes.Value] ? TermSearchModes.TERMS_COMMON_ONLY
+                        "searchMode".as[TermSearchModes.Value] ? TermSearchModes.TERMS_COMMON
                       ) { (analyzer, searchMode) =>
                         onCompleteWithBreaker(breaker)(
                           termService.searchFuture(indexName = indexName,
