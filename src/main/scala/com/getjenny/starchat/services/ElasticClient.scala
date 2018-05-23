@@ -74,7 +74,7 @@ trait ElasticClient {
   val convLogsIndexSuffix: String = config.getString("es.conv_logs_index_suffix")
   val dtIndexSuffix: String = config.getString("es.dt_index_suffix")
   val kbIndexSuffix: String = config.getString("es.kb_index_suffix")
-  val statConvsIndexSuffix: String = config.getString("es.stat_convs_index_suffix")
+  val statTextIndexSuffix: String = config.getString("es.stat_text_index_suffix")
   val sysRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
   val systemRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
   val termIndexSuffix: String = config.getString("es.term_index_suffix")

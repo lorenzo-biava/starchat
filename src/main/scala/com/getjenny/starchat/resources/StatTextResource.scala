@@ -6,7 +6,7 @@ package com.getjenny.starchat.resources
 
 import com.getjenny.starchat.services.{QuestionAnswerService, StatConversationsService}
 
-trait StatConversationsResource extends QuestionAnswerResource {
+trait StatTextResource extends QuestionAnswerResource {
   override protected[this] val questionAnswerService: QuestionAnswerService = StatConversationsService
-  override protected[this] val routeName: String = "stat_conversations"
+  override protected[this] val routeName: String = "stat_text"
 }

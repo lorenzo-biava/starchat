@@ -5,5 +5,5 @@ package com.getjenny.starchat.services
   */
 
 object StatConversationsElasticClient extends QuestionAnswerElasticClient {
-  override val indexSuffix: String = statConvsIndexSuffix
+  override val indexSuffix: String = statTextIndexSuffix
 }
