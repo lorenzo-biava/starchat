@@ -178,12 +178,12 @@ object ManausTermsExtractionService {
 
     val priorOccurrences = new PriorTokenOccurrenceMap(indexName = indexName,
       commonOrSpecificSearch = extractionRequest.commonOrSpecificSearchPrior.get,
-      field = extractionRequest.termFieldPrior.get)
+      field = extractionRequest.fieldsPrior.get)
 
     val observedOccurrences = new ObservedTokenOccurrenceMap(indexName: String,
       commonOrSpecificSearch = extractionRequest.commonOrSpecificSearchObserved.get,
       obsDest = extractionRequest.obsDest.get,
-      field = extractionRequest.termFieldObserved.get)
+      field = extractionRequest.fieldsObserved.get)
 
     val tokenizerReq = TokenizerQueryRequest("space_punctuation", extractionRequest.text)
 
