@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext
 
 trait RestInterface extends KnowledgeBaseResource with DecisionTableResource with RootAPIResource
   with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
-  with TermResource with TokenizersResource with AnalyzersPlaygroundResource
+  with TermResource with TokenizersResource with AnalyzersPlaygroundResource with TermsExtractionResource
   with SpellcheckResource with UserResource with ConversationLogsResource with StatTextResource {
 
   implicit def executionContext: ExecutionContext
@@ -31,7 +31,7 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
   lazy val cronCleanDTService = CronCleanDTService
   lazy val systemService = DtReloadService
   lazy val conversationLogsService = ConversationLogsService
-  lazy val statTextService = StatTextService
+  lazy val statTextService = PriorDataService
 
   val routes: Route = rootAPIsRoutes ~
     LoggingEntities.logRequestAndResultReduced(super[KnowledgeBaseResource].questionAnswerRoutes) ~
@@ -52,6 +52,8 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
     LoggingEntities.logRequestAndResult(super[StatTextResource].totalTermsRoutes) ~
     LoggingEntities.logRequestAndResult(super[StatTextResource].dictSizeRoutes) ~
     LoggingEntities.logRequestAndResult(super[StatTextResource].termsCountRoutes) ~
+    LoggingEntities.logRequestAndResult(termsExtractionRoutes) ~
+    LoggingEntities.logRequestAndResult(synExtractionRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableUploadCSVRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableSearchRoutes) ~

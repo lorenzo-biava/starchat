@@ -47,7 +47,7 @@ object IndexManagementService {
       indexSuffix = elasticClient.convLogsIndexSuffix),
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/question.json",
       updatePath = "/index_management/json_index_spec/general/update/question.json",
-      indexSuffix = elasticClient.statTextIndexSuffix),
+      indexSuffix = elasticClient.priorDataIndexSuffix),
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/question.json",
       updatePath = "/index_management/json_index_spec/general/update/question.json",
       indexSuffix = elasticClient.kbIndexSuffix),

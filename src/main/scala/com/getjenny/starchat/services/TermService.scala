@@ -404,12 +404,13 @@ object TermService {
     */
   def getTermsByIdFuture(indexName: String,
                          termsRequest: TermIdsRequest,
-                         searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON) : Future[Option[Terms]] = Future {
+                         searchMode: CommonOrSpecificSearch.Value =
+                         CommonOrSpecificSearch.COMMON) : Future[Option[Terms]] = Future {
     val fetchedTerms = searchMode match {
-      case TermSearchModes.TERMS_COMMON =>
+      case CommonOrSpecificSearch.COMMON =>
         val commonIndexName = getCommonIndexName(indexName)
         getTermsById(commonIndexName, termsRequest)
-      case TermSearchModes.TERMS_IDXSPECIFIC =>
+      case CommonOrSpecificSearch.IDXSPECIFIC =>
         getTermsById(indexName, termsRequest)
       case _ =>
         throw TermServiceException("Term : searchMode mode is unknown : " + searchMode.toString)
@@ -726,13 +727,14 @@ object TermService {
     * @return fetched terms
     */
   def searchTermFuture(indexName: String,
-         term: SearchTerm,
-         searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON): Future[Option[TermsResults]] = Future {
+                       term: SearchTerm,
+                       searchMode: CommonOrSpecificSearch.Value =
+                       CommonOrSpecificSearch.COMMON): Future[Option[TermsResults]] = Future {
     val fetchedTerms = searchMode match {
-      case TermSearchModes.TERMS_COMMON =>
+      case CommonOrSpecificSearch.COMMON =>
         val commonIndexName = getCommonIndexName(indexName)
         searchTerm(commonIndexName, term)
-      case TermSearchModes.TERMS_IDXSPECIFIC =>
+      case CommonOrSpecificSearch.IDXSPECIFIC =>
         searchTerm(indexName, term)
       case _ =>
         throw TermServiceException("Term : searchMode mode is unknown : " + searchMode.toString)
@@ -854,13 +856,13 @@ object TermService {
   def searchFuture(indexName: String,
                    text: String,
                    analyzer: String = "space_punctuation",
-                   searchMode: TermSearchModes.Value = TermSearchModes.TERMS_COMMON
-                   ) : Future[Option[TermsResults]] = Future {
+                   searchMode: CommonOrSpecificSearch.Value = CommonOrSpecificSearch.COMMON
+                  ) : Future[Option[TermsResults]] = Future {
     val fetchedTerms = searchMode match {
-      case TermSearchModes.TERMS_COMMON =>
+      case CommonOrSpecificSearch.COMMON =>
         val commonIndexName = getCommonIndexName(indexName)
         search(commonIndexName, text, analyzer)
-      case TermSearchModes.TERMS_IDXSPECIFIC =>
+      case CommonOrSpecificSearch.IDXSPECIFIC =>
         search(indexName, text, analyzer)
       case _ =>
         throw TermServiceException("Term : getTermsById mode is unknown : " + searchMode.toString)

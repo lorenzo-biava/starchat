@@ -8,7 +8,7 @@ import scalaz.Scalaz._
 
 object TermCountFields extends Enumeration {
   type TermCountField = Value
-  val question, answer, unknown = Value
+  val question, answer, all, unknown = Value
   def value(termCountField: String): TermCountFields.Value =
     values.find(_.toString === termCountField).getOrElse(unknown)
 }

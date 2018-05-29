@@ -79,24 +79,12 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
     def write(obj: Permissions.Value): JsValue = JsString(obj.toString)
     def read(json: JsValue): Permissions.Value = json match {
-        case JsString(str) =>
-          Permissions.values.find(_.toString === str) match {
-            case Some(t) => t
-            case _ => throw DeserializationException("Permission string is invalid")
-          }
-        case _ => throw DeserializationException("Permission string expected")
-      }
-  }
-
-  implicit object TermSearchModeJsonFormat extends JsonFormat[TermSearchModes.Value] {
-    def write(obj: TermSearchModes.Value): JsValue = JsString(obj.toString)
-    def read(json: JsValue): TermSearchModes.Value = json match {
       case JsString(str) =>
-        TermSearchModes.values.find(_.toString === str) match {
+        Permissions.values.find(_.toString === str) match {
           case Some(t) => t
-          case _ => throw DeserializationException("TermSearchMode string is invalid")
+          case _ => throw DeserializationException("Permission string is invalid")
         }
-      case _ => throw DeserializationException("TermSearchMode string expected")
+      case _ => throw DeserializationException("Permission string expected")
     }
   }
 
@@ -105,23 +93,62 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val dtReloadTimestamp = jsonFormat2(DtReloadTimestamp)
   implicit val openCloseIndexFormat = jsonFormat5(OpenCloseIndex)
 
-  implicit val termSearchMarshalling:
-    Unmarshaller[String, TermSearchModes.Value] = Unmarshaller.strict[String, TermSearchModes.Value] { searchMode =>
-    TermSearchModes.value(searchMode)
+  implicit val commonOrSpecificSearchUnmarshalling:
+    Unmarshaller[String, CommonOrSpecificSearch.Value] =
+    Unmarshaller.strict[String, CommonOrSpecificSearch.Value] { enumValue =>
+      CommonOrSpecificSearch.value(enumValue)
+    }
+
+  implicit object commonOrSpecificSearchFormat extends JsonFormat[CommonOrSpecificSearch.Value] {
+    def write(obj: CommonOrSpecificSearch.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): CommonOrSpecificSearch.Value = json match {
+      case JsString(str) =>
+        CommonOrSpecificSearch.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("CommonOrSpecificSearch string is invalid")
+        }
+      case _ => throw DeserializationException("CommonOrSpecificSearch string expected")
+    }
   }
 
-  implicit val statSearchMarshalling:
-    Unmarshaller[String, StatSearchModes.Value] = Unmarshaller.strict[String, StatSearchModes.Value] { searchMode =>
-    StatSearchModes.value(searchMode)
+  implicit val observedSearchDestUnmarshalling:
+    Unmarshaller[String, ObservedSearchDests.Value] = Unmarshaller.strict[String, ObservedSearchDests.Value] { enumValue =>
+    ObservedSearchDests.value(enumValue)
   }
 
-  implicit val termCountFieldsMarshalling:
+  implicit object observedSearchDestFormat extends JsonFormat[ObservedSearchDests.Value] {
+    def write(obj: ObservedSearchDests.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): ObservedSearchDests.Value = json match {
+      case JsString(str) =>
+        ObservedSearchDests.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("ObservedSearchDests string is invalid")
+        }
+      case _ => throw DeserializationException("ObservedSearchDests string expected")
+    }
+  }
+
+  implicit val termCountFieldsUnmarshalling:
     Unmarshaller[String, TermCountFields.Value] =
-    Unmarshaller.strict[String, TermCountFields.Value] { termCountField =>
-      TermCountFields.value(termCountField)
+    Unmarshaller.strict[String, TermCountFields.Value] { enumValue =>
+      TermCountFields.value(enumValue)
+    }
+
+  implicit object termCountFieldsFormat extends JsonFormat[TermCountFields.Value] {
+    def write(obj: TermCountFields.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): TermCountFields.Value = json match {
+      case JsString(str) =>
+        TermCountFields.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("TermCountFields string is invalid")
+        }
+      case _ => throw DeserializationException("TermCountFields string expected")
+    }
   }
 
   implicit val termCountFormat = jsonFormat2(TermCount)
   implicit val totalTermsFormat = jsonFormat3(TotalTerms)
   implicit val dictSizeFormat = jsonFormat4(DictSize)
+  implicit val termsExtractionRequestFormat = jsonFormat12(TermsExtractionRequest)
+  implicit val synExtractionRequest = jsonFormat13(SynExtractionRequest)
 }

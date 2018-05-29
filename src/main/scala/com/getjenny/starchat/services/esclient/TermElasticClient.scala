@@ -5,6 +5,5 @@ package com.getjenny.starchat.services.esclient
   */
 
 object TermElasticClient extends ElasticClient {
-  val commonIndexArbitraryPattern: String = config.getString("es.common_index_arbitrary_pattern")
   val indexSuffix: String = termIndexSuffix
 }
