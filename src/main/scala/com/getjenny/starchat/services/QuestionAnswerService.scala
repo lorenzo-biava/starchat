@@ -58,7 +58,7 @@ trait QuestionAnswerService {
     val totalAgg = AggregationBuilders.cardinality("total_term_count").script(script)
 
     val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
-      .setTypes(elasticClient.indexSuffix)
+      .setTypes(elasticClient.indexMapping)
       .setSize(0)
       .setQuery(QueryBuilders.matchAllQuery)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
@@ -91,7 +91,7 @@ trait QuestionAnswerService {
     val answerAgg = AggregationBuilders.sum("answer_term_count").field("answer.base_length")
 
     val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
-      .setTypes(elasticClient.indexSuffix)
+      .setTypes(elasticClient.indexMapping)
       .setSize(0)
       .setQuery(QueryBuilders.matchAllQuery)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
@@ -130,7 +130,7 @@ trait QuestionAnswerService {
       .must(QueryBuilders.matchQuery(esFieldName, term))
 
     val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
-      .setTypes(elasticClient.indexSuffix)
+      .setTypes(elasticClient.indexMapping)
       .setSize(0)
       .setQuery(boolQueryBuilder)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
@@ -152,7 +152,7 @@ trait QuestionAnswerService {
   def search(indexName: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elasticClient.client
     val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
-      .setTypes(elasticClient.indexSuffix)
+      .setTypes(elasticClient.indexMapping)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     searchBuilder.setMinScore(documentSearch.min_score.getOrElse(
@@ -447,7 +447,7 @@ trait QuestionAnswerService {
     val json: String = builder.string()
     val client: TransportClient = elasticClient.client
     val response: IndexResponse =
-      client.prepareIndex().setIndex(getIndexName(indexName)).setType(elasticClient.indexSuffix)
+      client.prepareIndex().setIndex(getIndexName(indexName)).setType(elasticClient.indexMapping)
         .setId(document.id)
         .setSource(json, XContentType.JSON).get()
 
@@ -558,7 +558,7 @@ trait QuestionAnswerService {
 
     val client: TransportClient = elasticClient.client
     val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
-      .setType(elasticClient.indexSuffix).setId(id)
+      .setType(elasticClient.indexMapping).setId(id)
       .setDoc(builder)
       .get()
 
@@ -597,7 +597,7 @@ trait QuestionAnswerService {
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.client
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
-      .setType(elasticClient.indexSuffix).setId(id).get()
+      .setType(elasticClient.indexMapping).setId(id).get()
 
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(getIndexName(indexName))

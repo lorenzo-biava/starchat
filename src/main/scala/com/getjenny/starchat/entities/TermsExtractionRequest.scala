@@ -5,16 +5,16 @@ package com.getjenny.starchat.entities
   */
 
 case class TermsExtractionRequest (
-      text: String,
-      commonOrSpecificSearchPrior: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.COMMON),
-      commonOrSpecificSearchObserved: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.IDXSPECIFIC),
-      obsDest: Option[ObservedSearchDests.Value] = Some(ObservedSearchDests.KNOWLEDGEBASE),
-      fieldsPrior: Option[TermCountFields.Value] = Some(TermCountFields.question),
-      fieldsObserved: Option[TermCountFields.Value] = Some(TermCountFields.question),
-      minWordsPerSentence: Option[Long] = Some(10),
-      pruneTermsThreshold: Option[Int] = Some(100000),
-      misspell_max_occurrence: Option[Int] = Some(5),
-      active_potential_decay: Option[Int] = Some(10),
-      active_potential: Option[Boolean] = Some(true),
-      total_info: Option[Boolean] = Some(false)
-      )
+                                    text: String,
+                                    commonOrSpecificSearchPrior: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.COMMON),
+                                    commonOrSpecificSearchObserved: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.IDXSPECIFIC),
+                                    obsDest: Option[ObservedSearchDests.Value] = Some(ObservedSearchDests.KNOWLEDGEBASE),
+                                    fieldsPrior: Option[TermCountFields.Value] = Some(TermCountFields.question),
+                                    fieldsObserved: Option[TermCountFields.Value] = Some(TermCountFields.question),
+                                    minWordsPerSentence: Option[Int] = Some(10),
+                                    pruneTermsThreshold: Option[Int] = Some(100000),
+                                    misspellMaxOccurrence: Option[Int] = Some(5),
+                                    activePotentialDecay: Option[Int] = Some(10),
+                                    activePotential: Option[Boolean] = Some(true),
+                                    totalInfo: Option[Boolean] = Some(false)
+                                  )

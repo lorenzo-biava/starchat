@@ -44,8 +44,8 @@ object ManausTermsExtractionService {
   }
 
   class PriorTokenOccurrenceMap(indexName: String,
-                                commonOrSpecificSearch: CommonOrSpecificSearch.Value = CommonOrSpecificSearch.COMMON,
-                                field: TermCountFields.Value = TermCountFields.question) extends TokenOccurrence {
+                                commonOrSpecificSearch: CommonOrSpecificSearch.Value,
+                                field: TermCountFields.Value) extends TokenOccurrence {
 
     private[this] val idxName: String = commonOrSpecificSearch match {
       case CommonOrSpecificSearch.COMMON =>
@@ -85,9 +85,9 @@ object ManausTermsExtractionService {
   }
 
   class ObservedTokenOccurrenceMap(indexName: String,
-                                   commonOrSpecificSearch: CommonOrSpecificSearch.Value = CommonOrSpecificSearch.COMMON,
-                                   obsDest: ObservedSearchDests.Value = ObservedSearchDests.KNOWLEDGEBASE,
-                                   field: TermCountFields.Value = TermCountFields.question) extends TokenOccurrence {
+                                   commonOrSpecificSearch: CommonOrSpecificSearch.Value,
+                                   obsDest: ObservedSearchDests.Value,
+                                   field: TermCountFields.Value) extends TokenOccurrence {
 
     private[this] val idxName: String = commonOrSpecificSearch match {
       case CommonOrSpecificSearch.COMMON =>
@@ -136,38 +136,36 @@ object ManausTermsExtractionService {
   private[this] def extractKeywords(sentenceTokens: List[String],
                                     observedOccurrences: TokenOccurrence,
                                     priorOccurrences: TokenOccurrence,
-                                    minWordsPerSentence: Int, pruneTermsThreshold: Int, misspell_max_occurrence: Int,
-                                    active_potential_decay: Int,
-                                    total_info: Boolean,
-                                    active_potential: Boolean): (List[String], Map[String, Double]) = {
+                                    minWordsPerSentence: Int,
+                                    pruneTermsThreshold: Int,
+                                    misspellMaxOccurrence: Int,
+                                    activePotentialDecay: Int,
+                                    totalInfo: Boolean,
+                                    activePotential: Boolean): (List[String], Map[String, Double]) = {
 
     val keywordsExtraction = new KeywordsExtraction(priorOccurrences=priorOccurrences,
       observedOccurrences=observedOccurrences)
 
-    log.info("extract informativeWords")
     /* Informative words */
     val rawBagOfKeywordsInfo: List[(String, Double)] =
       keywordsExtraction.extractInformativeWords(sentence = sentenceTokens,
         pruneSentence = pruneTermsThreshold, minWordsPerSentence = minWordsPerSentence,
-        totalInformationNorm = total_info)
+        totalInformationNorm = totalInfo)
 
-    log.info("calculating active potentials Map")
     /* Map(keyword -> active potential) */
     val activePotentialKeywordsMap = keywordsExtraction.getWordsActivePotentialMapForSentence(rawBagOfKeywordsInfo,
-      active_potential_decay)
+      activePotentialDecay)
 
-    log.info("getting informative words for sentences")
     val informativeKeywords: (List[String], List[(String, Double)]) = (sentenceTokens, rawBagOfKeywordsInfo)
 
-    log.info("calculating bags")
     // list of the final keywords
     val bags: (List[String], Map[String, Double]) =
-      if(active_potential) {
+      if(activePotential) {
         keywordsExtraction.extractBagsActiveForSentence(activePotentialKeywordsMap = activePotentialKeywordsMap,
-          informativeKeywords = informativeKeywords, misspellMaxOccurrence = misspell_max_occurrence)
+          informativeKeywords = informativeKeywords, misspellMaxOccurrence = misspellMaxOccurrence)
       } else {
         keywordsExtraction.extractBagsNoActiveForSentence(informativeKeywords = informativeKeywords,
-          misspellMaxOccurrence = misspell_max_occurrence)
+          misspellMaxOccurrence = misspellMaxOccurrence)
       }
     bags
   }
@@ -176,31 +174,33 @@ object ManausTermsExtractionService {
                 extractionRequest: TermsExtractionRequest
                ): Map[String, Double] = {
 
-    val priorOccurrences = new PriorTokenOccurrenceMap(indexName = indexName,
+    val priorOccurrences: TokenOccurrence = new PriorTokenOccurrenceMap(indexName = indexName,
       commonOrSpecificSearch = extractionRequest.commonOrSpecificSearchPrior.get,
       field = extractionRequest.fieldsPrior.get)
 
-    val observedOccurrences = new ObservedTokenOccurrenceMap(indexName: String,
+    val observedOccurrences: TokenOccurrence = new ObservedTokenOccurrenceMap(indexName: String,
       commonOrSpecificSearch = extractionRequest.commonOrSpecificSearchObserved.get,
       obsDest = extractionRequest.obsDest.get,
       field = extractionRequest.fieldsObserved.get)
 
     val tokenizerReq = TokenizerQueryRequest("space_punctuation", extractionRequest.text)
 
-    val sentenceTokens: TokenizerResponse = termService.esTokenizer(indexName, tokenizerReq) match {
+    val tokens: TokenizerResponse = termService.esTokenizer(indexName, tokenizerReq) match {
       case Some(t) => t
       case _ => TokenizerResponse(tokens = List.empty[TokenizerResponseItem])
     }
 
-    val bags = this.extractKeywords(sentenceTokens = sentenceTokens.tokens.map(_.token),
+    log.debug("ExtractionRequest:" + extractionRequest)
+
+    val bags = extractKeywords(sentenceTokens = tokens.tokens.map(_.token),
       observedOccurrences = observedOccurrences,
       priorOccurrences = priorOccurrences,
-      minWordsPerSentence = extractionRequest.minWordsPerSentence.get.toInt,
-      pruneTermsThreshold = extractionRequest.pruneTermsThreshold.get,
-      misspell_max_occurrence = extractionRequest.misspell_max_occurrence.get,
-      active_potential_decay = extractionRequest.active_potential_decay.get,
-      active_potential = extractionRequest.active_potential.get,
-      total_info = extractionRequest.total_info.get)
+      minWordsPerSentence = extractionRequest.minWordsPerSentence.getOrElse(10),
+      pruneTermsThreshold = extractionRequest.pruneTermsThreshold.getOrElse(100000),
+      misspellMaxOccurrence = extractionRequest.misspellMaxOccurrence.getOrElse(5),
+      activePotentialDecay = extractionRequest.activePotentialDecay.getOrElse(10),
+      activePotential = extractionRequest.activePotential.getOrElse(true),
+      totalInfo = extractionRequest.totalInfo.getOrElse(false))
     bags._2
   }
 

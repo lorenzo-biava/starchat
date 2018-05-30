@@ -6,5 +6,7 @@ package com.getjenny.starchat.services.esclient
 
 object KnowledgeBaseElasticClient extends QuestionAnswerElasticClient {
   override val indexSuffix: String = kbIndexSuffix
+  val indexMapping: String = "question"
 }
+
 

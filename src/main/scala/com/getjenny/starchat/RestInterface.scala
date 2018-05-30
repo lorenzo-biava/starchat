@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext
 trait RestInterface extends KnowledgeBaseResource with DecisionTableResource with RootAPIResource
   with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
   with TermResource with TokenizersResource with AnalyzersPlaygroundResource with TermsExtractionResource
-  with SpellcheckResource with UserResource with ConversationLogsResource with StatTextResource {
+  with SpellcheckResource with ConversationLogsResource with PriorDataResource with UserResource {
 
   implicit def executionContext: ExecutionContext
 
@@ -34,24 +34,24 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
   lazy val statTextService = PriorDataService
 
   val routes: Route = rootAPIsRoutes ~
-    LoggingEntities.logRequestAndResultReduced(super[KnowledgeBaseResource].questionAnswerRoutes) ~
-    LoggingEntities.logRequestAndResultReduced(super[KnowledgeBaseResource].questionAnswerStreamRoutes) ~
-    LoggingEntities.logRequestAndResult(super[KnowledgeBaseResource].questionAnswerSearchRoutes) ~
-    LoggingEntities.logRequestAndResult(super[KnowledgeBaseResource].totalTermsRoutes) ~
-    LoggingEntities.logRequestAndResult(super[KnowledgeBaseResource].dictSizeRoutes) ~
-    LoggingEntities.logRequestAndResult(super[KnowledgeBaseResource].termsCountRoutes) ~
-    LoggingEntities.logRequestAndResultReduced(super[ConversationLogsResource].questionAnswerRoutes) ~
-    LoggingEntities.logRequestAndResultReduced(super[ConversationLogsResource].questionAnswerStreamRoutes) ~
-    LoggingEntities.logRequestAndResult(super[ConversationLogsResource].questionAnswerSearchRoutes) ~
-    LoggingEntities.logRequestAndResult(super[ConversationLogsResource].totalTermsRoutes) ~
-    LoggingEntities.logRequestAndResult(super[ConversationLogsResource].dictSizeRoutes) ~
-    LoggingEntities.logRequestAndResult(super[ConversationLogsResource].termsCountRoutes) ~
-    LoggingEntities.logRequestAndResultReduced(super[StatTextResource].questionAnswerRoutes) ~
-    LoggingEntities.logRequestAndResultReduced(super[StatTextResource].questionAnswerStreamRoutes) ~
-    LoggingEntities.logRequestAndResult(super[StatTextResource].questionAnswerSearchRoutes) ~
-    LoggingEntities.logRequestAndResult(super[StatTextResource].totalTermsRoutes) ~
-    LoggingEntities.logRequestAndResult(super[StatTextResource].dictSizeRoutes) ~
-    LoggingEntities.logRequestAndResult(super[StatTextResource].termsCountRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(kbQuestionAnswerRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(kbQuestionAnswerStreamRoutes) ~
+    LoggingEntities.logRequestAndResult(kbQuestionAnswerSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(kbTotalTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(kbDictSizeRoutes) ~
+    LoggingEntities.logRequestAndResult(kbTermsCountRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(pdQuestionAnswerRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(pdQuestionAnswerStreamRoutes) ~
+    LoggingEntities.logRequestAndResult(pdQuestionAnswerSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(pdTotalTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(pdDictSizeRoutes) ~
+    LoggingEntities.logRequestAndResult(pdTermsCountRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(clQuestionAnswerRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(clQuestionAnswerStreamRoutes) ~
+    LoggingEntities.logRequestAndResult(clQuestionAnswerSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(clTotalTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(clDictSizeRoutes) ~
+    LoggingEntities.logRequestAndResult(clTermsCountRoutes) ~
     LoggingEntities.logRequestAndResult(termsExtractionRoutes) ~
     LoggingEntities.logRequestAndResult(synExtractionRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableRoutes) ~

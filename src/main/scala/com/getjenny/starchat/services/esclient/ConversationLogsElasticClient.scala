@@ -6,4 +6,5 @@ package com.getjenny.starchat.services.esclient
 
 object ConversationLogsElasticClient extends QuestionAnswerElasticClient {
   override val indexSuffix: String = convLogsIndexSuffix
+  val indexMapping: String = "question"
 }

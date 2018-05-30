@@ -11,16 +11,16 @@ import akka.pattern.CircuitBreaker
 import akka.stream.scaladsl.Source
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
-import com.getjenny.starchat.services.QuestionAnswerService
+import com.getjenny.starchat.services.{PriorDataService, QuestionAnswerService}
 
 import scala.util.{Failure, Success}
 
-trait QuestionAnswerResource extends StarChatResource {
+trait PriorDataResource extends StarChatResource {
 
-  protected[this] val questionAnswerService: QuestionAnswerService
-  protected[this] val routeName: String
+  private[this] val questionAnswerService: QuestionAnswerService = PriorDataService
+  private[this] val routeName: String = "prior_data"
 
-  def termsCountRoutes: Route = handleExceptions(routesExceptionHandler) {
+  def pdTermsCountRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
       """term_count""" ~ Slash ~
       routeName) { indexName =>
@@ -50,7 +50,7 @@ trait QuestionAnswerResource extends StarChatResource {
     }
   }
 
-  def dictSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
+  def pdDictSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
       """dict_size""" ~ Slash ~
       routeName) { indexName =>
@@ -77,7 +77,7 @@ trait QuestionAnswerResource extends StarChatResource {
     }
   }
 
-  def totalTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
+  def pdTotalTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
       """total_terms""" ~ Slash ~
       routeName) { indexName =>
@@ -104,7 +104,7 @@ trait QuestionAnswerResource extends StarChatResource {
     }
   }
 
-  def questionAnswerStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
+  def pdQuestionAnswerStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix(
       """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
         """stream""" ~ Slash ~
@@ -128,7 +128,7 @@ trait QuestionAnswerResource extends StarChatResource {
     }
   }
 
-  def questionAnswerRoutes: Route = handleExceptions(routesExceptionHandler) {
+  def pdQuestionAnswerRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ routeName) { indexName =>
       pathEnd {
         post {
@@ -275,7 +275,7 @@ trait QuestionAnswerResource extends StarChatResource {
     }
   }
 
-  def questionAnswerSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
+  def pdQuestionAnswerSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
     val localRouteName: String = routeName + "_search"
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
       Slash ~  localRouteName) { indexName =>

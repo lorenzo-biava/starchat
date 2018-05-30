@@ -6,6 +6,7 @@ package com.getjenny.starchat.services.esclient
 
 trait QuestionAnswerElasticClient extends ElasticClient {
   val indexSuffix: String
+  val indexMapping: String
   val queryMinThreshold : Float = config.getDouble("es.kb_query_min_threshold").toFloat
   val queriesScoreMode: String = config.getString("es.kb_nested_score_mode").toLowerCase
   val questionNegativeMinimumMatch: String = config.getString("es.kb_question_negative_minimum_match")
