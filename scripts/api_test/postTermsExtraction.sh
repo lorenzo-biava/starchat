@@ -7,11 +7,17 @@ curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
   -H "Content-Type: application/json" -X POST "http://localhost:${PORT}/${INDEX_NAME}/extraction/keywords" -d "
 {
 	\"text\": \"${QUERY}\",
-	\"commonOrSpecificSearchPrior\": \"IDXSPECIFIC\",
+	\"commonOrSpecificSearchPrior\": \"COMMON\",
 	\"commonOrSpecificSearchObserved\": \"IDXSPECIFIC\",
-	\"obsDest\": \"KNOWLEDGEBASE\",
-	\"fieldsPrior\": \"question\",
-	\"fieldsObserved\": \"question\"
+	\"observedDataSource\": \"KNOWLEDGEBASE\",
+	\"fieldsPrior\": \"all\",
+	\"fieldsObserved\": \"all\",
+	\"minWordsPerSentence\": 10,
+	\"pruneTermsThreshold\": 100000,
+	\"misspellMaxOccurrence\": 5,
+	\"activePotentialDecay\": 10,
+	\"activePotential\": true,
+	\"totalInfo\": false
 }
 "
 

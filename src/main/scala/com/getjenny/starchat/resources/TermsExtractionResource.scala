@@ -24,12 +24,10 @@ trait TermsExtractionResource extends StarChatResource {
           post {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { (user) =>
-              extractRequest { request =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, indexName, Permissions.read)) {
+                extractRequest { request =>
                   entity(as[TermsExtractionRequest]) { extractionRequest =>
-                    spellcheckService.textTerms(indexName = indexName,
-                      extractionRequest = extractionRequest)
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(spellcheckService.textTermsFuture(indexName = indexName,
                       extractionRequest = extractionRequest)) {
@@ -51,7 +49,7 @@ trait TermsExtractionResource extends StarChatResource {
         }
       }
     }
-//  }
+  //  }
 
   def synExtractionRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "extraction") { indexName =>
@@ -60,9 +58,9 @@ trait TermsExtractionResource extends StarChatResource {
           post {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { (user) =>
-              extractRequest { request =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, indexName, Permissions.read)) {
+                extractRequest { request =>
                   entity(as[SynExtractionRequest]) { extractionRequest =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(spellcheckService.termsSynonymsFuture(indexName = indexName,

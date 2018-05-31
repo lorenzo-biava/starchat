@@ -6,9 +6,9 @@ package com.getjenny.starchat.entities
 
 import scalaz.Scalaz._
 
-object ObservedSearchDests extends Enumeration {
-  type ObservedSearchDest = Value
+object ObservedDataSources extends Enumeration {
+  type ObservedDataSource = Value
   val KNOWLEDGEBASE, CONV_LOGS, unknown = Value
-  def value(dest: String) = values.find(_.toString === dest).getOrElse(unknown)
+  def value(enumValue: String) = values.find(_.toString === enumValue).getOrElse(unknown)
 }
 

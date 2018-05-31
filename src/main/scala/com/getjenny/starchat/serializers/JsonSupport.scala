@@ -111,16 +111,16 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val observedSearchDestUnmarshalling:
-    Unmarshaller[String, ObservedSearchDests.Value] = Unmarshaller.strict[String, ObservedSearchDests.Value] { enumValue =>
-    ObservedSearchDests.value(enumValue)
+  implicit val observedDataSourcesUnmarshalling:
+    Unmarshaller[String, ObservedDataSources.Value] = Unmarshaller.strict[String, ObservedDataSources.Value] { enumValue =>
+    ObservedDataSources.value(enumValue)
   }
 
-  implicit object observedSearchDestFormat extends JsonFormat[ObservedSearchDests.Value] {
-    def write(obj: ObservedSearchDests.Value): JsValue = JsString(obj.toString)
-    def read(json: JsValue): ObservedSearchDests.Value = json match {
+  implicit object observedSearchDestFormat extends JsonFormat[ObservedDataSources.Value] {
+    def write(obj: ObservedDataSources.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): ObservedDataSources.Value = json match {
       case JsString(str) =>
-        ObservedSearchDests.values.find(_.toString === str) match {
+        ObservedDataSources.values.find(_.toString === str) match {
           case Some(t) => t
           case _ => throw DeserializationException("ObservedSearchDests string is invalid")
         }

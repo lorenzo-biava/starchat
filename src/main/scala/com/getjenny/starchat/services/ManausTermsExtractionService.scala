@@ -86,7 +86,7 @@ object ManausTermsExtractionService {
 
   class ObservedTokenOccurrenceMap(indexName: String,
                                    commonOrSpecificSearch: CommonOrSpecificSearch.Value,
-                                   obsDest: ObservedSearchDests.Value,
+                                   observedDataSource: ObservedDataSources.Value,
                                    field: TermCountFields.Value) extends TokenOccurrence {
 
     private[this] val idxName: String = commonOrSpecificSearch match {
@@ -95,8 +95,8 @@ object ManausTermsExtractionService {
       case _ => indexName
     }
 
-    private[this] val dataService: QuestionAnswerService = obsDest match {
-      case ObservedSearchDests.KNOWLEDGEBASE =>
+    private[this] val dataService: QuestionAnswerService = observedDataSource match {
+      case ObservedDataSources.KNOWLEDGEBASE =>
         knowledgeBaseService
       case _ =>
         convLogDataService
@@ -146,6 +146,15 @@ object ManausTermsExtractionService {
     val keywordsExtraction = new KeywordsExtraction(priorOccurrences=priorOccurrences,
       observedOccurrences=observedOccurrences)
 
+    val freqData: String = sentenceTokens.map { case(e) =>
+      "word(" + e + ") observedOccurrences(" + observedOccurrences.tokenOccurrence(e) + ") priorOccurrences(" +
+        priorOccurrences.tokenOccurrence(e) + ") totalNumberOfObservedTokens(" +
+        observedOccurrences.totalNumberOfTokens + ") totalNumberOfObservedTokens(" +
+        priorOccurrences.totalNumberOfTokens + ")"
+    }.mkString(" ; ")
+
+    log.debug("SentenceFrequencies: " + freqData)
+
     /* Informative words */
     val rawBagOfKeywordsInfo: List[(String, Double)] =
       keywordsExtraction.extractInformativeWords(sentence = sentenceTokens,
@@ -167,6 +176,12 @@ object ManausTermsExtractionService {
         keywordsExtraction.extractBagsNoActiveForSentence(informativeKeywords = informativeKeywords,
           misspellMaxOccurrence = misspellMaxOccurrence)
       }
+
+
+    log.info("ExtractedData: " + rawBagOfKeywordsInfo + " # " + activePotentialKeywordsMap +
+      " # " + informativeKeywords + " # " + bags)
+    println("PLN ExtractedData: " + rawBagOfKeywordsInfo + " # " + activePotentialKeywordsMap +
+      " # " + informativeKeywords + " # " + bags)
     bags
   }
 
@@ -175,13 +190,14 @@ object ManausTermsExtractionService {
                ): Map[String, Double] = {
 
     val priorOccurrences: TokenOccurrence = new PriorTokenOccurrenceMap(indexName = indexName,
-      commonOrSpecificSearch = extractionRequest.commonOrSpecificSearchPrior.get,
-      field = extractionRequest.fieldsPrior.get)
+      commonOrSpecificSearch = extractionRequest.commonOrSpecificSearchPrior.getOrElse(CommonOrSpecificSearch.COMMON),
+      field = extractionRequest.fieldsPrior.getOrElse(TermCountFields.all))
 
     val observedOccurrences: TokenOccurrence = new ObservedTokenOccurrenceMap(indexName: String,
-      commonOrSpecificSearch = extractionRequest.commonOrSpecificSearchObserved.get,
-      obsDest = extractionRequest.obsDest.get,
-      field = extractionRequest.fieldsObserved.get)
+      commonOrSpecificSearch = extractionRequest.commonOrSpecificSearchObserved
+        .getOrElse(CommonOrSpecificSearch.IDXSPECIFIC),
+      observedDataSource = extractionRequest.observedDataSource.getOrElse(ObservedDataSources.KNOWLEDGEBASE),
+      field = extractionRequest.fieldsObserved.getOrElse(TermCountFields.all))
 
     val tokenizerReq = TokenizerQueryRequest("space_punctuation", extractionRequest.text)
 
