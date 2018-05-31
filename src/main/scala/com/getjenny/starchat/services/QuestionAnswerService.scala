@@ -619,7 +619,7 @@ trait QuestionAnswerService {
   def read(indexName: String, ids: List[String]): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elasticClient.client
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multigetBuilder.add(getIndexName(indexName), elasticClient.indexSuffix, ids:_*)
+    multigetBuilder.add(getIndexName(indexName), elasticClient.indexMapping, ids:_*)
     val response: MultiGetResponse = multigetBuilder.get()
 
     val documents : Option[List[SearchKBDocument]] = Option { response.getResponses

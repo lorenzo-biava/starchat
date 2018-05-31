@@ -27,20 +27,25 @@ trait ConversationLogsResource extends StarChatResource {
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
-            extractRequest { request =>
-              parameters("field".as[TermCountFields.Value] ?
-                TermCountFields.question, "term".as[String]) { (field, term) =>
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(questionAnswerService.countTermFuture(indexName, field, term)) {
-                  case Success(t) =>
-                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
-                  case Failure(e) =>
-                    log.error("index(" + indexName + ") uri=(" + request.uri +
-                      ") method=(" + request.method.name + ") : " + e.getMessage)
-                    completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        ReturnMessageData(code = 101, message = e.getMessage)
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              extractRequest { request =>
+                parameters("field".as[TermCountFields.Value] ?
+                  TermCountFields.question, "term".as[String]) { (field, term) =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(questionAnswerService.countTermFuture(indexName, field, term)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
                       })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") uri=(" + request.uri +
+                        ") method=(" + request.method.name + ") : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 101, message = e.getMessage)
+                        })
+                  }
                 }
               }
             }
@@ -57,18 +62,23 @@ trait ConversationLogsResource extends StarChatResource {
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
-            extractRequest { request =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(questionAnswerService.dictSizeFuture(indexName)) {
-                case Success(t) =>
-                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
-                case Failure(e) =>
-                  log.error("index(" + indexName + ") uri=(" + request.uri + ") method=(" +
-                    request.method.name + ") : " + e.getMessage)
-                  completeResponse(StatusCodes.BadRequest,
-                    Option {
-                      ReturnMessageData(code = 102, message = e.getMessage)
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              extractRequest { request =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(questionAnswerService.dictSizeFuture(indexName)) {
+                  case Success(t) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
                     })
+                  case Failure(e) =>
+                    log.error("index(" + indexName + ") uri=(" + request.uri + ") method=(" +
+                      request.method.name + ") : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 102, message = e.getMessage)
+                      })
+                }
               }
             }
           }
@@ -84,18 +94,23 @@ trait ConversationLogsResource extends StarChatResource {
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
-            extractRequest { request =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(questionAnswerService.totalTermsFuture(indexName)) {
-                case Success(t) =>
-                  completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {t})
-                case Failure(e) =>
-                  log.error("index(" + indexName + ") uri=(" + request.uri +
-                    ") method=(" + request.method.name + ") : " + e.getMessage)
-                  completeResponse(StatusCodes.BadRequest,
-                    Option {
-                      ReturnMessageData(code = 103, message = e.getMessage)
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              extractRequest { request =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(questionAnswerService.totalTermsFuture(indexName)) {
+                  case Success(t) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
                     })
+                  case Failure(e) =>
+                    log.error("index(" + indexName + ") uri=(" + request.uri +
+                      ") method=(" + request.method.name + ") : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 103, message = e.getMessage)
+                      })
+                }
               }
             }
           }
