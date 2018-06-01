@@ -147,7 +147,7 @@ object ManausTermsExtractionService {
       observedOccurrences=observedOccurrences)
 
     val freqData: String = sentenceTokens.map { case(e) =>
-      "word(" + e + ") observedOccurrences(" + observedOccurrences.tokenOccurrence(e) + ") priorOccurrences(" +
+      "word(" + e + ") -> observedOccurrences(" + observedOccurrences.tokenOccurrence(e) + ") priorOccurrences(" +
         priorOccurrences.tokenOccurrence(e) + ") totalNumberOfObservedTokens(" +
         observedOccurrences.totalNumberOfTokens + ") totalNumberOfObservedTokens(" +
         priorOccurrences.totalNumberOfTokens + ")"
@@ -211,7 +211,7 @@ object ManausTermsExtractionService {
     val bags = extractKeywords(sentenceTokens = tokens.tokens.map(_.token),
       observedOccurrences = observedOccurrences,
       priorOccurrences = priorOccurrences,
-      minWordsPerSentence = extractionRequest.minWordsPerSentence.getOrElse(10),
+      minWordsPerSentence = extractionRequest.minWordsPerSentence.getOrElse(5),
       pruneTermsThreshold = extractionRequest.pruneTermsThreshold.getOrElse(100000),
       misspellMaxOccurrence = extractionRequest.misspellMaxOccurrence.getOrElse(5),
       activePotentialDecay = extractionRequest.activePotentialDecay.getOrElse(10),
