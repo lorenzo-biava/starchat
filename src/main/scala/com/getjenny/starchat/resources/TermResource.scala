@@ -107,24 +107,20 @@ trait TermResource extends StarChatResource {
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
                   entity(as[TermIdsRequest]) { request_data =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    parameters("searchMode".as[CommonOrSpecificSearch.Value] ? CommonOrSpecificSearch.COMMON
-                    ) { searchMode =>
-                      onCompleteWithBreaker(breaker)(
-                        termService.getTermsByIdFuture(
-                          indexName = indexName,
-                          searchMode = searchMode,
-                          termsRequest = request_data)
-                      ) {
-                        case Success(t) =>
-                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                        case Failure(e) =>
-                          log.error("index(" + indexName + ") route=termRoutes method=POST function=get : " +
-                            e.getMessage)
-                          completeResponse(StatusCodes.BadRequest,
-                            Option {
-                              ReturnMessageData(code = 101, message = e.getMessage)
-                            })
-                      }
+                    onCompleteWithBreaker(breaker)(
+                      termService.getTermsByIdFuture(
+                        indexName = indexName,
+                        termsRequest = request_data)
+                    ) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                      case Failure(e) =>
+                        log.error("index(" + indexName + ") route=termRoutes method=POST function=get : " +
+                          e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 101, message = e.getMessage)
+                          })
                     }
                   }
                 }
@@ -207,13 +203,9 @@ trait TermResource extends StarChatResource {
                   case "term" =>
                     entity(as[SearchTerm]) { requestData =>
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      parameters("analyzer".as[String] ? "space_punctuation",
-                      "searchMode".as[CommonOrSpecificSearch.Value] ? CommonOrSpecificSearch.COMMON
-                      ) { (analyzer, searchMode) =>
+                      parameters("analyzer".as[String] ? "space_punctuation") { analyzer =>
                         onCompleteWithBreaker(breaker)(
-                          termService.searchTermFuture(indexName = indexName,
-                            searchMode = searchMode,
-                            term = requestData)
+                          termService.searchTermFuture(indexName = indexName, term = requestData)
                         ) {
                           case Success(t) =>
                             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
@@ -230,13 +222,10 @@ trait TermResource extends StarChatResource {
                   case "text" =>
                     entity(as[String]) { requestData =>
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      parameters("analyzer".as[String] ? "space_punctuation",
-                        "searchMode".as[CommonOrSpecificSearch.Value] ? CommonOrSpecificSearch.COMMON
-                      ) { (analyzer, searchMode) =>
+                      parameters("analyzer".as[String] ? "space_punctuation") { analyzer =>
                         onCompleteWithBreaker(breaker)(
                           termService.searchFuture(indexName = indexName,
-                            text = requestData, analyzer = analyzer,
-                            searchMode = searchMode)
+                            text = requestData, analyzer = analyzer)
                         ) {
                           case Success(t) =>
                             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)

@@ -67,14 +67,6 @@ object TermService {
     indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
   }
 
-  private[this] def getCommonIndexName(indexName: String, suffix: Option[String] = None): String = {
-    val arbitraryPattern = elasticClient.commonIndexArbitraryPattern
-    val (language, _) = languageFromIndex(indexName)
-    val commonIndexName = "index_" + language + "_" + arbitraryPattern
-    commonIndexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
-  }
-
-
   /** transform a vector of numerical values to a string payload which can be stored on Elasticsearch
     *
     * @param vector a vector of values
@@ -388,37 +380,18 @@ object TermService {
         score = None: Option[Double])
     })
 
-    documents match {
-      case Nil => None
-      case _ => Some(Terms(terms=documents))
-    }
+    Some(Terms(terms=documents))
   }
 
   /** fetch one or more terms from Elasticsearch
     *
     * @param indexName the index name
     * @param termsRequest the ids of the terms to be fetched
-    * @param searchMode whether to use the common terms table or the index specific terms table.
-    *                   By default it searches only on the common terms table
     * @return fetched terms
     */
   def getTermsByIdFuture(indexName: String,
-                         termsRequest: TermIdsRequest,
-                         searchMode: CommonOrSpecificSearch.Value =
-                         CommonOrSpecificSearch.COMMON) : Future[Option[Terms]] = Future {
-    val fetchedTerms = searchMode match {
-      case CommonOrSpecificSearch.COMMON =>
-        val commonIndexName = getCommonIndexName(indexName)
-        getTermsById(commonIndexName, termsRequest)
-      case CommonOrSpecificSearch.IDXSPECIFIC =>
-        getTermsById(indexName, termsRequest)
-      case _ =>
-        throw TermServiceException("Term : searchMode mode is unknown : " + searchMode.toString)
-    }
-    fetchedTerms match {
-      case Some(terms) => Some(terms)
-      case _ => None
-    }
+                         termsRequest: TermIdsRequest) : Future[Option[Terms]] = Future {
+    getTermsById(indexName, termsRequest)
   }
 
   /** update terms using a Future
@@ -584,10 +557,12 @@ object TermService {
   def searchTerm(indexName: String, term: SearchTerm) : Option[TermsResults] = {
     val client: TransportClient = elasticClient.client
 
+    val analyzer = "space_punctuation"
     val analyzer_name = term.analyzer.getOrElse("space_punctuation")
     val term_field_name =
       TokenizersDescription.analyzers_map.get(analyzer_name) match {
-        case Some(a) => "term." + a
+        case Some(a) =>
+          "term." + analyzer
         case _ =>
           throw TermServiceException("searchTerm: analyzer not found or not supported: (" +
             term.analyzer.getOrElse("") + ")")
@@ -722,27 +697,11 @@ object TermService {
     *
     * @param indexName the index name
     * @param term term search data structure
-    * @param searchMode whether to use the common terms table or the index specific terms table.
-    *                   By default it searches only on the common terms table
     * @return fetched terms
     */
   def searchTermFuture(indexName: String,
-                       term: SearchTerm,
-                       searchMode: CommonOrSpecificSearch.Value =
-                       CommonOrSpecificSearch.COMMON): Future[Option[TermsResults]] = Future {
-    val fetchedTerms = searchMode match {
-      case CommonOrSpecificSearch.COMMON =>
-        val commonIndexName = getCommonIndexName(indexName)
-        searchTerm(commonIndexName, term)
-      case CommonOrSpecificSearch.IDXSPECIFIC =>
-        searchTerm(indexName, term)
-      case _ =>
-        throw TermServiceException("Term : searchMode mode is unknown : " + searchMode.toString)
-    }
-    fetchedTerms match {
-      case Some(terms) => Some(terms)
-      case _ => None
-    }
+                       term: SearchTerm): Future[Option[TermsResults]] = Future {
+    searchTerm(indexName, term)
   }
 
   /** given a text, return all the matching terms
@@ -855,18 +814,8 @@ object TermService {
     */
   def searchFuture(indexName: String,
                    text: String,
-                   analyzer: String = "space_punctuation",
-                   searchMode: CommonOrSpecificSearch.Value = CommonOrSpecificSearch.COMMON
-                  ) : Future[Option[TermsResults]] = Future {
-    val fetchedTerms = searchMode match {
-      case CommonOrSpecificSearch.COMMON =>
-        val commonIndexName = getCommonIndexName(indexName)
-        search(commonIndexName, text, analyzer)
-      case CommonOrSpecificSearch.IDXSPECIFIC =>
-        search(indexName, text, analyzer)
-      case _ =>
-        throw TermServiceException("Term : getTermsById mode is unknown : " + searchMode.toString)
-    }
+                   analyzer: String = "space_punctuation") : Future[Option[TermsResults]] = Future {
+    val fetchedTerms = search(indexName, text, analyzer)
     fetchedTerms match {
       case Some(terms) => Some(terms)
       case _ => None
