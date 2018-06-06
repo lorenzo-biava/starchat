@@ -5,11 +5,14 @@ package com.getjenny.starchat.services
   */
 
 import akka.event.{Logging, LoggingAdapter}
+import com.getjenny.analyzer.util.VectorUtils
 import com.getjenny.manaus.{KeywordsExtraction, TokenOccurrence}
 import com.getjenny.starchat.SCActorSystem
+import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, TextToVectorsTools}
 import com.getjenny.starchat.entities.{TermsExtractionRequest, _}
 import com.getjenny.starchat.services.esclient.ManausTermsExtractionElasticClient
 
+import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -176,19 +179,11 @@ object ManausTermsExtractionService {
         keywordsExtraction.extractBagsNoActiveForSentence(informativeKeywords = informativeKeywords,
           misspellMaxOccurrence = misspellMaxOccurrence)
       }
-
-
-    log.info("ExtractedData: " + rawBagOfKeywordsInfo + " # " + activePotentialKeywordsMap +
-      " # " + informativeKeywords + " # " + bags)
-    println("PLN ExtractedData: " + rawBagOfKeywordsInfo + " # " + activePotentialKeywordsMap +
-      " # " + informativeKeywords + " # " + bags)
     bags
   }
 
-  def textTerms(indexName: String,
-                extractionRequest: TermsExtractionRequest
-               ): Map[String, Double] = {
-
+  private[this] def initTokenOccurrence(indexName: String,
+                                        extractionRequest: TermsExtractionRequest): (TokenOccurrence, TokenOccurrence) = {
     val priorOccurrences: TokenOccurrence = new PriorTokenOccurrenceMap(indexName = indexName,
       commonOrSpecificSearch = extractionRequest.commonOrSpecificSearchPrior.getOrElse(CommonOrSpecificSearch.COMMON),
       field = extractionRequest.fieldsPrior.getOrElse(TermCountFields.all))
@@ -199,12 +194,49 @@ object ManausTermsExtractionService {
       observedDataSource = extractionRequest.observedDataSource.getOrElse(ObservedDataSources.KNOWLEDGEBASE),
       field = extractionRequest.fieldsObserved.getOrElse(TermCountFields.all))
 
-    val tokenizerReq = TokenizerQueryRequest("space_punctuation", extractionRequest.text)
+    (priorOccurrences, observedOccurrences)
+  }
+
+  private[this] def tokenize(indexName: String, extractionRequest: TermsExtractionRequest): TokenizerResponse = {
+    val tokenizerReq = TokenizerQueryRequest(extractionRequest.tokenizer.getOrElse("space_punctuation"),
+      extractionRequest.text)
 
     val tokens: TokenizerResponse = termService.esTokenizer(indexName, tokenizerReq) match {
       case Some(t) => t
       case _ => TokenizerResponse(tokens = List.empty[TokenizerResponseItem])
     }
+
+    tokens
+  }
+
+  def termFrequency(indexName: String, extractionRequest: TermsExtractionRequest): TokenFrequency = {
+    val tokens = tokenize(indexName, extractionRequest)
+    val (priorOccurrences, observedOccurrences) = initTokenOccurrence(indexName, extractionRequest)
+    val freqItems = tokens.tokens.map(_.token).distinct.map { case (token) =>
+      TokenFrequencyItem(
+        token = token,
+        priorFrequency = priorOccurrences.tokenOccurrence(token),
+        observedFrequency = observedOccurrences.tokenOccurrence(token)
+      )
+    }
+
+    TokenFrequency( tokensFreq = freqItems,
+      priorTotalTerms = priorOccurrences.totalNumberOfTokens,
+      observedTotalTerms = observedOccurrences.totalNumberOfTokens
+    )
+  }
+
+  def termFrequencyFuture(indexName: String, extractionRequest: TermsExtractionRequest):
+  Future[TokenFrequency] = Future {
+    termFrequency(indexName, extractionRequest)
+  }
+
+  def textTerms(indexName: String,
+                extractionRequest: TermsExtractionRequest
+               ): (TokenizerResponse, Map[String, Double]) = {
+
+    val tokens = tokenize(indexName, extractionRequest)
+    val (priorOccurrences, observedOccurrences) = initTokenOccurrence(indexName, extractionRequest)
 
     log.debug("ExtractionRequest:" + extractionRequest)
 
@@ -217,25 +249,152 @@ object ManausTermsExtractionService {
       activePotentialDecay = extractionRequest.activePotentialDecay.getOrElse(10),
       activePotential = extractionRequest.activePotential.getOrElse(true),
       totalInfo = extractionRequest.totalInfo.getOrElse(false))
-    bags._2
+    (tokens, bags._2)
   }
 
   def textTermsFuture(indexName: String,
                       extractionRequest: TermsExtractionRequest
-                     ): Future[Map[String, Double]] = Future {
+                     ): Future[(TokenizerResponse, Map[String, Double])] = Future {
     textTerms(indexName = indexName, extractionRequest = extractionRequest)
   }
 
   def termsSynonyms(indexName: String,
                     extractionRequest: SynExtractionRequest
-                   ): Map[String, Double] = {
+                   ): List[SynonymExtractionItem] = {
 
-    Map[String, Double]()
+    // preparing the terms extraction request
+    val termsExtractionRequest = TermsExtractionRequest(
+      text = extractionRequest.text,
+      tokenizer = extractionRequest.tokenizer,
+      commonOrSpecificSearchPrior = extractionRequest.commonOrSpecificSearchPrior,
+      commonOrSpecificSearchObserved = extractionRequest.commonOrSpecificSearchObserved,
+      observedDataSource = extractionRequest.observedDataSource,
+      fieldsPrior = extractionRequest.fieldsPrior,
+      fieldsObserved = extractionRequest.fieldsObserved,
+      minWordsPerSentence =  extractionRequest.minWordsPerSentence,
+      pruneTermsThreshold = extractionRequest.pruneTermsThreshold,
+      misspellMaxOccurrence = extractionRequest.misspellMaxOccurrence,
+      activePotentialDecay = extractionRequest.activePotentialDecay,
+      activePotential = extractionRequest.activePotential,
+      totalInfo = extractionRequest.totalInfo
+    )
+
+    // extract manaus terms
+    val (tokenizationRes, manausKeywords) = textTerms(indexName, termsExtractionRequest)
+    log.info("ManausTermsExtraction: " + tokenizationRes)
+
+    // calculate source index name for the terms (vectorial representation)
+    val termsIndexName = extractionRequest.commonOrSpecificSearchTerms match {
+      case CommonOrSpecificSearch.IDXSPECIFIC => indexName
+      case _ => getCommonIndexName(indexName)
+    }
+
+    // extraction of vectorial terms representation
+    val tokenTermsId: Set[String] = tokenizationRes.tokens.map(_.token).toSet // all tokens
+    val extractedSentenceTerms = termService.getTermsById(termsIndexName, TermIdsRequest(ids = tokenTermsId.toList))
+    val tokenTerms = extractedSentenceTerms match {
+      case Some(terms) => terms.terms.map { case(t) => (t.term, t) }.toMap
+      case _ => Map.empty[String, Term]
+    }
+
+    // extraction of vectorial synonyms representation, exclude terms already in tokens (used as a cache)
+    val synsTermsId = tokenTerms.map { case(_, term) =>
+      term.synonyms match {
+        case Some(synList) => synList.keys.toSet
+        case _ => Set.empty[String]
+      }
+    }.toList.flatten.filter(! tokenTermsId.contains(_)).toSet
+    val extractedSynsTerms = termService.getTermsById(termsIndexName, TermIdsRequest(ids = synsTermsId.toList))
+    val synsTerms = extractedSynsTerms match {
+      case Some(terms) => terms.terms.map { case(t) => (t.term, t) }.toMap
+      case _ => Map.empty[String, Term]
+    }
+
+    //token and synonyms terms map
+    val allTerms: Map[String, Term] = tokenTerms ++ synsTerms
+
+    val numberOfTokens = tokenizationRes.tokens.length
+
+    // calculate the vector representation for the sentence
+    val sentenceVectors = tokenizationRes.tokens.map{ case(token) =>
+      allTerms.get(token.token) match {
+        case Some(t) => (token.token, t.vector)
+        case _ => (token.token, None)
+      }
+    }.filter(_._2.nonEmpty).map { case (t) => t._2.get}.toVector
+    val termsInSentence = sentenceVectors.length
+
+    val indexedTokenizationRes = tokenizationRes.tokens.zipWithIndex
+
+    val baseSentenceTextTerms = TextTerms(
+      text = "",
+      text_terms_n = numberOfTokens,
+      terms_found_n = termsInSentence,
+      terms = extractedSentenceTerms)
+
+    // iterate over tokens and calculate the synonyms score
+    indexedTokenizationRes.map { case(token, index) =>
+      // getting current token and rest of the sentence tokens
+      val currentTokenTerm = allTerms.get(token.token)
+      val restOfTheListTerms = indexedTokenizationRes.filter(_._2 != index).map { case(t) =>
+        allTerms.get(t._1.token)
+      }.filter(_.nonEmpty).map(_.get).filter(_.vector.nonEmpty)
+      // calculating vector representation of the sentence with the current token replaced by a synonym
+      val replacedTokenInSentence = currentTokenTerm match {
+        case Some(t) =>
+          t.vector match {
+            case Some(_) =>
+              // take all the synonyms and discard those without a vector representation
+              val syns = t.synonyms.getOrElse(Map.empty[String, Double]).keys
+                .map { case(s) => allTerms.get(s) }.filter(_.nonEmpty).map(_.get)
+                .filter(_.vector.nonEmpty).toList
+
+              syns.map { case(s) =>
+                val synSentenceTerms = s :: restOfTheListTerms
+                val synSentenceTermsLength = synSentenceTerms.length
+                val synSentenceTextTerms = TextTerms(
+                  text = "",
+                  text_terms_n = numberOfTokens,
+                  terms_found_n = synSentenceTermsLength,
+                  terms = Some(Terms(terms = synSentenceTerms)))
+
+                val sentencesDistance =
+//                  SumVectorDistances.distanceCosineSum(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                  EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+
+                (t, s, sentencesDistance)
+              }
+            case _ =>
+              List.empty[(Term, Term, Double)]
+          }
+        case _ => List.empty[(Term, Term, Double)]
+      }
+
+      val synItems = replacedTokenInSentence.map { case(term, synonym, distance) =>
+        val termsDistance = VectorUtils.cosineDist(
+          term.vector.getOrElse(TextToVectorsTools.emptyVec(term.vector.get.length)), synonym.vector.get)
+
+        SynonymItem(
+          synonym = synonym.term,
+          synonymScore = distance,
+          termSimilarityScore = termsDistance,
+          textDistanceWithSynonym = distance,
+          isKeywordToken = manausKeywords.contains(term.term),
+          keywordExtractionScore = manausKeywords.getOrElse(term.term, 0.0d)
+        )
+      }.filter(_.synonymScore > extractionRequest.sentencesThreshold.getOrElse(0.0d))
+        .filter(_.termSimilarityScore > extractionRequest.synonymsThresholds.getOrElse(0.0d))
+
+      SynonymExtractionItem(
+        token = token,
+        synonymItem = synItems
+      )
+    }
   }
 
   def termsSynonymsFuture(indexName: String,
                           extractionRequest: SynExtractionRequest
-                         ): Future[Map[String, Double]] = Future {
+                         ): Future[List[SynonymExtractionItem]] = Future {
     termsSynonyms(indexName = indexName, extractionRequest = extractionRequest)
   }
 

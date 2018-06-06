@@ -6,7 +6,7 @@ package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
-import com.getjenny.starchat.analyzer.utils.EmDistance
+import com.getjenny.starchat.analyzer.utils.EMDVectorDistances
 import com.getjenny.starchat.entities.TextTerms
 import com.getjenny.starchat.services._
 
@@ -54,7 +54,7 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], re
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val queryVectors = termService.textToVectors(indexName = indexName, text = query)
     val emdDistQueries = queriesVectors.map(q => {
-      val dist = EmDistance.distanceEuclidean(q , queryVectors)
+      val dist = EMDVectorDistances.distanceEuclidean(q , queryVectors)
       dist
     })
 

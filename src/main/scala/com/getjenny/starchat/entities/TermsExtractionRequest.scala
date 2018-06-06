@@ -6,6 +6,7 @@ package com.getjenny.starchat.entities
 
 case class TermsExtractionRequest (
                                     text: String,
+                                    tokenizer: Option[String] = Some("space_punctuation"),
                                     commonOrSpecificSearchPrior: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.COMMON),
                                     commonOrSpecificSearchObserved: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.IDXSPECIFIC),
                                     observedDataSource: Option[ObservedDataSources.Value] = Some(ObservedDataSources.KNOWLEDGEBASE),

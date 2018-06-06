@@ -17,9 +17,9 @@ trait TermsExtractionResource extends StarChatResource {
 
   private[this] val spellcheckService: ManausTermsExtractionService.type = ManausTermsExtractionService
 
-  def termsExtractionRoutes: Route = //handleExceptions(routesExceptionHandler) {
+  def freqExtractionRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "extraction") { indexName =>
-      pathPrefix("keywords") {
+      pathPrefix("frequencies") {
         pathEnd {
           post {
             authenticateBasicAsync(realm = authRealm,
@@ -29,8 +29,10 @@ trait TermsExtractionResource extends StarChatResource {
                 extractRequest { request =>
                   entity(as[TermsExtractionRequest]) { extractionRequest =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(spellcheckService.textTermsFuture(indexName = indexName,
-                      extractionRequest = extractionRequest)) {
+                    onCompleteWithBreaker(breaker)(
+                      spellcheckService.termFrequencyFuture(indexName = indexName,
+                        extractionRequest = extractionRequest)
+                    ) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                       case Failure(e) =>
@@ -49,7 +51,41 @@ trait TermsExtractionResource extends StarChatResource {
         }
       }
     }
-  //  }
+  }
+
+  def termsExtractionRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "extraction") { indexName =>
+      pathPrefix("keywords") {
+        pathEnd {
+          post {
+            authenticateBasicAsync(realm = authRealm,
+              authenticator = authenticator.authenticator) { (user) =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, indexName, Permissions.read)) {
+                extractRequest { request =>
+                  entity(as[TermsExtractionRequest]) { extractionRequest =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(spellcheckService.textTermsFuture(indexName = indexName,
+                      extractionRequest = extractionRequest)) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t._2)
+                      case Failure(e) =>
+                        log.error("index(" + indexName + ") uri=(" + request.uri +
+                          ") method=(" + request.method.name + ") : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 100, message = e.getMessage)
+                          })
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   def synExtractionRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "extraction") { indexName =>

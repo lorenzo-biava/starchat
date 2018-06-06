@@ -6,16 +6,19 @@ package com.getjenny.starchat.entities
 
 case class SynExtractionRequest (
                                   text: String,
+                                  tokenizer: Option[String] = Some("space_punctuation"),
+                                  sentencesThreshold: Option[Double] = Some(0.0d),
+                                  synonymsThresholds: Option[Double] = Some(0.0d),
                                   commonOrSpecificSearchTerms: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.COMMON),
                                   commonOrSpecificSearchPrior: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.COMMON),
                                   commonOrSpecificSearchObserved: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.IDXSPECIFIC),
                                   observedDataSource: Option[ObservedDataSources.Value] = Some(ObservedDataSources.KNOWLEDGEBASE),
                                   fieldsPrior: Option[TermCountFields.Value] = Some(TermCountFields.all),
                                   fieldsObserved: Option[TermCountFields.Value] = Some(TermCountFields.all),
-                                  minWordsPerSentence: Option[Long] = Some(10),
+                                  minWordsPerSentence: Option[Int] = Some(10),
                                   pruneTermsThreshold: Option[Int] = Some(100000),
                                   misspellMaxOccurrence: Option[Int] = Some(5),
                                   activePotentialDecay: Option[Int] = Some(10),
                                   activePotential: Option[Boolean] = Some(true),
-                                  total_info: Option[Boolean] = Some(false)
+                                  totalInfo: Option[Boolean] = Some(false)
                                 )

@@ -3,43 +3,25 @@ package com.getjenny.starchat.analyzer.utils
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services._
+import com.getjenny.analyzer.util.VectorUtils
 
 /**
   * Created by angelo on 04/04/17.
   */
 
-object EmDistance {
+object EMDVectorDistances {
   val termService: TermService.type = TermService
-
-  val emptyVec: Vector[Double] = Vector.fill(300){0.0}
 
   implicit class CrossTable[X](xs: Traversable[X]) {
     def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
   }
 
   //reduced EMD
-  def distance(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms],
-               dist_f: (Vector[Double], Vector[Double]) => Double): (Double, Double, Double) = {
+  private[this] def distanceReducedEMD(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms],
+                         dist_f: (Vector[Double], Vector[Double]) => Double): (Double, Double, Double) = {
 
-    val vectors1 = textTerms1 match {
-      case Some(t) => {
-        t.terms match {
-          case Some(terms) => terms.terms.map (e => (e.term, e.vector.getOrElse(emptyVec)) )
-          case _ => List.empty[(String, Vector[Double])]
-        }
-      }
-      case _ => List.empty[(String, Vector[Double])]
-    }
-
-    val vectors2 = textTerms2 match {
-      case Some(t) => {
-        t.terms match {
-          case Some(terms) => terms.terms.map (e => (e.term, e.vector.getOrElse(emptyVec)) )
-          case _ => List.empty[(String, Vector[Double])]
-        }
-      }
-      case _ => List.empty[(String, Vector[Double])]
-    }
+    val vectors1 = TextToVectorsTools.textTermsToVectors(textTerms1)
+    val vectors2 = TextToVectorsTools.textTermsToVectors(textTerms2)
 
     val reliabilityFactor1 = textTerms1 match {
       case Some(terms) => terms.terms_found_n.toDouble / terms.text_terms_n.toDouble
@@ -55,7 +37,7 @@ object EmDistance {
       .map{case(term, termVectorPair) =>
         val termFirstEntryVector = termVectorPair.headOption match {
           case Some(vectorPair) => vectorPair._2
-          case _ => emptyVec
+          case _ => TextToVectorsTools.emptyVec()
         }
         (term, (termVectorPair.length.toDouble, termFirstEntryVector))
       }
@@ -64,7 +46,7 @@ object EmDistance {
       .map{case(term, termVectorPair) =>
         val termFirstEntryVector = termVectorPair.headOption match {
           case Some(vectorPair) => vectorPair._2
-          case _ => emptyVec
+          case _ => TextToVectorsTools.emptyVec()
         }
         (term, (termVectorPair.length.toDouble, termFirstEntryVector))
       }
@@ -108,7 +90,7 @@ object EmDistance {
                    dist_f: (Vector[Double], Vector[Double]) => Double): (Double, Double, Double) = {
     val textVectors1 = termService.textToVectors(indexName, text = text1)
     val textVectors2 = termService.textToVectors(indexName, text = text2)
-    distance(textVectors1, textVectors2, dist_f)
+    distanceReducedEMD(textVectors1, textVectors2, dist_f)
   }
 
   def distanceEuclidean(indexName: String, text1: String, text2: String): Double = {
@@ -126,15 +108,14 @@ object EmDistance {
   }
 
   def distanceEuclidean(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms]): Double = {
-    val (distanceScore, reliabilityFactor1, reliabilityFactor2) = distance(textTerms1, textTerms2, euclideanDist)
+    val (distanceScore, reliabilityFactor1, reliabilityFactor2) = distanceReducedEMD(textTerms1, textTerms2, euclideanDist)
     val score = (1.0 / (1 + distanceScore)) * (reliabilityFactor1 * reliabilityFactor2)
     score
   }
 
   def distanceCosine(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms]): Double = {
-    val (distanceScore, reliabilityFactor1, reliabilityFactor2) = distance(textTerms1, textTerms2, cosineDist)
+    val (distanceScore, reliabilityFactor1, reliabilityFactor2) = distanceReducedEMD(textTerms1, textTerms2, cosineDist)
     val score = (1.0 / (1 + distanceScore )) * (reliabilityFactor1 * reliabilityFactor2)
     score
   }
-
 }
