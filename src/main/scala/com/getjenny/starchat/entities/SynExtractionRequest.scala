@@ -6,9 +6,11 @@ package com.getjenny.starchat.entities
 
 case class SynExtractionRequest (
                                   text: String,
-                                  tokenizer: Option[String] = Some("space_punctuation"),
+                                  tokenizer: Option[String] = Some("base"),
                                   sentencesThreshold: Option[Double] = Some(0.0d),
                                   synonymsThresholds: Option[Double] = Some(0.0d),
+                                  distanceFunction: Option[SynonymExtractionDistanceFunction.Value] =
+                                    Some(SynonymExtractionDistanceFunction.SUMCOSINE),
                                   commonOrSpecificSearchTerms: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.COMMON),
                                   commonOrSpecificSearchPrior: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.COMMON),
                                   commonOrSpecificSearchObserved: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.IDXSPECIFIC),

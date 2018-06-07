@@ -65,6 +65,12 @@
               "analyzer": "jenny_base_analyzer",
               "similarity": "scripted_term_freq"
             },
+            "space_punctuation": {
+              "type": "text",
+              "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_space_punctuation_analyzer"
+            },
             "base": {
               "type": "text",
               "fielddata": true,
@@ -256,11 +262,17 @@
               "analyzer": "jenny_base_analyzer",
               "similarity": "scripted_term_freq"
             },
-            "base": {
+            "space_punctuation": {
               "type": "text",
               "fielddata": true,
               "term_vector": "with_positions_offsets",
               "analyzer": "jenny_space_punctuation_analyzer"
+            },
+            "base": {
+              "type": "text",
+              "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_base_analyzer"
             },
             "base_length": {
               "type":     "token_count",

@@ -77,7 +77,7 @@ object IndexTerms extends JsonSupport {
         val entity = Await.result(entityFuture, 10.second)
         val responseFuture: Future[HttpResponse] =
           Http().singleRequest(HttpRequest(
-            method = HttpMethods.POST,
+            method = HttpMethods.PUT,
             uri = baseUrl,
             headers = httpHeader,
             entity = entity))

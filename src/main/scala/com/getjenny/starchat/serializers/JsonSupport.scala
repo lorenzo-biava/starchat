@@ -146,11 +146,24 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
+
+  implicit object synonymExtractionDistanceFunctionFormat extends JsonFormat[SynonymExtractionDistanceFunction.Value] {
+    def write(obj: SynonymExtractionDistanceFunction.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): SynonymExtractionDistanceFunction.Value = json match {
+      case JsString(str) =>
+        SynonymExtractionDistanceFunction.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("SynonymExtractionDistanceFunction string is invalid")
+        }
+      case _ => throw DeserializationException("SynonymExtractionDistanceFunction string expected")
+    }
+  }
+
   implicit val termCountFormat = jsonFormat2(TermCount)
   implicit val totalTermsFormat = jsonFormat3(TotalTerms)
   implicit val dictSizeFormat = jsonFormat4(DictSize)
   implicit val termsExtractionRequestFormat = jsonFormat13(TermsExtractionRequest)
-  implicit val synExtractionRequestFormat = jsonFormat16(SynExtractionRequest)
+  implicit val synExtractionRequestFormat = jsonFormat17(SynExtractionRequest)
   implicit val synonymItemFormat = jsonFormat6(SynonymItem)
   implicit val synonymExtractionItemFormat = jsonFormat2(SynonymExtractionItem)
   implicit val tokenFrequencyItemFormat = jsonFormat3(TokenFrequencyItem)

@@ -8,7 +8,7 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.VectorUtils
 import com.getjenny.manaus.{KeywordsExtraction, TokenOccurrence}
 import com.getjenny.starchat.SCActorSystem
-import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, TextToVectorsTools}
+import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, SumVectorDistances, TextToVectorsTools}
 import com.getjenny.starchat.entities.{TermsExtractionRequest, _}
 import com.getjenny.starchat.services.esclient.ManausTermsExtractionElasticClient
 
@@ -198,7 +198,7 @@ object ManausTermsExtractionService {
   }
 
   private[this] def tokenize(indexName: String, extractionRequest: TermsExtractionRequest): TokenizerResponse = {
-    val tokenizerReq = TokenizerQueryRequest(extractionRequest.tokenizer.getOrElse("space_punctuation"),
+    val tokenizerReq = TokenizerQueryRequest(extractionRequest.tokenizer.getOrElse("base"),
       extractionRequest.text)
 
     val tokens: TokenizerResponse = termService.esTokenizer(indexName, tokenizerReq) match {
@@ -358,9 +358,14 @@ object ManausTermsExtractionService {
                   terms_found_n = synSentenceTermsLength,
                   terms = Some(Terms(terms = synSentenceTerms)))
 
-                val sentencesDistance =
-//                  SumVectorDistances.distanceCosineSum(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
-                  EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                val sentencesDistance = extractionRequest.distanceFunction match {
+                  case SynonymExtractionDistanceFunction.EMDCOSINE =>
+                    EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                  case SynonymExtractionDistanceFunction.SUMCOSINE =>
+                    SumVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                  case _ =>
+                    SumVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                }
 
                 (t, s, sentencesDistance)
               }
