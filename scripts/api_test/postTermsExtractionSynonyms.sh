@@ -9,8 +9,8 @@ curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
 {
 	\"text\": \"${QUERY}\",
 	\"tokenizer\": \"base\",
-	\"sentencesThreshold\": 0.5,
-        \"synonymsThresholds\": 0.5,
+	\"sentencesThreshold\": 0.0,
+        \"synonymsThresholds\": 0.0,
 	\"commonOrSpecificSearchPrior\": \"COMMON\",
 	\"commonOrSpecificSearchObserved\": \"IDXSPECIFIC\",
 	\"observedDataSource\": \"KNOWLEDGEBASE\",

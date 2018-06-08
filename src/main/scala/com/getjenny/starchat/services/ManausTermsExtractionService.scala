@@ -291,7 +291,7 @@ object ManausTermsExtractionService {
 
     // extraction of vectorial terms representation
     val tokenTermsId: Set[String] = tokenizationRes.tokens.map(_.token).toSet // all tokens
-    val extractedSentenceTerms = termService.getTermsById(termsIndexName, TermIdsRequest(ids = tokenTermsId.toList))
+    val extractedSentenceTerms = termService.termsById(termsIndexName, TermIdsRequest(ids = tokenTermsId.toList))
     val tokenTerms = extractedSentenceTerms match {
       case Some(terms) => terms.terms.map { case(t) => (t.term, t) }.toMap
       case _ => Map.empty[String, Term]
@@ -304,7 +304,7 @@ object ManausTermsExtractionService {
         case _ => Set.empty[String]
       }
     }.toList.flatten.filter(! tokenTermsId.contains(_)).toSet
-    val extractedSynsTerms = termService.getTermsById(termsIndexName, TermIdsRequest(ids = synsTermsId.toList))
+    val extractedSynsTerms = termService.termsById(termsIndexName, TermIdsRequest(ids = synsTermsId.toList))
     val synsTerms = extractedSynsTerms match {
       case Some(terms) => terms.terms.map { case(t) => (t.term, t) }.toMap
       case _ => Map.empty[String, Term]

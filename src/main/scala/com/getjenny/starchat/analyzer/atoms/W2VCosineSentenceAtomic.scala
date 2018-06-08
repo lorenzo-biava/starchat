@@ -32,10 +32,10 @@ class W2VCosineSentenceAtomic(val arguments: List[String], restricted_args: Map[
 
 
   val indexName = restricted_args("index_name")
-  val sentenceVector: (Vector[Double], Double) = TextToVectorsTools.getSumOfVectorsFromText(indexName, sentence)
+  val sentenceVector: (Vector[Double], Double) = TextToVectorsTools.sumOfVectorsFromText(indexName, sentence)
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val query_vector = TextToVectorsTools.getSumOfVectorsFromText(indexName, query)
+    val query_vector = TextToVectorsTools.sumOfVectorsFromText(indexName, query)
 
     /** cosineDist returns 0.0 for the closest vector, we want 1.0 when the similarity is the highest
       *   so we use 1.0 - ...

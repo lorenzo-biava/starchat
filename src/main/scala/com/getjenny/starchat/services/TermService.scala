@@ -7,6 +7,7 @@ package com.getjenny.starchat.services
 import java.io.{FileNotFoundException, InputStream}
 
 import akka.event.{Logging, LoggingAdapter}
+import com.getjenny.analyzer.util.VectorUtils
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.TermElasticClient
@@ -30,6 +31,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
 import scalaz.Scalaz._
+import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, SumVectorDistances, TextToVectorsTools}
 
 case class TermServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -310,8 +312,8 @@ object TermService {
     * @param termsRequest the ids of the terms to be fetched
     * @return fetched terms
     */
-  def getTermsById(indexName: String,
-                   termsRequest: TermIdsRequest) : Option[Terms] = {
+  def termsById(indexName: String,
+                termsRequest: TermIdsRequest) : Option[Terms] = {
     val documents: List[Term] = if(termsRequest.ids.nonEmpty) {
       val client: TransportClient = elasticClient.client
       val multiGetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
@@ -409,7 +411,7 @@ object TermService {
     */
   def getTermsByIdFuture(indexName: String,
                          termsRequest: TermIdsRequest) : Future[Option[Terms]] = Future {
-    getTermsById(indexName, termsRequest)
+    termsById(indexName, termsRequest)
   }
 
   /** update terms using a Future
@@ -711,6 +713,36 @@ object TermService {
     )
   }
 
+  /** fetch two terms and calculate the distance between them
+    *
+    * @param indexName the index name
+    * @param termsReq list of terms
+    * @return the distance between terms
+    */
+  def termsDistance(indexName: String, termsReq: TermIdsRequest): Future[List[TermsDistanceRes]] = Future {
+    val extractedTerms = termsById(indexName, TermIdsRequest(ids = termsReq.ids))
+    val retrievedTerms = extractedTerms match {
+      case Some(terms) =>
+        terms.terms.map { case(t) => (t.term, t) }.toMap
+      case _ =>
+        Map.empty[String, Term]
+    }
+
+    val product = retrievedTerms.keys.flatMap(a => retrievedTerms.keys.map(b => (a, b))).filter(e => e._1 =/= e._2)
+    product.map { case(t1, t2) =>
+      val v1 = retrievedTerms(t1).vector.getOrElse(TextToVectorsTools.emptyVec())
+      val v2 = retrievedTerms(t2).vector.getOrElse(TextToVectorsTools.emptyVec())
+      TermsDistanceRes(
+        term1 = t1,
+        term2 = t2,
+        vector1 = v1,
+        vector2 = v2,
+        cosDistance = VectorUtils.cosineDist(v1, v2),
+        eucDistance = VectorUtils.euclideanDist(v1, v2)
+      )
+    }.toList
+  }
+
   /** search terms on Elasticsearch
     *
     * @param indexName the index name
@@ -900,7 +932,7 @@ object TermService {
     val tokenList = if (unique) fullTokenList.toSet.toList else fullTokenList
     val returnValue = if(tokenList.nonEmpty) {
       val termsRequest = TermIdsRequest(ids = tokenList)
-      val termList = getTermsById(indexName, termsRequest)
+      val termList = termsById(indexName, termsRequest)
 
       val textTerms = TextTerms(text = text,
         text_terms_n = tokenList.length,

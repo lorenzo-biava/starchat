@@ -28,7 +28,7 @@ object TextToVectorsTools {
     }
   }
 
-  def getSumOfTermsVectors(textTerms: Option[TextTerms], length: Int = 300): (Vector[Double], Double) = {
+  def sumOfTermsVectors(textTerms: Option[TextTerms], length: Int = 300): (Vector[Double], Double) = {
     textTerms match {
       case Some(t) => {
         val vectors = t.terms match {
@@ -48,9 +48,9 @@ object TextToVectorsTools {
     }
   }
 
-  def getSumOfVectorsFromText(index_name: String, text: String): (Vector[Double], Double) = {
+  def sumOfVectorsFromText(index_name: String, text: String): (Vector[Double], Double) = {
     val textVectors = termService.textToVectors(index_name, text)
-    val vector = getSumOfTermsVectors(textVectors)
+    val vector = sumOfTermsVectors(textVectors)
     vector
   }
 

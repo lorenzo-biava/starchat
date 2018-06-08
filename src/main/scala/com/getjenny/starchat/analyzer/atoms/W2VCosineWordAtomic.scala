@@ -29,7 +29,7 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
 
   val indexName: String = restricted_args("index_name")
   val (sentenceVector: Vector[Double], reliabilityFactor: Double) =
-    TextToVectorsTools.getSumOfVectorsFromText(indexName, word)
+    TextToVectorsTools.sumOfVectorsFromText(indexName, word)
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {

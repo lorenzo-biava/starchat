@@ -73,6 +73,29 @@ trait TermResource extends StarChatResource {
                   }
                 }
               }
+            case "distance" =>
+              authenticateBasicAsync(realm = authRealm,
+                authenticator = authenticator.authenticator) { (user) =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, indexName, Permissions.read)) {
+                  entity(as[TermIdsRequest]) { requestData =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(
+                      termService.termsDistance( indexName = indexName, termsReq = requestData)
+                    ) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                      case Failure(e) =>
+                        log.error("index(" + indexName + ") route=termRoutes method=POST function=get : " +
+                          e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 101, message = e.getMessage)
+                          })
+                    }
+                  }
+                }
+              }
             case "index_default_synonyms" =>
               withoutRequestTimeout {
                 authenticateBasicAsync(realm = authRealm,
