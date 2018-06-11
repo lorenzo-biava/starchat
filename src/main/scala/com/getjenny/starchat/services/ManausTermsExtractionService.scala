@@ -310,7 +310,7 @@ object ManausTermsExtractionService {
       case _ => Map.empty[String, Term]
     }
 
-    //token and synonyms terms map
+    // token and synonyms terms map
     val allTerms: Map[String, Term] = tokenTerms ++ synsTerms
 
     val numberOfTokens = tokenizationRes.tokens.length
@@ -383,15 +383,15 @@ object ManausTermsExtractionService {
           synonym = synonym.term,
           synonymScore = distance,
           termSimilarityScore = termsDistance,
-          textDistanceWithSynonym = distance,
-          isKeywordToken = manausKeywords.contains(term.term),
-          keywordExtractionScore = manausKeywords.getOrElse(term.term, 0.0d)
+          textDistanceWithSynonym = distance
         )
       }.filter(_.synonymScore > extractionRequest.sentencesThreshold.getOrElse(0.0d))
         .filter(_.termSimilarityScore > extractionRequest.synonymsThresholds.getOrElse(0.0d))
 
       SynonymExtractionItem(
         token = token,
+        isKeywordToken = manausKeywords.contains(token.token),
+        keywordExtractionScore = manausKeywords.getOrElse(token.token, 0.0d),
         synonymItem = synItems
       )
     }

@@ -37,6 +37,7 @@ import scalaz.Scalaz._
 
 trait QuestionAnswerService {
   val elasticClient: QuestionAnswerElasticClient
+  val manausTermsExtractionService: ManausTermsExtractionService.type = ManausTermsExtractionService
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   val nested_score_mode: Map[String, ScoreMode] = Map[String, ScoreMode]("min" -> ScoreMode.Min,
@@ -468,8 +469,7 @@ trait QuestionAnswerService {
     Option {doc_result}
   }
 
-  def update(indexName: String, id: String, document: KBDocumentUpdate, refresh: Int):
-  Future[Option[UpdateDocumentResult]] = Future {
+  def update(indexName: String, id: String, document: KBDocumentUpdate, refresh: Int): UpdateDocumentResult = {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.conversation match {
@@ -576,7 +576,7 @@ trait QuestionAnswerService {
       created = response.status === RestStatus.CREATED
     )
 
-    Option {docResult}
+    docResult
   }
 
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
@@ -616,11 +616,12 @@ trait QuestionAnswerService {
     Option {docResult}
   }
 
-  def read(indexName: String, ids: List[String]): Future[Option[SearchKBDocumentsResults]] = {
+  def read(indexName: String, ids: List[String]): Option[SearchKBDocumentsResults] = {
     val client: TransportClient = elasticClient.client
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multigetBuilder.add(getIndexName(indexName), elasticClient.indexMapping, ids:_*)
+    multigetBuilder.add(getIndexName(indexName), elasticClient.indexSuffix, ids:_*)
     val response: MultiGetResponse = multigetBuilder.get()
+
 
     val documents : Option[List[SearchKBDocument]] = Option { response.getResponses
       .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
@@ -737,8 +738,57 @@ trait QuestionAnswerService {
     val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, max_score = maxScore,
       hits = filteredDoc)
 
-    val searchResultsOption : Future[Option[SearchKBDocumentsResults]] = Future { Option { searchResults } }
+    val searchResultsOption : Option[SearchKBDocumentsResults] = Option { searchResults }
     searchResultsOption
+  }
+
+  def readFuture(indexName: String, ids: List[String]): Future[Option[SearchKBDocumentsResults]] = Future {
+    read(indexName, ids)
+  }
+
+  def updateFuture(indexName: String, id: String, document: KBDocumentUpdate, refresh: Int):
+  Future[UpdateDocumentResult] = Future {
+    update(indexName, id, document, refresh)
+  }
+
+  def updateTextTerms(indexName: String,
+                      extractionRequest: UpdateQATermsRequest
+                     ): List[UpdateDocumentResult] = {
+
+    def extractionReq(text: String, er: UpdateQATermsRequest) = TermsExtractionRequest(text = text,
+      tokenizer = Some("space_punctuation"),
+      commonOrSpecificSearchPrior = Some(CommonOrSpecificSearch.COMMON),
+      commonOrSpecificSearchObserved = Some(CommonOrSpecificSearch.IDXSPECIFIC),
+      observedDataSource = Some(ObservedDataSources.KNOWLEDGEBASE),
+      fieldsPrior = Some(TermCountFields.all),
+      fieldsObserved = Some(TermCountFields.all),
+      minWordsPerSentence = Some(10),
+      pruneTermsThreshold = Some(100000),
+      misspellMaxOccurrence = Some(5),
+      activePotentialDecay = Some(10),
+      activePotential = Some(true),
+      totalInfo = Some(false))
+
+    val ids: List[String] = List(extractionRequest.id)
+    val q = this.read(indexName, ids)
+    val hits = q.getOrElse(SearchKBDocumentsResults())
+    hits.hits.map{ case(hit) =>
+      val extractionReqQ = extractionReq(text = hit.document.question, er = extractionRequest)
+      val extractionReqA = extractionReq(text = hit.document.answer, er = extractionRequest)
+      val (_, termsQ) = manausTermsExtractionService
+        .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
+      val (_, termsA) = manausTermsExtractionService
+        .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
+      val scoredTermsUpdateReq = KBDocumentUpdate(question_scored_terms = Some(termsQ.toList),
+        answer_scored_terms = Some(termsA.toList))
+      this.update(indexName = indexName, id = hit.document.id, document = scoredTermsUpdateReq, refresh = 0)
+    }
+  }
+
+  def updateTextTermsFuture(indexName: String,
+                            extractionRequest: UpdateQATermsRequest):
+  Future[List[UpdateDocumentResult]] = Future {
+    updateTextTerms(indexName, extractionRequest)
   }
 
   def allDocuments(index_name: String, keepAlive: Long = 60000): Iterator[KBDocument] = {

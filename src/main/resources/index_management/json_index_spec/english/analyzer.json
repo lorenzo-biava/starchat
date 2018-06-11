@@ -66,6 +66,18 @@
     },
     "analyzer":
     {
+      "jenny_raw_nolc_analyzer":
+      {
+        "tokenizer":    "keyword"
+      },
+      "jenny_space_punctuation_nolc_analyzer":
+      {
+        "tokenizer":    "space_punctuation"
+      },
+      "jenny_base_nolc_analyzer":
+      {
+        "tokenizer":    "standard"
+      },
       "jenny_raw_analyzer":
       {
         "tokenizer":    "keyword",

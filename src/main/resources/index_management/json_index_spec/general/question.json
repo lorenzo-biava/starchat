@@ -56,14 +56,14 @@
           "type": "text",
           "store": true,
           "fields": {
-            "raw": {
-              "type": "keyword",
-              "ignore_above": 10922
-            },
             "freq": {
               "type": "text",
               "analyzer": "jenny_base_analyzer",
               "similarity": "scripted_term_freq"
+            },
+            "raw": {
+              "type": "keyword",
+              "ignore_above": 10922
             },
             "space_punctuation": {
               "type": "text",
@@ -76,6 +76,22 @@
               "fielddata": true,
               "term_vector": "with_positions_offsets",
               "analyzer": "jenny_base_analyzer"
+            },
+            "raw_nolc": {
+              "type": "jenny_raw_nolc_analyzer",
+              "ignore_above": 10922
+            },
+            "space_punctuation_nolc": {
+              "type": "text",
+              "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_space_punctuation_nolc_analyzer"
+            },
+            "base_nolc": {
+              "type": "text",
+              "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_base_nolc_analyzer"
             },
             "base_length": {
               "type":     "token_count",
@@ -149,20 +165,42 @@
               "type": "text",
               "store": true,
               "fields": {
-                "raw": {
-                  "type": "keyword",
-                  "ignore_above": 10922
-                },
                 "freq": {
                   "type": "text",
                   "analyzer": "jenny_base_analyzer",
                   "similarity": "scripted_term_freq"
+                },
+                "raw": {
+                  "type": "keyword",
+                  "ignore_above": 10922
+                },
+                "space_punctuation": {
+                  "type": "text",
+                  "fielddata": true,
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_space_punctuation_analyzer"
                 },
                 "base": {
                   "type": "text",
                   "fielddata": true,
                   "term_vector": "with_positions_offsets",
                   "analyzer": "jenny_base_analyzer"
+                },
+                "raw_nolc": {
+                  "type": "jenny_raw_nolc_analyzer",
+                  "ignore_above": 10922
+                },
+                "space_punctuation_nolc": {
+                  "type": "text",
+                  "fielddata": true,
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_space_punctuation_nolc_analyzer"
+                },
+                "base_nolc": {
+                  "type": "text",
+                  "fielddata": true,
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_base_nolc_analyzer"
                 },
                 "base_length": {
                   "type":     "token_count",
@@ -253,14 +291,14 @@
           "type": "text",
           "store": true,
           "fields": {
-            "raw": {
-              "type": "keyword",
-              "ignore_above": 10922
-            },
             "freq": {
               "type": "text",
               "analyzer": "jenny_base_analyzer",
               "similarity": "scripted_term_freq"
+            },
+            "raw": {
+              "type": "jenny_raw_analyzer",
+              "ignore_above": 10922
             },
             "space_punctuation": {
               "type": "text",
@@ -273,6 +311,22 @@
               "fielddata": true,
               "term_vector": "with_positions_offsets",
               "analyzer": "jenny_base_analyzer"
+            },
+            "raw_nolc": {
+              "type": "jenny_raw_nolc_analyzer",
+              "ignore_above": 10922
+            },
+            "space_punctuation_nolc": {
+              "type": "text",
+              "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_space_punctuation_nolc_analyzer"
+            },
+            "base_nolc": {
+              "type": "text",
+              "fielddata": true,
+              "term_vector": "with_positions_offsets",
+              "analyzer": "jenny_base_nolc_analyzer"
             },
             "base_length": {
               "type":     "token_count",

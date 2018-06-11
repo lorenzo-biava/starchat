@@ -164,9 +164,10 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val dictSizeFormat = jsonFormat4(DictSize)
   implicit val termsExtractionRequestFormat = jsonFormat13(TermsExtractionRequest)
   implicit val synExtractionRequestFormat = jsonFormat17(SynExtractionRequest)
-  implicit val synonymItemFormat = jsonFormat6(SynonymItem)
-  implicit val synonymExtractionItemFormat = jsonFormat2(SynonymExtractionItem)
+  implicit val synonymItemFormat = jsonFormat4(SynonymItem)
+  implicit val synonymExtractionItemFormat = jsonFormat4(SynonymExtractionItem)
   implicit val tokenFrequencyItemFormat = jsonFormat3(TokenFrequencyItem)
   implicit val tokenFrequencyFormat = jsonFormat3(TokenFrequency)
   implicit val termsDistanceResFormat = jsonFormat6(TermsDistanceRes)
+  implicit val updateQATermsRequestFormat = jsonFormat13(UpdateQATermsRequest)
 }
