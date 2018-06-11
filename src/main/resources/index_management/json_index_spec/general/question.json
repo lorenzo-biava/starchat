@@ -78,8 +78,8 @@
               "analyzer": "jenny_base_analyzer"
             },
             "raw_nolc": {
-              "type": "jenny_raw_nolc_analyzer",
-              "ignore_above": 10922
+              "type": "text",
+              "analyzer": "jenny_raw_nolc_analyzer"
             },
             "space_punctuation_nolc": {
               "type": "text",
@@ -187,8 +187,8 @@
                   "analyzer": "jenny_base_analyzer"
                 },
                 "raw_nolc": {
-                  "type": "jenny_raw_nolc_analyzer",
-                  "ignore_above": 10922
+                  "type": "text",
+                  "analyzer": "jenny_raw_nolc_analyzer"
                 },
                 "space_punctuation_nolc": {
                   "type": "text",
@@ -297,7 +297,7 @@
               "similarity": "scripted_term_freq"
             },
             "raw": {
-              "type": "jenny_raw_analyzer",
+              "type": "keyword",
               "ignore_above": 10922
             },
             "space_punctuation": {
@@ -313,8 +313,8 @@
               "analyzer": "jenny_base_analyzer"
             },
             "raw_nolc": {
-              "type": "jenny_raw_nolc_analyzer",
-              "ignore_above": 10922
+              "type": "text",
+              "analyzer": "jenny_raw_nolc_analyzer"
             },
             "space_punctuation_nolc": {
               "type": "text",
