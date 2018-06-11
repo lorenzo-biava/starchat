@@ -128,9 +128,9 @@ trait PriorDataResource extends StarChatResource {
         get {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
-            extractRequest { request =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, indexName, Permissions.stream)) {
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.stream)) {
+              extractRequest { request =>
                 val entryIterator = questionAnswerService.allDocuments(indexName)
                 val entries: Source[KBDocument, NotUsed] =
                   Source.fromIterator(() => entryIterator)
@@ -351,6 +351,22 @@ trait PriorDataResource extends StarChatResource {
                           ReturnMessageData(code = 103, message = e.getMessage)
                         })
                   }
+                }
+              }
+            }
+          }
+        } ~ post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.stream)) {
+              entity(as[UpdateQATermsRequest]) { extractionRequest =>
+                extractRequest { request =>
+                  val entryIterator = questionAnswerService.updateAllTextTerms(indexName = indexName,
+                    extractionRequest = extractionRequest)
+                  val entries: Source[UpdateDocumentResult, NotUsed] =
+                    Source.fromIterator(() => entryIterator)
+                  complete(entries)
                 }
               }
             }
