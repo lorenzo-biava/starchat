@@ -387,6 +387,7 @@ object ManausTermsExtractionService {
         )
       }.filter(_.synonymScore > extractionRequest.sentencesThreshold.getOrElse(0.0d))
         .filter(_.termSimilarityScore > extractionRequest.synonymsThresholds.getOrElse(0.0d))
+        .sortWith((a, b) => a.synonymScore >= b.synonymScore)
 
       SynonymExtractionItem(
         token = token,
