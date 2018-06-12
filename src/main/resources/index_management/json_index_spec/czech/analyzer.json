@@ -1,6 +1,14 @@
 {
   "index.queries.cache.enabled": true,
   "index.requests.cache.enable": true,
+  "similarity": {
+    "scripted_term_freq": {
+      "type": "scripted",
+      "script": {
+        "source": "return doc.freq ;"
+      }
+    }
+  },
   "analysis":
   {
     "tokenizer": {
@@ -58,15 +66,28 @@
     },
     "analyzer":
     {
+      "jenny_raw_nolc_analyzer":
+      {
+        "tokenizer":    "keyword"
+      },
+      "jenny_space_punctuation_nolc_analyzer":
+      {
+        "tokenizer":    "space_punctuation"
+      },
+      "jenny_base_nolc_analyzer":
+      {
+        "tokenizer":    "standard"
+      },
       "jenny_raw_analyzer":
       {
         "tokenizer":    "keyword",
-        "filter":       [ "lowercase"]
+        "filter":       [ "lowercase" ]
       },
       "jenny_space_punctuation_analyzer":
       {
         "tokenizer":    "space_punctuation",
-        "filter":       [ "lowercase"]
+        "filter":       [ "lowercase" ],
+        "char_filter":  [ "&_to_and" ]
       },
       "jenny_base_analyzer":
       {

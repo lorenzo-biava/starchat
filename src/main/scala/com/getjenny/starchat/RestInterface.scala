@@ -10,15 +10,13 @@ import com.getjenny.starchat.services._
 
 import scala.concurrent.ExecutionContext
 
-trait Resources extends KnowledgeBaseResource with DecisionTableResource
-  with RootAPIResource with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
-  with TermResource with TokenizersResource with AnalyzersPlaygroundResource
-  with SpellcheckResource with UserResource
+trait RestInterface extends KnowledgeBaseResource with DecisionTableResource with RootAPIResource
+  with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
+  with TermResource with TokenizersResource with AnalyzersPlaygroundResource with TermsExtractionResource
+  with SpellcheckResource with ConversationLogsResource with PriorDataResource with UserResource {
 
-trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
 
-  lazy val knowledgeBaseService = KnowledgeBaseService
   lazy val decisionTableService = DecisionTableService
   lazy val indexManagementService = IndexManagementService
   lazy val systemIndexManagementService = SystemIndexManagementService
@@ -31,11 +29,35 @@ trait RestInterface extends Resources {
   lazy val cronReloadDTService = CronReloadDTService
   lazy val cronCleanDTService = CronCleanDTService
   lazy val systemService = DtReloadService
+  lazy val knowledgeBaseService = KnowledgeBaseService
+  lazy val conversationLogsService = ConversationLogsService
+  lazy val priorDataService = PriorDataService
 
   val routes: Route = rootAPIsRoutes ~
-    LoggingEntities.logRequestAndResultReduced(knowledgeBaseRoutes) ~
-    LoggingEntities.logRequestAndResultReduced(knowledgeBaseStreamRoutes) ~
-    LoggingEntities.logRequestAndResult(knowledgeBaseSearchRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(kbQuestionAnswerRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(kbQuestionAnswerStreamRoutes) ~
+    LoggingEntities.logRequestAndResult(kbQuestionAnswerSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(kbTotalTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(kbDictSizeRoutes) ~
+    LoggingEntities.logRequestAndResult(kbTermsCountRoutes) ~
+    LoggingEntities.logRequestAndResult(kbUpdateTermsRoutes)~
+    LoggingEntities.logRequestAndResultReduced(pdQuestionAnswerRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(pdQuestionAnswerStreamRoutes) ~
+    LoggingEntities.logRequestAndResult(pdQuestionAnswerSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(pdTotalTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(pdDictSizeRoutes) ~
+    LoggingEntities.logRequestAndResult(pdTermsCountRoutes) ~
+    LoggingEntities.logRequestAndResult(pdUpdateTermsRoutes)~
+    LoggingEntities.logRequestAndResultReduced(clQuestionAnswerRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(clQuestionAnswerStreamRoutes) ~
+    LoggingEntities.logRequestAndResult(clQuestionAnswerSearchRoutes) ~
+    LoggingEntities.logRequestAndResult(clTotalTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(clDictSizeRoutes) ~
+    LoggingEntities.logRequestAndResult(clTermsCountRoutes) ~
+    LoggingEntities.logRequestAndResult(clUpdateTermsRoutes)~
+    LoggingEntities.logRequestAndResult(termsExtractionRoutes) ~
+    LoggingEntities.logRequestAndResult(synExtractionRoutes) ~
+    LoggingEntities.logRequestAndResult(freqExtractionRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableUploadCSVRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableSearchRoutes) ~

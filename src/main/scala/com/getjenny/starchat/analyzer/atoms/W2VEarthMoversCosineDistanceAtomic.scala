@@ -2,7 +2,7 @@ package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
-import com.getjenny.starchat.analyzer.utils.EmDistance
+import com.getjenny.starchat.analyzer.utils.EMDVectorDistances
 import com.getjenny.starchat.services._
 
 /**
@@ -37,7 +37,7 @@ class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String], restricted
   val indexName = restricted_args("index_name")
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
-    val emdDist = EmDistance.distanceCosine(indexName, query, sentence)
+    val emdDist = EMDVectorDistances.distanceCosine(indexName, query, sentence)
     Result(score=emdDist)
   }
 

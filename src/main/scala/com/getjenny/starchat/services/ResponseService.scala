@@ -9,6 +9,7 @@ import com.getjenny.analyzer.analyzers._
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
+import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
 
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,11 +30,11 @@ case class ResponseServiceDTNotLoadedException(message: String = "", cause: Thro
   * Implements response functionalities
   */
 object ResponseService {
-  val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val termService: TermService.type = TermService
-  val decisionTableService: DecisionTableService.type = DecisionTableService
-  val cronReloadDTService: CronReloadDTService.type = CronReloadDTService
+  private[this] val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val termService: TermService.type = TermService
+  private[this] val decisionTableService: DecisionTableService.type = DecisionTableService
+  private[this] val cronReloadDTService: CronReloadDTService.type = CronReloadDTService
 
   def getNextResponse(indexName: String, request: ResponseRequestIn):
   Future[Option[ResponseRequestOutOperationResult]] = {

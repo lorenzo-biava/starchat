@@ -22,7 +22,7 @@ object IndexTerms extends JsonSupport {
 
   private[this] case class Params(
     host: String = "http://localhost:8888",
-    index_name: String = "index_0",
+    index_name: String = "index_english_0",
     path: String = "/term/index",
     inputfile: String = "vectors.txt",
     skiplines: Int = 0,
@@ -77,7 +77,7 @@ object IndexTerms extends JsonSupport {
         val entity = Await.result(entityFuture, 10.second)
         val responseFuture: Future[HttpResponse] =
           Http().singleRequest(HttpRequest(
-            method = HttpMethods.POST,
+            method = HttpMethods.PUT,
             uri = baseUrl,
             headers = httpHeader,
             entity = entity))

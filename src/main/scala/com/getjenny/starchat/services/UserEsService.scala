@@ -11,6 +11,7 @@ import com.getjenny.analyzer.util.RandomNumbers
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.auth.AbstractStarChatAuthenticator
+import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClient
 import com.typesafe.config.{Config, ConfigFactory}
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
@@ -32,15 +33,15 @@ case class UserEsServiceException(message: String = "", cause: Throwable = None.
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
 class UserEsService extends AbstractUserService {
-  val config: Config = ConfigFactory.load()
-  val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  val indexName: String = elasticClient.indexName + "." + elasticClient.userIndexSuffix
+  private[this] val config: Config = ConfigFactory.load()
+  private[this] val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val indexName: String = elasticClient.indexName + "." + elasticClient.userIndexSuffix
 
-  val admin: String = config.getString("starchat.basic_http_es.admin")
-  val password: String = config.getString("starchat.basic_http_es.password")
-  val salt: String = config.getString("starchat.basic_http_es.salt")
-  val admin_user = User(id = admin, password = password, salt = salt,
+  private[this] val admin: String = config.getString("starchat.basic_http_es.admin")
+  private[this] val password: String = config.getString("starchat.basic_http_es.password")
+  private[this] val salt: String = config.getString("starchat.basic_http_es.salt")
+  private[this] val admin_user = User(id = admin, password = password, salt = salt,
     permissions = Map("admin" -> Set(Permissions.admin)))
 
   def create(user: User): Future[IndexDocumentResult] = Future {
@@ -65,14 +66,14 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val response = client.prepareIndex().setIndex(indexName)
       .setCreate(true)
       .setType(elasticClient.userIndexSuffix)
       .setId(user.id)
       .setSource(builder).get()
 
-    val refreshIndex = elasticClient.refreshIndex(indexName)
+    val refreshIndex = elasticClient.refresh(indexName)
     if(refreshIndex.failed_shards_n > 0) {
       throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
@@ -120,13 +121,13 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val response: UpdateResponse = client.prepareUpdate().setIndex(indexName)
       .setType(elasticClient.userIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
-    val refresh_index = elasticClient.refreshIndex(indexName)
+    val refresh_index = elasticClient.refresh(indexName)
     if(refresh_index.failed_shards_n > 0) {
       throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
@@ -147,11 +148,11 @@ class UserEsService extends AbstractUserService {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val response: DeleteResponse = client.prepareDelete().setIndex(indexName)
       .setType(elasticClient.userIndexSuffix).setId(id).get()
 
-    val refreshIndex = elasticClient.refreshIndex(indexName)
+    val refreshIndex = elasticClient.refresh(indexName)
     if(refreshIndex.failed_shards_n > 0) {
       throw new Exception("User: index refresh failed: (" + indexName + ")")
     }
@@ -171,7 +172,7 @@ class UserEsService extends AbstractUserService {
       admin_user
     } else {
 
-      val client: TransportClient = elasticClient.getClient()
+      val client: TransportClient = elasticClient.client
       val getBuilder: GetRequestBuilder = client.prepareGet(indexName, elasticClient.userIndexSuffix, id)
 
       val response: GetResponse = getBuilder.get()
@@ -199,7 +200,7 @@ class UserEsService extends AbstractUserService {
       val permissions: Map[String, Set[Permissions.Value]] = source.get("permissions") match {
         case Some(t) => t.asInstanceOf[java.util.HashMap[String, java.util.List[String]]]
           .asScala.map{case(permIndexName, userPermissions) =>
-          (permIndexName, userPermissions.asScala.map(permissionString => Permissions.getValue(permissionString)).toSet)
+          (permIndexName, userPermissions.asScala.map(permissionString => Permissions.value(permissionString)).toSet)
         }.toMap
         case None =>
           throw UserEsServiceException("Permissions list is empty for the user: " + id)

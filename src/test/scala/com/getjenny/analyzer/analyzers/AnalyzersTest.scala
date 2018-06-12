@@ -1,10 +1,10 @@
+package com.getjenny.analyzer.analyzers
+
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 03/03/17.
   */
 
-import com.getjenny.analyzer.analyzers._
 import org.scalatest._
-import com.getjenny.analyzer.operators.OperatorException
 
 class AnalyzersTest extends FlatSpec with Matchers {
 

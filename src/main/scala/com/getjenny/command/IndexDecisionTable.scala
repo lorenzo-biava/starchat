@@ -24,7 +24,7 @@ object IndexDecisionTable extends JsonSupport {
 
   private[this] case class Params(
                              host: String = "http://localhost:8888",
-                             indexName: String = "index_0",
+                             indexName: String = "index_english_0",
                              path: String = "/decisiontable",
                              inputfile: String = "decision_table.csv",
                              separator: Char = ',',
@@ -86,7 +86,7 @@ object IndexDecisionTable extends JsonSupport {
       head("Index data into DecisionTable")
       help("help").text("prints this usage text")
       opt[String]("inputfile")
-        .text(s"the path of the file with the vectors" +
+        .text(s"the path of the file with the decision table entries" +
           s"  default: ${defaultParams.inputfile}")
         .action((x, c) => c.copy(inputfile = x))
       opt[String]("host")
@@ -94,7 +94,7 @@ object IndexDecisionTable extends JsonSupport {
           s"  default: ${defaultParams.host}")
         .action((x, c) => c.copy(host = x))
       opt[String]("index_name")
-        .text(s"the index_name, e.g. index_XXX" +
+        .text(s"the index_name, e.g. index_<language>_XXX" +
           s"  default: ${defaultParams.indexName}")
         .action((x, c) => c.copy(indexName = x))
       opt[String]("path")

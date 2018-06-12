@@ -1,3 +1,5 @@
+package com.getjenny.starchat.resources
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.BasicHttpCredentials
@@ -53,6 +55,8 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         val index_name_regex = "index_(?:[a-z]+)_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r

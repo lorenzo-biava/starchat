@@ -1,4 +1,4 @@
-package com.getjenny.starchat.services
+package com.getjenny.starchat.services.esclient
 
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
@@ -32,17 +32,17 @@ trait ElasticClient {
   val inetAddresses: List[TransportAddress] =
     hostMap.map{ case(k,v) => new TransportAddress(InetAddress.getByName(k), v) }.toList
 
-  var client : TransportClient = openClient()
+  private[this] var transportClient : TransportClient = open()
 
-  def openClient(): TransportClient = {
+  def open(): TransportClient = {
     val client: TransportClient = new PreBuiltTransportClient(settings)
       .addTransportAddresses(inetAddresses:_*)
     client
   }
 
-  def refreshIndex(index_name: String): RefreshIndexResult = {
+  def refresh(indexName: String): RefreshIndexResult = {
     val refreshRes: RefreshResponse =
-      client.admin().indices().prepareRefresh(index_name).get()
+      transportClient.admin().indices().prepareRefresh(indexName).get()
 
     val failedShards: List[FailedShard] = refreshRes.getShardFailures.map(item => {
       val failedShardItem = FailedShard(index_name = item.index,
@@ -54,7 +54,7 @@ trait ElasticClient {
     }).toList
 
     val refreshIndexResult =
-      RefreshIndexResult(index_name = index_name,
+      RefreshIndexResult(index_name = indexName,
         failed_shards_n = refreshRes.getFailedShards,
         successful_shards_n = refreshRes.getSuccessfulShards,
         total_shards_n = refreshRes.getTotalShards,
@@ -63,11 +63,25 @@ trait ElasticClient {
     refreshIndexResult
   }
 
-  def getClient(): TransportClient = {
-    this.client
+  def client: TransportClient = {
+    this.transportClient
   }
 
-  def closeClient(client: TransportClient): Unit = {
+  def close(client: TransportClient): Unit = {
     client.close()
   }
+
+  val commonIndexArbitraryPattern: String = config.getString("es.common_index_arbitrary_pattern")
+
+  val convLogsIndexSuffix: String = config.getString("es.logs_data_index_suffix")
+  val dtIndexSuffix: String = config.getString("es.dt_index_suffix")
+  val kbIndexSuffix: String = config.getString("es.kb_index_suffix")
+  val priorDataIndexSuffix: String = config.getString("es.prior_data_index_suffix")
+  val sysRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
+  val systemRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
+  val termIndexSuffix: String = config.getString("es.term_index_suffix")
+  val userIndexSuffix: String = config.getString("es.user_index_suffix")
+
+  val enableDeleteIndex: Boolean = config.getBoolean("es.enable_delete_application_index")
+  val enableDeleteSystemIndex: Boolean = config.getBoolean("es.enable_delete_system_index")
 }

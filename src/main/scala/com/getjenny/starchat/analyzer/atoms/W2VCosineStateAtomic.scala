@@ -45,7 +45,7 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
   }
 
   val queryVectors: List[(Vector[Double], Double)] = queryTerms.map(item => {
-    val query_vector = TextToVectorsTools.getSumOfTermsVectors(Option{item})
+    val query_vector = TextToVectorsTools.sumOfTermsVectors(Option{item})
     query_vector
   })
 
@@ -54,7 +54,7 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
     val distance = queryVectors.map{
       case (sentenceVector, reliabilityFactor) =>
         val (querySentenceVector, queryReliabilityFactor) =
-            TextToVectorsTools.getSumOfVectorsFromText(indexName, query)
+            TextToVectorsTools.sumOfVectorsFromText(indexName, query)
         val dist = (1.0 - cosineDist(sentenceVector, querySentenceVector)) *
           (reliabilityFactor * queryReliabilityFactor)
         dist

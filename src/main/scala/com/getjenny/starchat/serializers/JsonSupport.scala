@@ -11,6 +11,7 @@ import akka.util.ByteString
 import com.getjenny.analyzer.expressions.Data
 import com.getjenny.starchat.entities._
 import spray.json._
+import akka.http.scaladsl.unmarshalling.Unmarshaller
 
 import scalaz.Scalaz._
 
@@ -72,23 +73,101 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val spellcheckTokenSuggestionsFormat = jsonFormat3(SpellcheckTokenSuggestions)
   implicit val spellcheckTokenFormat = jsonFormat4(SpellcheckToken)
   implicit val spellcheckTermsResponseFormat = jsonFormat1(SpellcheckTermsResponse)
-  implicit val spellcheckTermsRequestFormat = jsonFormat3(SpellcheckTermsRequest)
+  implicit val spellcheckTermsRequestFormat = jsonFormat4(SpellcheckTermsRequest)
   implicit val responseRequestOutOperationResultFormat = jsonFormat2(ResponseRequestOutOperationResult)
 
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
     def write(obj: Permissions.Value): JsValue = JsString(obj.toString)
     def read(json: JsValue): Permissions.Value = json match {
-        case JsString(str) =>
-          Permissions.values.find(_.toString === str) match {
-            case Some(t) => t
-            case _ => throw DeserializationException("Permission string is invalid")
-          }
-        case _ => throw DeserializationException("Permission string expected")
-      }
+      case JsString(str) =>
+        Permissions.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("Permission string is invalid")
+        }
+      case _ => throw DeserializationException("Permission string expected")
+    }
   }
+
   implicit val userFormat = jsonFormat4(User)
   implicit val userUpdateFormat = jsonFormat3(UserUpdate)
   implicit val dtReloadTimestamp = jsonFormat2(DtReloadTimestamp)
   implicit val openCloseIndexFormat = jsonFormat5(OpenCloseIndex)
 
+  implicit val commonOrSpecificSearchUnmarshalling:
+    Unmarshaller[String, CommonOrSpecificSearch.Value] =
+    Unmarshaller.strict[String, CommonOrSpecificSearch.Value] { enumValue =>
+      CommonOrSpecificSearch.value(enumValue)
+    }
+
+  implicit object commonOrSpecificSearchFormat extends JsonFormat[CommonOrSpecificSearch.Value] {
+    def write(obj: CommonOrSpecificSearch.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): CommonOrSpecificSearch.Value = json match {
+      case JsString(str) =>
+        CommonOrSpecificSearch.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("CommonOrSpecificSearch string is invalid")
+        }
+      case _ => throw DeserializationException("CommonOrSpecificSearch string expected")
+    }
+  }
+
+  implicit val observedDataSourcesUnmarshalling:
+    Unmarshaller[String, ObservedDataSources.Value] = Unmarshaller.strict[String, ObservedDataSources.Value] { enumValue =>
+    ObservedDataSources.value(enumValue)
+  }
+
+  implicit object observedSearchDestFormat extends JsonFormat[ObservedDataSources.Value] {
+    def write(obj: ObservedDataSources.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): ObservedDataSources.Value = json match {
+      case JsString(str) =>
+        ObservedDataSources.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("ObservedSearchDests string is invalid")
+        }
+      case _ => throw DeserializationException("ObservedSearchDests string expected")
+    }
+  }
+
+  implicit val termCountFieldsUnmarshalling:
+    Unmarshaller[String, TermCountFields.Value] =
+    Unmarshaller.strict[String, TermCountFields.Value] { enumValue =>
+      TermCountFields.value(enumValue)
+    }
+
+  implicit object termCountFieldsFormat extends JsonFormat[TermCountFields.Value] {
+    def write(obj: TermCountFields.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): TermCountFields.Value = json match {
+      case JsString(str) =>
+        TermCountFields.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("TermCountFields string is invalid")
+        }
+      case _ => throw DeserializationException("TermCountFields string expected")
+    }
+  }
+
+
+  implicit object synonymExtractionDistanceFunctionFormat extends JsonFormat[SynonymExtractionDistanceFunction.Value] {
+    def write(obj: SynonymExtractionDistanceFunction.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): SynonymExtractionDistanceFunction.Value = json match {
+      case JsString(str) =>
+        SynonymExtractionDistanceFunction.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("SynonymExtractionDistanceFunction string is invalid")
+        }
+      case _ => throw DeserializationException("SynonymExtractionDistanceFunction string expected")
+    }
+  }
+
+  implicit val termCountFormat = jsonFormat2(TermCount)
+  implicit val totalTermsFormat = jsonFormat3(TotalTerms)
+  implicit val dictSizeFormat = jsonFormat4(DictSize)
+  implicit val termsExtractionRequestFormat = jsonFormat13(TermsExtractionRequest)
+  implicit val synExtractionRequestFormat = jsonFormat17(SynExtractionRequest)
+  implicit val synonymItemFormat = jsonFormat4(SynonymItem)
+  implicit val synonymExtractionItemFormat = jsonFormat4(SynonymExtractionItem)
+  implicit val tokenFrequencyItemFormat = jsonFormat3(TokenFrequencyItem)
+  implicit val tokenFrequencyFormat = jsonFormat3(TokenFrequency)
+  implicit val termsDistanceResFormat = jsonFormat6(TermsDistanceRes)
+  implicit val updateQATermsRequestFormat = jsonFormat13(UpdateQATermsRequest)
 }

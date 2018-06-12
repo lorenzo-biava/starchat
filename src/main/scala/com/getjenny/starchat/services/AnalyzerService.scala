@@ -9,6 +9,7 @@ import com.getjenny.analyzer.expressions.{AnalyzersData, Data}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.analyzer.analyzers.StarchatAnalyzer
 import com.getjenny.starchat.entities._
+import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.unit._
@@ -55,21 +56,21 @@ object AnalyzerService {
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
   val dtMaxTables: Long = elasticClient.config.getLong("es.dt_max_tables")
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
-    indexName + "." + suffix.getOrElse(elasticClient.dtIndexSuffix)
+  private[this] def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+    indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
   }
 
   def getAnalyzers(indexName: String): mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
 
-    val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+    val refreshIndex = elasticClient.refresh(getIndexName(indexName))
     if(refreshIndex.failed_shards_n > 0) {
       throw AnalyzerServiceException("DecisionTable : index refresh failed: (" + indexName + ")")
     }
 
     val scrollResp : SearchResponse = client.prepareSearch().setIndices(getIndexName(indexName))
-      .setTypes(elasticClient.dtIndexSuffix)
+      .setTypes(elasticClient.indexSuffix)
       .setFetchSource(Array("state", "execution_order", "max_state_counter",
         "analyzer", "queries"), Array.empty[String])
       .setScroll(new TimeValue(60000))

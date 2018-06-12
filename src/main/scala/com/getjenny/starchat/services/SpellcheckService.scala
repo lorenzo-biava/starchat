@@ -7,6 +7,7 @@ package com.getjenny.starchat.services
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
+import com.getjenny.starchat.services.esclient.KnowledgeBaseElasticClient
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.search.suggest.SuggestBuilder
@@ -18,18 +19,18 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object SpellcheckService {
-  val elasticClient = KnowledgeBaseElasticClient
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  private[this] val elasticClient = KnowledgeBaseElasticClient
+  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
-    indexName + "." + suffix.getOrElse(elasticClient.kbIndexSuffix)
+  private[this] def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+    indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
   }
 
   def termsSuggester(indexName: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient()
+    val client: TransportClient = elasticClient.client
 
     val suggestionBuilder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
-    suggestionBuilder.maxEdits(2)
+    suggestionBuilder.maxEdits(request.max_edit)
       .prefixLength(request.prefix_length)
       .minDocFreq(request.min_doc_freq)
 
@@ -38,7 +39,7 @@ object SpellcheckService {
       .addSuggestion("suggestions", suggestionBuilder)
 
     val searchBuilder = client.prepareSearch(getIndexName(indexName))
-      .setTypes(elasticClient.kbIndexSuffix)
+      .setTypes(elasticClient.indexSuffix)
       .suggest(suggestBuilder)
 
     val searchResponse : SearchResponse = searchBuilder

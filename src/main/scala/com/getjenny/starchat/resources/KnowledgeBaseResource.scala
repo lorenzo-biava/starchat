@@ -11,27 +11,127 @@ import akka.pattern.CircuitBreaker
 import akka.stream.scaladsl.Source
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
-import com.getjenny.starchat.services.KnowledgeBaseService
+import com.getjenny.starchat.services.{KnowledgeBaseService, QuestionAnswerService}
 
 import scala.util.{Failure, Success}
 
 trait KnowledgeBaseResource extends StarChatResource {
 
-  private[this] val knowledgeBaseService: KnowledgeBaseService.type = KnowledgeBaseService
+  private[this] val questionAnswerService: QuestionAnswerService = KnowledgeBaseService
+  private[this] val routeName: String = "knowledgebase"
 
-  def knowledgeBaseStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
+  def kbTermsCountRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
+      """term_count""" ~ Slash ~
+      routeName) { indexName =>
+      pathEnd {
+        get {
+          authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              extractRequest { request =>
+                parameters("field".as[TermCountFields.Value] ?
+                  TermCountFields.question, "term".as[String]) { (field, term) =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(questionAnswerService.countTermFuture(indexName, field, term)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
+                      })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") uri=(" + request.uri +
+                        ") method=(" + request.method.name + ") : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 101, message = e.getMessage)
+                        })
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def kbDictSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
+      """dict_size""" ~ Slash ~
+      routeName) { indexName =>
+      pathEnd {
+        get {
+          authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              extractRequest { request =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(questionAnswerService.dictSizeFuture(indexName)) {
+                  case Success(t) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                  case Failure(e) =>
+                    log.error("index(" + indexName + ") uri=(" + request.uri + ") method=(" +
+                      request.method.name + ") : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 102, message = e.getMessage)
+                      })
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def kbTotalTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
+      """total_terms""" ~ Slash ~
+      routeName) { indexName =>
+      pathEnd {
+        get {
+          authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              extractRequest { request =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(questionAnswerService.totalTermsFuture(indexName)) {
+                  case Success(t) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                  case Failure(e) =>
+                    log.error("index(" + indexName + ") uri=(" + request.uri +
+                      ") method=(" + request.method.name + ") : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 103, message = e.getMessage)
+                      })
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def kbQuestionAnswerStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix(
       """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
         """stream""" ~ Slash ~
-        """knowledgebase""") { indexName =>
+        routeName) { indexName =>
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.stream)) {
-              extractMethod { method =>
-                val entryIterator = knowledgeBaseService.allDocuments(indexName)
+              extractRequest { request =>
+                val entryIterator = questionAnswerService.allDocuments(indexName)
                 val entries: Source[KBDocument, NotUsed] =
                   Source.fromIterator(() => entryIterator)
                 complete(entries)
@@ -43,37 +143,41 @@ trait KnowledgeBaseResource extends StarChatResource {
     }
   }
 
-  def knowledgeBaseRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "knowledgebase") { indexName =>
+  def kbQuestionAnswerRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ routeName) { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { (user) =>
-            authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.write)) {
-              parameters("refresh".as[Int] ? 0) { refresh =>
-                entity(as[KBDocument]) { document =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(knowledgeBaseService.create(indexName, document, refresh)) {
-                    case Success(t) =>
-                      t match {
-                        case Some(v) =>
-                          completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
-                            v
-                          })
-                        case None =>
-                          log.error("index(" + indexName + ") route=knowledgeBaseRoutes method=POST")
-                          completeResponse(StatusCodes.BadRequest,
-                            Option {
-                              ReturnMessageData(code = 100, message = "Error indexing new document, empty response")
+            extractRequest { request =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                parameters("refresh".as[Int] ? 0) { refresh =>
+                  entity(as[KBDocument]) { document =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(questionAnswerService.create(indexName, document, refresh)) {
+                      case Success(t) =>
+                        t match {
+                          case Some(v) =>
+                            completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
+                              v
                             })
-                      }
-                    case Failure(e) =>
-                      log.error("index(" + indexName + ") route=knowledgeBaseRoutes method=POST: " + e.getMessage)
-                      completeResponse(StatusCodes.BadRequest,
-                        Option {
-                          ReturnMessageData(code = 101, message = "Error indexing new document")
-                        })
+                          case None =>
+                            log.error("index(" + indexName + ") uri=(" + request.uri +
+                              ") method=(" + request.method.name + ")")
+                            completeResponse(StatusCodes.BadRequest,
+                              Option {
+                                ReturnMessageData(code = 104, message = "Error indexing new document, empty response")
+                              })
+                        }
+                      case Failure(e) =>
+                        log.error("index(" + indexName + ") uri=(" + request.uri +
+                          ") method=(" + request.method.name + ") : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 105, message = "Error indexing new document")
+                          })
+                    }
                   }
                 }
               }
@@ -83,21 +187,24 @@ trait KnowledgeBaseResource extends StarChatResource {
           get {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { (user) =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                parameters("ids".as[String].*) { ids =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(knowledgeBaseService.read(indexName, ids.toList)) {
-                    case Success(t) =>
-                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                        t
-                      })
-                    case Failure(e) =>
-                      log.error("index(" + indexName + ") route=knowledgeBaseRoutes method=GET: " + e.getMessage)
-                      completeResponse(StatusCodes.BadRequest,
-                        Option {
-                          ReturnMessageData(code = 102, message = e.getMessage)
+              extractRequest { request =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, indexName, Permissions.read)) {
+                  parameters("ids".as[String].*) { ids =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(questionAnswerService.readFuture(indexName, ids.toList)) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                          t
                         })
+                      case Failure(e) =>
+                        log.error("index(" + indexName + ") uri=(" + request.uri +
+                          ") method=(" + request.method.name + ") : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 106, message = e.getMessage)
+                          })
+                    }
                   }
                 }
               }
@@ -106,20 +213,23 @@ trait KnowledgeBaseResource extends StarChatResource {
           delete {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { (user) =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(knowledgeBaseService.deleteAll(indexName)) {
-                  case Success(t) =>
-                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                  case Failure(e) =>
-                    log.error("index(" + indexName + ") route=knowledgeBaseRoutes method=DELETE: " + e.getMessage)
-                    completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        ReturnMessageData(code = 103, message = e.getMessage)
+              extractRequest { request =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(questionAnswerService.deleteAll(indexName)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
                       })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") uri=(" + request.uri +
+                        ") method=(" + request.method.name + ") : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 107, message = e.getMessage)
+                        })
+                  }
                 }
               }
             }
@@ -129,20 +239,23 @@ trait KnowledgeBaseResource extends StarChatResource {
           put {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { (user) =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                parameters("refresh".as[Int] ? 0) { refresh =>
-                  entity(as[KBDocumentUpdate]) { update =>
-                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(knowledgeBaseService.update(indexName, id, update, refresh)) {
-                      case Success(t) =>
-                        completeResponse(StatusCodes.Created, StatusCodes.BadRequest, t)
-                      case Failure(e) =>
-                        log.error("index(" + indexName + ") route=knowledgeBaseRoutes method=PUT: " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 104, message = e.getMessage)
-                          })
+              extractRequest { request =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                  parameters("refresh".as[Int] ? 0) { refresh =>
+                    entity(as[KBDocumentUpdate]) { update =>
+                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                      onCompleteWithBreaker(breaker)(questionAnswerService.updateFuture(indexName, id, update, refresh)) {
+                        case Success(t) =>
+                          completeResponse(StatusCodes.Created, StatusCodes.BadRequest, t)
+                        case Failure(e) =>
+                          log.error("index(" + indexName + ") uri=(" + request.uri +
+                            ") method=(" + request.method.name + ") : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest,
+                            Option {
+                              ReturnMessageData(code = 108, message = e.getMessage)
+                            })
+                      }
                     }
                   }
                 }
@@ -152,19 +265,22 @@ trait KnowledgeBaseResource extends StarChatResource {
             delete {
               authenticateBasicAsync(realm = authRealm,
                 authenticator = authenticator.authenticator) { user =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                  parameters("refresh".as[Int] ? 0) { refresh =>
-                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(knowledgeBaseService.delete(indexName, id, refresh)) {
-                      case Success(t) =>
-                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                      case Failure(e) =>
-                        log.error("index(" + indexName + ") route=knowledgeBaseRoutes method=DELETE : " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 105, message = e.getMessage)
-                          })
+                extractRequest { request =>
+                  authorizeAsync(_ =>
+                    authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                    parameters("refresh".as[Int] ? 0) { refresh =>
+                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                      onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, id, refresh)) {
+                        case Success(t) =>
+                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                        case Failure(e) =>
+                          log.error("index(" + indexName + ") uri=(" + request.uri +
+                            ") method=(" + request.method.name + ") : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest,
+                            Option {
+                              ReturnMessageData(code = 109, message = e.getMessage)
+                            })
+                      }
                     }
                   }
                 }
@@ -174,27 +290,83 @@ trait KnowledgeBaseResource extends StarChatResource {
     }
   }
 
-  def knowledgeBaseSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "knowledgebase_search") { indexName =>
+  def kbQuestionAnswerSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
+    val localRouteName: String = routeName + "_search"
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
+      Slash ~  localRouteName) { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
-            authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.write)) {
-              entity(as[KBDocumentSearch]) { docsearch =>
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(knowledgeBaseService.search(indexName, docsearch)) {
-                  case Success(t) =>
-                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                  case Failure(e) =>
-                    log.error("index(" + indexName + ") route=decisionTableSearchRoutes method=POST: " + e.getMessage)
-                    completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        ReturnMessageData(code = 106, message = e.getMessage)
+            extractRequest { request =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                entity(as[KBDocumentSearch]) { docsearch =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(questionAnswerService.search(indexName, docsearch)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
                       })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") uri=(" + request.uri +
+                        ") method=(" + request.method.name + ") : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 110, message = e.getMessage)
+                        })
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def kbUpdateTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
+      """updateTerms""" ~ Slash ~
+      routeName) { indexName =>
+      pathEnd {
+        put {
+          authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              extractRequest { request =>
+                entity(as[UpdateQATermsRequest]) { extractionRequest =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(questionAnswerService.updateTextTermsFuture(indexName = indexName,
+                    extractionRequest = extractionRequest)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
+                      })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") uri=(" + request.uri +
+                        ") method=(" + request.method.name + ") : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 103, message = e.getMessage)
+                        })
+                  }
+                }
+              }
+            }
+          }
+        } ~ get {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.stream)) {
+              entity(as[UpdateQATermsRequest]) { extractionRequest =>
+                extractRequest { request =>
+                  val entryIterator = questionAnswerService.updateAllTextTerms(indexName = indexName,
+                    extractionRequest = extractionRequest)
+                  val entries: Source[UpdateDocumentResult, NotUsed] =
+                    Source.fromIterator(() => entryIterator)
+                  complete(entries)
                 }
               }
             }

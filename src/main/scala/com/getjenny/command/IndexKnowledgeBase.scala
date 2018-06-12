@@ -28,7 +28,7 @@ import scala.util.Try
 object IndexKnowledgeBase extends JsonSupport {
   private[this] case class Params(
                              host: String = "http://localhost:8888",
-                             indexName: String = "index_0",
+                             indexName: String = "index_english_0",
                              path: String = "/knowledgebase",
                              questionsPath: Option[String] = None: Option[String],
                              answersPath: Option[String] = None: Option[String],
