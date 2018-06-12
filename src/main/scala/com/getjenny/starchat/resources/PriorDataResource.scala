@@ -355,7 +355,7 @@ trait PriorDataResource extends StarChatResource {
               }
             }
           }
-        } ~ post {
+        } ~ get {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
