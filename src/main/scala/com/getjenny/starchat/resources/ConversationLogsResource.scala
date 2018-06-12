@@ -11,13 +11,13 @@ import akka.pattern.CircuitBreaker
 import akka.stream.scaladsl.Source
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
-import com.getjenny.starchat.services.{PriorDataService, QuestionAnswerService}
+import com.getjenny.starchat.services.{ConversationLogsService, QuestionAnswerService}
 
 import scala.util.{Failure, Success}
 
 trait ConversationLogsResource extends StarChatResource {
 
-  private[this] val questionAnswerService: QuestionAnswerService = PriorDataService
+  private[this] val questionAnswerService: QuestionAnswerService = ConversationLogsService
   private[this] val routeName: String = "conversation_logs"
 
   def clTermsCountRoutes: Route = handleExceptions(routesExceptionHandler) {
