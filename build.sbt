@@ -90,7 +90,7 @@ dockerCommands := Seq(
 
 packageName in Docker := packageName.value
 version in Docker := version.value
-dockerRepository := Some("elegansio")
+dockerRepository := Some("getjenny")
 
 //dockerImageCreationTask := (publishLocal in Docker).value
 composeNoBuild := true
