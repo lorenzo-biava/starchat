@@ -7,6 +7,6 @@ package com.getjenny.starchat.entities
 case class CountersCacheSize (
                                dictSizeCacheMaxSize: Option[Int] = Some(1000),
                                totalTermsCacheMaxSize: Option[Int] = Some(1000),
-                               countTermCacheMaxSize: Option[Int] = Some(10000)
+                               countTermCacheMaxSize: Option[Int] = Some(20000)
                              )
 

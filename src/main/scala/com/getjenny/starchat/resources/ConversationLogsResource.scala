@@ -352,7 +352,7 @@ trait ConversationLogsResource extends StarChatResource {
                         ") method=(" + request.method.name + ") : " + e.getMessage)
                       completeResponse(StatusCodes.BadRequest,
                         Option {
-                          ReturnMessageData(code = 103, message = e.getMessage)
+                          ReturnMessageData(code = 111, message = e.getMessage)
                         })
                   }
                 }

@@ -67,6 +67,7 @@ trait QuestionAnswerService {
       .addAggregation(questionAgg)
       .addAggregation(answerAgg)
       .addAggregation(totalAgg)
+      .setRequestCache(true)
       .execute.actionGet
 
     val totalHits = aggregationQueryRes.getHits.totalHits
@@ -82,10 +83,10 @@ trait QuestionAnswerService {
     )
   }
 
-  private[this] var dictSizeCacheMaxSize: Int = elasticClient.dictSizeCacheMaxSize
+  var dictSizeCacheMaxSize: Int
   private[this] val dictSizeCache: mutable.LinkedHashMap[String, (Long, DictSize)] =
     mutable.LinkedHashMap[String, (Long, DictSize)]()
-  def dictSize(indexName: String, stale: Long = 0): DictSize = {
+  def dictSize(indexName: String, stale: Long = 3600000): DictSize = {
     val key = indexName
     dictSizeCache.get(key) match {
       case Some(v) =>
@@ -110,7 +111,7 @@ trait QuestionAnswerService {
     }
   }
 
-  def dictSizeFuture(indexName: String, stale: Long): Future[DictSize] = Future {
+  def dictSizeFuture(indexName: String, stale: Long = 3600000): Future[DictSize] = Future {
     dictSize(indexName = indexName, stale = stale)
   }
 
@@ -127,6 +128,7 @@ trait QuestionAnswerService {
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
       .addAggregation(questionAgg)
       .addAggregation(answerAgg)
+      .setRequestCache(true)
       .execute.actionGet
 
     val totalHits = aggregationQueryRes.getHits.totalHits
@@ -139,10 +141,10 @@ trait QuestionAnswerService {
       answer = answerAggRes.getValue.toLong)
   }
 
-  private[this] var totalTermsCacheMaxSize: Int = elasticClient.totalTermsCacheMaxSize
+  var totalTermsCacheMaxSize: Int
   private[this] val totalTermsCache: mutable.LinkedHashMap[String, (Long, TotalTerms)] =
     mutable.LinkedHashMap[String, (Long, TotalTerms)]()
-  def totalTerms(indexName: String, stale: Long = 0): TotalTerms = {
+  def totalTerms(indexName: String, stale: Long = 3600000): TotalTerms = {
     val key = indexName
     totalTermsCache.get(key) match {
       case Some(v) =>
@@ -167,7 +169,7 @@ trait QuestionAnswerService {
     }
   }
 
-  def totalTermsFuture(indexName: String, stale: Long = 0): Future[TotalTerms] = Future {
+  def totalTermsFuture(indexName: String, stale: Long = 3600000): Future[TotalTerms] = Future {
     totalTerms(indexName = indexName, stale = stale)
   }
 
@@ -193,6 +195,7 @@ trait QuestionAnswerService {
       .setQuery(boolQueryBuilder)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
       .addAggregation(agg)
+      .setRequestCache(true)
       .execute.actionGet
 
     val totalHits = aggregationQueryRes.getHits.totalHits
@@ -203,7 +206,7 @@ trait QuestionAnswerService {
       count = aggRes.getValue.toLong)
   }
 
-  private[this] var countTermCacheMaxSize: Int = elasticClient.countTermCacheMaxSize
+  var countTermCacheMaxSize: Int
   private[this] val countTermCache: mutable.LinkedHashMap[String, (Long, TermCount)] =
     mutable.LinkedHashMap[String, (Long, TermCount)]()
   def termCount(indexName: String, field: TermCountFields.Value, term: String, stale: Long = 0): TermCount = {
@@ -232,7 +235,7 @@ trait QuestionAnswerService {
   }
 
   def termCountFuture(indexName: String, field: TermCountFields.Value, term: String,
-                      stale: Long = 0): Future[TermCount] = Future {
+                      stale: Long = 3600000): Future[TermCount] = Future {
     termCount(indexName, field, term, stale)
   }
 
@@ -1031,7 +1034,7 @@ trait QuestionAnswerService {
   def updateAllTextTerms(indexName: String,
                          extractionRequest: UpdateQATermsRequest,
                          keepAlive: Long = 60000): Iterator[UpdateDocumentResult] = {
-    allDocuments(indexName = indexName, keepAlive = keepAlive).map{ case(item) =>
+    allDocuments(indexName = indexName, keepAlive = keepAlive, size = 100).map{ case(item) =>
       val extractionReqQ = extractionReq(text = item.question, er = extractionRequest)
       val extractionReqA = extractionReq(text = item.answer, er = extractionRequest)
       val (_, termsQ) = manausTermsExtractionService

@@ -6,5 +6,8 @@ package com.getjenny.starchat.services.esclient
 
 object ConversationLogsElasticClient extends QuestionAnswerElasticClient {
   override val indexSuffix: String = convLogsIndexSuffix
-  val indexMapping: String = "question"
+  override val indexMapping: String = "question"
+  override val dictSizeCacheMaxSize: Int = config.getInt("es.dictSizeCacheMaxSize")
+  override val totalTermsCacheMaxSize: Int = config.getInt("es.totalTermsCacheMaxSize")
+  override val countTermCacheMaxSize: Int = config.getInt("es.countTermCacheMaxSize")
 }

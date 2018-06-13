@@ -8,4 +8,7 @@ import com.getjenny.starchat.services.esclient.{QuestionAnswerElasticClient, Pri
 
 object PriorDataService extends QuestionAnswerService {
   override val elasticClient: QuestionAnswerElasticClient = PriorDataElasticClient
+  override var dictSizeCacheMaxSize: Int = elasticClient.dictSizeCacheMaxSize
+  override var totalTermsCacheMaxSize: Int = elasticClient.totalTermsCacheMaxSize
+  override var countTermCacheMaxSize: Int = elasticClient.countTermCacheMaxSize
 }

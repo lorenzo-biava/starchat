@@ -8,4 +8,8 @@ import com.getjenny.starchat.services.esclient.{KnowledgeBaseElasticClient, Ques
 
 object KnowledgeBaseService extends QuestionAnswerService {
   override val elasticClient: QuestionAnswerElasticClient = KnowledgeBaseElasticClient
+  override var dictSizeCacheMaxSize: Int = elasticClient.dictSizeCacheMaxSize
+  override var totalTermsCacheMaxSize: Int = elasticClient.totalTermsCacheMaxSize
+  override var countTermCacheMaxSize: Int = elasticClient.countTermCacheMaxSize
+
 }

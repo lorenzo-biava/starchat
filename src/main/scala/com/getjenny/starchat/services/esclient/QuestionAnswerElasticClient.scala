@@ -12,7 +12,7 @@ trait QuestionAnswerElasticClient extends ElasticClient {
   val questionNegativeMinimumMatch: String = config.getString("es.kb_question_negative_minimum_match")
   val questionNegativeBoost: Float = config.getDouble("es.kb_question_negative_boost").toFloat
   val questionExactMatchBoost: Float = config.getDouble("es.kb_question_exact_match_boost").toFloat
-  val dictSizeCacheMaxSize: Int = config.getInt("es.dictSizeCacheMaxSize")
-  val totalTermsCacheMaxSize: Int = config.getInt("es.totalTermsCacheMaxSize")
-  val countTermCacheMaxSize: Int = config.getInt("es.countTermCacheMaxSize")
+  val dictSizeCacheMaxSize: Int
+  val totalTermsCacheMaxSize: Int
+  val countTermCacheMaxSize: Int
 }
