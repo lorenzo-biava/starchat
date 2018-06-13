@@ -382,10 +382,35 @@ trait ConversationLogsResource extends StarChatResource {
 
   def clCountersCacheSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """cacheSize""" ~ Slash ~
+      """cache""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
-        post {
+        delete {
+          authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              extractRequest { request =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(
+                  Future {
+                    questionAnswerService.resetCountersCache
+                  }) {
+                  case Success(t) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                  case Failure(e) =>
+                    log.error("index(" + indexName + ") uri=(" + request.uri +
+                      ") method=(" + request.method.name + ") : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 112, message = e.getMessage)
+                      })
+                }
+              }
+            }
+          }
+        } ~ post {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
@@ -415,7 +440,7 @@ trait ConversationLogsResource extends StarChatResource {
         } ~ get {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
               extractRequest { request =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(

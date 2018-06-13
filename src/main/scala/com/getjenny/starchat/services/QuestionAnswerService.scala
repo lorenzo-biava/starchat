@@ -91,7 +91,7 @@ trait QuestionAnswerService {
     dictSizeCache.get(key) match {
       case Some(v) =>
         val cacheStaleTime = math.abs(Time.timestampMillis - v._1)
-        if(cacheStaleTime > stale) {
+        if(cacheStaleTime < stale) {
           v._2
         } else {
           val result = calcDictSize(indexName = indexName)
@@ -149,7 +149,7 @@ trait QuestionAnswerService {
     totalTermsCache.get(key) match {
       case Some(v) =>
         val cacheStaleTime = math.abs(Time.timestampMillis - v._1)
-        if(cacheStaleTime > stale) {
+        if(cacheStaleTime < stale) {
           v._2
         } else {
           val result = calcTotalTerms(indexName = indexName)
@@ -209,12 +209,12 @@ trait QuestionAnswerService {
   var countTermCacheMaxSize: Int
   private[this] val countTermCache: mutable.LinkedHashMap[String, (Long, TermCount)] =
     mutable.LinkedHashMap[String, (Long, TermCount)]()
-  def termCount(indexName: String, field: TermCountFields.Value, term: String, stale: Long = 0): TermCount = {
+  def termCount(indexName: String, field: TermCountFields.Value, term: String, stale: Long = 3600000): TermCount = {
     val key = indexName + field + term
     countTermCache.get(key) match {
       case Some(v) =>
         val cacheStaleTime = math.abs(Time.timestampMillis - v._1)
-        if(cacheStaleTime > stale) {
+        if(cacheStaleTime < stale) {
           v._2
         } else {
           val result = calcTermCount(indexName = indexName, field = field, term = term)
@@ -268,6 +268,11 @@ trait QuestionAnswerService {
       totalTermsCacheMaxSize = Some(totalTermsCacheMaxSize),
       countTermCacheMaxSize = Some(countTermCacheMaxSize)
     )
+  }
+
+  def resetCountersCache: CountersCacheSize = {
+    totalTermsCache.clear()
+    countersCacheSize
   }
 
   def search(indexName: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
@@ -1034,7 +1039,7 @@ trait QuestionAnswerService {
   def updateAllTextTerms(indexName: String,
                          extractionRequest: UpdateQATermsRequest,
                          keepAlive: Long = 60000): Iterator[UpdateDocumentResult] = {
-    allDocuments(indexName = indexName, keepAlive = keepAlive, size = 100).map{ case(item) =>
+    allDocuments(indexName = indexName, keepAlive = keepAlive, size = 5).map{ case(item) =>
       val extractionReqQ = extractionReq(text = item.question, er = extractionRequest)
       val extractionReqA = extractionReq(text = item.answer, er = extractionRequest)
       val (_, termsQ) = manausTermsExtractionService
