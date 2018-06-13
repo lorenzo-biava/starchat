@@ -82,7 +82,7 @@ trait QuestionAnswerService {
     )
   }
 
-  private[this] var dictSizeCacheMaxSize: Int = 1000
+  private[this] var dictSizeCacheMaxSize: Int = elasticClient.dictSizeCacheMaxSize
   private[this] val dictSizeCache: mutable.LinkedHashMap[String, (Long, DictSize)] =
     mutable.LinkedHashMap[String, (Long, DictSize)]()
   def dictSize(indexName: String, stale: Long = 0): DictSize = {
@@ -139,7 +139,7 @@ trait QuestionAnswerService {
       answer = answerAggRes.getValue.toLong)
   }
 
-  private[this] var totalTermsCacheMaxSize: Int = 1000
+  private[this] var totalTermsCacheMaxSize: Int = elasticClient.totalTermsCacheMaxSize
   private[this] val totalTermsCache: mutable.LinkedHashMap[String, (Long, TotalTerms)] =
     mutable.LinkedHashMap[String, (Long, TotalTerms)]()
   def totalTerms(indexName: String, stale: Long = 0): TotalTerms = {
@@ -203,7 +203,7 @@ trait QuestionAnswerService {
       count = aggRes.getValue.toLong)
   }
 
-  private[this] var countTermCacheMaxSize: Int = 10000
+  private[this] var countTermCacheMaxSize: Int = elasticClient.countTermCacheMaxSize
   private[this] val countTermCache: mutable.LinkedHashMap[String, (Long, TermCount)] =
     mutable.LinkedHashMap[String, (Long, TermCount)]()
   def termCount(indexName: String, field: TermCountFields.Value, term: String, stale: Long = 0): TermCount = {
