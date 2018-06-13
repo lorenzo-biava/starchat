@@ -10,4 +10,5 @@ object ConversationLogsElasticClient extends QuestionAnswerElasticClient {
   override val dictSizeCacheMaxSize: Int = config.getInt("es.dictSizeCacheMaxSize")
   override val totalTermsCacheMaxSize: Int = config.getInt("es.totalTermsCacheMaxSize")
   override val countTermCacheMaxSize: Int = config.getInt("es.countTermCacheMaxSize")
+  override val cacheStealTimeMillis: Int = config.getInt("es.cacheStealTimeMillis")
 }

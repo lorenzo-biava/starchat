@@ -15,4 +15,5 @@ trait QuestionAnswerElasticClient extends ElasticClient {
   val dictSizeCacheMaxSize: Int
   val totalTermsCacheMaxSize: Int
   val countTermCacheMaxSize: Int
+  val cacheStealTimeMillis: Int
 }

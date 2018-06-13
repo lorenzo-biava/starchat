@@ -416,11 +416,11 @@ trait PriorDataResource extends StarChatResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
               extractRequest { request =>
-                entity(as[CountersCacheSize]) { cacheSize =>
+                entity(as[CountersCacheParameters]) { cacheSize =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(
                     Future {
-                      questionAnswerService.setCountersCacheSize(cacheSize)
+                      questionAnswerService.setCountersCacheParameters(cacheSize)
                     }) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
@@ -446,7 +446,7 @@ trait PriorDataResource extends StarChatResource {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(
                   Future {
-                    questionAnswerService.countersCacheSize
+                    questionAnswerService.countersCacheParameters
                   }) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {

@@ -44,6 +44,8 @@ trait QuestionAnswerService {
   val nested_score_mode: Map[String, ScoreMode] = Map[String, ScoreMode]("min" -> ScoreMode.Min,
     "max" -> ScoreMode.Max, "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
+  var cacheStealTimeMillis: Int
+
   def getIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
   }
@@ -86,7 +88,7 @@ trait QuestionAnswerService {
   var dictSizeCacheMaxSize: Int
   private[this] val dictSizeCache: mutable.LinkedHashMap[String, (Long, DictSize)] =
     mutable.LinkedHashMap[String, (Long, DictSize)]()
-  def dictSize(indexName: String, stale: Long = 3600000): DictSize = {
+  def dictSize(indexName: String, stale: Long = cacheStealTimeMillis): DictSize = {
     val key = indexName
     dictSizeCache.get(key) match {
       case Some(v) =>
@@ -98,6 +100,7 @@ trait QuestionAnswerService {
           if (dictSizeCache.size >= dictSizeCacheMaxSize && dictSizeCache.nonEmpty) {
             dictSizeCache -= dictSizeCache.head._1
           }
+          dictSizeCache.remove(key)
           dictSizeCache.update(key, (Time.timestampMillis, result))
           result
         }
@@ -111,7 +114,7 @@ trait QuestionAnswerService {
     }
   }
 
-  def dictSizeFuture(indexName: String, stale: Long = 3600000): Future[DictSize] = Future {
+  def dictSizeFuture(indexName: String, stale: Long = cacheStealTimeMillis): Future[DictSize] = Future {
     dictSize(indexName = indexName, stale = stale)
   }
 
@@ -144,7 +147,7 @@ trait QuestionAnswerService {
   var totalTermsCacheMaxSize: Int
   private[this] val totalTermsCache: mutable.LinkedHashMap[String, (Long, TotalTerms)] =
     mutable.LinkedHashMap[String, (Long, TotalTerms)]()
-  def totalTerms(indexName: String, stale: Long = 3600000): TotalTerms = {
+  def totalTerms(indexName: String, stale: Long = cacheStealTimeMillis): TotalTerms = {
     val key = indexName
     totalTermsCache.get(key) match {
       case Some(v) =>
@@ -156,6 +159,7 @@ trait QuestionAnswerService {
           if (totalTermsCache.size >= totalTermsCacheMaxSize && totalTermsCache.nonEmpty) {
             totalTermsCache -= totalTermsCache.head._1
           }
+          totalTermsCache.remove(key)
           totalTermsCache.update(key, (Time.timestampMillis, result))
           result
         }
@@ -169,7 +173,7 @@ trait QuestionAnswerService {
     }
   }
 
-  def totalTermsFuture(indexName: String, stale: Long = 3600000): Future[TotalTerms] = Future {
+  def totalTermsFuture(indexName: String, stale: Long = cacheStealTimeMillis): Future[TotalTerms] = Future {
     totalTerms(indexName = indexName, stale = stale)
   }
 
@@ -209,7 +213,8 @@ trait QuestionAnswerService {
   var countTermCacheMaxSize: Int
   private[this] val countTermCache: mutable.LinkedHashMap[String, (Long, TermCount)] =
     mutable.LinkedHashMap[String, (Long, TermCount)]()
-  def termCount(indexName: String, field: TermCountFields.Value, term: String, stale: Long = 3600000): TermCount = {
+  def termCount(indexName: String, field: TermCountFields.Value, term: String,
+                stale: Long = cacheStealTimeMillis): TermCount = {
     val key = indexName + field + term
     countTermCache.get(key) match {
       case Some(v) =>
@@ -221,6 +226,7 @@ trait QuestionAnswerService {
           if (countTermCache.size > countTermCacheMaxSize && countTermCache.nonEmpty) {
             countTermCache -= countTermCache.head._1
           }
+          countTermCache.remove(key)
           countTermCache.update(key, (Time.timestampMillis, result))
           result
         }
@@ -235,44 +241,51 @@ trait QuestionAnswerService {
   }
 
   def termCountFuture(indexName: String, field: TermCountFields.Value, term: String,
-                      stale: Long = 3600000): Future[TermCount] = Future {
+                      stale: Long = cacheStealTimeMillis): Future[TermCount] = Future {
     termCount(indexName, field, term, stale)
   }
 
-  def setCountersCacheSize(countersCacheSize: CountersCacheSize): CountersCacheSize = {
-    countersCacheSize.dictSizeCacheMaxSize match {
+  def setCountersCacheParameters(parameters: CountersCacheParameters): CountersCacheParameters = {
+    parameters.dictSizeCacheMaxSize match {
       case Some(v) => this.dictSizeCacheMaxSize = v
       case _ => ;
     }
 
-    countersCacheSize.totalTermsCacheMaxSize match {
+    parameters.totalTermsCacheMaxSize match {
       case Some(v) => this.totalTermsCacheMaxSize = v
       case _ => ;
     }
 
-    countersCacheSize.countTermCacheMaxSize match {
+    parameters.countTermCacheMaxSize match {
       case Some(v) => this.countTermCacheMaxSize = v
       case _ => ;
     }
 
-    CountersCacheSize(
+    parameters.cacheStealTimeMillis match {
+      case Some(v) => this.cacheStealTimeMillis = v
+      case _ => ;
+    }
+
+    CountersCacheParameters(
       dictSizeCacheMaxSize = Some(dictSizeCacheMaxSize),
       totalTermsCacheMaxSize = Some(totalTermsCacheMaxSize),
-      countTermCacheMaxSize = Some(countTermCacheMaxSize)
+      countTermCacheMaxSize = Some(countTermCacheMaxSize),
+      cacheStealTimeMillis = Some(cacheStealTimeMillis)
     )
   }
 
-  def countersCacheSize: CountersCacheSize = {
-    CountersCacheSize(
+  def countersCacheParameters: CountersCacheParameters = {
+    CountersCacheParameters(
       dictSizeCacheMaxSize = Some(dictSizeCacheMaxSize),
       totalTermsCacheMaxSize = Some(totalTermsCacheMaxSize),
-      countTermCacheMaxSize = Some(countTermCacheMaxSize)
+      countTermCacheMaxSize = Some(countTermCacheMaxSize),
+      cacheStealTimeMillis = Some(cacheStealTimeMillis)
     )
   }
 
-  def resetCountersCache: CountersCacheSize = {
+  def resetCountersCache: CountersCacheParameters = {
     totalTermsCache.clear()
-    countersCacheSize
+    countersCacheParameters
   }
 
   def search(indexName: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {

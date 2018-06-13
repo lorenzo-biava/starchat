@@ -11,4 +11,5 @@ object PriorDataService extends QuestionAnswerService {
   override var dictSizeCacheMaxSize: Int = elasticClient.dictSizeCacheMaxSize
   override var totalTermsCacheMaxSize: Int = elasticClient.totalTermsCacheMaxSize
   override var countTermCacheMaxSize: Int = elasticClient.countTermCacheMaxSize
+  override var cacheStealTimeMillis: Int = elasticClient.cacheStealTimeMillis
 }
