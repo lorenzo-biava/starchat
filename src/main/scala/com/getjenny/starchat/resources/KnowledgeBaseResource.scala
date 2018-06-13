@@ -13,6 +13,7 @@ import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.{KnowledgeBaseService, QuestionAnswerService}
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 trait KnowledgeBaseResource extends StarChatResource {
@@ -31,9 +32,9 @@ trait KnowledgeBaseResource extends StarChatResource {
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               extractRequest { request =>
                 parameters("field".as[TermCountFields.Value] ?
-                  TermCountFields.question, "term".as[String]) { (field, term) =>
+                  TermCountFields.question, "term".as[String], "stale".as[Long] ? 0) { (field, term, stale) =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(questionAnswerService.countTermFuture(indexName, field, term)) {
+                  onCompleteWithBreaker(breaker)(questionAnswerService.termCountFuture(indexName, field, term, stale)) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                         t
@@ -65,19 +66,21 @@ trait KnowledgeBaseResource extends StarChatResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               extractRequest { request =>
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(questionAnswerService.dictSizeFuture(indexName)) {
-                  case Success(t) =>
-                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                  case Failure(e) =>
-                    log.error("index(" + indexName + ") uri=(" + request.uri + ") method=(" +
-                      request.method.name + ") : " + e.getMessage)
-                    completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        ReturnMessageData(code = 102, message = e.getMessage)
+                parameters("stale".as[Long] ? 0) { stale =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(questionAnswerService.dictSizeFuture(indexName, stale)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
                       })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") uri=(" + request.uri + ") method=(" +
+                        request.method.name + ") : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 102, message = e.getMessage)
+                        })
+                  }
                 }
               }
             }
@@ -97,19 +100,21 @@ trait KnowledgeBaseResource extends StarChatResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               extractRequest { request =>
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(questionAnswerService.totalTermsFuture(indexName)) {
-                  case Success(t) =>
-                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                  case Failure(e) =>
-                    log.error("index(" + indexName + ") uri=(" + request.uri +
-                      ") method=(" + request.method.name + ") : " + e.getMessage)
-                    completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        ReturnMessageData(code = 103, message = e.getMessage)
+                parameters("stale".as[Long] ? 0) { stale =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(questionAnswerService.totalTermsFuture(indexName, stale)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
                       })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") uri=(" + request.uri +
+                        ") method=(" + request.method.name + ") : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 103, message = e.getMessage)
+                        })
+                  }
                 }
               }
             }
@@ -348,7 +353,7 @@ trait KnowledgeBaseResource extends StarChatResource {
                         ") method=(" + request.method.name + ") : " + e.getMessage)
                       completeResponse(StatusCodes.BadRequest,
                         Option {
-                          ReturnMessageData(code = 103, message = e.getMessage)
+                          ReturnMessageData(code = 111, message = e.getMessage)
                         })
                   }
                 }
@@ -367,6 +372,68 @@ trait KnowledgeBaseResource extends StarChatResource {
                   val entries: Source[UpdateDocumentResult, NotUsed] =
                     Source.fromIterator(() => entryIterator)
                   complete(entries)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def kbCountersCacheSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
+      """cacheSize""" ~ Slash ~
+      routeName) { indexName =>
+      pathEnd {
+        post {
+          authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              extractRequest { request =>
+                entity(as[CountersCacheSize]) { cacheSize =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(
+                    Future {
+                      questionAnswerService.setCountersCacheSize(cacheSize)
+                    }) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
+                      })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") uri=(" + request.uri +
+                        ") method=(" + request.method.name + ") : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 112, message = e.getMessage)
+                        })
+                  }
+                }
+              }
+            }
+          }
+        } ~ get {
+          authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              extractRequest { request =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(
+                  Future {
+                    questionAnswerService.countersCacheSize
+                  }) {
+                  case Success(t) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                  case Failure(e) =>
+                    log.error("index(" + indexName + ") uri=(" + request.uri +
+                      ") method=(" + request.method.name + ") : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 113, message = e.getMessage)
+                      })
                 }
               }
             }

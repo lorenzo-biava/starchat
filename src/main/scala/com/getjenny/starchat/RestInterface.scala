@@ -40,14 +40,16 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
     LoggingEntities.logRequestAndResult(kbTotalTermsRoutes) ~
     LoggingEntities.logRequestAndResult(kbDictSizeRoutes) ~
     LoggingEntities.logRequestAndResult(kbTermsCountRoutes) ~
-    LoggingEntities.logRequestAndResult(kbUpdateTermsRoutes)~
+    LoggingEntities.logRequestAndResult(kbUpdateTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(kbCountersCacheSizeRoutes) ~
     LoggingEntities.logRequestAndResultReduced(pdQuestionAnswerRoutes) ~
     LoggingEntities.logRequestAndResultReduced(pdQuestionAnswerStreamRoutes) ~
     LoggingEntities.logRequestAndResult(pdQuestionAnswerSearchRoutes) ~
     LoggingEntities.logRequestAndResult(pdTotalTermsRoutes) ~
     LoggingEntities.logRequestAndResult(pdDictSizeRoutes) ~
     LoggingEntities.logRequestAndResult(pdTermsCountRoutes) ~
-    LoggingEntities.logRequestAndResult(pdUpdateTermsRoutes)~
+    LoggingEntities.logRequestAndResult(pdUpdateTermsRoutes) ~
+    LoggingEntities.logRequestAndResult(pdCountersCacheSizeRoutes) ~
     LoggingEntities.logRequestAndResultReduced(clQuestionAnswerRoutes) ~
     LoggingEntities.logRequestAndResultReduced(clQuestionAnswerStreamRoutes) ~
     LoggingEntities.logRequestAndResult(clQuestionAnswerSearchRoutes) ~
@@ -55,6 +57,7 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
     LoggingEntities.logRequestAndResult(clDictSizeRoutes) ~
     LoggingEntities.logRequestAndResult(clTermsCountRoutes) ~
     LoggingEntities.logRequestAndResult(clUpdateTermsRoutes)~
+    LoggingEntities.logRequestAndResult(clCountersCacheSizeRoutes) ~
     LoggingEntities.logRequestAndResult(termsExtractionRoutes) ~
     LoggingEntities.logRequestAndResult(synExtractionRoutes) ~
     LoggingEntities.logRequestAndResult(freqExtractionRoutes) ~

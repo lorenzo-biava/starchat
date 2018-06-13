@@ -28,12 +28,13 @@ import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
 import org.elasticsearch.search.aggregations.metrics.sum.Sum
-
+import com.getjenny.starchat.tools._
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scalaz.Scalaz._
+import scala.collection.mutable
 
 trait QuestionAnswerService {
   val elasticClient: QuestionAnswerElasticClient
@@ -47,7 +48,7 @@ trait QuestionAnswerService {
     indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
   }
 
-  def dictSize(indexName: String): DictSize = {
+  private[this] def calcDictSize(indexName: String): DictSize = {
     val client: TransportClient = elasticClient.client
 
     val questionAgg = AggregationBuilders.cardinality("question_term_count").field("question.base")
@@ -81,11 +82,39 @@ trait QuestionAnswerService {
     )
   }
 
-  def dictSizeFuture(indexName: String): Future[DictSize] = Future {
-    dictSize(indexName)
+  private[this] var dictSizeCacheMaxSize: Int = 1000
+  private[this] val dictSizeCache: mutable.LinkedHashMap[String, (Long, DictSize)] =
+    mutable.LinkedHashMap[String, (Long, DictSize)]()
+  def dictSize(indexName: String, stale: Long = 0): DictSize = {
+    val key = indexName
+    dictSizeCache.get(key) match {
+      case Some(v) =>
+        val cacheStaleTime = math.abs(Time.timestampMillis - v._1)
+        if(cacheStaleTime > stale) {
+          v._2
+        } else {
+          val result = calcDictSize(indexName = indexName)
+          if (dictSizeCache.size >= dictSizeCacheMaxSize && dictSizeCache.nonEmpty) {
+            dictSizeCache -= dictSizeCache.head._1
+          }
+          dictSizeCache.update(key, (Time.timestampMillis, result))
+          result
+        }
+      case _ =>
+        val result = calcDictSize(indexName = indexName)
+        if (dictSizeCache.size >= dictSizeCacheMaxSize && dictSizeCache.nonEmpty) {
+          dictSizeCache -= dictSizeCache.head._1
+        }
+        dictSizeCache.update(key, (Time.timestampMillis, result))
+        result
+    }
   }
 
-  def totalTerms(indexName: String): TotalTerms = {
+  def dictSizeFuture(indexName: String, stale: Long): Future[DictSize] = Future {
+    dictSize(indexName = indexName, stale = stale)
+  }
+
+  private[this] def calcTotalTerms(indexName: String): TotalTerms = {
     val client: TransportClient = elasticClient.client
 
     val questionAgg = AggregationBuilders.sum("question_term_count").field("question.base_length")
@@ -110,12 +139,40 @@ trait QuestionAnswerService {
       answer = answerAggRes.getValue.toLong)
   }
 
-  def totalTermsFuture(indexName: String): Future[TotalTerms] = Future {
-    totalTerms(indexName)
+  private[this] var totalTermsCacheMaxSize: Int = 1000
+  private[this] val totalTermsCache: mutable.LinkedHashMap[String, (Long, TotalTerms)] =
+    mutable.LinkedHashMap[String, (Long, TotalTerms)]()
+  def totalTerms(indexName: String, stale: Long = 0): TotalTerms = {
+    val key = indexName
+    totalTermsCache.get(key) match {
+      case Some(v) =>
+        val cacheStaleTime = math.abs(Time.timestampMillis - v._1)
+        if(cacheStaleTime > stale) {
+          v._2
+        } else {
+          val result = calcTotalTerms(indexName = indexName)
+          if (totalTermsCache.size >= totalTermsCacheMaxSize && totalTermsCache.nonEmpty) {
+            totalTermsCache -= totalTermsCache.head._1
+          }
+          totalTermsCache.update(key, (Time.timestampMillis, result))
+          result
+        }
+      case _ =>
+        val result = calcTotalTerms(indexName = indexName)
+        if (totalTermsCache.size >= totalTermsCacheMaxSize && totalTermsCache.nonEmpty) {
+          totalTermsCache -= totalTermsCache.head._1
+        }
+        totalTermsCache.update(key, (Time.timestampMillis, result))
+        result
+    }
   }
 
-  def countTerm(indexName: String,
-                field: TermCountFields.Value = TermCountFields.question, term: String): TermCount = {
+  def totalTermsFuture(indexName: String, stale: Long = 0): Future[TotalTerms] = Future {
+    totalTerms(indexName = indexName, stale = stale)
+  }
+
+  def calcTermCount(indexName: String,
+                    field: TermCountFields.Value = TermCountFields.question, term: String): TermCount = {
     val client: TransportClient = elasticClient.client
 
     val script: Script = new Script("_score")
@@ -146,8 +203,68 @@ trait QuestionAnswerService {
       count = aggRes.getValue.toLong)
   }
 
-  def countTermFuture(indexName: String, field: TermCountFields.Value, term: String): Future[TermCount] = Future {
-    countTerm(indexName, field, term)
+  private[this] var countTermCacheMaxSize: Int = 10000
+  private[this] val countTermCache: mutable.LinkedHashMap[String, (Long, TermCount)] =
+    mutable.LinkedHashMap[String, (Long, TermCount)]()
+  def termCount(indexName: String, field: TermCountFields.Value, term: String, stale: Long = 0): TermCount = {
+    val key = indexName + field + term
+    countTermCache.get(key) match {
+      case Some(v) =>
+        val cacheStaleTime = math.abs(Time.timestampMillis - v._1)
+        if(cacheStaleTime > stale) {
+          v._2
+        } else {
+          val result = calcTermCount(indexName = indexName, field = field, term = term)
+          if (countTermCache.size > countTermCacheMaxSize && countTermCache.nonEmpty) {
+            countTermCache -= countTermCache.head._1
+          }
+          countTermCache.update(key, (Time.timestampMillis, result))
+          result
+        }
+      case _ =>
+        val result = calcTermCount(indexName = indexName, field = field, term = term)
+        if (countTermCache.size > countTermCacheMaxSize && countTermCache.nonEmpty) {
+          countTermCache -= countTermCache.head._1
+        }
+        countTermCache.update(key, (Time.timestampMillis, result))
+        result
+    }
+  }
+
+  def termCountFuture(indexName: String, field: TermCountFields.Value, term: String,
+                      stale: Long = 0): Future[TermCount] = Future {
+    termCount(indexName, field, term, stale)
+  }
+
+  def setCountersCacheSize(countersCacheSize: CountersCacheSize): CountersCacheSize = {
+    countersCacheSize.dictSizeCacheMaxSize match {
+      case Some(v) => this.dictSizeCacheMaxSize = v
+      case _ => ;
+    }
+
+    countersCacheSize.totalTermsCacheMaxSize match {
+      case Some(v) => this.totalTermsCacheMaxSize = v
+      case _ => ;
+    }
+
+    countersCacheSize.countTermCacheMaxSize match {
+      case Some(v) => this.countTermCacheMaxSize = v
+      case _ => ;
+    }
+
+    CountersCacheSize(
+      dictSizeCacheMaxSize = Some(dictSizeCacheMaxSize),
+      totalTermsCacheMaxSize = Some(totalTermsCacheMaxSize),
+      countTermCacheMaxSize = Some(countTermCacheMaxSize)
+    )
+  }
+
+  def countersCacheSize: CountersCacheSize = {
+    CountersCacheSize(
+      dictSizeCacheMaxSize = Some(dictSizeCacheMaxSize),
+      totalTermsCacheMaxSize = Some(totalTermsCacheMaxSize),
+      countTermCacheMaxSize = Some(countTermCacheMaxSize)
+    )
   }
 
   def search(indexName: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
@@ -751,7 +868,7 @@ trait QuestionAnswerService {
     update(indexName, id, document, refresh)
   }
 
-  def allDocuments(indexName: String, keepAlive: Long = 60000): Iterator[KBDocument] = {
+  def allDocuments(indexName: String, keepAlive: Long = 60000, size: Int = 100): Iterator[KBDocument] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val client: TransportClient = elasticClient.client
 
@@ -759,7 +876,7 @@ trait QuestionAnswerService {
       .prepareSearch(getIndexName(indexName))
       .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
-      .setSize(100).get()
+      .setSize(size).get()
 
     val iterator = Iterator.continually{
       val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
@@ -901,7 +1018,7 @@ trait QuestionAnswerService {
         .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
       val scoredTermsUpdateReq = KBDocumentUpdate(question_scored_terms = Some(termsQ.toList),
         answer_scored_terms = Some(termsA.toList))
-      this.update(indexName = indexName, id = hit.document.id, document = scoredTermsUpdateReq, refresh = 0)
+      update(indexName = indexName, id = hit.document.id, document = scoredTermsUpdateReq, refresh = 0)
     }
   }
 
@@ -923,7 +1040,7 @@ trait QuestionAnswerService {
         .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
       val scoredTermsUpdateReq = KBDocumentUpdate(question_scored_terms = Some(termsQ.toList),
         answer_scored_terms = Some(termsA.toList))
-      this.update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
+      update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
     }
   }
 }

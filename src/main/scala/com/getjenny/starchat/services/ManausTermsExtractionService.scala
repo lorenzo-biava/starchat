@@ -59,16 +59,16 @@ object ManausTermsExtractionService {
     override def tokenOccurrence(word: String): Long = {
       field match {
         case TermCountFields.question =>
-          val termCount = priorDataService.countTerm(indexName = idxName, field = TermCountFields.question,
+          val termCount = priorDataService.termCount(indexName = idxName, field = TermCountFields.question,
             term = word)
           termCount.count
         case TermCountFields.answer =>
-          val termCount = priorDataService.countTerm(indexName = idxName, field = TermCountFields.answer, term = word)
+          val termCount = priorDataService.termCount(indexName = idxName, field = TermCountFields.answer, term = word)
           termCount.count
         case _ =>
-          val termCountQ = priorDataService.countTerm(indexName = idxName,
+          val termCountQ = priorDataService.termCount(indexName = idxName,
             field = TermCountFields.question, term = word)
-          val termCountA = priorDataService.countTerm(indexName = idxName,
+          val termCountA = priorDataService.termCount(indexName = idxName,
             field = TermCountFields.answer, term = word)
           termCountQ.count + termCountA.count
       }
@@ -108,16 +108,16 @@ object ManausTermsExtractionService {
     override def tokenOccurrence(word: String): Long = {
       field match {
         case TermCountFields.question =>
-          val termCount = dataService.countTerm(indexName = idxName, field = TermCountFields.question,
+          val termCount = dataService.termCount(indexName = idxName, field = TermCountFields.question,
             term = word)
           termCount.count
         case TermCountFields.answer =>
-          val termCount = dataService.countTerm(indexName = idxName, field = TermCountFields.answer, term = word)
+          val termCount = dataService.termCount(indexName = idxName, field = TermCountFields.answer, term = word)
           termCount.count
         case _ =>
-          val termCountQ = dataService.countTerm(indexName = idxName,
+          val termCountQ = dataService.termCount(indexName = idxName,
             field = TermCountFields.question, term = word)
-          val termCountA = dataService.countTerm(indexName = idxName,
+          val termCountA = dataService.termCount(indexName = idxName,
             field = TermCountFields.answer, term = word)
           termCountQ.count + termCountA.count
       }
