@@ -284,6 +284,8 @@ trait QuestionAnswerService {
   }
 
   def resetCountersCache: CountersCacheParameters = {
+    dictSizeCache.clear()
+    countTermCache.clear()
     totalTermsCache.clear()
     countersCacheParameters
   }
