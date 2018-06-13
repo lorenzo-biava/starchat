@@ -281,11 +281,11 @@ trait QuestionAnswerService {
       countTermCacheMaxSize = Some(countTermCacheMaxSize),
       cacheStealTimeMillis = Some(cacheStealTimeMillis)
     ),
-    CountersCacheSize(
-      dictSizeCacheSize = dictSizeCache.size,
-      totalTermsCacheSize = totalTermsCache.size,
-      countTermCacheSize = countTermCache.size
-    ))
+      CountersCacheSize(
+        dictSizeCacheSize = dictSizeCache.size,
+        totalTermsCacheSize = totalTermsCache.size,
+        countTermCacheSize = countTermCache.size
+      ))
   }
 
 
@@ -1059,7 +1059,7 @@ trait QuestionAnswerService {
 
   def updateAllTextTerms(indexName: String,
                          extractionRequest: UpdateQATermsRequest,
-                         keepAlive: Long = 120000): Iterator[UpdateDocumentResult] = {
+                         keepAlive: Long = 3600000): Iterator[UpdateDocumentResult] = {
     allDocuments(indexName = indexName, keepAlive = keepAlive).map{ case(item) =>
       val extractionReqQ = extractionReq(text = item.question, er = extractionRequest)
       val extractionReqA = extractionReq(text = item.answer, er = extractionRequest)
@@ -1069,9 +1069,7 @@ trait QuestionAnswerService {
         .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
       val scoredTermsUpdateReq = KBDocumentUpdate(question_scored_terms = Some(termsQ.toList),
         answer_scored_terms = Some(termsA.toList))
-      val res = update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
-      println(res)
-      res
+      update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
     }
   }
 }
