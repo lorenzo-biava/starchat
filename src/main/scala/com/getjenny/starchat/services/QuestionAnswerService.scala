@@ -97,7 +97,7 @@ trait QuestionAnswerService {
           v._2
         } else {
           val result = calcDictSize(indexName = indexName)
-          if (dictSizeCache.size >= dictSizeCacheMaxSize && dictSizeCache.nonEmpty) {
+          if (dictSizeCache.size >= dictSizeCacheMaxSize) {
             dictSizeCache -= dictSizeCache.head._1
           }
           dictSizeCache.remove(key)
@@ -106,7 +106,7 @@ trait QuestionAnswerService {
         }
       case _ =>
         val result = calcDictSize(indexName = indexName)
-        if (dictSizeCache.size >= dictSizeCacheMaxSize && dictSizeCache.nonEmpty) {
+        if (dictSizeCache.size >= dictSizeCacheMaxSize) {
           dictSizeCache -= dictSizeCache.head._1
         }
         dictSizeCache.update(key, (Time.timestampMillis, result))
@@ -156,7 +156,7 @@ trait QuestionAnswerService {
           v._2
         } else {
           val result = calcTotalTerms(indexName = indexName)
-          if (totalTermsCache.size >= totalTermsCacheMaxSize && totalTermsCache.nonEmpty) {
+          if (totalTermsCache.size >= totalTermsCacheMaxSize) {
             totalTermsCache -= totalTermsCache.head._1
           }
           totalTermsCache.remove(key)
@@ -165,7 +165,7 @@ trait QuestionAnswerService {
         }
       case _ =>
         val result = calcTotalTerms(indexName = indexName)
-        if (totalTermsCache.size >= totalTermsCacheMaxSize && totalTermsCache.nonEmpty) {
+        if (totalTermsCache.size >= totalTermsCacheMaxSize) {
           totalTermsCache -= totalTermsCache.head._1
         }
         totalTermsCache.update(key, (Time.timestampMillis, result))
@@ -223,7 +223,7 @@ trait QuestionAnswerService {
           v._2
         } else {
           val result = calcTermCount(indexName = indexName, field = field, term = term)
-          if (countTermCache.size > countTermCacheMaxSize && countTermCache.nonEmpty) {
+          if (countTermCache.size > countTermCacheMaxSize) {
             countTermCache -= countTermCache.head._1
           }
           countTermCache.remove(key)
@@ -232,7 +232,7 @@ trait QuestionAnswerService {
         }
       case _ =>
         val result = calcTermCount(indexName = indexName, field = field, term = term)
-        if (countTermCache.size > countTermCacheMaxSize && countTermCache.nonEmpty) {
+        if (countTermCache.size > countTermCacheMaxSize) {
           countTermCache -= countTermCache.head._1
         }
         countTermCache.update(key, (Time.timestampMillis, result))
@@ -274,16 +274,22 @@ trait QuestionAnswerService {
     )
   }
 
-  def countersCacheParameters: CountersCacheParameters = {
-    CountersCacheParameters(
+  def countersCacheParameters: (CountersCacheParameters, CountersCacheSize) = {
+    (CountersCacheParameters(
       dictSizeCacheMaxSize = Some(dictSizeCacheMaxSize),
       totalTermsCacheMaxSize = Some(totalTermsCacheMaxSize),
       countTermCacheMaxSize = Some(countTermCacheMaxSize),
       cacheStealTimeMillis = Some(cacheStealTimeMillis)
-    )
+    ),
+    CountersCacheSize(
+      dictSizeCacheSize = dictSizeCache.size,
+      totalTermsCacheSize = totalTermsCache.size,
+      countTermCacheSize = countTermCache.size
+    ))
   }
 
-  def resetCountersCache: CountersCacheParameters = {
+
+  def resetCountersCache: (CountersCacheParameters, CountersCacheSize) = {
     dictSizeCache.clear()
     countTermCache.clear()
     totalTermsCache.clear()
@@ -1053,8 +1059,8 @@ trait QuestionAnswerService {
 
   def updateAllTextTerms(indexName: String,
                          extractionRequest: UpdateQATermsRequest,
-                         keepAlive: Long = 60000): Iterator[UpdateDocumentResult] = {
-    allDocuments(indexName = indexName, keepAlive = keepAlive, size = 5).map{ case(item) =>
+                         keepAlive: Long = 120000): Iterator[UpdateDocumentResult] = {
+    allDocuments(indexName = indexName, keepAlive = keepAlive).map{ case(item) =>
       val extractionReqQ = extractionReq(text = item.question, er = extractionRequest)
       val extractionReqA = extractionReq(text = item.answer, er = extractionRequest)
       val (_, termsQ) = manausTermsExtractionService
@@ -1063,7 +1069,9 @@ trait QuestionAnswerService {
         .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
       val scoredTermsUpdateReq = KBDocumentUpdate(question_scored_terms = Some(termsQ.toList),
         answer_scored_terms = Some(termsA.toList))
-      update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
+      val res = update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
+      println(res)
+      res
     }
   }
 }
