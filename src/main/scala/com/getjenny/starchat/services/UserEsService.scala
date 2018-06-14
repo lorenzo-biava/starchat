@@ -59,7 +59,7 @@ class UserEsService extends AbstractUserService {
     val permissions = builder.startObject("permissions")
     user.permissions.foreach{case(permIndexName, userPermissions) =>
       val array = permissions.field(permIndexName).startArray()
-      userPermissions.foreach(p => { array.value(p)}) // for each permission
+      userPermissions.foreach(p => { array.value(p.toString)}) // for each permission
       array.endArray()
     }
     permissions.endObject()
@@ -112,7 +112,7 @@ class UserEsService extends AbstractUserService {
         val permissions = builder.startObject("permissions")
         user.permissions.getOrElse(Map.empty).foreach{case(permIndexName, userPermissions) =>
           val array = permissions.field(permIndexName).startArray()
-          userPermissions.foreach(p => { array.value(p)})
+          userPermissions.foreach(p => { array.value(p.toString)})
           array.endArray()
         }
         permissions.endObject()
