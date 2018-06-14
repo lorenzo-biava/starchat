@@ -51,7 +51,7 @@
           "type": "text",
           "store": true,
           "fields": {
-            "question_freq": {
+            "freq": {
               "type": "text",
               "analyzer": "jenny_base_analyzer",
               "similarity": "scripted_term_freq"
@@ -145,7 +145,7 @@
               "type": "text",
               "store": true,
               "fields": {
-                "question_negative_freq": {
+                "freq": {
                   "type": "text",
                   "analyzer": "jenny_base_analyzer",
                   "similarity": "scripted_term_freq"
@@ -256,7 +256,7 @@
           "type": "text",
           "store": true,
           "fields": {
-            "answer_freq": {
+            "freq": {
               "type": "text",
               "analyzer": "jenny_base_analyzer",
               "similarity": "scripted_term_freq"
