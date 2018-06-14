@@ -6,8 +6,8 @@ services:
     restart: unless-stopped
     command: elasticsearch
     ports:
-      - "0.0.0.0:9200:9200"
-      - "0.0.0.0:9300:9300"
+      - "localhost:9200:9200"
+      - "localhost:9300:9300"
     expose:
       - "9200"
       - "9300"
