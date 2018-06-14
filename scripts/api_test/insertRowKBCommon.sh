@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 PORT=${1:-8888}
-INDEX_NAME=${2:-index_english_0}
-curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
+INDEX_NAME=${2:-index_english_common_0}
+curl -v -H "Authorization: Basic $(echo -n 'admin:adminp4ssw0rd' | base64)" \
   -H "Content-Type: application/json" -X POST http://localhost:${PORT}/${INDEX_NAME}/knowledgebase -d '{
 	"id": "0",
 	"conversation": "id:1000",
 	"index_in_conversation": 1,
-	"question": "thank you, bye",
+	"question": "thank you",
         "question_negative": ["ok, I will not talk with you anymore", "thank you anyway"],
 	"answer": "you are welcome! you very welcome!",
 	"question_scored_terms": [

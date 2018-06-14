@@ -186,8 +186,8 @@ trait QuestionAnswerService {
     val agg = AggregationBuilders.sum("countTerms").script(script)
 
     val esFieldName: String = field match {
-      case TermCountFields.question => "question.freq"
-      case TermCountFields.answer => "answer.freq"
+      case TermCountFields.question => "question.question_freq"
+      case TermCountFields.answer => "answer.answer_freq"
     }
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
