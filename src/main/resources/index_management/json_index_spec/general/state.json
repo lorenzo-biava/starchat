@@ -46,28 +46,13 @@
                   "type": "text",
                   "analyzer": "jenny_base_analyzer"
                 },
-                "base_bm25": {
-                  "type": "text",
-                  "analyzer": "jenny_base_analyzer",
-                  "similarity": "BM25"
-                },
                 "stop": {
                   "type": "text",
                   "analyzer": "jenny_stop_analyzer"
                 },
-                "stop_bm25": {
-                  "type": "text",
-                  "analyzer": "jenny_stop_analyzer",
-                  "similarity": "BM25"
-                },
                 "stem": {
                   "type": "text",
                   "analyzer": "jenny_stem_analyzer"
-                },
-                "stem_bm25": {
-                  "type": "text",
-                  "analyzer": "jenny_stem_analyzer",
-                  "similarity": "BM25"
                 },
                 "shingles_2": {
                   "type": "text",

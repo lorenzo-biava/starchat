@@ -341,7 +341,7 @@ trait QuestionAnswerService {
     documentSearch.question match {
       case Some(questionQuery) =>
         boolQueryBuilder.must(QueryBuilders.boolQuery()
-          .must(QueryBuilders.matchQuery("question.stem_bm25", questionQuery))
+          .must(QueryBuilders.matchQuery("question.stem", questionQuery))
           .should(QueryBuilders.matchPhraseQuery("question.raw", questionQuery)
             .boost(elasticClient.questionExactMatchBoost))
         )

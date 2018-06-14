@@ -85,7 +85,7 @@ object DecisionTableService {
         val nestedQuery: QueryBuilder = QueryBuilders.nestedQuery(
           "queries",
           QueryBuilders.boolQuery()
-            .must(QueryBuilders.matchQuery("queries.query.stem_bm25", value))
+            .must(QueryBuilders.matchQuery("queries.query.stem", value))
             .should(QueryBuilders.matchPhraseQuery("queries.query.raw", value)
               .boost(1 + (minScore * boostExactMatchFactor))
             ),
