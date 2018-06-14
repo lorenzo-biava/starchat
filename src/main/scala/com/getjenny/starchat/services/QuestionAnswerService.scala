@@ -591,12 +591,11 @@ trait QuestionAnswerService {
 
     builder.endObject()
 
-    val json: String = builder.string()
     val client: TransportClient = elasticClient.client
     val response: IndexResponse =
       client.prepareIndex().setIndex(getIndexName(indexName)).setType(elasticClient.indexMapping)
         .setId(document.id)
-        .setSource(json, XContentType.JSON).get()
+        .setSource(builder).get()
 
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(getIndexName(indexName))
