@@ -1,6 +1,6 @@
 {
   "mappings": {
-    "question_answers": {
+    "question_answer": {
       "properties": {
         "doctype": {
           "type": "keyword",
