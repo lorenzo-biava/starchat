@@ -24,6 +24,7 @@ object IndexTerms extends JsonSupport {
     host: String = "http://localhost:8888",
     index_name: String = "index_english_0",
     path: String = "/term/index",
+    method: String = "POST",
     inputfile: String = "vectors.txt",
     skiplines: Int = 0,
     timeout: Int = 60,
@@ -72,12 +73,18 @@ object IndexTerms extends JsonSupport {
         val term = Term(term = termText,
           vector = Some{termVector})
 
+        val method: HttpMethod = if (params.method.toUpperCase() == "POST") {
+          HttpMethods.POST
+        } else {
+          HttpMethods.PUT
+        }
+
         val terms = Terms(terms = List(term))
         val entityFuture = Marshal(terms).to[MessageEntity]
         val entity = Await.result(entityFuture, 10.second)
         val responseFuture: Future[HttpResponse] =
           Http().singleRequest(HttpRequest(
-            method = HttpMethods.PUT,
+            method = method,
             uri = baseUrl,
             headers = httpHeader,
             entity = entity))
@@ -106,9 +113,13 @@ object IndexTerms extends JsonSupport {
           s"  default: ${defaultParams.host}")
         .action((x, c) => c.copy(host = x))
       opt[String]("path")
-        .text(s"the service path" +
+        .text(s"the service path, use /term with method PUT" +
           s"  default: ${defaultParams.path}")
         .action((x, c) => c.copy(path = x))
+      opt[String]("method")
+        .text(s"the http method to use: PUT or POST" +
+          s"  default: ${defaultParams.method}")
+        .action((x, c) => c.copy(method = x))
       opt[String]("index_name")
         .text(s"the index_name, e.g. index_XXX" +
           s"  default: ${defaultParams.index_name}")
