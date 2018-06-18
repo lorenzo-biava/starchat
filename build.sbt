@@ -29,7 +29,7 @@ libraryDependencies ++= {
   val ScalazVersion	= "7.2.24"
   val ScoptVersion	= "3.7.0"
   val TikaVersion	= "1.18"
-  val ManausLibVersion = "1.0.0"
+  val ManausLibVersion = "1.0.1"
   Seq(
     "com.getjenny" %% "manaus-lib" % ManausLibVersion,
     "ch.qos.logback" % "logback-classic" % LogbackVersion,

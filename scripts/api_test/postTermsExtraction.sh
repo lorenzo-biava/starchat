@@ -12,11 +12,13 @@ curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
 	\"observedDataSource\": \"KNOWLEDGEBASE\",
 	\"fieldsPrior\": \"all\",
 	\"fieldsObserved\": \"all\",
-	\"minWordsPerSentence\": 5,
+	\"minWordsPerSentence\": 0,
 	\"pruneTermsThreshold\": 100000,
 	\"misspellMaxOccurrence\": 10,
 	\"activePotentialDecay\": 1,
 	\"activePotential\": true,
+	\"minSentenceInfoBit\": 20,
+	\"minKeywordInfo\": 8,
 	\"totalInfo\": true
 }
 "

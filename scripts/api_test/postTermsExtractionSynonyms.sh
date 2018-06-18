@@ -21,6 +21,8 @@ curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
 	\"misspellMaxOccurrence\": 10,
 	\"activePotentialDecay\": 1,
 	\"activePotential\": true,
+	\"minSentenceInfoBit\": 20,
+	\"minKeywordInfo\": 8,
 	\"totalInfo\": true
 }
 "

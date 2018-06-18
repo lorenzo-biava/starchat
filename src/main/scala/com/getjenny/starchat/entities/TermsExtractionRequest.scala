@@ -17,5 +17,7 @@ case class TermsExtractionRequest (
                                     misspellMaxOccurrence: Option[Int] = Some(5),
                                     activePotentialDecay: Option[Int] = Some(10),
                                     activePotential: Option[Boolean] = Some(true),
+                                    minSentenceInfoBit: Option[Int] = Some(16),
+                                    minKeywordInfo: Option[Int] = Some(8),
                                     totalInfo: Option[Boolean] = Some(false)
                                   )

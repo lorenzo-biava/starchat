@@ -143,6 +143,8 @@ object ManausTermsExtractionService {
                                     pruneTermsThreshold: Int,
                                     misspellMaxOccurrence: Int,
                                     activePotentialDecay: Int,
+                                    minSentenceInfoBit: Int = 16,
+                                    minKeywordInfo: Int = 8,
                                     totalInfo: Boolean,
                                     activePotential: Boolean): (List[String], Map[String, Double]) = {
 
@@ -161,7 +163,10 @@ object ManausTermsExtractionService {
     /* Informative words */
     val rawBagOfKeywordsInfo: List[(String, Double)] =
       keywordsExtraction.extractInformativeWords(sentence = sentenceTokens,
-        pruneSentence = pruneTermsThreshold, minWordsPerSentence = minWordsPerSentence,
+        pruneSentence = pruneTermsThreshold,
+        minWordsPerSentence = minWordsPerSentence,
+        minSentenceInfoBit = minSentenceInfoBit,
+        minKeywordInfo = minKeywordInfo,
         totalInformationNorm = totalInfo)
 
     /* Map(keyword -> active potential) */
@@ -248,6 +253,8 @@ object ManausTermsExtractionService {
       misspellMaxOccurrence = extractionRequest.misspellMaxOccurrence.getOrElse(5),
       activePotentialDecay = extractionRequest.activePotentialDecay.getOrElse(10),
       activePotential = extractionRequest.activePotential.getOrElse(true),
+      minSentenceInfoBit = extractionRequest.minSentenceInfoBit.getOrElse(16),
+      minKeywordInfo = extractionRequest.minKeywordInfo.getOrElse(8),
       totalInfo = extractionRequest.totalInfo.getOrElse(false))
     (tokens, bags._2)
   }
@@ -276,6 +283,8 @@ object ManausTermsExtractionService {
       misspellMaxOccurrence = extractionRequest.misspellMaxOccurrence,
       activePotentialDecay = extractionRequest.activePotentialDecay,
       activePotential = extractionRequest.activePotential,
+      minSentenceInfoBit = extractionRequest.minSentenceInfoBit,
+      minKeywordInfo = extractionRequest.minKeywordInfo,
       totalInfo = extractionRequest.totalInfo
     )
 
