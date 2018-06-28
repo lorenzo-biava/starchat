@@ -83,11 +83,11 @@ dockerCommands := Seq(
 
 packageName in Docker := packageName.value
 version in Docker := version.value
-dockerRepository := Some("elegansio")
+dockerRepository := Some("getjenny")
 
 //dockerImageCreationTask := (publishLocal in Docker).value
 composeNoBuild := true
-composeFile := "docker-starchat/docker-compose.test.yml" 
+composeFile := "docker-starchat/docker-compose.test.yml"
 
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.starchat.Main")
