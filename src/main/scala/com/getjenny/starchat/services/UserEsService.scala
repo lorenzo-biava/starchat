@@ -236,10 +236,10 @@ class UserEsService extends AbstractUserService {
   }
 
   def generatePassword(size: Int = 16): String = {
-    RandomNumbers.getString(size)
+    RandomNumbers.string(size)
   }
 
   def generateSalt(): String = {
-    RandomNumbers.getString(16)
+    RandomNumbers.string(16)
   }
 }

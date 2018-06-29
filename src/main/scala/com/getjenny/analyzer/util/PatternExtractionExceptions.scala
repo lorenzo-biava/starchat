@@ -1,4 +1,4 @@
-package com.getjenny.analyzer.utils
+package com.getjenny.analyzer.util
 
 /**
   * Created by angelo on 26/06/17.

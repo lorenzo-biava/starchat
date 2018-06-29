@@ -363,7 +363,7 @@ trait QuestionAnswerService {
 
     documentSearch.random.filter(identity) match {
       case Some(true) =>
-        val randomBuilder = new RandomScoreFunctionBuilder().seed(RandomNumbers.getInt())
+        val randomBuilder = new RandomScoreFunctionBuilder().seed(RandomNumbers.integer)
         val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(randomBuilder)
         boolQueryBuilder.must(functionScoreQuery)
       case _ => ;

@@ -1,7 +1,7 @@
 package com.getjenny.analyzer.atoms
 
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
-import com.getjenny.analyzer.utils._
+import com.getjenny.analyzer.util._
 
 import scala.util.Try
 import scala.util.control.NonFatal

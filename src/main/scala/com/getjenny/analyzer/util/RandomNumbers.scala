@@ -1,37 +1,39 @@
 package com.getjenny.analyzer.util
 
-object RandomNumbers {
-  val random = scala.util.Random
+import scala.util.Random
 
-  def getIntPos(): Int = {
+object RandomNumbers {
+  val random: Random.type = scala.util.Random
+
+  def intPos: Int = {
     math.abs(random.nextInt)
   }
 
-  def getFloatPos(): Float = {
+  def floatPos: Float = {
     math.abs(random.nextFloat)
   }
 
-  def getDoublePos(): Double = {
+  def doublePos: Double = {
     math.abs(random.nextDouble)
   }
 
-  def getInt(): Int = {
+  def integer: Int = {
     random.nextInt
   }
 
-  def getFloat(): Float = {
+  def float: Float = {
     random.nextFloat
   }
 
-  def getDouble(): Double = {
+  def double: Double = {
     random.nextDouble
   }
 
-  def getLong(): Long = {
+  def long: Long = {
     random.nextLong()
   }
 
-  def getString(size: Int): String = {
+  def string(size: Int): String = {
     random.alphanumeric.take(size).mkString
   }
 }
