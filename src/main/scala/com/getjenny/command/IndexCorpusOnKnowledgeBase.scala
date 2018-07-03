@@ -125,7 +125,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
           s"  default: ${defaultParams.host}")
         .action((x, c) => c.copy(host = x))
       opt[String]("index_name")
-        .text(s"the index_name, e.g. index_XXX" +
+        .text(s"the index_name, e.g. index_english_XXX" +
           s"  default: ${defaultParams.indexName}")
         .action((x, c) => c.copy(indexName = x))
       opt[String]("path")
