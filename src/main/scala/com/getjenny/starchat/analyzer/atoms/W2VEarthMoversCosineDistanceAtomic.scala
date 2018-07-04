@@ -2,7 +2,8 @@ package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
-import com.getjenny.starchat.analyzer.utils.EMDVectorDistances
+import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, TextToVectorsTools}
+import com.getjenny.starchat.entities.CommonOrSpecificSearch
 import com.getjenny.starchat.services._
 
 /**
@@ -25,6 +26,11 @@ class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String], restricted
       throw ExceptionAtomic("similarCosEmd requires an argument")
   }
 
+  val commonOrSpecific: CommonOrSpecificSearch.Value = arguments.lastOption match {
+    case Some(t) => CommonOrSpecificSearch.value(t)
+    case _ => CommonOrSpecificSearch.COMMON
+  }
+
   val termService: TermService.type = TermService
 
   implicit class Crosstable[X](xs: Traversable[X]) {
@@ -34,7 +40,8 @@ class W2VEarthMoversCosineDistanceAtomic(val arguments: List[String], restricted
   override def toString: String = "similarCosEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
 
-  val indexName = restricted_args("index_name")
+  val originalIndexName: String = restricted_args("index_name")
+  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
     val emdDist = EMDVectorDistances.distanceCosine(indexName, query, sentence)

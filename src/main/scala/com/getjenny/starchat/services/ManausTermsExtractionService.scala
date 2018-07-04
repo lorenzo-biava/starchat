@@ -15,6 +15,7 @@ import com.getjenny.starchat.services.esclient.ManausTermsExtractionElasticClien
 import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 
 object ManausTermsExtractionService {
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
@@ -24,35 +25,13 @@ object ManausTermsExtractionService {
   private[this] val convLogDataService: ConversationLogsService.type = ConversationLogsService
   private[this] val knowledgeBaseService: KnowledgeBaseService.type = KnowledgeBaseService
 
-  /** Extract language from index name
-    *
-    * @param indexName the full index name
-    * @return a tuple with the two component of the index (language, arbitrary pattern)
-    */
-  private[this] def languageFromIndex(indexName: String): (String, String) = {
-    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-
-    val (_, language, arbitrary) = indexName match {
-      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
-        (indexPattern, languagePattern, arbitraryPattern)
-      case _ => throw new Exception("index name is not well formed")
-    }
-    (language, arbitrary)
-  }
-
-  private[this] def getCommonIndexName(indexName: String): String = {
-    val arbitraryPattern = elasticClient.commonIndexArbitraryPattern
-    val (language, _) = languageFromIndex(indexName)
-    "index_" + language + "_" + arbitraryPattern
-  }
-
   class PriorTokenOccurrenceMap(indexName: String,
                                 commonOrSpecificSearch: CommonOrSpecificSearch.Value,
                                 field: TermCountFields.Value) extends TokenOccurrence {
 
     private[this] val idxName: String = commonOrSpecificSearch match {
       case CommonOrSpecificSearch.COMMON =>
-        getCommonIndexName(indexName)
+        TextToVectorsTools.getCommonIndexName(indexName)
       case _ => indexName
     }
 
@@ -94,7 +73,7 @@ object ManausTermsExtractionService {
 
     private[this] val idxName: String = commonOrSpecificSearch match {
       case CommonOrSpecificSearch.COMMON =>
-        getCommonIndexName(indexName)
+        TextToVectorsTools.getCommonIndexName(indexName)
       case _ => indexName
     }
 
@@ -295,7 +274,7 @@ object ManausTermsExtractionService {
     // calculate source index name for the terms (vectorial representation)
     val termsIndexName = extractionRequest.commonOrSpecificSearchTerms match {
       case CommonOrSpecificSearch.IDXSPECIFIC => indexName
-      case _ => getCommonIndexName(indexName)
+      case _ => TextToVectorsTools.getCommonIndexName(indexName)
     }
 
     // extraction of vectorial terms representation

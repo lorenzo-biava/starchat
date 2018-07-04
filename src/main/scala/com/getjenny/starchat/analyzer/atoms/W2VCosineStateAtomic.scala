@@ -8,7 +8,7 @@ import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
-import com.getjenny.starchat.entities._
+import com.getjenny.starchat.entities.{CommonOrSpecificSearch, _}
 import com.getjenny.starchat.services._
 
 class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic  {
@@ -26,11 +26,18 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
       throw ExceptionAtomic("similarState requires an argument")
   }
 
+  val commonOrSpecific: CommonOrSpecificSearch.Value = arguments.lastOption match {
+    case Some(t) => CommonOrSpecificSearch.value(t)
+    case _ => CommonOrSpecificSearch.COMMON
+  }
+
   override def toString: String = "similarState(\"" + state + "\")"
 
   val analyzerService: AnalyzerService.type = AnalyzerService
 
-  val indexName = restricted_args("index_name")
+  val originalIndexName: String = restricted_args("index_name")
+  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
+
   val querySentences: Option[DecisionTableRuntimeItem] =
     AnalyzerService.analyzersMap(indexName).analyzerMap.get(state)
   if (querySentences.isEmpty) {

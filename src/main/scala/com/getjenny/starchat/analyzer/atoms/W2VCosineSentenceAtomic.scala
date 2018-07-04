@@ -4,6 +4,7 @@ import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
+import com.getjenny.starchat.entities.CommonOrSpecificSearch
 import com.getjenny.starchat.services._
 
 /**
@@ -25,13 +26,18 @@ class W2VCosineSentenceAtomic(val arguments: List[String], restricted_args: Map[
       throw ExceptionAtomic("cosineSentence requires an argument")
   }
 
+  val commonOrSpecific: CommonOrSpecificSearch.Value = arguments.lastOption match {
+    case Some(t) => CommonOrSpecificSearch.value(t)
+    case _ => CommonOrSpecificSearch.COMMON
+  }
+
   val termService: TermService.type = TermService
 
   override def toString: String = "similar(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
 
-
-  val indexName = restricted_args("index_name")
+  val originalIndexName: String = restricted_args("index_name")
+  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
   val sentenceVector: (Vector[Double], Double) = TextToVectorsTools.sumOfVectorsFromText(indexName, sentence)
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {

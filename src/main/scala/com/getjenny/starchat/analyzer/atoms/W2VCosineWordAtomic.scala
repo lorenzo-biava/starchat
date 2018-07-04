@@ -4,8 +4,8 @@ import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
+import com.getjenny.starchat.entities.CommonOrSpecificSearch
 import com.getjenny.starchat.services._
-
 import scalaz.Scalaz._
 
 /**
@@ -23,11 +23,18 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
       throw ExceptionAtomic("similar requires an argument")
   }
 
+  val commonOrSpecific: CommonOrSpecificSearch.Value = arguments.lastOption match {
+    case Some(t) => CommonOrSpecificSearch.value(t)
+    case _ => CommonOrSpecificSearch.COMMON
+  }
+
   override def toString: String = "similar(\"" + word + "\")"
 
   val termService: TermService.type = TermService
 
-  val indexName: String = restricted_args("index_name")
+  val originalIndexName: String = restricted_args("index_name")
+  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
+
   val (sentenceVector: Vector[Double], reliabilityFactor: Double) =
     TextToVectorsTools.sumOfVectorsFromText(indexName, word)
 

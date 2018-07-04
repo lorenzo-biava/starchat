@@ -43,6 +43,12 @@ object TermService {
   private[this] val elasticClient: TermElasticClient.type = TermElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
+  /** fetch the index arbitrary pattern
+    *
+    * @return the index arbitrary pattern
+    */
+  def commonIndexArbitraryPattern: String = elasticClient.commonIndexArbitraryPattern
+
   /** Extract language from index name
     *
     * @param indexName the full index name

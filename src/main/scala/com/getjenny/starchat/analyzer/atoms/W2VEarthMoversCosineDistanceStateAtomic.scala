@@ -3,8 +3,8 @@ package com.getjenny.starchat.analyzer.atoms
 import com.getjenny.analyzer.analyzers._
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
-import com.getjenny.starchat.analyzer.utils.EMDVectorDistances
-import com.getjenny.starchat.entities.TextTerms
+import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, TextToVectorsTools}
+import com.getjenny.starchat.entities.{CommonOrSpecificSearch, TextTerms}
 import com.getjenny.starchat.services._
 
 /**
@@ -27,6 +27,11 @@ class W2VEarthMoversCosineDistanceStateAtomic(val arguments: List[String], restr
       throw ExceptionAtomic("similarCosEmdState requires an argument")
   }
 
+  val commonOrSpecific: CommonOrSpecificSearch.Value = arguments.lastOption match {
+    case Some(t) => CommonOrSpecificSearch.value(t)
+    case _ => CommonOrSpecificSearch.COMMON
+  }
+
   val termService: TermService.type = TermService
 
   implicit class CrossTable[X](xs: Traversable[X]) {
@@ -37,7 +42,8 @@ class W2VEarthMoversCosineDistanceStateAtomic(val arguments: List[String], restr
 
   val analyzerService: AnalyzerService.type = AnalyzerService
 
-  val indexName = restricted_args("index_name")
+  val originalIndexName: String = restricted_args("index_name")
+  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
 
   val queriesSentences: Option[DecisionTableRuntimeItem] =
     AnalyzerService.analyzersMap(indexName).analyzerMap.get(state)
