@@ -51,8 +51,8 @@ object TextToVectorsTools {
     */
   def resolveIndexName(indexName: String, commonOrSpecific: CommonOrSpecificSearch.Value): String = {
     commonOrSpecific match {
-      case CommonOrSpecificSearch.COMMON => getCommonIndexName(indexName)
-      case _ => indexName
+      case CommonOrSpecificSearch.IDXSPECIFIC => indexName
+      case _ => getCommonIndexName(indexName)
     }
   }
 
