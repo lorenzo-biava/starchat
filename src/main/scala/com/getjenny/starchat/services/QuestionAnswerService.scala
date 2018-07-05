@@ -5,7 +5,7 @@ package com.getjenny.starchat.services
   */
 
 import akka.event.{Logging, LoggingAdapter}
-import com.getjenny.analyzer.util.RandomNumbers
+import com.getjenny.analyzer.util.{RandomNumbers, Time}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.QuestionAnswerElasticClient
@@ -17,8 +17,8 @@ import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, Se
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
 import org.elasticsearch.index.query.functionscore._
 import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
 import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
@@ -28,13 +28,13 @@ import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
 import org.elasticsearch.search.aggregations.metrics.sum.Sum
-import com.getjenny.starchat.tools._
+import scalaz.Scalaz._
+
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scalaz.Scalaz._
-import scala.collection.mutable
 
 trait QuestionAnswerService {
   val elasticClient: QuestionAnswerElasticClient

@@ -28,7 +28,13 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     "lastTravStateIs",
     "prevTravStateIs",
     "cosDistanceKeywords",
-    "distance"
+    "distance",
+    "checkTimestamp",
+    "checkDayOfWeek",
+    "checkDayOfMonth",
+    "checkMonth",
+    "checkHour",
+    "checkMinute"
   )
 
   override def get(name: String, argument: List[String], restricted_args: Map[String, String]):
@@ -50,6 +56,12 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     case "lastTravStateIs" => new LastTravStateIsAtomic(argument, restricted_args)
     case "prevTravStateIs" => new PreviousTravStateIsAtomic(argument, restricted_args)
     case ("distance" | "cosDistanceKeywords") => new CosineDistanceAnalyzer(argument, restricted_args)
+    case "checkTimestamp" => new CheckTimestampAtomic(argument, restricted_args)
+    case "checkDayOfWeek" => new CheckDayOfWeekAtomic(argument, restricted_args)
+    case "checkDayOfMonth" => new CheckDayOfMonthAtomic(argument, restricted_args)
+    case "checkMonth" => new CheckMonthAtomic(argument, restricted_args)
+    case "checkHour" => new CheckHourAtomic(argument, restricted_args)
+    case "checkMinute" => new CheckMinuteAtomic(argument, restricted_args)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }
