@@ -7,7 +7,7 @@ package com.getjenny.analyzer.atoms
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
 import com.getjenny.analyzer.util.{ComparisonOperators, Time}
 
-/** Check if the current time is Equal, LessOrEqual, Less, Greater, GreaterOrEqual to the argument which
+/** Check if the current month is Equal, LessOrEqual, Less, Greater, GreaterOrEqual to the argument which
   * is an integer between 1 (JANUARY) and 12 (DECEMBER)
   *
   * first argument is the month's number: an integer between 1 and 12
