@@ -17,10 +17,10 @@ resolvers +=
   "Sonatype OSS Releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 
 libraryDependencies ++= {
-  val AkkaHttpVersion	= "10.1.2"
+  val AkkaHttpVersion	= "10.1.3"
   val AkkaVersion	= "2.5.13"
   val BreezeVersion	= "0.13.2"
-  val ESClientVersion	= "6.3.1"
+  val ESClientVersion	= "6.2.4"
   val Log4JVersion	= "2.9.1"
   val LogbackVersion	= "1.2.3"
   val ParboiledVersion	= "2.1.4"
@@ -49,6 +49,8 @@ libraryDependencies ++= {
     "org.apache.tika" % "tika-app" % TikaVersion,
     "org.apache.tika" % "tika-core" % TikaVersion,
     "org.apache.tika" % "tika-parsers" % TikaVersion,
+    // Not integrated, High level rest API still miss
+    //  delete by query: https://github.com/elastic/elasticsearch/issues/27205
     //"org.elasticsearch.client" % "elasticsearch-rest-client" % ESClientVersion,
     //"org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % ESClientVersion,
     "org.elasticsearch.client" % "transport" % ESClientVersion,
