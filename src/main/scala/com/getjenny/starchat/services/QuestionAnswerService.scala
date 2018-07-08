@@ -15,6 +15,7 @@ import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGet
 import org.elasticsearch.action.index.IndexResponse
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.action.update.UpdateResponse
+import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentBuilder
@@ -51,7 +52,7 @@ trait QuestionAnswerService {
   }
 
   private[this] def calcDictSize(indexName: String): DictSize = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val questionAgg = AggregationBuilders.cardinality("question_term_count").field("question.base")
     val answerAgg = AggregationBuilders.cardinality("answer_term_count").field("answer.base")
@@ -119,7 +120,7 @@ trait QuestionAnswerService {
   }
 
   private[this] def calcTotalTerms(indexName: String): TotalTerms = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val questionAgg = AggregationBuilders.sum("question_term_count").field("question.base_length")
     val answerAgg = AggregationBuilders.sum("answer_term_count").field("answer.base_length")
@@ -179,7 +180,7 @@ trait QuestionAnswerService {
 
   def calcTermCount(indexName: String,
                     field: TermCountFields.Value = TermCountFields.question, term: String): TermCount = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val script: Script = new Script("_score")
 
@@ -297,7 +298,7 @@ trait QuestionAnswerService {
   }
 
   def search(indexName: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
       .setTypes(elasticClient.indexMapping)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
@@ -591,7 +592,7 @@ trait QuestionAnswerService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val response: IndexResponse =
       client.prepareIndex().setIndex(getIndexName(indexName)).setType(elasticClient.indexMapping)
         .setId(document.id)
@@ -701,7 +702,7 @@ trait QuestionAnswerService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
       .setType(elasticClient.indexMapping).setId(id)
       .setDoc(builder)
@@ -725,7 +726,7 @@ trait QuestionAnswerService {
   }
 
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -740,7 +741,7 @@ trait QuestionAnswerService {
   }
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
       .setType(elasticClient.indexMapping).setId(id).get()
 
@@ -762,7 +763,7 @@ trait QuestionAnswerService {
   }
 
   def read(indexName: String, ids: List[String]): Option[SearchKBDocumentsResults] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
     multigetBuilder.add(getIndexName(indexName), elasticClient.indexSuffix, ids:_*)
     val response: MultiGetResponse = multigetBuilder.get()
@@ -898,7 +899,7 @@ trait QuestionAnswerService {
 
   def allDocuments(indexName: String, keepAlive: Long = 60000, size: Int = 100): Iterator[KBDocument] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     var scrollResp: SearchResponse = client
       .prepareSearch(getIndexName(indexName))

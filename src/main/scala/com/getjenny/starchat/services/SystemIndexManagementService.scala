@@ -12,6 +12,7 @@ import com.getjenny.starchat.entities.{IndexManagementResponse, _}
 import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClient
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
+import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
@@ -51,7 +52,7 @@ object SystemIndexManagementService {
   )
 
   def create(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -84,7 +85,7 @@ object SystemIndexManagementService {
   }
 
   def remove(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     if (! elasticClient.enableDeleteSystemIndex) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -132,7 +133,7 @@ object SystemIndexManagementService {
   }
 
   def update(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {

@@ -14,6 +14,7 @@ import org.elasticsearch.action.admin.indices.close.CloseIndexResponse
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import org.elasticsearch.action.admin.indices.open.OpenIndexResponse
+import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
@@ -58,7 +59,7 @@ object IndexManagementService {
 
   def create(indexName: String,
              indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     // extract language from index name
     val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
@@ -110,7 +111,7 @@ object IndexManagementService {
 
   def remove(indexName: String,
              indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     if (! elasticClient.enableDeleteIndex) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -139,7 +140,7 @@ object IndexManagementService {
 
   def check(indexName: String,
             indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -160,7 +161,7 @@ object IndexManagementService {
 
   def openClose(indexName: String, indexSuffix: Option[String] = None,
                 operation: String): Future[List[OpenCloseIndex]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t === item.indexSuffix
@@ -184,7 +185,7 @@ object IndexManagementService {
 
   def updateSettings(indexName: String, language: String,
                      indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val analyzerJsonPath: String = analyzerFiles(language).updatePath
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
@@ -215,7 +216,7 @@ object IndexManagementService {
 
   def updateMappings(indexName: String, language: String,
                      indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {

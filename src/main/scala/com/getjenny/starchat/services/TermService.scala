@@ -32,6 +32,7 @@ import scala.concurrent.Future
 import scala.io.Source
 import scalaz.Scalaz._
 import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, SumVectorDistances, TextToVectorsTools}
+import org.elasticsearch.client.RestHighLevelClient
 
 case class TermServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -243,7 +244,7 @@ object TermService {
     * @return list of indexing responses
     */
   def indexTerm(indexName: String, terms: Terms, refresh: Int) : Future[Option[IndexDocumentListResult]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
@@ -439,7 +440,7 @@ object TermService {
     * @return result of the update operations
     */
   private[this] def updateTerm(indexName: String, terms: Terms, refresh: Int) : Option[UpdateDocumentListResult] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
@@ -520,7 +521,7 @@ object TermService {
     * @return a DeleteDocumentsResult with the status of the delete operation
     */
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -543,7 +544,7 @@ object TermService {
     */
   def delete(indexName: String, termGetRequest: TermIdsRequest, refresh: Int):
   Future[Option[DeleteDocumentListResult]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val bulkRequest : BulkRequestBuilder = client.prepareBulk()
 
     termGetRequest.ids.foreach( id => {
@@ -581,7 +582,7 @@ object TermService {
     * @return the retrieved terms
     */
   def searchTerm(indexName: String, term: SearchTerm) : Option[TermsResults] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val analyzer = "space_punctuation"
     val analyzer_name = term.analyzer.getOrElse("space_punctuation")
@@ -769,7 +770,7 @@ object TermService {
     */
   def search(indexName: String, text: String,
              analyzer: String = "space_punctuation"): Option[TermsResults] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val term_field_name = TokenizersDescription.analyzers_map.get(analyzer) match {
       case Some(anlrz) => "term." + analyzer
@@ -891,7 +892,7 @@ object TermService {
         throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + query.tokenizer + ")")
     }
 
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val analyzerBuilder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.text)
     analyzerBuilder.setAnalyzer(analyzer)
@@ -960,7 +961,7 @@ object TermService {
     */
   def allDocuments(index_name: String, keepAlive: Long = 60000): Iterator[Term] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     var scrollResp: SearchResponse = client
       .prepareSearch(getIndexName(index_name))

@@ -11,6 +11,7 @@ import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClien
 import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.action.update.UpdateResponse
+import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentBuilder
@@ -43,7 +44,7 @@ object  DtReloadService {
     builder.field(elasticClient.dtReloadTimestampFieldName, timestamp)
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val response: UpdateResponse =
       client.prepareUpdate().setIndex(getIndexName())
         .setType(elasticClient.systemRefreshDtIndexSuffix)
@@ -66,7 +67,7 @@ object  DtReloadService {
 
   def getDTReloadTimestamp(indexName: String) : Future[Option[DtReloadTimestamp]] = Future {
     val dtReloadDocId: String = indexName
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val getBuilder: GetRequestBuilder = client.prepareGet()
       .setIndex(getIndexName())
       .setType(elasticClient.systemRefreshDtIndexSuffix)
@@ -92,7 +93,7 @@ object  DtReloadService {
 
   def allDTReloadTimestamp(minTimestamp: Option[Long] = None,
                            maxItems: Option[Long] = None): Option[List[DtReloadTimestamp]] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
     minTimestamp match {
       case Some(minTs) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("state_refresh_ts").gt(minTs))

@@ -5,7 +5,6 @@ package com.getjenny.starchat.services
   */
 
 import javax.naming.AuthenticationException
-
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.RandomNumbers
 import com.getjenny.starchat.SCActorSystem
@@ -16,6 +15,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
 import org.elasticsearch.action.update.UpdateResponse
+import org.elasticsearch.client.RestHighLevelClient
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
@@ -66,7 +66,7 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val response = client.prepareIndex().setIndex(indexName)
       .setCreate(true)
       .setType(elasticClient.userIndexSuffix)
@@ -121,7 +121,7 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val response: UpdateResponse = client.prepareUpdate().setIndex(indexName)
       .setType(elasticClient.userIndexSuffix).setId(id)
       .setDoc(builder)
@@ -148,7 +148,7 @@ class UserEsService extends AbstractUserService {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val response: DeleteResponse = client.prepareDelete().setIndex(indexName)
       .setType(elasticClient.userIndexSuffix).setId(id).get()
 
@@ -172,7 +172,7 @@ class UserEsService extends AbstractUserService {
       admin_user
     } else {
 
-      val client: TransportClient = elasticClient.client
+      val client: RestHighLevelClient = elasticClient.client
       val getBuilder: GetRequestBuilder = client.prepareGet(indexName, elasticClient.userIndexSuffix, id)
 
       val response: GetResponse = getBuilder.get()
