@@ -8,6 +8,7 @@ services:
   - docker
 script:
    - sbt ++$TRAVIS_SCALA_VERSION dockerComposeUp
+   - nc -z 0.0.0.0 9300 && echo "OK" || echo "FAILED"
    - sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport codacyCoverage
    - sbt ++$TRAVIS_SCALA_VERSION dockerComposeStop
 notifications:
