@@ -8,6 +8,7 @@ services:
   - docker
 script:
    - sbt ++$TRAVIS_SCALA_VERSION dockerComposeUp
+   - sleep 10
    - sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport codacyCoverage
    - sbt ++$TRAVIS_SCALA_VERSION dockerComposeStop
 notifications:
