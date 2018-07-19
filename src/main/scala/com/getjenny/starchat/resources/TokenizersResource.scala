@@ -18,7 +18,7 @@ trait TokenizersResource extends StarChatResource {
   private[this] val termService: TermService.type = TermService
 
   def esTokenizersRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "tokenizers") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "tokenizers") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

@@ -28,7 +28,7 @@ trait DecisionTableResource extends StarChatResource {
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
 
   def decisionTableRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "decisiontable") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
@@ -170,7 +170,7 @@ trait DecisionTableResource extends StarChatResource {
     File.createTempFile("DecisionTableCSV", ".csv")
 
   def decisionTableUploadCSVRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable_upload_csv") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "decisiontable_upload_csv") { indexName =>
       pathEnd {
         authenticateBasicAsync(realm = authRealm,
           authenticator = authenticator.authenticator) { user =>
@@ -203,7 +203,7 @@ trait DecisionTableResource extends StarChatResource {
   }
 
   def decisionTableAsyncReloadRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable_async_reload") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "decisiontable_async_reload") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
@@ -231,7 +231,7 @@ trait DecisionTableResource extends StarChatResource {
   }
 
   def decisionTableAnalyzerRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable_analyzer") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "decisiontable_analyzer") { indexName =>
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm,
@@ -284,7 +284,7 @@ trait DecisionTableResource extends StarChatResource {
   }
 
   def decisionTableSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "decisiontable_search") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "decisiontable_search") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
@@ -314,7 +314,7 @@ trait DecisionTableResource extends StarChatResource {
   }
 
   def decisionTableResponseRequestRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "get_next_response") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "get_next_response") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

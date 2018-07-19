@@ -8,7 +8,7 @@ import scalaz.Scalaz._
 
 object Permissions extends Enumeration {
   type Permission = Value
-  val stream, read, write, admin, unknown = Value
+  val stream, read, write, org_admin, admin, unknown = Value
   def value(permission: String): Permissions.Value = values.find(_.toString === permission).getOrElse(unknown)
 }
 

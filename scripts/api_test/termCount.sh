@@ -2,7 +2,7 @@
 
 TERM=${1:-"hello"}
 ROUTE=${2:-knowledgebase}
-INDEX_NAME=${3:-index_english_0}
+INDEX_NAME=${3:-index_getjenny_english_0}
 FIELD=${4:-"question"}
 PORT=${5:-8888}
 curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \

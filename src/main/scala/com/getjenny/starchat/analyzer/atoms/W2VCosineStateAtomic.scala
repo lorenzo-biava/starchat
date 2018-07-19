@@ -10,6 +10,7 @@ import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.starchat.entities.{CommonOrSpecificSearch, _}
 import com.getjenny.starchat.services._
+import com.getjenny.starchat.utils.Index
 
 class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic  {
   /**
@@ -36,7 +37,7 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
   val analyzerService: AnalyzerService.type = AnalyzerService
 
   val originalIndexName: String = restricted_args("index_name")
-  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
+  val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
 
   val querySentences: Option[DecisionTableRuntimeItem] =
     AnalyzerService.analyzersMap(indexName).analyzerMap.get(state)

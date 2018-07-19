@@ -11,11 +11,11 @@ import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, SumVectorDistances, TextToVectorsTools}
 import com.getjenny.starchat.entities.{TermsExtractionRequest, _}
 import com.getjenny.starchat.services.esclient.ManausTermsExtractionElasticClient
+import com.getjenny.starchat.utils.Index
 
 import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 
 object ManausTermsExtractionService {
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
@@ -31,7 +31,7 @@ object ManausTermsExtractionService {
 
     private[this] val idxName: String = commonOrSpecificSearch match {
       case CommonOrSpecificSearch.COMMON =>
-        TextToVectorsTools.getCommonIndexName(indexName)
+        Index.getCommonIndexName(indexName)
       case _ => indexName
     }
 
@@ -73,7 +73,7 @@ object ManausTermsExtractionService {
 
     private[this] val idxName: String = commonOrSpecificSearch match {
       case CommonOrSpecificSearch.COMMON =>
-        TextToVectorsTools.getCommonIndexName(indexName)
+        Index.getCommonIndexName(indexName)
       case _ => indexName
     }
 
@@ -274,7 +274,7 @@ object ManausTermsExtractionService {
     // calculate source index name for the terms (vectorial representation)
     val termsIndexName = extractionRequest.commonOrSpecificSearchTerms match {
       case CommonOrSpecificSearch.IDXSPECIFIC => indexName
-      case _ => TextToVectorsTools.getCommonIndexName(indexName)
+      case _ => Index.getCommonIndexName(indexName)
     }
 
     // extraction of vectorial terms representation

@@ -10,6 +10,7 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
+import com.getjenny.starchat.utils.Index
 import org.apache.lucene.search.join._
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
@@ -23,6 +24,7 @@ import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBu
 import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
+import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
@@ -30,7 +32,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
-import scalaz.Scalaz._
 
 case class DecisionTableServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -46,16 +47,13 @@ object DecisionTableService {
     Map[String, ScoreMode]("min" -> ScoreMode.Min,
       "max" -> ScoreMode.Max, "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
-  private[this] def getIndexName(indexName: String, suffix: Option[String] = None): String = {
-    indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
-  }
-
   def search(indexName: String, documentSearch: DTDocumentSearch): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elasticClient.client
-    val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
-      .setTypes(elasticClient.indexSuffix)
-      .setVersion(true)
-      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+    val searchBuilder : SearchRequestBuilder =
+      client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
+        .setTypes(elasticClient.indexSuffix)
+        .setVersion(true)
+        .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val minScore = documentSearch.min_score.getOrElse(
       Option{elasticClient.queryMinThreshold}.getOrElse(0.0f)
@@ -170,12 +168,17 @@ object DecisionTableService {
           case None => ""
         }
 
+        val enabled : Boolean = source.get("enabled") match {
+          case Some(t) => t.asInstanceOf[Boolean]
+          case None => true
+        }
+
         val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
           max_state_count = maxStateCount,
           analyzer = analyzer, queries = queries, bubble = bubble,
           action = action, action_input = actionInput, state_data = stateData,
           success_value = successValue, failure_value = failureValue,
-          version = version
+          enabled = Some(enabled), version = version
         )
 
         val searchDocument : SearchDTDocument = SearchDTDocument(score = item.getScore, document = document)
@@ -200,11 +203,9 @@ object DecisionTableService {
 
   def searchDtQueries(indexName: String, userText: String): Future[Option[SearchDTDocumentsResults]] = {
     val dtDocumentSearch: DTDocumentSearch =
-      DTDocumentSearch(from = Option {
-        0
-      }, size = Option {
-        10000
-      },
+      DTDocumentSearch(
+        from = Option {0},
+        size = Option {10000},
         min_score = Option {
           elasticClient.queryMinThreshold
         },
@@ -214,7 +215,9 @@ object DecisionTableService {
         },
         state = None: Option[String], queries = Option {
           userText
-        })
+        },
+        enabled = Some(true)
+      )
 
     this.search(indexName, dtDocumentSearch).map {
       case Some(results) => Some(results)
@@ -260,17 +263,21 @@ object DecisionTableService {
 
     builder.field("success_value", document.success_value)
     builder.field("failure_value", document.failure_value)
-
+    val enabled = document.enabled match {
+      case Some(t) => t
+      case _ => true
+    }
+    builder.field("enabled", enabled)
     builder.endObject()
 
     val client: TransportClient = elasticClient.client
-    val response = client.prepareIndex().setIndex(getIndexName(indexName))
+    val response = client.prepareIndex().setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
       .setType(elasticClient.indexSuffix)
       .setId(document.state)
       .setSource(builder).get()
 
     if (refresh =/= 0) {
-      val refreshIndex = elasticClient.refresh(getIndexName(indexName))
+      val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")
       }
@@ -343,16 +350,22 @@ object DecisionTableService {
       case Some(t) => builder.field("failure_value", t)
       case None => ;
     }
+    document.enabled match {
+      case Some(t) => builder.field("enabled", t)
+      case None => ;
+    }
+
     builder.endObject()
 
     val client: TransportClient = elasticClient.client
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
+    val response: UpdateResponse = client.prepareUpdate()
+      .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
       .setType(elasticClient.indexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh =/= 0) {
-      val refreshIndex = elasticClient.refresh(getIndexName(indexName))
+      val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")
       }
@@ -373,7 +386,7 @@ object DecisionTableService {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(getIndexName(indexName))
+        .source(Index.indexName(indexName, elasticClient.indexSuffix))
         .filter(qb)
         .get()
 
@@ -385,11 +398,13 @@ object DecisionTableService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.client
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
+    val response: DeleteResponse = client.prepareDelete()
+      .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
       .setType(elasticClient.indexSuffix).setId(id).get()
 
     if (refresh =/= 0) {
-      val refreshIndex = elasticClient.refresh(getIndexName(indexName))
+      val refreshIndex = elasticClient
+        .refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")
       }
@@ -405,11 +420,12 @@ object DecisionTableService {
     Option {docResult}
   }
 
-  def getDTDocuments(index_name: String): Future[Option[SearchDTDocumentsResults]] = {
+  def getDTDocuments(indexName: String): Future[Option[SearchDTDocumentsResults]] = {
     val client: TransportClient = elasticClient.client
 
     val qb : QueryBuilder = QueryBuilders.matchAllQuery()
-    val scrollResp : SearchResponse = client.prepareSearch(getIndexName(index_name))
+    val scrollResp : SearchResponse = client
+      .prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
       .setTypes(elasticClient.indexSuffix)
       .setQuery(qb)
       .setVersion(true)
@@ -475,12 +491,17 @@ object DecisionTableService {
         case None => ""
       }
 
+      val enabled : Boolean = source.get("enabled") match {
+        case Some(t) => t.asInstanceOf[Boolean]
+        case None => true
+      }
+
       val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
         max_state_count = maxStateCount,
         analyzer = analyzer, queries = queries, bubble = bubble,
         action = action, action_input = actionInput, state_data = stateData,
         success_value = successValue, failure_value = failureValue,
-        version = version
+        enabled = Some(enabled), version = version
       )
 
       val searchDocument : SearchDTDocument = SearchDTDocument(score = .0f, document = document)
@@ -501,7 +522,7 @@ object DecisionTableService {
 
     if(ids.nonEmpty) {
       // a list of specific ids was requested
-      multigetBuilder.add(getIndexName(indexName), elasticClient.indexSuffix, ids: _*)
+      multigetBuilder.add(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, ids: _*)
       val response: MultiGetResponse = multigetBuilder.get()
 
       val documents: Option[List[SearchDTDocument]] = Option {
@@ -568,12 +589,17 @@ object DecisionTableService {
             case None => ""
           }
 
+          val enabled : Boolean = source.get("enabled") match {
+            case Some(t) => t.asInstanceOf[Boolean]
+            case None => true
+          }
+
           val document: DTDocument = DTDocument(state = state, execution_order = executionOrder,
             max_state_count = maxStateCount,
             analyzer = analyzer, queries = queries, bubble = bubble,
             action = action, action_input = actionInput, state_data = stateData,
             success_value = successValue, failure_value = failureValue,
-            version = version
+            enabled = Some(enabled), version = version
           )
 
           val searchDocument: SearchDTDocument = SearchDTDocument(score = .0f, document = document)

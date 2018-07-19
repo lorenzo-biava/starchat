@@ -18,7 +18,7 @@ trait SpellcheckResource extends StarChatResource {
   private[this] val spellcheckService: SpellcheckService.type = SpellcheckService
 
   def spellcheckRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "spellcheck") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "spellcheck") { indexName =>
       pathPrefix("terms") {
         pathEnd {
           post {

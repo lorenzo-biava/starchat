@@ -10,6 +10,7 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.IndexManagementElasticClient
+import com.getjenny.starchat.utils.Index
 import org.elasticsearch.action.admin.indices.close.CloseIndexResponse
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
@@ -17,11 +18,11 @@ import org.elasticsearch.action.admin.indices.open.OpenIndexResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
+import scalaz.Scalaz._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
-import scalaz.Scalaz._
 
 case class IndexManagementServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -182,9 +183,11 @@ object IndexManagementService {
     })
   }
 
-  def updateSettings(indexName: String, language: String,
+  def updateSettings(indexName: String,
                      indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.client
+
+    val (orgName, language, arbitrary) = Index.patternsFromIndex(indexName: String)
 
     val analyzerJsonPath: String = analyzerFiles(language).updatePath
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
@@ -213,9 +216,11 @@ object IndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def updateMappings(indexName: String, language: String,
+  def updateMappings(indexName: String,
                      indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.client
+
+    val (orgName, language, arbitrary) = Index.patternsFromIndex(indexName: String)
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {

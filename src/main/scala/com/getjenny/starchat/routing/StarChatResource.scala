@@ -16,6 +16,8 @@ import org.elasticsearch.index.IndexNotFoundException
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
+import scala.util.matching.Regex
+import com.getjenny.starchat.utils.Index
 
 trait StarChatResource extends Directives with JsonSupport {
 
@@ -25,6 +27,8 @@ trait StarChatResource extends Directives with JsonSupport {
   val authRealm: String = config.getString("starchat.auth_realm")
   val authenticator: AbstractStarChatAuthenticator = StarChatAuthenticator.authenticator
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+
+  val indexRegex: Regex = Index.indexMatchRegex
 
   val routesExceptionHandler = ExceptionHandler {
     case e: IndexNotFoundException =>

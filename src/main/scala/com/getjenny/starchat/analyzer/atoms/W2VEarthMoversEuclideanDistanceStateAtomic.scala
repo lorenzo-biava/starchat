@@ -6,9 +6,10 @@ package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
-import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, TextToVectorsTools}
+import com.getjenny.starchat.analyzer.utils.EMDVectorDistances
 import com.getjenny.starchat.entities.{CommonOrSpecificSearch, TextTerms}
 import com.getjenny.starchat.services._
+import com.getjenny.starchat.utils.Index
 
 class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], restricted_args: Map[String, String])
   extends AbstractAtomic  {
@@ -42,7 +43,7 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], re
   val analyzerService: AnalyzerService.type = AnalyzerService
 
   val originalIndexName: String = restricted_args("index_name")
-  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
+  val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
 
   val queriesSentences: Option[DecisionTableRuntimeItem] =
     AnalyzerService.analyzersMap(indexName).analyzerMap.get(state)

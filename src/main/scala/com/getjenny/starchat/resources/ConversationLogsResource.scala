@@ -21,8 +21,7 @@ trait ConversationLogsResource extends StarChatResource {
   private[this] val routeName: String = "conversation_logs"
 
   def clTermsCountRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """term_count""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """term_count""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         get {
@@ -56,8 +55,7 @@ trait ConversationLogsResource extends StarChatResource {
   }
 
   def clDictSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """dict_size""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """dict_size""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         get {
@@ -90,8 +88,7 @@ trait ConversationLogsResource extends StarChatResource {
   }
 
   def clTotalTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """total_terms""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """total_terms""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         get {
@@ -124,9 +121,7 @@ trait ConversationLogsResource extends StarChatResource {
   }
 
   def clQuestionAnswerStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix(
-      """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-        """stream""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """stream""" ~ Slash ~
         routeName) { indexName =>
       pathEnd {
         get {
@@ -148,7 +143,7 @@ trait ConversationLogsResource extends StarChatResource {
   }
 
   def clQuestionAnswerRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ routeName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ routeName) { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
@@ -330,8 +325,7 @@ trait ConversationLogsResource extends StarChatResource {
   }
 
   def clUpdateTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """updateTerms""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """updateTerms""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         put {
@@ -381,8 +375,7 @@ trait ConversationLogsResource extends StarChatResource {
   }
 
   def clCountersCacheSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """cache""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """cache""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         delete {

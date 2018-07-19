@@ -109,6 +109,12 @@
           "store": true,
           "index": true,
           "null_value": ""
+        },
+        "enabled": {
+          "type": "boolean",
+          "store": true,
+          "null_value": true,
+          "index": true
         }
       }
     }

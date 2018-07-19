@@ -16,46 +16,6 @@ object TextToVectorsTools {
     def cross[Y](ys: Traversable[Y]): Traversable[(X, Y)] = for { x <- xs; y <- ys } yield (x, y)
   }
 
-  /** Extract language from index name
-    *
-    * @param indexName the full index name
-    * @return a tuple with the two component of the index (language, arbitrary pattern)
-    */
-  def languageFromIndex(indexName: String): (String, String) = {
-    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-
-    val (_, language, arbitrary) = indexName match {
-      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
-        (indexPattern, languagePattern, arbitraryPattern)
-      case _ => throw new Exception("index name is not well formed")
-    }
-    (language, arbitrary)
-  }
-
-  /** Extract the name of the common index
-    *
-    * @param indexName the index name e.g. index_english_0
-    * @return the name of the language specific common index e.g. index_english_common_0
-    */
-  def getCommonIndexName(indexName: String): String = {
-    val arbitraryPattern =  termService.commonIndexArbitraryPattern
-    val (language, _) = languageFromIndex(indexName)
-    "index_" + language + "_" + arbitraryPattern
-  }
-
-  /** resolve the index name using the common or specific information
-    *
-    * @param indexName the index name
-    * @param commonOrSpecific IDXSPECIFIC or COMMON
-    * @return the common index name otherwise the indexName without modifications
-    */
-  def resolveIndexName(indexName: String, commonOrSpecific: CommonOrSpecificSearch.Value): String = {
-    commonOrSpecific match {
-      case CommonOrSpecificSearch.IDXSPECIFIC => indexName
-      case _ => getCommonIndexName(indexName)
-    }
-  }
-
   def textTermsToVectors(textTerms: Option[TextTerms]): List[(String, Vector[Double])] = {
     textTerms match {
       case Some(t) => {

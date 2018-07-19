@@ -22,8 +22,7 @@ trait KnowledgeBaseResource extends StarChatResource {
   private[this] val routeName: String = "knowledgebase"
 
   def kbTermsCountRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """term_count""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """term_count""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         get {
@@ -57,8 +56,7 @@ trait KnowledgeBaseResource extends StarChatResource {
   }
 
   def kbDictSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """dict_size""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """dict_size""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         get {
@@ -91,8 +89,7 @@ trait KnowledgeBaseResource extends StarChatResource {
   }
 
   def kbTotalTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """total_terms""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """total_terms""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         get {
@@ -125,9 +122,7 @@ trait KnowledgeBaseResource extends StarChatResource {
   }
 
   def kbQuestionAnswerStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix(
-      """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-        """stream""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """stream""" ~ Slash ~
         routeName) { indexName =>
       pathEnd {
         get {
@@ -149,7 +144,7 @@ trait KnowledgeBaseResource extends StarChatResource {
   }
 
   def kbQuestionAnswerRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ routeName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ routeName) { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

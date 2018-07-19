@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 PORT=${1:-8888}
-INDEX_NAME=${2:-index_english_0}
+INDEX_NAME=${2:-index_getjenny_english_0}
 LANGUAGE=${3:-english}
 UPDATE_TYPE=${4:-settings}
 INDEX_SUFFIX=${5:-""}

@@ -22,8 +22,7 @@ trait PriorDataResource extends StarChatResource {
   private[this] val routeName: String = "prior_data"
 
   def pdTermsCountRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """term_count""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """term_count""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         get {
@@ -57,8 +56,7 @@ trait PriorDataResource extends StarChatResource {
   }
 
   def pdDictSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """dict_size""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """dict_size""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         get {
@@ -91,8 +89,7 @@ trait PriorDataResource extends StarChatResource {
   }
 
   def pdTotalTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """total_terms""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """total_terms""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         get {
@@ -125,9 +122,7 @@ trait PriorDataResource extends StarChatResource {
   }
 
   def pdQuestionAnswerStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix(
-      """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-        """stream""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """stream""" ~ Slash ~
         routeName) { indexName =>
       pathEnd {
         get {
@@ -149,7 +144,7 @@ trait PriorDataResource extends StarChatResource {
   }
 
   def pdQuestionAnswerRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ routeName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ routeName) { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
@@ -297,8 +292,7 @@ trait PriorDataResource extends StarChatResource {
 
   def pdQuestionAnswerSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
     val localRouteName: String = routeName + "_search"
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
-      Slash ~  localRouteName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~  localRouteName) { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
@@ -331,8 +325,7 @@ trait PriorDataResource extends StarChatResource {
   }
 
   def pdUpdateTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """updateTerms""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """updateTerms""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         put {
@@ -382,8 +375,7 @@ trait PriorDataResource extends StarChatResource {
   }
 
   def pdCountersCacheSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """cache""" ~ Slash ~
+    pathPrefix(indexRegex ~ Slash ~ """cache""" ~ Slash ~
       routeName) { indexName =>
       pathEnd {
         delete {

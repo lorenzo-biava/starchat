@@ -15,5 +15,6 @@ case class DTDocumentUpdate(execution_order: Option[Int],
                             action_input: Option[Map[String, String]],
                             state_data: Option[Map[String, String]],
                             success_value: Option[String],
-                            failure_value: Option[String]
+                            failure_value: Option[String],
+                            enabled: Option[Boolean]
                             )

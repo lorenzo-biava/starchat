@@ -12,12 +12,13 @@ import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.AnalyzerService
 
 import scala.util.{Failure, Success}
+import com.getjenny.starchat.utils.Index
 
 trait AnalyzersPlaygroundResource extends StarChatResource {
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
 
   def analyzersPlaygroundRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "analyzers_playground") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "analyzers_playground") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

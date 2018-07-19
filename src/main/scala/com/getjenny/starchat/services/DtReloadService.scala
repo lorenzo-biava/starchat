@@ -8,6 +8,7 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities.DtReloadTimestamp
 import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClient
+import com.getjenny.starchat.utils.Index
 import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.action.update.UpdateResponse
@@ -30,10 +31,6 @@ object  DtReloadService {
   private[this] val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  private[this] def getIndexName(indexName: Option[String] = None, suffix: Option[String] = None): String = {
-    indexName.getOrElse(elasticClient.indexName) + "." + suffix.getOrElse(elasticClient.systemRefreshDtIndexSuffix)
-  }
-
   def setDTReloadTimestamp(indexName: String, refresh: Int = 0):
   Future[Option[DtReloadTimestamp]] = Future {
     val dtReloadDocId: String = indexName
@@ -45,7 +42,8 @@ object  DtReloadService {
 
     val client: TransportClient = elasticClient.client
     val response: UpdateResponse =
-      client.prepareUpdate().setIndex(getIndexName())
+      client.prepareUpdate()
+        .setIndex(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
         .setType(elasticClient.systemRefreshDtIndexSuffix)
         .setId(dtReloadDocId)
         .setDocAsUpsert(true)
@@ -55,7 +53,8 @@ object  DtReloadService {
     log.debug("dt reload timestamp response status: " + response.status())
 
     if (refresh =/= 0) {
-      val refreshIndex = elasticClient.refresh(getIndexName())
+      val refreshIndex = elasticClient
+        .refresh(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("System: index refresh failed: (" + indexName + ")")
       }
@@ -68,7 +67,7 @@ object  DtReloadService {
     val dtReloadDocId: String = indexName
     val client: TransportClient = elasticClient.client
     val getBuilder: GetRequestBuilder = client.prepareGet()
-      .setIndex(getIndexName())
+      .setIndex(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
       .setType(elasticClient.systemRefreshDtIndexSuffix)
       .setId(dtReloadDocId)
     val response: GetResponse = getBuilder.get()
@@ -99,7 +98,8 @@ object  DtReloadService {
       case _ => ;
     }
 
-    val scrollResp : SearchResponse = client.prepareSearch(getIndexName())
+    val scrollResp : SearchResponse = client
+      .prepareSearch(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
       .setTypes(elasticClient.systemRefreshDtIndexSuffix)
       .setQuery(boolQueryBuilder)
       .addSort("state_refresh_ts", SortOrder.DESC)

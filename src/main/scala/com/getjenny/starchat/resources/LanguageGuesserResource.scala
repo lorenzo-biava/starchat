@@ -18,7 +18,7 @@ trait LanguageGuesserResource extends StarChatResource {
   private[this] val languageGuesserService: LanguageGuesserService.type = LanguageGuesserService
 
   def languageGuesserRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "language_guesser") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "language_guesser") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

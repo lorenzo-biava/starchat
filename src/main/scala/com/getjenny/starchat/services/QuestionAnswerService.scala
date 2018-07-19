@@ -35,6 +35,7 @@ import scala.collection.immutable.{List, Map}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import com.getjenny.starchat.utils.Index
 
 trait QuestionAnswerService {
   val elasticClient: QuestionAnswerElasticClient
@@ -45,10 +46,6 @@ trait QuestionAnswerService {
     "max" -> ScoreMode.Max, "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   var cacheStealTimeMillis: Int
-
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
-    indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
-  }
 
   private[this] def calcDictSize(indexName: String): DictSize = {
     val client: TransportClient = elasticClient.client
@@ -61,7 +58,7 @@ trait QuestionAnswerService {
     val script: Script = new Script(scriptBody)
     val totalAgg = AggregationBuilders.cardinality("total_term_count").script(script)
 
-    val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
+    val aggregationQueryRes = client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
       .setTypes(elasticClient.indexMapping)
       .setSize(0)
       .setQuery(QueryBuilders.matchAllQuery)
@@ -124,7 +121,7 @@ trait QuestionAnswerService {
     val questionAgg = AggregationBuilders.sum("question_term_count").field("question.base_length")
     val answerAgg = AggregationBuilders.sum("answer_term_count").field("answer.base_length")
 
-    val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
+    val aggregationQueryRes = client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
       .setTypes(elasticClient.indexMapping)
       .setSize(0)
       .setQuery(QueryBuilders.matchAllQuery)
@@ -193,7 +190,7 @@ trait QuestionAnswerService {
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
       .must(QueryBuilders.matchQuery(esFieldName, term))
 
-    val aggregationQueryRes = client.prepareSearch(getIndexName(indexName))
+    val aggregationQueryRes = client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
       .setTypes(elasticClient.indexMapping)
       .setSize(0)
       .setQuery(boolQueryBuilder)
@@ -298,7 +295,8 @@ trait QuestionAnswerService {
 
   def search(indexName: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
     val client: TransportClient = elasticClient.client
-    val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
+    val searchBuilder : SearchRequestBuilder = client
+      .prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
       .setTypes(elasticClient.indexMapping)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
@@ -593,12 +591,13 @@ trait QuestionAnswerService {
 
     val client: TransportClient = elasticClient.client
     val response: IndexResponse =
-      client.prepareIndex().setIndex(getIndexName(indexName)).setType(elasticClient.indexMapping)
+      client.prepareIndex().setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
+        .setType(elasticClient.indexMapping)
         .setId(document.id)
         .setSource(builder).get()
 
     if (refresh =/= 0) {
-      val refresh_index = elasticClient.refresh(getIndexName(indexName))
+      val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
       }
@@ -702,13 +701,14 @@ trait QuestionAnswerService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.client
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
+    val response: UpdateResponse = client.prepareUpdate()
+      .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
       .setType(elasticClient.indexMapping).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh =/= 0) {
-      val refresh_index = elasticClient.refresh(getIndexName(indexName))
+      val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
       }
@@ -729,7 +729,7 @@ trait QuestionAnswerService {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(getIndexName(indexName))
+        .source(Index.indexName(indexName, elasticClient.indexSuffix))
         .filter(qb)
         .get()
 
@@ -741,11 +741,12 @@ trait QuestionAnswerService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.client
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
+    val response: DeleteResponse = client.prepareDelete()
+      .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
       .setType(elasticClient.indexMapping).setId(id).get()
 
     if (refresh =/= 0) {
-      val refresh_index = elasticClient.refresh(getIndexName(indexName))
+      val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
       }
@@ -764,7 +765,7 @@ trait QuestionAnswerService {
   def read(indexName: String, ids: List[String]): Option[SearchKBDocumentsResults] = {
     val client: TransportClient = elasticClient.client
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multigetBuilder.add(getIndexName(indexName), elasticClient.indexSuffix, ids:_*)
+    multigetBuilder.add(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, ids:_*)
     val response: MultiGetResponse = multigetBuilder.get()
 
 
@@ -901,7 +902,7 @@ trait QuestionAnswerService {
     val client: TransportClient = elasticClient.client
 
     var scrollResp: SearchResponse = client
-      .prepareSearch(getIndexName(indexName))
+      .prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
       .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
       .setSize(size).get()

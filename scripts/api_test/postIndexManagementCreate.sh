@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 PORT=${1:-8888}
-INDEX_NAME=${2:-index_english_0}
+INDEX_NAME=${2:-index_getjenny_english_0}
 INDEX_SUFFIX=${3}
 if [[ ! -z ${INDEX_SUFFIX} ]]; then
   SUFFIX="?indexSuffix=${INDEX_SUFFIX}"

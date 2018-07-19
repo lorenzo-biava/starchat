@@ -6,6 +6,7 @@ import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.starchat.entities.CommonOrSpecificSearch
 import com.getjenny.starchat.services._
+import com.getjenny.starchat.utils.Index
 
 /**
   * Created by mal on 20/02/2017.
@@ -37,7 +38,8 @@ class W2VCosineSentenceAtomic(val arguments: List[String], restricted_args: Map[
   val isEvaluateNormalized: Boolean = true
 
   val originalIndexName: String = restricted_args("index_name")
-  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
+
+  val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
   val sentenceVector: (Vector[Double], Double) = TextToVectorsTools.sumOfVectorsFromText(indexName, sentence)
 
   def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {

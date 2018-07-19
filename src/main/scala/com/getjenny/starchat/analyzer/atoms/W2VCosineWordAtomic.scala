@@ -6,6 +6,7 @@ import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.starchat.entities.CommonOrSpecificSearch
 import com.getjenny.starchat.services._
+import com.getjenny.starchat.utils.Index
 import scalaz.Scalaz._
 
 /**
@@ -33,7 +34,7 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
   val termService: TermService.type = TermService
 
   val originalIndexName: String = restricted_args("index_name")
-  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
+  val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
 
   val (sentenceVector: Vector[Double], reliabilityFactor: Double) =
     TextToVectorsTools.sumOfVectorsFromText(indexName, word)

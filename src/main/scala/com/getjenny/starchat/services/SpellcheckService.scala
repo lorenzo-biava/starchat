@@ -8,6 +8,7 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.KnowledgeBaseElasticClient
+import com.getjenny.starchat.utils.Index
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.search.suggest.SuggestBuilder
@@ -22,10 +23,6 @@ object SpellcheckService {
   private[this] val elasticClient = KnowledgeBaseElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  private[this] def getIndexName(indexName: String, suffix: Option[String] = None): String = {
-    indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
-  }
-
   def termsSuggester(indexName: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
     val client: TransportClient = elasticClient.client
 
@@ -38,7 +35,7 @@ object SpellcheckService {
     suggestBuilder.setGlobalText(request.text)
       .addSuggestion("suggestions", suggestionBuilder)
 
-    val searchBuilder = client.prepareSearch(getIndexName(indexName))
+    val searchBuilder = client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
       .setTypes(elasticClient.indexSuffix)
       .suggest(suggestBuilder)
 

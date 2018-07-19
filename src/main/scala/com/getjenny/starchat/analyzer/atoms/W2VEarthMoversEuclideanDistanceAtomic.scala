@@ -2,9 +2,10 @@ package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
 import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
-import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, TextToVectorsTools}
+import com.getjenny.starchat.analyzer.utils.EMDVectorDistances
 import com.getjenny.starchat.entities.CommonOrSpecificSearch
 import com.getjenny.starchat.services._
+import com.getjenny.starchat.utils.Index
 
 /**
   * Created by angelo on 04/04/17.
@@ -33,7 +34,7 @@ class W2VEarthMoversEuclideanDistanceAtomic(val arguments: List[String], restric
   val termService: TermService.type = TermService
 
   val originalIndexName: String = restricted_args("index_name")
-  val indexName: String = TextToVectorsTools.resolveIndexName(originalIndexName, commonOrSpecific)
+  val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
 
   override def toString: String = "similarEucEmd(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true

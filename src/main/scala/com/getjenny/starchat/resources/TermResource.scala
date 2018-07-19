@@ -21,10 +21,7 @@ trait TermResource extends StarChatResource {
   private[this] val termService: TermService.type = TermService
 
   def termStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix(
-      """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-        """stream""" ~ Slash ~
-        """term""") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ """stream""" ~ Slash ~ """term""") { indexName =>
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm,
@@ -46,7 +43,7 @@ trait TermResource extends StarChatResource {
   }
 
   def termRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "term") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "term") { indexName =>
       path(Segment) { operation: String =>
         post {
           operation match {

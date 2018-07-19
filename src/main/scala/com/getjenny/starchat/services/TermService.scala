@@ -9,8 +9,10 @@ import java.io.{FileNotFoundException, InputStream}
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.VectorUtils
 import com.getjenny.starchat.SCActorSystem
+import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.TermElasticClient
+import com.getjenny.starchat.utils.Index
 import org.elasticsearch.action.admin.indices.analyze.{AnalyzeRequestBuilder, AnalyzeResponse}
 import org.elasticsearch.action.bulk._
 import org.elasticsearch.action.delete.DeleteRequestBuilder
@@ -24,14 +26,13 @@ import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuild
 import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
+import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
-import scalaz.Scalaz._
-import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, SumVectorDistances, TextToVectorsTools}
 
 case class TermServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -48,32 +49,6 @@ object TermService {
     * @return the index arbitrary pattern
     */
   def commonIndexArbitraryPattern: String = elasticClient.commonIndexArbitraryPattern
-
-  /** Extract language from index name
-    *
-    * @param indexName the full index name
-    * @return a tuple with the two component of the index (language, arbitrary pattern)
-    */
-  private[this] def languageFromIndex(indexName: String): (String, String) = {
-    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-
-    val (_, language, arbitrary) = indexName match {
-      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
-        (indexPattern, languagePattern, arbitraryPattern)
-      case _ => throw new Exception("index name is not well formed")
-    }
-    (language, arbitrary)
-  }
-
-  /** calculate and return the full index name
-    *
-    * @param indexName the index name
-    * @param suffix the suffix name
-    * @return the full index name made of indexName and Suffix
-    */
-  private[this] def getIndexName(indexName: String, suffix: Option[String] = None): String = {
-    indexName + "." + suffix.getOrElse(elasticClient.indexSuffix)
-  }
 
   /** transform a vector of numerical values to a string payload which can be stored on Elasticsearch
     *
@@ -188,7 +163,7 @@ object TermService {
     */
   def indexDefaultSynonyms(indexName: String, groupSize: Int = 2000,
                            refresh: Int = 0) : Future[Option[ReturnMessageData]] = Future {
-    val (language, _) = languageFromIndex(indexName)
+    val (_, language, _) = Index.patternsFromIndex(indexName)
     val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.txt"
     val synonymsIs: Option[InputStream] = Some(getClass.getResourceAsStream(synonymsPath))
     val analyzerSource: Source = synonymsIs match {
@@ -290,7 +265,7 @@ object TermService {
       }
       builder.endObject()
 
-      val indexTermReq = client.prepareIndex().setIndex(getIndexName(indexName))
+      val indexTermReq = client.prepareIndex().setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
         .setType(elasticClient.indexSuffix)
         .setId(term.term)
         .setSource(builder)
@@ -323,7 +298,8 @@ object TermService {
     val documents: List[Term] = if(termsRequest.ids.nonEmpty) {
       val client: TransportClient = elasticClient.client
       val multiGetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
-      multiGetBuilder.add(getIndexName(indexName), elasticClient.indexSuffix, termsRequest.ids: _*)
+      multiGetBuilder.add(Index.indexName(indexName, elasticClient.indexSuffix),
+        elasticClient.indexSuffix, termsRequest.ids: _*)
       val response: MultiGetResponse = multiGetBuilder.get()
       response.getResponses.toList
         .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case (e) =>
@@ -486,7 +462,7 @@ object TermService {
       }
       builder.endObject()
 
-      bulkRequest.add(client.prepareUpdate().setIndex(getIndexName(indexName))
+      bulkRequest.add(client.prepareUpdate().setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
         .setType(elasticClient.indexSuffix)
         .setDocAsUpsert(true)
         .setId(term.term)
@@ -496,7 +472,7 @@ object TermService {
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh =/= 0) {
-      val refreshIndex = elasticClient.refresh(getIndexName(indexName))
+      val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refreshIndex.failed_shards_n > 0) {
         throw TermServiceException("Term : index refresh failed: (" + indexName + ")")
       }
@@ -524,7 +500,7 @@ object TermService {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(getIndexName(indexName))
+        .source(Index.indexName(indexName, elasticClient.indexSuffix))
         .filter(qb)
         .get()
 
@@ -548,7 +524,7 @@ object TermService {
 
     termGetRequest.ids.foreach( id => {
       val deleteRequest: DeleteRequestBuilder = client.prepareDelete()
-        .setIndex(getIndexName(indexName))
+        .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
         .setType(elasticClient.indexSuffix)
         .setId(id)
       bulkRequest.add(deleteRequest)
@@ -556,7 +532,7 @@ object TermService {
     val bulkResponse: BulkResponse = bulkRequest.get()
 
     if (refresh =/= 0) {
-      val refreshIndex = elasticClient.refresh(getIndexName(indexName))
+      val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refreshIndex.failed_shards_n > 0) {
         throw TermServiceException("Term : index refresh failed: (" + indexName + ")")
       }
@@ -594,9 +570,10 @@ object TermService {
             term.analyzer.getOrElse("") + ")")
       }
 
-    val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
-      .setTypes(elasticClient.indexSuffix)
-      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+    val searchBuilder : SearchRequestBuilder =
+      client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
+        .setTypes(elasticClient.indexSuffix)
+        .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
 
@@ -778,7 +755,7 @@ object TermService {
     }
 
     val searchBuilder : SearchRequestBuilder = client.prepareSearch()
-      .setIndices(getIndexName(indexName))
+      .setIndices(Index.indexName(indexName, elasticClient.indexSuffix))
       .setTypes(elasticClient.indexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 
@@ -895,7 +872,7 @@ object TermService {
 
     val analyzerBuilder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.text)
     analyzerBuilder.setAnalyzer(analyzer)
-    analyzerBuilder.setIndex(getIndexName(indexName))
+    analyzerBuilder.setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
 
     val analyzeResponse: AnalyzeResponse = analyzerBuilder
       .execute()
@@ -954,16 +931,16 @@ object TermService {
 
   /** fetch all documents and serve them through an iterator
     *
-    * @param index_name index name
+    * @param indexName index name
     * @param keepAlive the keep alive timeout for the ElasticSearch document scroller
     * @return an iterator for Items
     */
-  def allDocuments(index_name: String, keepAlive: Long = 60000): Iterator[Term] = {
+  def allDocuments(indexName: String, keepAlive: Long = 60000): Iterator[Term] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val client: TransportClient = elasticClient.client
 
     var scrollResp: SearchResponse = client
-      .prepareSearch(getIndexName(index_name))
+      .prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
       .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
       .setSize(100).get()

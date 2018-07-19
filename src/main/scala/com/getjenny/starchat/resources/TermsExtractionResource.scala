@@ -18,7 +18,7 @@ trait TermsExtractionResource extends StarChatResource {
   private[this] val spellcheckService: ManausTermsExtractionService.type = ManausTermsExtractionService
 
   def freqExtractionRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "extraction") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "extraction") { indexName =>
       pathPrefix("frequencies") {
         pathEnd {
           post {
@@ -54,7 +54,7 @@ trait TermsExtractionResource extends StarChatResource {
   }
 
   def termsExtractionRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "extraction") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "extraction") { indexName =>
       pathPrefix("keywords") {
         pathEnd {
           post {
@@ -88,7 +88,7 @@ trait TermsExtractionResource extends StarChatResource {
   }
 
   def synExtractionRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "extraction") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "extraction") { indexName =>
       pathPrefix("synonyms") {
         pathEnd {
           post {
