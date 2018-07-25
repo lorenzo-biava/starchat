@@ -8,10 +8,10 @@ import akka.testkit._
 import com.getjenny.starchat.StarChatService
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
+import com.getjenny.starchat.utils.Index
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.duration._
-import com.getjenny.starchat.utils.Index
 
 class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds.dilated(system))
