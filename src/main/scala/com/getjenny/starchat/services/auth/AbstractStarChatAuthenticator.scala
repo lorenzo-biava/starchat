@@ -13,7 +13,11 @@ abstract class AbstractStarChatAuthenticator {
 
   def authenticator(credentials: Credentials): Future[Option[User]]
 
-  def hasPermissions(user: User, index: String, permission: Permissions.Value): Future[Boolean]
+  def hasPermissions(user: User, index: String, permissions: Set[Permissions.Value]): Future[Boolean]
+
+  def hasPermissions(user: User, index: String, permission: Permissions.Value): Future[Boolean] = {
+    hasPermissions(user = user, index = index, permissions = Set(permission))
+  }
 
   def secret(password: String, salt: String): String
 

@@ -24,7 +24,7 @@ trait UserResource extends StarChatResource {
         authenticateBasicAsync(realm = authRealm,
           authenticator = authenticator.authenticator) { (user) =>
           authorizeAsync(_ =>
-            authenticator.hasPermissions(user, "admin", Permissions.org_admin)) {
+            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
             entity(as[User]) { user_entity =>
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(userService.create(user_entity)) {
@@ -50,7 +50,7 @@ trait UserResource extends StarChatResource {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.org_admin)) {
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               entity(as[UserUpdate]) { user_entity =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(userService.update(id, user_entity)) {
@@ -78,7 +78,7 @@ trait UserResource extends StarChatResource {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.org_admin)) {
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(userService.delete(id)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
@@ -103,7 +103,7 @@ trait UserResource extends StarChatResource {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.org_admin)) {
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(userService.read(id)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
@@ -128,7 +128,7 @@ trait UserResource extends StarChatResource {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { (user) =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.org_admin)) {
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               entity(as[UserUpdate]) { user_entity =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(Future {

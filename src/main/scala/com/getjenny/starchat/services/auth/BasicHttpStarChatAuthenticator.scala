@@ -53,14 +53,14 @@ class BasicHttpStarChatAuthenticator(userService: AbstractUserService) extends A
     }
   }
 
-  def hasPermissions(user: User, index: String, permission: Permissions.Value): Future[Boolean] = {
+  def hasPermissions(user: User, index: String, permissions: Set[Permissions.Value]): Future[Boolean] = {
     user.id match {
       case `admin` => //admin can do everything
         val userPermissions = user.permissions.getOrElse("admin", Set.empty[Permissions.Value])
         Future.successful(userPermissions.contains(Permissions.admin))
       case _ =>
         val userPermissions = user.permissions.getOrElse(index, Set.empty[Permissions.Value])
-        Future.successful(userPermissions.contains(permission))
+        Future.successful((userPermissions & permissions).nonEmpty)
     }
   }
 }
