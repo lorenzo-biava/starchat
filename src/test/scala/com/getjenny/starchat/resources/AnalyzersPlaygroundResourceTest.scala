@@ -28,8 +28,8 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
-          "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
+          "(?:[A-Za-z0-9_]+)\\(" + Index.systemIndexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + Index.systemIndexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
@@ -251,7 +251,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
 
   it should {
     "return an HTTP code 200 when deleting an existing system index" in {
-      Delete(s"/system_getjenny_index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
+      Delete(s"/system_index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
       }

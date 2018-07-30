@@ -16,10 +16,16 @@ object Index {
   private[this] val arbitraryPatternRegex: String = "[A-Za-z0-9_]{1,256}"
 
   /** regular expression to match index names */
-  val indexMatchRegex: Regex = ("^(index_(?:" +
-    orgNameRegex + ")_(?:" + langRegex + ")_(?:" + arbitraryPatternRegex + "))$").r
-  val indexExtractFieldsRegex: Regex = ("""^(?:index_(""" +
-    orgNameRegex + """)_(""" + langRegex + ")_(" + arbitraryPatternRegex + "))$").r
+  val systemIndexMatchRegex: Regex = "(starchat_system_[A-Za-z0-9\\-]{1,256})".r
+  val systemIndexMatchRegexDelimited: Regex = ("^" + systemIndexMatchRegex + "$").r
+
+  val indexMatchRegex: Regex = ("(index_(?:" +
+    orgNameRegex + ")_(?:" + langRegex + ")_(?:" + arbitraryPatternRegex + "))").r
+  val indexMatchRegexDelimited: Regex = ("^" + indexMatchRegex + "$").r
+
+  val indexExtractFieldsRegex: Regex = ("""(?:index_(""" +
+    orgNameRegex + """)_(""" + langRegex + ")_(" + arbitraryPatternRegex + "))").r
+  val indexExtractFieldsRegexDelimited: Regex = ("^" + indexExtractFieldsRegex + "$").r
 
   /** Extract language from index name
     *
@@ -28,7 +34,7 @@ object Index {
     */
   def patternsFromIndex(indexName: String): (String, String, String) = {
     val (organization, language, arbitrary) = indexName match {
-      case indexMatchRegex(orgPattern, languagePattern, arbitraryPattern) =>
+      case indexMatchRegexDelimited(orgPattern, languagePattern, arbitraryPattern) =>
         (orgPattern, languagePattern, arbitraryPattern)
       case _ => throw new Exception("index name is not well formed")
     }

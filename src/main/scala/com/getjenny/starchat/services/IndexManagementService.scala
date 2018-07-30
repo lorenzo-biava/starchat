@@ -62,11 +62,9 @@ object IndexManagementService {
     val client: TransportClient = elasticClient.client
 
     // extract language from index name
-    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-
-    val (_, language, _) = indexName match {
-      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
-        (indexPattern, languagePattern, arbitraryPattern)
+    val (_, language, _)= indexName match {
+      case Index.indexExtractFieldsRegexDelimited(orgPattern, languagePattern, arbitraryPattern) =>
+        (orgPattern, languagePattern, arbitraryPattern)
       case _ => throw new Exception("index name is not well formed")
     }
 

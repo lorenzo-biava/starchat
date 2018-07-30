@@ -28,7 +28,7 @@ trait StarChatResource extends Directives with JsonSupport {
   val authenticator: AbstractStarChatAuthenticator = StarChatAuthenticator.authenticator
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  val indexRegex: Regex = Index.indexMatchRegex
+  val indexRegex: Regex = Index.indexMatchRegexDelimited
 
   val routesExceptionHandler = ExceptionHandler {
     case e: IndexNotFoundException =>
