@@ -3,9 +3,14 @@ services:
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:6.4.0
-    network_mode: "host"
     restart: unless-stopped
     command: elasticsearch
+    ports:
+      - "0.0.0.0:9200:9200"
+      - "0.0.0.0:9300:9300"
+    expose:
+      - "9200"
+      - "9300"
     volumes:
       - ./elasticsearch/config:/usr/share/elasticsearch/config
       - ./elasticsearch_test/logs:/usr/share/elasticsearch/logs
