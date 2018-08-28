@@ -83,7 +83,7 @@ dockerCommands := Seq(
   Cmd("RUN", "apt", "update"),
   Cmd("RUN", "apt", "install", "-y", "netcat"),
   Cmd("LABEL", "maintainer=\"Angelo Leto <angelo@getjenny.com>\""),
-  Cmd("LABEL", "description=\"Docker container for Starchat\""),
+  Cmd("LABEL", "description=\"Docker container for StarChat\""),
   Cmd("WORKDIR", "/"),
   Cmd("ADD", "/opt/docker", "/starchat"),
   Cmd("VOLUME", "/starchat/config"),
