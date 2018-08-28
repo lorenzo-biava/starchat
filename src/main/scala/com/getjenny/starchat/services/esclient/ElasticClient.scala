@@ -27,8 +27,8 @@ trait ElasticClient {
 
   val settings: Settings = Settings.builder()
     .put("cluster.name", clusterName)
-//    .put("client.transport.ignore_cluster_name", ignoreClusterName)
-//    .put("client.transport.sniff", sniff)
+    .put("client.transport.ignore_cluster_name", ignoreClusterName)
+    .put("client.transport.sniff", sniff)
     .build()
 
   val inetAddresses: List[TransportAddress] =
