@@ -1,7 +1,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1f53a6754e8248b09e2876a4556dcafb)](https://www.codacy.com/app/GetJenny/starchat?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=GetJenny/starchat&amp;utm_campaign=Badge_Grade)
 [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/1f53a6754e8248b09e2876a4556dcafb)](https://www.codacy.com/app/GetJenny/starchat?utm_source=github.com&utm_medium=referral&utm_content=GetJenny/starchat&utm_campaign=Badge_Coverage)
 
-[![Build Status](https://travis-ci.org/GetJenny/starchat.png)](https://travis-ci.org/GetJenny/starchat)
+<!--[![Build Status](https://travis-ci.org/GetJenny/starchat.png)](https://travis-ci.org/GetJenny/starchat)-->
 [![Join the chat at https://gitter.im/GetJenny-StarChat/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/GetJenny-StarChat/Lobby)
 [![Code Triagers Badge](https://www.codetriage.com/getjenny/starchat/badges/users.svg)](https://www.codetriage.com/getjenny/starchat)
 [![Project status](https://img.shields.io/badge/status-active-brightgreen.svg)](#status)
