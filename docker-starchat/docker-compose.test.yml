@@ -3,9 +3,9 @@ services:
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:6.4.0
+    network_mode: "host"
     restart: unless-stopped
     command: elasticsearch
-    network_mode: "host"
     volumes:
       - ./elasticsearch/config:/usr/share/elasticsearch/config
       - ./elasticsearch_test/logs:/usr/share/elasticsearch/logs
