@@ -34,7 +34,7 @@ object Index {
     */
   def patternsFromIndex(indexName: String): (String, String, String) = {
     val (organization, language, arbitrary) = indexName match {
-      case indexMatchRegexDelimited(orgPattern, languagePattern, arbitraryPattern) =>
+      case indexExtractFieldsRegexDelimited(orgPattern, languagePattern, arbitraryPattern) =>
         (orgPattern, languagePattern, arbitraryPattern)
       case _ => throw new Exception("index name is not well formed")
     }
@@ -53,13 +53,19 @@ object Index {
 
   /** Extract the name of the common index
     *
-    * @param indexName the index name e.g. index_english_0
-    * @return the name of the language specific common index e.g. index_english_common_0
+    * @param indexName the index name e.g. index_getjenny_english_0
+    * @param useDefaultOrg force to use the default org instead of the organization pattern
+    * @return the name of the language specific common index e.g. index_getjenny_english_common_0
     */
-  def getCommonIndexName(indexName: String): String = {
+  def getCommonIndexName(indexName: String, useDefaultOrg: Boolean = true): String = {
     val arbitraryPattern =  TermService.commonIndexArbitraryPattern
     val (organization, language, _) = patternsFromIndex(indexName)
-    "index_" + organization + "_" + language + "_" + arbitraryPattern
+    val org = useDefaultOrg match {
+      case true =>
+        TermService.defaultOrg
+      case _ => organization
+    }
+    "index_" + org + "_" + language + "_" + arbitraryPattern
   }
 
   /** resolve the index name using the common or specific information

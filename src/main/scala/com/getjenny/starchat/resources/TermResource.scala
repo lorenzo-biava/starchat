@@ -113,7 +113,7 @@ trait TermResource extends StarChatResource {
                             "route=termRoutes method=POST function=index_default_synonyms : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
-                              ReturnMessageData(code = 100, message = e.getMessage)
+                              ReturnMessageData(code = 102, message = e.getMessage)
                             })
                       }
                     }
@@ -139,7 +139,7 @@ trait TermResource extends StarChatResource {
                           e.getMessage)
                         completeResponse(StatusCodes.BadRequest,
                           Option {
-                            ReturnMessageData(code = 101, message = e.getMessage)
+                            ReturnMessageData(code = 103, message = e.getMessage)
                           })
                     }
                   }
@@ -170,7 +170,7 @@ trait TermResource extends StarChatResource {
                           log.error("index(" + indexName + ") route=termRoutes method=DELETE : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
-                              ReturnMessageData(code = 102, message = e.getMessage)
+                              ReturnMessageData(code = 104, message = e.getMessage)
                             })
                       }
                     } else {
@@ -182,7 +182,7 @@ trait TermResource extends StarChatResource {
                           log.error("index(" + indexName + ") route=termRoutes method=DELETE : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
-                              ReturnMessageData(code = 103, message = e.getMessage)
+                              ReturnMessageData(code = 105, message = e.getMessage)
                             })
                       }
                     }

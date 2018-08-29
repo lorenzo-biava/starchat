@@ -74,6 +74,7 @@ trait ElasticClient {
   }
 
   val commonIndexArbitraryPattern: String = config.getString("es.common_index_arbitrary_pattern")
+  val commonIndexDefaultOrgPattern: String = config.getString("es.common_index_default_org_pattern")
 
   val convLogsIndexSuffix: String = config.getString("es.logs_data_index_suffix")
   val dtIndexSuffix: String = config.getString("es.dt_index_suffix")

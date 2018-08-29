@@ -43,6 +43,7 @@ case class TermServiceException(message: String = "", cause: Throwable = None.or
 object TermService {
   private[this] val elasticClient: TermElasticClient.type = TermElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  val defaultOrg = TermElasticClient.commonIndexDefaultOrgPattern
 
   /** fetch the index arbitrary pattern
     *
