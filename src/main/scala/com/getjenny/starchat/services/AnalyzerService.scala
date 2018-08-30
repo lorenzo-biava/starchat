@@ -74,7 +74,7 @@ object AnalyzerService {
         "analyzer", "queries"), Array.empty[String])
       .setScroll(new TimeValue(60000))
       .setVersion(true)
-      .setSize(1000).get()
+      .setSize(10000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
     val analyzersLHM = mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]
