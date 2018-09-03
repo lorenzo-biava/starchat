@@ -77,7 +77,7 @@ object IndexSubtitles extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
-    val lines = Source.fromFile(name=params.inputfile).getLines.toList
+    val lines = Source.fromFile(name=params.inputfile).getLines
 
     val docs = lines.map{ case(entry) =>
       val fields = entry.split("\t")
