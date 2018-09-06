@@ -28,6 +28,26 @@ object TextToVectorsTools {
     }
   }
 
+  def meanOfTermsVectors(textTerms: Option[TextTerms], length: Int = 300): (Vector[Double], Double) = {
+    textTerms match {
+      case Some(t) => {
+        val vectors = t.terms match {
+          case Some(k) => k.terms.map(e => e.vector.getOrElse(emptyVec())).toVector
+          case _ => Vector.empty[Vector[Double]]
+        }
+
+        val sentenceVector = if (vectors.nonEmpty)
+          meanArrayOfArrays(vectors)
+        else
+          emptyVec(length)
+        val reliabilityFactor =
+          t.terms_found_n.toDouble / math.max(1, t.text_terms_n.toDouble)
+        (sentenceVector, reliabilityFactor)
+      }
+      case _ => (emptyVec(), 0.0) //default dimension
+    }
+  }
+
   def sumOfTermsVectors(textTerms: Option[TextTerms], length: Int = 300): (Vector[Double], Double) = {
     textTerms match {
       case Some(t) => {

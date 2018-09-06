@@ -355,6 +355,8 @@ object ManausTermsExtractionService {
                     EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
                   case SynonymExtractionDistanceFunction.SUMCOSINE =>
                     SumVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                  case SynonymExtractionDistanceFunction.MEANCOSINE =>
+                    MeanVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
                   case _ =>
                     EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
                 }

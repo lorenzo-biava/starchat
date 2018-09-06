@@ -12,6 +12,10 @@ import scalaz.Scalaz._
 
 object VectorUtils {
 
+  def meanArrayOfArrays(vectors: scala.Vector[scala.Vector[Double]]): scala.Vector[Double] = {
+    sumArrayOfArrays(vectors) / vectors.length
+  }
+
   def sumArrayOfArrays(vectors: scala.Vector[scala.Vector[Double]]): scala.Vector[Double] = {
     val matrix = DenseMatrix(vectors.map(_.toArray): _*)
     sum(matrix, Axis._0).t.toArray.toVector
