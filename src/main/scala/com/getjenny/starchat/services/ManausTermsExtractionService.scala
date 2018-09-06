@@ -370,7 +370,7 @@ object ManausTermsExtractionService {
       }
 
       val synItems = replacedTokenInSentence.map { case(term, synonym, distance) =>
-        val termsDistance = VectorUtils.cosineDist(
+        val termsDistance = 1 - VectorUtils.cosineDist(
           term.vector.getOrElse(TextToVectorsTools.emptyVec(term.vector.get.length)), synonym.vector.get)
 
         SynonymItem(
