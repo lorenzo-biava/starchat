@@ -10,7 +10,7 @@ case class SynExtractionRequest (
                                   sentencesThreshold: Option[Double] = Some(0.0d),
                                   synonymsThreshold: Option[Double] = Some(0.0d),
                                   distanceFunction: Option[SynonymExtractionDistanceFunction.Value] =
-                                    Some(SynonymExtractionDistanceFunction.SUMCOSINE),
+                                    Some(SynonymExtractionDistanceFunction.EMDCOSINE),
                                   commonOrSpecificSearchTerms: Option[CommonOrSpecificSearch.Value] =
                                     Some(CommonOrSpecificSearch.COMMON),
                                   commonOrSpecificSearchPrior: Option[CommonOrSpecificSearch.Value] =
