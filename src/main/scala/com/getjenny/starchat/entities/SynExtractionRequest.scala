@@ -8,13 +8,17 @@ case class SynExtractionRequest (
                                   text: String,
                                   tokenizer: Option[String] = Some("base"),
                                   sentencesThreshold: Option[Double] = Some(0.0d),
-                                  synonymsThresholds: Option[Double] = Some(0.0d),
+                                  synonymsThreshold: Option[Double] = Some(0.0d),
                                   distanceFunction: Option[SynonymExtractionDistanceFunction.Value] =
                                     Some(SynonymExtractionDistanceFunction.SUMCOSINE),
-                                  commonOrSpecificSearchTerms: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.COMMON),
-                                  commonOrSpecificSearchPrior: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.COMMON),
-                                  commonOrSpecificSearchObserved: Option[CommonOrSpecificSearch.Value] = Some(CommonOrSpecificSearch.IDXSPECIFIC),
-                                  observedDataSource: Option[ObservedDataSources.Value] = Some(ObservedDataSources.KNOWLEDGEBASE),
+                                  commonOrSpecificSearchTerms: Option[CommonOrSpecificSearch.Value] =
+                                    Some(CommonOrSpecificSearch.COMMON),
+                                  commonOrSpecificSearchPrior: Option[CommonOrSpecificSearch.Value] =
+                                    Some(CommonOrSpecificSearch.COMMON),
+                                  commonOrSpecificSearchObserved: Option[CommonOrSpecificSearch.Value] =
+                                    Some(CommonOrSpecificSearch.IDXSPECIFIC),
+                                  observedDataSource: Option[ObservedDataSources.Value] =
+                                    Some(ObservedDataSources.KNOWLEDGEBASE),
                                   fieldsPrior: Option[TermCountFields.Value] = Some(TermCountFields.all),
                                   fieldsObserved: Option[TermCountFields.Value] = Some(TermCountFields.all),
                                   minWordsPerSentence: Option[Int] = Some(10),

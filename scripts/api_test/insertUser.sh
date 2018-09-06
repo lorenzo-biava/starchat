@@ -8,8 +8,8 @@ curl -v -H "Authorization: Basic $(echo -n 'admin:adminp4ssw0rd' | base64)" \
 	"password": "3c98bf19cb962ac4cd0227142b3495ab1be46534061919f792254b80c0f3e566f7819cae73bdc616af0ff555f7460ac96d88d56338d659ebd93e2be858ce1cf9", 
 	"salt": "salt",
 	"permissions": {
-		"index_english_0": ["read", "write", "stream"],
-		"index_english_common_0": ["read", "stream"]
+		"index_getjenny_english_0": ["read", "write", "stream"],
+		"index_getjenny_english_common_0": ["read", "stream"]
 	}
 }'
 

@@ -271,10 +271,14 @@ object ManausTermsExtractionService {
     val (tokenizationRes, manausKeywords) = textTerms(indexName, termsExtractionRequest)
     log.info("ManausTermsExtraction: " + tokenizationRes)
 
+    log.debug("Terms extraction Request: " + extractionRequest)
+
     // calculate source index name for the terms (vectorial representation)
     val termsIndexName = extractionRequest.commonOrSpecificSearchTerms match {
-      case CommonOrSpecificSearch.IDXSPECIFIC => indexName
-      case _ => Index.getCommonIndexName(indexName)
+      case CommonOrSpecificSearch.IDXSPECIFIC =>
+        indexName
+      case _ =>
+        Index.getCommonIndexName(indexName)
     }
 
     // extraction of vectorial terms representation
@@ -352,7 +356,7 @@ object ManausTermsExtractionService {
                   case SynonymExtractionDistanceFunction.SUMCOSINE =>
                     SumVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
                   case _ =>
-                    SumVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                    EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
                 }
 
                 (t, s, sentencesDistance)
@@ -374,7 +378,7 @@ object ManausTermsExtractionService {
           textDistanceWithSynonym = distance
         )
       }.filter(_.synonymScore > extractionRequest.sentencesThreshold.getOrElse(0.0d))
-        .filter(_.termSimilarityScore > extractionRequest.synonymsThresholds.getOrElse(0.0d))
+        .filter(_.termSimilarityScore > extractionRequest.synonymsThreshold.getOrElse(0.0d))
         .sortWith((a, b) => a.synonymScore >= b.synonymScore)
 
       SynonymExtractionItem(
