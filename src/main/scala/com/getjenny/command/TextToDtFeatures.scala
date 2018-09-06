@@ -74,7 +74,7 @@ object TextToDtFeatures extends JsonSupport {
     val namesWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_names)))
     names.foreach { case(line) =>
       namesWriter.write(line)
-      namesWriter.newLine
+      namesWriter.newLine()
     }
     namesWriter.close()
 
@@ -94,7 +94,7 @@ object TextToDtFeatures extends JsonSupport {
     features.zipWithIndex.map{ case(v) => v._1 ++ Vector(v._2.toLong)}.foreach { case(row) =>
       val entry = row.mkString(",")
       featuresWriter.write(entry)
-      featuresWriter.newLine
+      featuresWriter.newLine()
     }
     featuresWriter.close()
 
