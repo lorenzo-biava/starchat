@@ -24,7 +24,7 @@ object TextToDtFeatures extends JsonSupport {
                                    out_training: String = "training.data",
                                    out_names: String = "features.names",
                                    window: Int = 5,
-                                   center: Int= 2,
+                                   center: Int = 2,
 
                                  )
 
@@ -55,28 +55,8 @@ object TextToDtFeatures extends JsonSupport {
         }
     }.filter(_.length > 1)
 
-    val dictionaryWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_dictionary)))
-    dict.foreach { case(key, value) =>
-      dictionaryWriter.write(key + "\t" + value)
-      dictionaryWriter.newLine()
-    }
-    dictionaryWriter.close()
-
     val window = params.window
     val center = params.center
-    val dictSize = dict.size
-
-    val names: List[String] = List("expansions.\t\t\t\t| the target attribute") ++
-      List.range(0, window).map { case (e) =>
-        "e" + e + ":\t\t\t\t" + List.range(0, dictSize).mkString(",") + "."
-      } ++ List("ID:\t\t\t\tlabel.")
-
-    val namesWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_names)))
-    names.foreach { case(line) =>
-      namesWriter.write(line)
-      namesWriter.newLine()
-    }
-    namesWriter.close()
 
     val leftPad = center
     val rightPad = window - center + 1
@@ -90,7 +70,7 @@ object TextToDtFeatures extends JsonSupport {
       }
     }
 
-    val featuresWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_dictionary)))
+    val featuresWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_training)))
     features.zipWithIndex.map{ case(v) => v._1 ++ Vector(v._2.toLong)}.foreach { case(row) =>
       val entry = row.mkString(",")
       featuresWriter.write(entry)
@@ -98,6 +78,27 @@ object TextToDtFeatures extends JsonSupport {
     }
     featuresWriter.close()
 
+    val dictionaryWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_dictionary)))
+    dict.foreach { case(key, value) =>
+      dictionaryWriter.write(key + "\t" + value)
+      dictionaryWriter.newLine()
+    }
+    dictionaryWriter.close()
+
+    val dictSize = dict.size
+
+    val names: List[String] = List("predicted.    | the target attribute") ++
+      List.range(0, window).map { case (e) =>
+        "e" + e + ":\t\t\t\t" + List.range(0, dictSize).mkString(",") + "."
+      } ++ List("predicted:\t\t\t\t" + List.range(0, dictSize).mkString(",") + ".")
+      List("ID:\t\t\t\tlabel.")
+
+    val namesWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_names)))
+    names.foreach { case(line) =>
+      namesWriter.write(line)
+      namesWriter.newLine()
+    }
+    namesWriter.close()
   }
 
   def main(args: Array[String]) {
