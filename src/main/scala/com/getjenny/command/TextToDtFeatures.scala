@@ -39,6 +39,7 @@ object TextToDtFeatures extends JsonSupport {
     val tokenizedSentences = sentencesIt.map { case (sentence) =>
       sentence.asScala.map { case(token) => token.word.toLowerCase }.toVector
         .filter(! _.matches("([^\\p{L}|^\\d])")) // filtering strings with just one punctuation token
+        //TODO: better filtering, remove sentence with number, codes, url and with low freq. term  e.g. < 2
     }
 
     val nullFeature: Long = 0
@@ -87,10 +88,10 @@ object TextToDtFeatures extends JsonSupport {
 
     val dictSize = dict.size
 
-    val names: List[String] = List("predicted.    | the target attribute") ++
-      List.range(0, window).map { case (e) =>
+    val names: List[String] = List(".target    | the target attribute") ++
+      List.range(0, window -1).map { case (e) =>
         "e" + e + ":\t\t\t\t" + List.range(0, dictSize).mkString(",") + "."
-      } ++ List("predicted:\t\t\t\t" + List.range(0, dictSize).mkString(",") + ".")
+      } ++ List("target:\t\t\t\t" + List.range(0, dictSize).mkString(",") + ".") ++
       List("ID:\t\t\t\tlabel.")
 
     val namesWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_names)))
