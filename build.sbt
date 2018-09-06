@@ -49,6 +49,8 @@ libraryDependencies ++= {
     "org.apache.tika" % "tika-app" % TikaVersion,
     "org.apache.tika" % "tika-core" % TikaVersion,
     "org.apache.tika" % "tika-parsers" % TikaVersion,
+    "edu.stanford.nlp" % "stanford-corenlp" % "3.7.0",
+
     // Not integrated, High level rest API still miss
     //  delete by query: https://github.com/elastic/elasticsearch/issues/27205
     //"org.elasticsearch.client" % "elasticsearch-rest-client" % ESClientVersion,
