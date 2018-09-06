@@ -58,7 +58,7 @@ object TextToDtFeatures extends JsonSupport {
     val dictionaryWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_dictionary)))
     dict.foreach { case(key, value) =>
       dictionaryWriter.write(key + "\t" + value)
-      dictionaryWriter.newLine
+      dictionaryWriter.newLine()
     }
     dictionaryWriter.close()
 
