@@ -23,6 +23,7 @@ object TextToDtFeatures extends JsonSupport {
                                    out_dictionary: String = "dictionary.tsv",
                                    out_training: String = "training.data",
                                    out_names: String = "features.names",
+                                   filter: String = "[\\p{L}\\s*]+",
                                    window: Int = 5,
                                    center: Int = 2,
 
@@ -36,11 +37,18 @@ object TextToDtFeatures extends JsonSupport {
     val reader: FileReader = new FileReader(params.inputfile)
     val docProcecessor: DocumentPreprocessor = new DocumentPreprocessor(reader)
     val sentencesIt = docProcecessor.iterator.asScala
-    val tokenizedSentences = sentencesIt.map { case (sentence) =>
+    val tokenizedSentencesUnfiltered = sentencesIt.map { case (sentence) =>
       sentence.asScala.map { case(token) => token.word.toLowerCase }.toVector
         .filter(! _.matches("([^\\p{L}|^\\d])")) // filtering strings with just one punctuation token
         //TODO: better filtering, remove sentence with number, codes, url and with low freq. term  e.g. < 2
     }
+
+    val tokenizedSentences = if (params.filter.isEmpty)
+      tokenizedSentencesUnfiltered
+    else
+      tokenizedSentencesUnfiltered.filter(tokens =>
+          tokens.mkString(" ").matches(params.filter)
+      )
 
     val nullFeature: Long = 0
     val dict = mutable.Map[String, Long]("" -> nullFeature) // empty feature
@@ -123,6 +131,10 @@ object TextToDtFeatures extends JsonSupport {
         .text(s"the output file where to save the features names" +
           s"  default: ${defaultParams.out_names}")
         .action((x, c) => c.copy(out_names = x))
+      opt[String]("filter")
+        .text(s"a regex to filter only the sentences which matches, an empty regex means no filteringx  " +
+          s"  default: ${defaultParams.filter}")
+        .action((x, c) => c.copy(filter = x))
       opt[Int]("window")
         .text(s"the size of the sliding window " +
           s"  default: ${defaultParams.window}")
