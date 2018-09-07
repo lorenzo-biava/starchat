@@ -40,28 +40,28 @@ object TextToDtFeatures extends JsonSupport {
     val tokenizedSentencesUnfiltered = sentencesIt.map { case (sentence) =>
       sentence.asScala.map { case(token) => token.word.toLowerCase }.toVector
         .filter(! _.matches("([^\\p{L}|^\\d])")) // filtering strings with just one punctuation token
-        //TODO: better filtering, remove sentence with number, codes, url and with low freq. term  e.g. < 2
+      //TODO: better filtering, remove sentence with number, codes, url and with low freq. term  e.g. < 2
     }
 
     val tokenizedSentences = if (params.filter.isEmpty)
       tokenizedSentencesUnfiltered
     else
       tokenizedSentencesUnfiltered.filter(tokens =>
-          tokens.mkString(" ").matches(params.filter)
+        tokens.mkString(" ").matches(params.filter)
       )
 
     val nullFeature: Long = 0
     val dict = mutable.Map[String, Long]("" -> nullFeature) // empty feature
     val sentenceFeatures = tokenizedSentences.map { case(sentence) =>
-        sentence.map { case (token) =>
-            dict.get(token) match {
-              case Some(i) => i
-              case _ =>
-                val newIndex = dict.size.toLong
-                dict(token) = newIndex
-                newIndex
-            }
+      sentence.map { case (token) =>
+        dict.get(token) match {
+          case Some(i) => i
+          case _ =>
+            val newIndex = dict.size.toLong
+            dict(token) = newIndex
+            newIndex
         }
+      }
     }.filter(_.length > 1)
 
     val window = params.window
@@ -96,7 +96,7 @@ object TextToDtFeatures extends JsonSupport {
 
     val dictSize = dict.size
 
-    val names: List[String] = List(".target    | the target attribute") ++
+    val names: List[String] = List("target.    | the target attribute") ++
       List.range(0, window -1).map { case (e) =>
         "e" + e + ":\t\t\t\t" + List.range(0, dictSize).mkString(",") + "."
       } ++ List("target:\t\t\t\t" + List.range(0, dictSize).mkString(",") + ".") ++
@@ -132,7 +132,7 @@ object TextToDtFeatures extends JsonSupport {
           s"  default: ${defaultParams.out_names}")
         .action((x, c) => c.copy(out_names = x))
       opt[String]("filter")
-        .text(s"a regex to filter only the sentences which matches, an empty regex means no filteringx  " +
+        .text(s"a regex to filter only the sentences which matches, an empty regex means no filtering" +
           s"  default: ${defaultParams.filter}")
         .action((x, c) => c.copy(filter = x))
       opt[Int]("window")
