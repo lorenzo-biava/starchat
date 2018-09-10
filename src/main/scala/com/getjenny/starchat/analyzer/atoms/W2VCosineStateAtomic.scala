@@ -5,7 +5,7 @@ package com.getjenny.starchat.analyzer.atoms
   */
 
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.starchat.entities.{CommonOrSpecificSearch, _}
@@ -58,7 +58,7 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
   })
 
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val distance = queryVectors.map{
       case (sentenceVector, reliabilityFactor) =>
         val (querySentenceVector, queryReliabilityFactor) =

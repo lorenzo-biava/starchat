@@ -1,6 +1,6 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.analyzer.util._
 import scalaz._
 import Scalaz._
@@ -14,7 +14,7 @@ import Scalaz._
 class CosineDistanceAnalyzer(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
   override def toString: String = "cosDistanceKeywords(\"" + arguments + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     // 1- tokenize
     val queryTokens = query.split("\\W").filter(_ =/= "")
 

@@ -28,7 +28,7 @@ class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(c
     }
   }
 
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     def conjunction(l: List[Expression]): Result = {
       val eval = l.headOption match {
         case Some(t) =>
@@ -42,8 +42,8 @@ class ConjunctionOperator(children: List[Expression]) extends AbstractOperator(c
         val res = conjunction(l.tail)
 
         Result(score = eval.score * res.score,
-          AnalyzersData(
-            item_list = data.item_list,
+          AnalyzersDataInternal(
+            traversed_states = data.traversed_states,
             extracted_variables = eval.data.extracted_variables ++ res.data.extracted_variables,
             data = eval.data.data ++ res.data.data
           )

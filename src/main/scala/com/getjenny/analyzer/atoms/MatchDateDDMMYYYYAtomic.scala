@@ -1,6 +1,6 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.analyzer.util._
 
 import scala.util.Try
@@ -34,9 +34,9 @@ class MatchDateDDMMYYYYAtomic(val arguments: List[String], restricted_args: Map[
     * @param data the dictionary of variables (not used in this analyzer)
     * @return Result with 1.0 the date on extracted_variables if the pattern matches, score = 0.0 otherwise
     */
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val res = Try(Result(score = 1.0,
-        AnalyzersData(item_list = data.item_list, extracted_variables = regexExtractor.evaluate(query))
+        AnalyzersDataInternal(traversed_states = data.traversed_states, extracted_variables = regexExtractor.evaluate(query))
       )) recover {
       case _: PatternExtractionNoMatchException =>
         Result(score=0)

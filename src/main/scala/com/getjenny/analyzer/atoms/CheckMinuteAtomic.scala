@@ -4,7 +4,7 @@ package com.getjenny.analyzer.atoms
   * Created by angelo on 05/07/18.
   */
 
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.analyzer.util.{ComparisonOperators, Time}
 
 /** Check if the current minutes are Equal, LessOrEqual, Less, Greater, GreaterOrEqual to the first argument
@@ -34,7 +34,7 @@ class CheckMinuteAtomic(val arguments: List[String],
 
   override def toString: String = "checkTime(\"" + argMinute + ", " + argOperator + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val minute: Long = Time.minutes(argZone)
     if(ComparisonOperators.compare(minute, argMinute, argOperator))
       Result(score = 1.0)

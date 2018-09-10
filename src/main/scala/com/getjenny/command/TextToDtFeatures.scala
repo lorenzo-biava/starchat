@@ -15,6 +15,7 @@ import scopt.OptionParser
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.ExecutionContextExecutor
+import scala.io.Source
 
 object TextToDtFeatures extends JsonSupport {
 
@@ -22,8 +23,9 @@ object TextToDtFeatures extends JsonSupport {
                                    inputfile: String = "file.txt",
                                    out_dictionary: String = "dictionary.tsv",
                                    out_training: String = "training.data",
+                                   terms_filter: String = "",
                                    out_names: String = "features.names",
-                                   filter: String = "[\\p{L}\\s*]+",
+                                   filter: String = """([\p{L}|\d|_| |/]+)""",
                                    window: Int = 5,
                                    center: Int = 2,
 
@@ -34,21 +36,37 @@ object TextToDtFeatures extends JsonSupport {
     implicit val materializer: ActorMaterializer = ActorMaterializer()
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
+    val termsFilter = if(params.terms_filter.nonEmpty) {
+      Source.fromFile(params.terms_filter).getLines.map(_.toLowerCase).toSet
+    } else {
+      Set[String]()
+    }
+
     val reader: FileReader = new FileReader(params.inputfile)
     val docProcecessor: DocumentPreprocessor = new DocumentPreprocessor(reader)
     val sentencesIt = docProcecessor.iterator.asScala
-    val tokenizedSentencesUnfiltered = sentencesIt.map { case (sentence) =>
+    val tokenizedSentencesUnfiltered0 = sentencesIt.map { case (sentence) =>
       sentence.asScala.map { case(token) => token.word.toLowerCase }.toVector
-        .filter(! _.matches("([^\\p{L}|^\\d])")) // filtering strings with just one punctuation token
-      //TODO: better filtering, remove sentence with number, codes, url and with low freq. term  e.g. < 2
+    }.map{
+      case(sentence) =>
+        sentence.filter( ! _.matches("""([^\p{L}|^\d])"""))
     }
 
-    val tokenizedSentences = if (params.filter.isEmpty)
-      tokenizedSentencesUnfiltered
+    println(tokenizedSentencesUnfiltered0)
+
+    val tokenizedSentencesUnfiltered1 = if(params.filter.nonEmpty)
+      tokenizedSentencesUnfiltered0.filter(v => ! v.exists(! _.matches(params.filter)))
     else
-      tokenizedSentencesUnfiltered.filter(tokens =>
-        tokens.mkString(" ").matches(params.filter)
-      )
+      tokenizedSentencesUnfiltered0
+
+    println(tokenizedSentencesUnfiltered1)
+
+    val tokenizedSentencesUnfiltered2 = if(termsFilter.nonEmpty)
+      tokenizedSentencesUnfiltered1.filter(v => ! v.exists(t => ! termsFilter.contains(t)))
+    else
+      tokenizedSentencesUnfiltered1
+
+    val tokenizedSentences = tokenizedSentencesUnfiltered2
 
     val nullFeature: Long = 0
     val dict = mutable.Map[String, Long]("" -> nullFeature) // empty feature
@@ -132,9 +150,13 @@ object TextToDtFeatures extends JsonSupport {
           s"  default: ${defaultParams.out_names}")
         .action((x, c) => c.copy(out_names = x))
       opt[String]("filter")
-        .text(s"a regex to filter only the sentences which matches, an empty regex means no filtering" +
+        .text(s"a regex to filter sentences which matches, an empty regex means no filtering" +
           s"  default: ${defaultParams.filter}")
         .action((x, c) => c.copy(filter = x))
+      opt[String]("terms_filter")
+        .text(s"a file with valid terms, all the other will be removed to reduce the dataset" +
+          s"  default is empty")
+        .action((x, c) => c.copy(terms_filter = x))
       opt[Int]("window")
         .text(s"the size of the sliding window " +
           s"  default: ${defaultParams.window}")

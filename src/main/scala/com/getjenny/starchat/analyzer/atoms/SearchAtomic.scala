@@ -5,7 +5,7 @@ package com.getjenny.starchat.analyzer.atoms
   */
 
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services._
 
@@ -26,7 +26,7 @@ class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]
 
   val decisionTableService: DecisionTableService.type = DecisionTableService
 
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
 
     val searchResOpt = data.data.getOrElse("dt_queries_search_result", None)
       .asInstanceOf[Option[Map[String, (Float, SearchDTDocument)]]]

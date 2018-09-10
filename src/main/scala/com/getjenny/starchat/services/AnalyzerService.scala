@@ -5,7 +5,7 @@ package com.getjenny.starchat.services
   */
 
 import akka.event.{Logging, LoggingAdapter}
-import com.getjenny.analyzer.expressions.{AnalyzersData, Data}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, AnalyzersData}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.analyzer.analyzers.StarchatAnalyzer
 import com.getjenny.starchat.entities._
@@ -267,14 +267,14 @@ object AnalyzerService {
             // prepare search result for search analyzer
             decisionTableService.searchDtQueries(indexName, analyzerRequest.query).map(searchRes => {
               val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
-              val dataInternal = AnalyzersData(item_list = data.item_list,
+              val dataInternal = AnalyzersDataInternal(traversed_states = data.traversed_states,
                 extracted_variables = data.extracted_variables, data = analyzersInternalData)
               val evalRes = result.evaluate(analyzerRequest.query, dataInternal)
-              val returnData = if(evalRes.data.extracted_variables.nonEmpty || evalRes.data.item_list.nonEmpty) {
+              val returnData = if(evalRes.data.extracted_variables.nonEmpty || evalRes.data.traversed_states.nonEmpty) {
                 val dataInternal = evalRes.data
-                Some(Data(item_list = dataInternal.item_list, extracted_variables = dataInternal.extracted_variables))
+                Some(AnalyzersData(traversed_states = dataInternal.traversed_states, extracted_variables = dataInternal.extracted_variables))
               } else {
-                Option.empty[Data]
+                Option.empty[AnalyzersData]
               }
               Some(AnalyzerEvaluateResponse(build = true,
                 value = evalRes.score, data = returnData, build_message = "success"))
@@ -282,7 +282,7 @@ object AnalyzerService {
           case _ =>
             Future{
               Some(AnalyzerEvaluateResponse(build = true,
-                value = 0.0, data = Option.empty[Data], build_message = "success"))
+                value = 0.0, data = Option.empty[AnalyzersData], build_message = "success"))
             }
         }
     }

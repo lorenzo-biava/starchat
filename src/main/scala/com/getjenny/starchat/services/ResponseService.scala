@@ -6,7 +6,7 @@ package com.getjenny.starchat.services
 
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.analyzers._
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
@@ -76,7 +76,7 @@ object ResponseService {
     // prepare search result for search analyzer
     val searchResAnalyzers = decisionTableService.searchDtQueries(indexName, userText).map(searchRes => {
       val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
-      AnalyzersData(extracted_variables = variables, item_list = traversedStates,
+      AnalyzersDataInternal(extracted_variables = variables, traversed_states = traversedStates,
         data = analyzersInternalData)
     })
 

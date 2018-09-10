@@ -27,14 +27,14 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
     }
   }
 
-  def evaluate(query: String, data: AnalyzersData = new AnalyzersData): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = new AnalyzersDataInternal): Result = {
     def reinfConjunction(l: List[Expression]): Result = {
       val res = l.head.evaluate(query, data)
       if (l.tail.isEmpty) {
 //        println("SCORE_NIL: " + res.score * 1.1 + "(" + res.score + ")")
         Result(score = res.score * 1.1,
-          AnalyzersData(
-            item_list = data.item_list,
+          AnalyzersDataInternal(
+            traversed_states = data.traversed_states,
             extracted_variables = res.data.extracted_variables,
             data = res.data.data
           )
@@ -44,8 +44,8 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
         val val2 = reinfConjunction(l.tail)
 //        println("SCORE_NOT_NIL: " + (val1.score * 1.1) * val2.score + "(" + val1.score + ")" + "(" + val2.score + ")")
         Result(score = (val1.score * 1.1) * val2.score,
-          AnalyzersData(
-            item_list = data.item_list,
+          AnalyzersDataInternal(
+            traversed_states = data.traversed_states,
             extracted_variables = res.data.extracted_variables,
             data = res.data.data
           )

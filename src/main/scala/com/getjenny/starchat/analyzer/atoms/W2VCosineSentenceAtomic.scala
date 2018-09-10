@@ -1,7 +1,7 @@
 package com.getjenny.starchat.analyzer.atoms
 
 import com.getjenny.analyzer.atoms.{AbstractAtomic, ExceptionAtomic}
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.starchat.entities.CommonOrSpecificSearch
@@ -42,7 +42,7 @@ class W2VCosineSentenceAtomic(val arguments: List[String], restricted_args: Map[
   val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
   val sentenceVector: (Vector[Double], Double) = TextToVectorsTools.sumOfVectorsFromText(indexName, sentence)
 
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val query_vector = TextToVectorsTools.sumOfVectorsFromText(indexName, query)
 
     /** cosineDist returns 0.0 for the closest vector, we want 1.0 when the similarity is the highest

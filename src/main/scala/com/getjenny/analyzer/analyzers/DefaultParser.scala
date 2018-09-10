@@ -5,7 +5,7 @@ package com.getjenny.analyzer.analyzers
   */
 
 import com.getjenny.analyzer.atoms._
-import com.getjenny.analyzer.expressions.{AnalyzersData, Expression, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Expression, Result}
 import com.getjenny.analyzer.interfaces.{AtomicFactoryTrait, OperatorFactoryTrait}
 import com.getjenny.analyzer.operators._
 
@@ -34,7 +34,7 @@ abstract class DefaultParser(command_string: String, restricted_args: Map[String
   override def toString: String = operator.toString
   /** Read a sentence and produce a score (the higher, the more confident)
     */
-  def evaluate(sentence: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(sentence: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val res = operator.evaluate(query = sentence, data = data)
     //if (res.score > 0) println("DEBUG: DefaultParser: '" + this + "' evaluated to " + res)
     res

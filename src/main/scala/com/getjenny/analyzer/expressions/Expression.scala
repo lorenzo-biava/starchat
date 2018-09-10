@@ -15,11 +15,11 @@ abstract class Expression {
     * @param data the Map exchanged between StarChat and the other services
     * @return a score (>= 0) which represents its confidence on triggering the state it is in
     */
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result // read a sentence and produce a score (the higher, the more confident)
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result // read a sentence and produce a score (the higher, the more confident)
 
   // In case of boolean logic, the threshold above which it says the state should be triggered
   val matchThreshold = 0.0
-  def matches(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def matches(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val res = this.evaluate(query, data)
     val bool: Double = if(res.score > matchThreshold) 1.0 else 0.0
     //if (bool === 1.0d) println("DEBUG: Expression: " + this + " matches " + query)

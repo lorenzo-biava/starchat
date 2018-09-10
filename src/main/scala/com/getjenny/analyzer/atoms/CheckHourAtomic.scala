@@ -4,7 +4,7 @@ package com.getjenny.analyzer.atoms
   * Created by angelo on 05/07/18.
   */
 
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.analyzer.util.{ComparisonOperators, Time}
 
 /** Check if the current time is Equal, LessOrEqual, Less, Greater, GreaterOrEqual to the argument time in EPOC
@@ -34,7 +34,7 @@ class CheckHourAtomic(val arguments: List[String],
 
   override def toString: String = "checkTime(\"" + argHour + ", " + argOperator + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val hour: Long = Time.hour(argZone)
     if(ComparisonOperators.compare(hour, argHour, argOperator))
       Result(score = 1.0)

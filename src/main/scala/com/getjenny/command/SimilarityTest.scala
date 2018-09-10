@@ -15,7 +15,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import au.com.bytecode.opencsv.CSVWriter
 import breeze.io.CSVReader
-import com.getjenny.analyzer.expressions.Data
+import com.getjenny.analyzer.expressions.AnalyzersData
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
@@ -88,7 +88,7 @@ object SimilarityTest extends JsonSupport {
       val evaluate_request = AnalyzerEvaluateRequest(
         analyzer = analyzer,
         query = text2,
-        data = Option{ Data(extracted_variables = params.variables, item_list = params.itemList.toList) }
+        data = Option{ AnalyzersData(extracted_variables = params.variables, traversed_states = params.itemList.toList) }
       )
 
       val entityFuture = Marshal(evaluate_request).to[MessageEntity]
@@ -157,7 +157,7 @@ object SimilarityTest extends JsonSupport {
         .text(s"the index_name, e.g. index_XXX" +
           s"  default: ${defaultParams.indexName}")
         .action((x, c) => c.copy(indexName = x))
-      opt[Seq[String]]("item_list")
+      opt[Seq[String]]("traversed_states")
         .text(s"list of string representing the traversed states" +
           s"  default: ${defaultParams.itemList}")
         .action((x, c) => c.copy(itemList = x))

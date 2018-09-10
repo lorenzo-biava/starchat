@@ -1,6 +1,6 @@
 package com.getjenny.analyzer.atoms
 
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.analyzer.util._
 
 import scala.util.Try
@@ -30,9 +30,9 @@ class MatchPatternRegexAtomic(val arguments: List[String], restricted_args: Map[
 
   val regexExtractor = new PatternExtractionRegex(regex)
 
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val res = Try(Result(score = 1.0,
-      AnalyzersData(item_list = data.item_list, extracted_variables = regexExtractor.evaluate(query))
+      AnalyzersDataInternal(traversed_states = data.traversed_states, extracted_variables = regexExtractor.evaluate(query))
       )) recover {
       case e: PatternExtractionNoMatchException =>
         //println("DEBUG: no match for regular expression specification(" + regex + "), query(" + query + ")")

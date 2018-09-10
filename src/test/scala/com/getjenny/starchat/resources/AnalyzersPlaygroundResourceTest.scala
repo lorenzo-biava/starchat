@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.BasicHttpCredentials
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.testkit._
-import com.getjenny.analyzer.expressions.Data
+import com.getjenny.analyzer.expressions.AnalyzersData
 import com.getjenny.starchat.StarChatService
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
@@ -69,7 +69,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         AnalyzerEvaluateRequest(
           query = "",
           analyzer = """keyword("test")""",
-          data = Option{Data()}
+          data = Option{AnalyzersData()}
         )
 
       Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
@@ -88,7 +88,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         AnalyzerEvaluateRequest(
           query = "this is a test",
           analyzer = """keyword("test")""",
-          data = Option{Data()}
+          data = Option{AnalyzersData()}
         )
 
       Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
@@ -108,7 +108,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           query = "query",
           analyzer = """hasTravState("one")""",
           data = Option{
-            Data(item_list=List("one", "two"), extracted_variables = Map.empty[String, String])
+            AnalyzersData(traversed_states=List("one", "two"), extracted_variables = Map.empty[String, String])
           }
         )
 
@@ -129,7 +129,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           query = "query",
           analyzer = """bnot(hasTravState("three"))""",
           data = Option{
-            Data(item_list=List("one", "two"), extracted_variables = Map.empty[String, String])
+            AnalyzersData(traversed_states=List("one", "two"), extracted_variables = Map.empty[String, String])
           }
         )
 
@@ -150,7 +150,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           query = "query",
           analyzer = """lastTravStateIs("two")""",
           data = Option{
-            Data(item_list=List("one", "two"), extracted_variables = Map.empty[String, String])
+            AnalyzersData(traversed_states=List("one", "two"), extracted_variables = Map.empty[String, String])
           }
         )
 
@@ -171,7 +171,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           query = "query",
           analyzer = """prevTravStateIs("one")""",
           data = Option{
-            Data(item_list=List("one", "two"), extracted_variables = Map.empty[String, String])
+            AnalyzersData(traversed_states=List("one", "two"), extracted_variables = Map.empty[String, String])
           }
         )
 
@@ -193,7 +193,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           analyzer =
             """band(prevTravStateIs("one"),keyword("on"),matchPatternRegex("[day,month,year](?:(0[1-9]|[12][0-9]|3[01])(?:[- \/\.])(0[1-9]|1[012])(?:[- \/\.])((?:19|20)\d\d))"))""",
           data = Option{
-            Data(item_list=List("one", "two"),
+            AnalyzersData(traversed_states=List("one", "two"),
               extracted_variables = Map.empty[String, String])
           }
         )
@@ -205,9 +205,9 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         response.build_message should be ("success")
         response.value should be (1)
         response.data.nonEmpty should be (true)
-        response.data.getOrElse(Data()).extracted_variables.exists(_ == ("month.0", "11")) should be (true)
-        response.data.getOrElse(Data()).extracted_variables.exists(_ == ("day.0", "31")) should be (true)
-        response.data.getOrElse(Data()).extracted_variables.exists(_ == ("year.0", "1900")) should be (true)
+        response.data.getOrElse(AnalyzersData()).extracted_variables.exists(_ == ("month.0", "11")) should be (true)
+        response.data.getOrElse(AnalyzersData()).extracted_variables.exists(_ == ("day.0", "31")) should be (true)
+        response.data.getOrElse(AnalyzersData()).extracted_variables.exists(_ == ("year.0", "1900")) should be (true)
       }
     }
   }
@@ -220,7 +220,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           analyzer =
             """existsVariable("month.0")""",
           data = Option{
-            Data(item_list=List("one", "two"),
+            AnalyzersData(traversed_states=List("one", "two"),
               extracted_variables =
                 Map[String, String](
                   "month.0" -> "11",

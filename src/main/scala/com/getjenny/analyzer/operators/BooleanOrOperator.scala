@@ -25,7 +25,7 @@ class BooleanOrOperator(children: List[Expression]) extends AbstractOperator(chi
     }
   }
 
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     def loop(l: List[Expression]): Result = {
       val res = l.headOption match {
         case Some(arg) => arg.matches(query, data)

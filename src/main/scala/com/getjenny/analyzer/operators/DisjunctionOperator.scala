@@ -25,7 +25,7 @@ class DisjunctionOperator(children: List[Expression]) extends AbstractOperator(c
     }
   }
 
-  def evaluate(query: String, data: AnalyzersData = new AnalyzersData): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = new AnalyzersDataInternal): Result = {
     def compDisjunction(l: List[Expression]): Result = {
       val res = l.headOption match {
         case Some(t) => {
@@ -40,8 +40,8 @@ class DisjunctionOperator(children: List[Expression]) extends AbstractOperator(c
           if (t.nonEmpty) {
             val comp_disj = compDisjunction(t)
             Result(score = (1.0 - res.score) * comp_disj.score,
-              AnalyzersData(
-                item_list = data.item_list,
+              AnalyzersDataInternal(
+                traversed_states = data.traversed_states,
                 extracted_variables = comp_disj.data.extracted_variables ++ res.data.extracted_variables,
                 data = comp_disj.data.data ++ res.data.data
               )

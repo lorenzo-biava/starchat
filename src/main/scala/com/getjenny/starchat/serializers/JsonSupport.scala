@@ -8,7 +8,7 @@ import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSup
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
-import com.getjenny.analyzer.expressions.Data
+import com.getjenny.analyzer.expressions.AnalyzersData
 import com.getjenny.starchat.entities._
 import spray.json._
 import akka.http.scaladsl.unmarshalling.Unmarshaller
@@ -67,7 +67,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val analyzerQueryRequestFormat = jsonFormat2(TokenizerQueryRequest)
   implicit val analyzerResponseItemFormat = jsonFormat5(TokenizerResponseItem)
   implicit val analyzerResponseFormat = jsonFormat1(TokenizerResponse)
-  implicit val analyzerDataFormat = jsonFormat2(Data)
+  implicit val analyzerDataFormat = jsonFormat2(AnalyzersData)
   implicit val analyzerEvaluateRequestFormat = jsonFormat3(AnalyzerEvaluateRequest)
   implicit val analyzerEvaluateResponseFormat = jsonFormat4(AnalyzerEvaluateResponse)
   implicit val spellcheckTokenSuggestionsFormat = jsonFormat3(SpellcheckTokenSuggestions)

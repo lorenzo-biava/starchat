@@ -25,13 +25,13 @@ class MaxOperator(children: List[Expression]) extends AbstractOperator(children:
     }
   }
 
-  def evaluate(query: String, data: AnalyzersData = new AnalyzersData): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = new AnalyzersDataInternal): Result = {
     def compMax(l: List[Expression]): Result = {
       val val1 = l.head.evaluate(query, data)
       if (l.tail.isEmpty) {
         Result(score = val1.score,
-          AnalyzersData(
-            item_list = data.item_list,
+          AnalyzersDataInternal(
+            traversed_states = data.traversed_states,
             extracted_variables = val1.data.extracted_variables,
             data = val1.data.data
           )

@@ -54,7 +54,7 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     case "existsVariable" => new ExistsVariableAtomic(argument, restricted_args)
     case "hasTravState" => new HasTravStateAtomic(argument, restricted_args)
     case "lastTravStateIs" => new LastTravStateIsAtomic(argument, restricted_args)
-    case "prevTravStateIs" => new PreviousTravStateIsAtomic(argument, restricted_args)
+    case "prevTravStateIs" => new PrevTravStateIsAtomic(argument, restricted_args)
     case ("distance" | "cosDistanceKeywords") => new CosineDistanceAnalyzer(argument, restricted_args)
     case "checkTimestamp" => new CheckTimestampAtomic(argument, restricted_args)
     case "checkDayOfWeek" => new CheckDayOfWeekAtomic(argument, restricted_args)

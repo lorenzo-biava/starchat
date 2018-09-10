@@ -4,7 +4,7 @@ package com.getjenny.analyzer.atoms
   * Created by angelo on 05/07/18.
   */
 
-import com.getjenny.analyzer.expressions.{AnalyzersData, Result}
+import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
 import com.getjenny.analyzer.util.{ComparisonOperators, Time}
 
 /** Check if the current time is Equal, LessOrEqual, Less, Greater, GreaterOrEqual to the argument which
@@ -35,7 +35,7 @@ class CheckDayOfMonthAtomic(val arguments: List[String],
 
   override def toString: String = "checkTime(\"" + argDayOfMonth + ", " + argOperator + "\")"
   val isEvaluateNormalized: Boolean = true
-  def evaluate(query: String, data: AnalyzersData = AnalyzersData()): Result = {
+  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val month = Time.monthInt(argZone).toLong
     if(ComparisonOperators.compare(month, argDayOfMonth, argOperator))
       Result(score = 1.0)
