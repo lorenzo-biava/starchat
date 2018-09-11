@@ -28,7 +28,7 @@ object TextToDtFeatures extends JsonSupport {
                                    filter: String = """([\p{L}|\d|_| |/]+)""",
                                    window: Int = 5,
                                    center: Int = 2,
-
+                                   take: Int = 0 // take up to N sentences
                                  )
 
   private[this] def execute(params: Params) {
@@ -66,7 +66,12 @@ object TextToDtFeatures extends JsonSupport {
     else
       tokenizedSentencesUnfiltered1
 
-    val tokenizedSentences = tokenizedSentencesUnfiltered2
+    val tokenizedSentencesUnfiltered3 = if(params.take == 0)
+      tokenizedSentencesUnfiltered2.take(params.take)
+    else
+      tokenizedSentencesUnfiltered2
+
+    val tokenizedSentences = tokenizedSentencesUnfiltered3
 
     val nullFeature: Long = 0
     val dict = mutable.Map[String, Long]("" -> nullFeature) // empty feature
@@ -157,6 +162,10 @@ object TextToDtFeatures extends JsonSupport {
         .text(s"a file with valid terms, all the other will be removed to reduce the dataset" +
           s"  default is empty")
         .action((x, c) => c.copy(terms_filter = x))
+      opt[Int]("take")
+        .text(s"take up to N sentences" +
+          s"  default: ${defaultParams.take}")
+        .action((x, c) => c.copy(take = x))
       opt[Int]("window")
         .text(s"the size of the sliding window " +
           s"  default: ${defaultParams.window}")
