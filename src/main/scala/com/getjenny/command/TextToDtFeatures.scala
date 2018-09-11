@@ -52,21 +52,17 @@ object TextToDtFeatures extends JsonSupport {
         sentence.filter( ! _.matches("""([^\p{L}|^\d])"""))
     }
 
-    println(tokenizedSentencesUnfiltered0)
-
     val tokenizedSentencesUnfiltered1 = if(params.filter.nonEmpty)
       tokenizedSentencesUnfiltered0.filter(v => ! v.exists(! _.matches(params.filter)))
     else
       tokenizedSentencesUnfiltered0
-
-    println(tokenizedSentencesUnfiltered1)
-
+    
     val tokenizedSentencesUnfiltered2 = if(termsFilter.nonEmpty)
       tokenizedSentencesUnfiltered1.filter(v => ! v.exists(t => ! termsFilter.contains(t)))
     else
       tokenizedSentencesUnfiltered1
 
-    val tokenizedSentencesUnfiltered3 = if(params.take == 0)
+    val tokenizedSentencesUnfiltered3 = if(params.take > 0)
       tokenizedSentencesUnfiltered2.take(params.take)
     else
       tokenizedSentencesUnfiltered2
@@ -163,7 +159,7 @@ object TextToDtFeatures extends JsonSupport {
           s"  default is empty")
         .action((x, c) => c.copy(terms_filter = x))
       opt[Int]("take")
-        .text(s"take up to N sentences" +
+        .text(s"take up to N filtered sentences" +
           s"  default: ${defaultParams.take}")
         .action((x, c) => c.copy(take = x))
       opt[Int]("window")
