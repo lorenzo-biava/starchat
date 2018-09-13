@@ -26,6 +26,8 @@ object TextToDtFeatures extends JsonSupport {
                                    terms_filter: String = "",
                                    out_names: String = "features.names",
                                    filter: String = """([\p{L}|\d|_| |/]+)""",
+                                   add_feature_id: Boolean = true,
+                                   omit_null_feature: Boolean = false,
                                    window: Int = 5,
                                    center: Int = 2,
                                    take: Int = 0 // take up to N sentences
@@ -56,7 +58,7 @@ object TextToDtFeatures extends JsonSupport {
       tokenizedSentencesUnfiltered0.filter(v => ! v.exists(! _.matches(params.filter)))
     else
       tokenizedSentencesUnfiltered0
-    
+
     val tokenizedSentencesUnfiltered2 = if(termsFilter.nonEmpty)
       tokenizedSentencesUnfiltered1.filter(v => ! v.exists(t => ! termsFilter.contains(t)))
     else
@@ -70,7 +72,8 @@ object TextToDtFeatures extends JsonSupport {
     val tokenizedSentences = tokenizedSentencesUnfiltered3
 
     val nullFeature: Long = 0
-    val dict = mutable.Map[String, Long]("" -> nullFeature) // empty feature
+    val dict = mutable.Map[String, Long]()
+    if(! params.omit_null_feature) dict("") = nullFeature // empty feature
     val sentenceFeatures = tokenizedSentences.map { case(sentence) =>
       sentence.map { case (token) =>
         dict.get(token) match {
@@ -99,7 +102,11 @@ object TextToDtFeatures extends JsonSupport {
     }
 
     val featuresWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_training)))
-    features.zipWithIndex.map{ case(v) => v._1 ++ Vector(v._2.toLong)}.foreach { case(row) =>
+    if(params.add_feature_id) {
+      features.zipWithIndex.map{ case(v) => v._1 ++ Vector(v._2.toLong)}
+    } else {
+      features
+    }.foreach { case(row) =>
       val entry = row.mkString(",")
       featuresWriter.write(entry)
       featuresWriter.newLine()
@@ -158,6 +165,14 @@ object TextToDtFeatures extends JsonSupport {
         .text(s"a file with valid terms, all the other will be removed to reduce the dataset" +
           s"  default is empty")
         .action((x, c) => c.copy(terms_filter = x))
+      opt[Boolean]("add_feature_id")
+        .text(s"add a progressive feature id at the end of the feature line" +
+          s"  default is  ${defaultParams.add_feature_id}")
+        .action((x, c) => c.copy(add_feature_id = x))
+      opt[Boolean]("omit_null_feature")
+        .text(s"omit the null feature on dictionary)" +
+          s"  default is  ${defaultParams.omit_null_feature}")
+        .action((x, c) => c.copy(omit_null_feature = x))
       opt[Int]("take")
         .text(s"take up to N filtered sentences" +
           s"  default: ${defaultParams.take}")

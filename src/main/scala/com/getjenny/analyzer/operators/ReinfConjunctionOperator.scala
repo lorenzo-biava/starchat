@@ -35,7 +35,7 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
         Result(score = res.score * 1.1,
           AnalyzersDataInternal(
             traversed_states = data.traversed_states,
-            extracted_variables = res.data.extracted_variables,
+            extracted_variables = data.extracted_variables ++ res.data.extracted_variables,
             data = res.data.data
           )
         )
@@ -46,8 +46,8 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
         Result(score = (val1.score * 1.1) * val2.score,
           AnalyzersDataInternal(
             traversed_states = data.traversed_states,
-            extracted_variables = res.data.extracted_variables,
-            data = res.data.data
+            extracted_variables = val1.data.extracted_variables ++ val2.data.extracted_variables,
+            data = data.data ++ val1.data.data ++ val2.data.data
           )
         )
       }
