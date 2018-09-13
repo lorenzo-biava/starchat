@@ -31,27 +31,29 @@ class ReinfConjunctionOperator(children: List[Expression]) extends AbstractOpera
     def reinfConjunction(l: List[Expression]): Result = {
       val res = l.head.evaluate(query, data)
       if (l.tail.isEmpty) {
-//        println("SCORE_NIL: " + res.score * 1.1 + "(" + res.score + ")")
+        //        println("SCORE_NIL: " + res.score * 1.1 + "(" + res.score + ")")
         Result(score = res.score * 1.1,
           AnalyzersData(
             item_list = data.item_list,
-            extracted_variables = res.data.extracted_variables,
+            extracted_variables = data.extracted_variables ++ res.data.extracted_variables,
             data = res.data.data
           )
         )
       } else {
         val val1 = l.head.evaluate(query, data)
         val val2 = reinfConjunction(l.tail)
-//        println("SCORE_NOT_NIL: " + (val1.score * 1.1) * val2.score + "(" + val1.score + ")" + "(" + val2.score + ")")
+        //        println("SCORE_NOT_NIL: " + (val1.score * 1.1) * val2.score + "(" + val1.score + ")" + "(" + val2.score + ")")
         Result(score = (val1.score * 1.1) * val2.score,
           AnalyzersData(
             item_list = data.item_list,
-            extracted_variables = res.data.extracted_variables,
-            data = res.data.data
+            extracted_variables = val1.data.extracted_variables ++ val2.data.extracted_variables,
+            data = data.data ++ val1.data.data ++ val2.data.data
           )
         )
       }
     }
     reinfConjunction(children)
   }
+
+
 }
