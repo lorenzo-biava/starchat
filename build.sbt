@@ -30,6 +30,7 @@ libraryDependencies ++= {
   val ScoptVersion	= "3.7.0"
   val TikaVersion	= "1.18"
   val ManausLibVersion = "1.0.1"
+  val StanfordCoreNLP = "3.9.1"
   Seq(
     "com.getjenny" %% "manaus-lib" % ManausLibVersion,
     "ch.qos.logback" % "logback-classic" % LogbackVersion,
@@ -49,7 +50,7 @@ libraryDependencies ++= {
     "org.apache.tika" % "tika-app" % TikaVersion,
     "org.apache.tika" % "tika-core" % TikaVersion,
     "org.apache.tika" % "tika-parsers" % TikaVersion,
-    "edu.stanford.nlp" % "stanford-corenlp" % "3.7.0",
+    "edu.stanford.nlp" % "stanford-corenlp" % StanfordCoreNLP,
 
     // Not integrated, High level rest API still miss
     //  delete by query: https://github.com/elastic/elasticsearch/issues/27205
