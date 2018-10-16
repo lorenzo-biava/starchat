@@ -275,11 +275,13 @@ object ManausTermsExtractionService {
 
     // calculate source index name for the terms (vectorial representation)
     val termsIndexName = extractionRequest.commonOrSpecificSearchTerms match {
-      case CommonOrSpecificSearch.IDXSPECIFIC =>
+      case Some(CommonOrSpecificSearch.IDXSPECIFIC) =>
         indexName
       case _ =>
         Index.getCommonIndexName(indexName)
     }
+
+    log.debug("TermsIndexName (" + indexName + "): " + termsIndexName)
 
     // extraction of vectorial terms representation
     val tokenTermsId: Set[String] = tokenizationRes.tokens.map(_.token).toSet // all tokens
