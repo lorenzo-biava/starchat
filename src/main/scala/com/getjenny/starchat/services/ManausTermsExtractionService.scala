@@ -281,7 +281,7 @@ object ManausTermsExtractionService {
         Index.getCommonIndexName(indexName)
     }
 
-    log.debug("TermsIndexName (" + indexName + "): " + termsIndexName)
+    log.debug("IndexName (" + indexName + ") -> termsIndexName(" + termsIndexName + ")")
 
     // extraction of vectorial terms representation
     val tokenTermsId: Set[String] = tokenizationRes.tokens.map(_.token).toSet // all tokens
