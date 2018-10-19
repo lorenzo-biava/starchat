@@ -34,7 +34,8 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     "checkDayOfMonth",
     "checkMonth",
     "checkHour",
-    "checkMinute"
+    "checkMinute",
+    "double"
   )
 
   override def get(name: String, argument: List[String], restricted_args: Map[String, String]):
@@ -62,6 +63,7 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     case "checkMonth" => new CheckMonthAtomic(argument, restricted_args)
     case "checkHour" => new CheckHourAtomic(argument, restricted_args)
     case "checkMinute" => new CheckMinuteAtomic(argument, restricted_args)
+    case "double" => new DoubleNumberAtomic(argument, restricted_args)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }
