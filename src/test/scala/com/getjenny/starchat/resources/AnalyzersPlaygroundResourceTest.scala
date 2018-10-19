@@ -191,7 +191,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         AnalyzerEvaluateRequest(
           query = "on 31-11-1900",
           analyzer =
-            """band(prevTravStateIs("one"),keyword("on"),matchPatternRegex("[day,month,year](?:(0[1-9]|[12][0-9]|3[01])(?:[- \/\.])(0[1-9]|1[012])(?:[- \/\.])((?:19|20)\d\d))"))""",
+            """band(prevTravStateIs("one"),binarize(keyword("on")),matchPatternRegex("[day,month,year](?:(0[1-9]|[12][0-9]|3[01])(?:[- \/\.])(0[1-9]|1[012])(?:[- \/\.])((?:19|20)\d\d))"))""",
           data = Option{
             AnalyzersData(traversed_states=List("one", "two"),
               extracted_variables = Map.empty[String, String])
@@ -203,7 +203,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         val response = responseAs[AnalyzerEvaluateResponse]
         response.build should be (true)
         response.build_message should be ("success")
-        response.value should be (1)
+        response.value should be (1.0)
         response.data.nonEmpty should be (true)
         response.data.getOrElse(AnalyzersData()).extracted_variables.exists(_ == ("month.0", "11")) should be (true)
         response.data.getOrElse(AnalyzersData()).extracted_variables.exists(_ == ("day.0", "31")) should be (true)

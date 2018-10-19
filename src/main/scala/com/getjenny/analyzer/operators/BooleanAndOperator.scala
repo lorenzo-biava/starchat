@@ -32,10 +32,9 @@ class BooleanAndOperator(children: List[Expression]) extends AbstractOperator(ch
         case _ => throw OperatorException("BooleanAndOperator: operator argument is empty")
       }
       if (first_res.score < 1.0d) {
-        Result(score=0, data = first_res.data)
-      }
-      else if (l.tail.isEmpty) {
-        Result(score=1, data = first_res.data)
+        Result(score=0.0d, data = first_res.data)
+      } else if (l.tail.isEmpty) {
+        Result(score=1.0d, data = first_res.data)
       } else {
         val res = loop(l.tail)
         Result(score = res.score,

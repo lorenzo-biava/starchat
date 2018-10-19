@@ -7,15 +7,15 @@ package com.getjenny.analyzer.expressions
   *
   * Created by mal on 20/02/2017.
   */
-import scalaz.Scalaz._
 
 abstract class Expression {
-  /**
+  /** Read a sentence and produce a score (the higher, the more confident)
     * @param query see AbstractAtomic or AbstractOperator
     * @param data the Map exchanged between StarChat and the other services
     * @return a score (>= 0) which represents its confidence on triggering the state it is in
     */
-  def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result // read a sentence and produce a score (the higher, the more confident)
+  def evaluate(query: String,
+               data: AnalyzersDataInternal = AnalyzersDataInternal()): Result
 
   // In case of boolean logic, the threshold above which it says the state should be triggered
   val matchThreshold = 0.0

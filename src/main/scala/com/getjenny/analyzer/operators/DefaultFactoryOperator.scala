@@ -10,7 +10,7 @@ import com.getjenny.analyzer.interfaces._
 class DefaultFactoryOperator extends OperatorFactoryTrait[List[Expression], AbstractOperator] {
 
   override val operations = Set("or" , "and", "conjunction", "disjunction", "bor", "band", "booleanor", "booleanand",
-    "booleanOr", "booleanAnd", "booleanNot", "booleannot", "bnot", "maximum", "max", "reinfConjunction")
+    "booleanOr", "booleanAnd", "booleanNot", "booleannot", "bnot", "maximum", "max", "reinfConjunction", "binarize")
 
   override def get(name: String, argument: List[Expression]): AbstractOperator = name.filter(c => !c.isWhitespace ) match {
     case ("booleanOr" | "booleanor" | "bor") => new BooleanOrOperator(argument)
@@ -19,6 +19,7 @@ class DefaultFactoryOperator extends OperatorFactoryTrait[List[Expression], Abst
     case ("conjunction" | "and") => new ConjunctionOperator(argument)
     case ("disjunction" | "or") => new DisjunctionOperator(argument)
     case ("maximum" | "max") => new MaxOperator(argument)
+    case ("binarize") => new BinarizeOperator(argument)
     case ("reinfConjunction") => new ReinfConjunctionOperator(argument)
     case _ => throw OperatorNotFoundException("Operator \'" + name + "\' not found")
   }
