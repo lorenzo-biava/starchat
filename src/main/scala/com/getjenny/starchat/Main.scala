@@ -11,8 +11,8 @@ import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
-
 import scala.concurrent.ExecutionContextExecutor
+import akka.http.scaladsl.server.Route
 
 case class Parameters(
          http_enable: Boolean,
@@ -75,18 +75,19 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
     sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
     val https: HttpsConnectionContext = ConnectionContext.https(sslContext)
 
-    Http().bindAndHandle(handler = routes, interface = params.get.https_host, port = params.get.https_port,
+    Http().bindAndHandleAsync(handler = Route.asyncHandler(routes), interface = params.get.https_host, port = params.get.https_port,
       connectionContext = https, log = system.log) map { binding =>
       system.log.info(s"REST (HTTPS) interface bound to ${binding.localAddress}")
     } recover { case eX =>
       system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.https_host}:${params.get.https_port}",
         eX.getMessage)
     }
+
+
   }
 
   if((! params.get.https_enable) || params.get.http_enable) {
-
-     Http().bindAndHandle(handler = routes, interface = params.get.http_host,
+     Http().bindAndHandleAsync(handler = Route.asyncHandler(routes), interface = params.get.http_host,
        port = params.get.http_port, log = system.log) map { binding =>
       system.log.info(s"REST (HTTP) interface bound to ${binding.localAddress}")
     } recover { case eX: Exception =>

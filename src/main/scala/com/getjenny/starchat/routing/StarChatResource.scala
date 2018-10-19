@@ -11,16 +11,15 @@ import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.serializers.JsonSupport
 import com.getjenny.starchat.services.UserEsServiceException
 import com.getjenny.starchat.services.auth.{AbstractStarChatAuthenticator, StarChatAuthenticator}
+import com.getjenny.starchat.utils.Index
 import com.typesafe.config.{Config, ConfigFactory}
 import org.elasticsearch.index.IndexNotFoundException
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
-import com.getjenny.starchat.utils.Index
 
 trait StarChatResource extends Directives with JsonSupport {
-
   implicit def executionContext: ExecutionContext
   val defaultHeader: RawHeader = RawHeader("application", "json")
   val config: Config = ConfigFactory.load()
