@@ -395,7 +395,7 @@ object DecisionTableService {
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
-    throw new Exception("Function to be implemente dwith version 7.0 of ES")
+    throw new Exception("Function to be implemented with version 7.0 of ES")
     /* TODO: to be implemented with version 7.0 of ES
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
