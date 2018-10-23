@@ -51,12 +51,8 @@ libraryDependencies ++= {
     "org.apache.tika" % "tika-core" % TikaVersion,
     "org.apache.tika" % "tika-parsers" % TikaVersion,
     "edu.stanford.nlp" % "stanford-corenlp" % StanfordCoreNLP,
-
-    // Not integrated, High level rest API still miss
-    //  delete by query: https://github.com/elastic/elasticsearch/issues/27205
-    //"org.elasticsearch.client" % "elasticsearch-rest-client" % ESClientVersion,
-    //"org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % ESClientVersion,
-    "org.elasticsearch.client" % "transport" % ESClientVersion,
+    "org.elasticsearch.client" % "elasticsearch-rest-client" % ESClientVersion,
+    "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % ESClientVersion,
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "org.parboiled" %% "parboiled" % ParboiledVersion,
     "org.scalanlp" %% "breeze" % BreezeVersion,

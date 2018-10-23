@@ -9,22 +9,23 @@ import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities.DtReloadTimestamp
 import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClient
 import com.getjenny.starchat.utils.Index
-import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
-import org.elasticsearch.action.search.SearchResponse
-import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.action.get.{GetRequest, GetResponse}
+import org.elasticsearch.action.search.{SearchRequest, SearchResponse}
+import org.elasticsearch.action.update.{UpdateRequest, UpdateResponse}
+import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.search.sort.SortOrder
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
+import org.elasticsearch.search.builder.SearchSourceBuilder
+import org.elasticsearch.search.sort.SortOrder
+import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scalaz.Scalaz._
 
 object  DtReloadService {
   val DT_RELOAD_TIMESTAMP_DEFAULT : Long = -1
@@ -33,6 +34,7 @@ object  DtReloadService {
 
   def setDTReloadTimestamp(indexName: String, refresh: Int = 0):
   Future[Option[DtReloadTimestamp]] = Future {
+    val client: RestHighLevelClient = elasticClient.client
     val dtReloadDocId: String = indexName
     val timestamp: Long = System.currentTimeMillis
 
@@ -40,15 +42,14 @@ object  DtReloadService {
     builder.field(elasticClient.dtReloadTimestampFieldName, timestamp)
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
-    val response: UpdateResponse =
-      client.prepareUpdate()
-        .setIndex(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
-        .setType(elasticClient.systemRefreshDtIndexSuffix)
-        .setId(dtReloadDocId)
-        .setDocAsUpsert(true)
-        .setDoc(builder)
-        .get()
+    val updateReq = new UpdateRequest()
+      .index(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
+      .`type`(elasticClient.systemRefreshDtIndexSuffix)
+      .doc(builder)
+      .id(dtReloadDocId)
+      .docAsUpsert(true)
+
+    val response: UpdateResponse = client.update(updateReq, RequestOptions.DEFAULT)
 
     log.debug("dt reload timestamp response status: " + response.status())
 
@@ -64,13 +65,15 @@ object  DtReloadService {
   }
 
   def getDTReloadTimestamp(indexName: String) : Future[Option[DtReloadTimestamp]] = Future {
+    val client: RestHighLevelClient = elasticClient.client
     val dtReloadDocId: String = indexName
-    val client: TransportClient = elasticClient.client
-    val getBuilder: GetRequestBuilder = client.prepareGet()
-      .setIndex(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
-      .setType(elasticClient.systemRefreshDtIndexSuffix)
-      .setId(dtReloadDocId)
-    val response: GetResponse = getBuilder.get()
+
+    val getReq = new GetRequest()
+      .`type`(elasticClient.systemRefreshDtIndexSuffix)
+      .index(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
+      .id(dtReloadDocId)
+
+    val response: GetResponse = client.get(getReq, RequestOptions.DEFAULT)
 
     val timestamp = if(! response.isExists || response.isSourceEmpty) {
       log.info("dt reload timestamp field is empty or does not exists")
@@ -91,20 +94,25 @@ object  DtReloadService {
 
   def allDTReloadTimestamp(minTimestamp: Option[Long] = None,
                            maxItems: Option[Long] = None): Option[List[DtReloadTimestamp]] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
     minTimestamp match {
       case Some(minTs) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("state_refresh_ts").gt(minTs))
       case _ => ;
     }
 
-    val scrollResp : SearchResponse = client
-      .prepareSearch(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
-      .setTypes(elasticClient.systemRefreshDtIndexSuffix)
-      .setQuery(boolQueryBuilder)
-      .addSort("state_refresh_ts", SortOrder.DESC)
-      .setScroll(new TimeValue(60000))
-      .setSize(maxItems.getOrElse(0L).toInt).get()
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .query(boolQueryBuilder)
+      .size(maxItems.getOrElse(100L).toInt)
+      .version(true)
+      .sort("state_refresh_ts", SortOrder.DESC)
+
+    val searchReq = new SearchRequest(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.systemRefreshDtIndexSuffix)
+      .scroll(new TimeValue(60000))
+
+    val scrollResp : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val dtReloadTimestamps : List[DtReloadTimestamp] = scrollResp.getHits.getHits.toList.map({ timestampEntry =>
       val item: SearchHit = timestampEntry

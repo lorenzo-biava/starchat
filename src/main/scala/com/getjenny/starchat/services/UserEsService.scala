@@ -4,8 +4,6 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/12/17.
   */
 
-import javax.naming.AuthenticationException
-
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.RandomNumbers
 import com.getjenny.starchat.SCActorSystem
@@ -13,18 +11,20 @@ import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.auth.AbstractStarChatAuthenticator
 import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClient
 import com.typesafe.config.{Config, ConfigFactory}
-import org.elasticsearch.action.delete.DeleteResponse
-import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
-import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.client.transport.TransportClient
+import javax.naming.AuthenticationException
+import org.elasticsearch.action.delete.{DeleteRequest, DeleteResponse}
+import org.elasticsearch.action.get.{GetResponse, _}
+import org.elasticsearch.action.index.{IndexRequest, IndexResponse}
+import org.elasticsearch.action.update.{UpdateRequest, UpdateResponse}
+import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.rest.RestStatus
+import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scalaz.Scalaz._
 
 case class UserEsServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -66,12 +66,16 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
-    val response = client.prepareIndex().setIndex(indexName)
-      .setCreate(true)
-      .setType(elasticClient.userIndexSuffix)
-      .setId(user.id)
-      .setSource(builder).get()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val indexReq = new IndexRequest()
+      .index(indexName)
+      .create(true)
+      .`type`(elasticClient.userIndexSuffix)
+      .id(user.id)
+      .source(builder)
+
+    val response: IndexResponse = client.index(indexReq, RequestOptions.DEFAULT)
 
     val refreshIndex = elasticClient.refresh(indexName)
     if(refreshIndex.failed_shards_n > 0) {
@@ -108,7 +112,7 @@ class UserEsService extends AbstractUserService {
     }
 
     user.permissions match {
-      case Some(t) =>
+      case Some(_) =>
         val permissions = builder.startObject("permissions")
         user.permissions.getOrElse(Map.empty).foreach{case(permIndexName, userPermissions) =>
           val array = permissions.field(permIndexName).startArray()
@@ -121,11 +125,15 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
-    val response: UpdateResponse = client.prepareUpdate().setIndex(indexName)
-      .setType(elasticClient.userIndexSuffix).setId(id)
-      .setDoc(builder)
-      .get()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val updateReq = new UpdateRequest()
+      .index(indexName)
+      .`type`(elasticClient.userIndexSuffix)
+      .doc(builder)
+      .id(id)
+
+    val response: UpdateResponse = client.update(updateReq, RequestOptions.DEFAULT)
 
     val refresh_index = elasticClient.refresh(indexName)
     if(refresh_index.failed_shards_n > 0) {
@@ -148,9 +156,14 @@ class UserEsService extends AbstractUserService {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
-    val client: TransportClient = elasticClient.client
-    val response: DeleteResponse = client.prepareDelete().setIndex(indexName)
-      .setType(elasticClient.userIndexSuffix).setId(id).get()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val deleteReq = new DeleteRequest()
+      .index(indexName)
+      .`type`(elasticClient.userIndexSuffix)
+      .id(id)
+
+    val response: DeleteResponse = client.delete(deleteReq, RequestOptions.DEFAULT)
 
     val refreshIndex = elasticClient.refresh(indexName)
     if(refreshIndex.failed_shards_n > 0) {
@@ -172,10 +185,14 @@ class UserEsService extends AbstractUserService {
       admin_user
     } else {
 
-      val client: TransportClient = elasticClient.client
-      val getBuilder: GetRequestBuilder = client.prepareGet(indexName, elasticClient.userIndexSuffix, id)
+      val client: RestHighLevelClient = elasticClient.client
 
-      val response: GetResponse = getBuilder.get()
+      val getReq = new GetRequest()
+        .index(indexName)
+        .`type`(elasticClient.userIndexSuffix)
+        .id(id)
+
+      val response: GetResponse = client.get(getReq, RequestOptions.DEFAULT)
       val source = if(response.getSource != None.orNull) {
         response.getSource.asScala.toMap
       } else {

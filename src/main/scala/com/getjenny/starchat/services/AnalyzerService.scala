@@ -5,17 +5,19 @@ package com.getjenny.starchat.services
   */
 
 import akka.event.{Logging, LoggingAdapter}
-import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, AnalyzersData}
+import com.getjenny.analyzer.expressions.{AnalyzersData, AnalyzersDataInternal}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.analyzer.analyzers.StarchatAnalyzer
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
 import com.getjenny.starchat.utils.Index
-import org.elasticsearch.action.search.SearchResponse
-import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.action.search.{SearchRequest, SearchResponse}
+import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.unit._
-import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.SearchHit
+import org.elasticsearch.search.builder.SearchSourceBuilder
+import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
@@ -23,7 +25,6 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-import scalaz.Scalaz._
 
 case class AnalyzerServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -58,22 +59,26 @@ object AnalyzerService {
   val dtMaxTables: Long = elasticClient.config.getLong("es.dt_max_tables")
 
   def getAnalyzers(indexName: String): mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
-    val client: TransportClient = elasticClient.client
-    val qb : QueryBuilder = QueryBuilders.matchAllQuery()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .query(QueryBuilders.matchAllQuery)
+      .fetchSource(Array("state", "execution_order", "max_state_counter",
+        "analyzer", "queries"), Array.empty[String])
+      .size(10000)
+      .version(true)
+
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexSuffix)
+      .scroll(new TimeValue(60000))
+
+    var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
     if(refreshIndex.failed_shards_n > 0) {
       throw AnalyzerServiceException("DecisionTable : index refresh failed: (" + indexName + ")")
     }
-
-    val scrollResp : SearchResponse = client.prepareSearch()
-      .setIndices(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setTypes(elasticClient.indexSuffix)
-      .setFetchSource(Array("state", "execution_order", "max_state_counter",
-        "analyzer", "queries"), Array.empty[String])
-      .setScroll(new TimeValue(60000))
-      .setVersion(true)
-      .setSize(10000).get()
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
     val analyzersLHM = mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]

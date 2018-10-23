@@ -9,8 +9,9 @@ import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.KnowledgeBaseElasticClient
 import com.getjenny.starchat.utils.Index
-import org.elasticsearch.action.search.SearchResponse
-import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.action.search.{SearchRequest, SearchResponse}
+import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
+import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.suggest.SuggestBuilder
 import org.elasticsearch.search.suggest.term.{TermSuggestion, TermSuggestionBuilder}
 
@@ -24,7 +25,7 @@ object SpellcheckService {
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def termsSuggester(indexName: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val suggestionBuilder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
     suggestionBuilder.maxEdits(request.max_edit)
@@ -35,27 +36,29 @@ object SpellcheckService {
     suggestBuilder.setGlobalText(request.text)
       .addSuggestion("suggestions", suggestionBuilder)
 
-    val searchBuilder = client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setTypes(elasticClient.indexSuffix)
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
       .suggest(suggestBuilder)
 
-    val searchResponse : SearchResponse = searchBuilder
-      .execute()
-      .actionGet()
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexSuffix)
 
-    val suggestions: List[SpellcheckToken] =
+
+    val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
+
+    val termsSuggestions: List[SpellcheckToken] =
       searchResponse.getSuggest.getSuggestion[TermSuggestion]("suggestions")
-      .getEntries.asScala.toList.map({ case(e) =>
-        val item: TermSuggestion.Entry = e
+      .getEntries.asScala.toList.map({ case(suggestions) =>
+        val item: TermSuggestion.Entry = suggestions
         val text = item.getText.toString
         val offset = item.getOffset
         val length = item.getLength
         val options: List[SpellcheckTokenSuggestions] =
-          item.getOptions.asScala.toList.map({ case(e) =>
+          item.getOptions.asScala.toList.map({ case(suggestion) =>
             val option = SpellcheckTokenSuggestions(
-              score = e.getScore.toDouble,
-              freq = e.getFreq.toDouble,
-              text = e.getText.toString
+              score = suggestion.getScore.toDouble,
+              freq = suggestion.getFreq.toDouble,
+              text = suggestion.getText.toString
             )
             option
         })
@@ -65,7 +68,7 @@ object SpellcheckService {
         spellcheckToken
     })
 
-    val response = SpellcheckTermsResponse(tokens = suggestions)
+    val response = SpellcheckTermsResponse(tokens = termsSuggestions)
     Option {
       response
     }

@@ -19,6 +19,7 @@ import scala.concurrent.duration._
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 import scalaz.Scalaz._
+import akka.http.javadsl.server.CircuitBreakerOpenRejection
 
 trait DecisionTableResource extends StarChatResource {
 
@@ -164,7 +165,6 @@ trait DecisionTableResource extends StarChatResource {
         }
     }
   }
-
 
   def tempDestination(fileInfo: FileInfo): File =
     File.createTempFile("DecisionTableCSV", ".csv")
@@ -341,10 +341,24 @@ trait DecisionTableResource extends StarChatResource {
                           val message = "index(" + indexName + ") DecisionTableResource: " +
                             "Unable to complete the request: " + e.getMessage
                           log.error(message = message)
-                          completeResponse(StatusCodes.BadRequest,
+                          completeResponse(StatusCodes.NotFound,
                             Option {
                               ResponseRequestOutOperationResult(
                                 ReturnMessageData(code = 110, message = message),
+                                Option {
+                                  List.empty[ResponseRequestOut]
+                                })
+                            }
+                          )
+                        case e @ (_: CircuitBreakerOpenRejection) =>
+                          val message = "index(" + indexName + ") DecisionTableResource: " +
+                            "The request the takes too much time: " + e.getMessage +
+                            " : stacktrace(" + e.getStackTrace.map(x => x.toString).mkString(";") + ")"
+                          log.error(message = message)
+                          completeResponse(StatusCodes.RequestTimeout,
+                            Option {
+                              ResponseRequestOutOperationResult(
+                                ReturnMessageData(code = 111, message = message),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })
@@ -358,7 +372,7 @@ trait DecisionTableResource extends StarChatResource {
                           completeResponse(StatusCodes.BadRequest,
                             Option {
                               ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 111, message = message),
+                                ReturnMessageData(code = 112, message = message),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })
@@ -378,7 +392,7 @@ trait DecisionTableResource extends StarChatResource {
                           completeResponse(StatusCodes.BadRequest,
                             Option {
                               ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 112, message = "unable to complete the response"),
+                                ReturnMessageData(code = 113, message = "unable to complete the response"),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })

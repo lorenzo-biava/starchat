@@ -26,9 +26,7 @@ object CronReloadDTService  {
   class ReloadAnalyzersTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
       case `tickMessage` =>
-        val maxItemsIndexesToUpdate: Long = if (analyzerService.dtMaxTables > analyzerService.analyzersMap.size) {
-          analyzerService.dtMaxTables - analyzerService.analyzersMap.size
-        } else 0L
+        val maxItemsIndexesToUpdate: Long = math.max(analyzerService.dtMaxTables, analyzerService.analyzersMap.size)
 
         dtReloadService.allDTReloadTimestamp(Some(updateTimestamp), Some(maxItemsIndexesToUpdate)) match {
           case Some(indices) =>

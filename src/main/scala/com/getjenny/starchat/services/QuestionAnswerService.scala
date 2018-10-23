@@ -9,25 +9,26 @@ import com.getjenny.analyzer.util.{RandomNumbers, Time}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.QuestionAnswerElasticClient
+import com.getjenny.starchat.utils.Index
 import org.apache.lucene.search.join._
-import org.elasticsearch.action.delete.DeleteResponse
-import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
-import org.elasticsearch.action.index.IndexResponse
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.action.delete.{DeleteRequest, DeleteResponse}
+import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequest, MultiGetResponse}
+import org.elasticsearch.action.index.{IndexRequest, IndexResponse}
+import org.elasticsearch.action.search.{SearchRequest, SearchResponse, SearchType}
+import org.elasticsearch.action.update.{UpdateRequest, UpdateResponse}
+import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.index.query.functionscore._
 import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.script._
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
 import org.elasticsearch.search.aggregations.metrics.sum.Sum
+import org.elasticsearch.search.builder.SearchSourceBuilder
 import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
@@ -35,7 +36,6 @@ import scala.collection.immutable.{List, Map}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import com.getjenny.starchat.utils.Index
 
 trait QuestionAnswerService {
   val elasticClient: QuestionAnswerElasticClient
@@ -48,7 +48,7 @@ trait QuestionAnswerService {
   var cacheStealTimeMillis: Int
 
   private[this] def calcDictSize(indexName: String): DictSize = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val questionAgg = AggregationBuilders.cardinality("question_term_count").field("question.base")
     val answerAgg = AggregationBuilders.cardinality("answer_term_count").field("answer.base")
@@ -58,22 +58,27 @@ trait QuestionAnswerService {
     val script: Script = new Script(scriptBody)
     val totalAgg = AggregationBuilders.cardinality("total_term_count").script(script)
 
-    val aggregationQueryRes = client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setTypes(elasticClient.indexMapping)
-      .setSize(0)
-      .setQuery(QueryBuilders.matchAllQuery)
-      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-      .addAggregation(questionAgg)
-      .addAggregation(answerAgg)
-      .addAggregation(totalAgg)
-      .setRequestCache(true)
-      .execute.actionGet
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .query(QueryBuilders.matchAllQuery)
+      .size(0)
+      .aggregation(questionAgg)
+      .aggregation(answerAgg)
+      .aggregation(totalAgg)
 
-    val totalHits = aggregationQueryRes.getHits.totalHits
 
-    val questionAggRes: Cardinality = aggregationQueryRes.getAggregations.get("question_term_count")
-    val answerAggRes: Cardinality = aggregationQueryRes.getAggregations.get("answer_term_count")
-    val totalAggRes: Cardinality = aggregationQueryRes.getAggregations.get("total_term_count")
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexMapping)
+      .searchType(SearchType.DFS_QUERY_THEN_FETCH)
+      .requestCache(true)
+
+    val searchResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
+
+    val totalHits = searchResp.getHits.totalHits
+
+    val questionAggRes: Cardinality = searchResp.getAggregations.get("question_term_count")
+    val answerAggRes: Cardinality = searchResp.getAggregations.get("answer_term_count")
+    val totalAggRes: Cardinality = searchResp.getAggregations.get("total_term_count")
 
     DictSize(numDocs = totalHits,
       question = questionAggRes.getValue,
@@ -116,25 +121,29 @@ trait QuestionAnswerService {
   }
 
   private[this] def calcTotalTerms(indexName: String): TotalTerms = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val questionAgg = AggregationBuilders.sum("question_term_count").field("question.base_length")
     val answerAgg = AggregationBuilders.sum("answer_term_count").field("answer.base_length")
 
-    val aggregationQueryRes = client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setTypes(elasticClient.indexMapping)
-      .setSize(0)
-      .setQuery(QueryBuilders.matchAllQuery)
-      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-      .addAggregation(questionAgg)
-      .addAggregation(answerAgg)
-      .setRequestCache(true)
-      .execute.actionGet
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .query(QueryBuilders.matchAllQuery)
+      .size(0)
+      .aggregation(questionAgg)
+      .aggregation(answerAgg)
 
-    val totalHits = aggregationQueryRes.getHits.totalHits
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexMapping)
+      .searchType(SearchType.DFS_QUERY_THEN_FETCH)
+      .requestCache(true)
 
-    val questionAggRes: Sum = aggregationQueryRes.getAggregations.get("question_term_count")
-    val answerAggRes: Sum = aggregationQueryRes.getAggregations.get("answer_term_count")
+    val searchResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
+
+    val totalHits = searchResp.getHits.totalHits
+
+    val questionAggRes: Sum = searchResp.getAggregations.get("question_term_count")
+    val answerAggRes: Sum = searchResp.getAggregations.get("answer_term_count")
 
     TotalTerms(numDocs = totalHits,
       question = questionAggRes.getValue.toLong,
@@ -176,7 +185,7 @@ trait QuestionAnswerService {
 
   def calcTermCount(indexName: String,
                     field: TermCountFields.Value = TermCountFields.question, term: String): TermCount = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val script: Script = new Script("_score")
 
@@ -190,18 +199,22 @@ trait QuestionAnswerService {
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
       .must(QueryBuilders.matchQuery(esFieldName, term))
 
-    val aggregationQueryRes = client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setTypes(elasticClient.indexMapping)
-      .setSize(0)
-      .setQuery(boolQueryBuilder)
-      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-      .addAggregation(agg)
-      .setRequestCache(true)
-      .execute.actionGet
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .query(boolQueryBuilder)
+      .size(0)
+      .aggregation(agg)
 
-    val totalHits = aggregationQueryRes.getHits.totalHits
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexMapping)
+      .searchType(SearchType.DFS_QUERY_THEN_FETCH)
+      .requestCache(true)
 
-    val aggRes: Sum = aggregationQueryRes.getAggregations.get("countTerms")
+    val searchResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
+
+    val totalHits = searchResp.getHits.totalHits
+
+    val aggRes: Sum = searchResp.getAggregations.get("countTerms")
 
     TermCount(numDocs = totalHits,
       count = aggRes.getValue.toLong)
@@ -294,15 +307,17 @@ trait QuestionAnswerService {
   }
 
   def search(indexName: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
-    val client: TransportClient = elasticClient.client
-    val searchBuilder : SearchRequestBuilder = client
-      .prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setTypes(elasticClient.indexMapping)
-      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+    val client: RestHighLevelClient = elasticClient.client
 
-    searchBuilder.setMinScore(documentSearch.min_score.getOrElse(
-      Option{elasticClient.queryMinThreshold}.getOrElse(0.0f))
-    )
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .from(documentSearch.from.getOrElse(0))
+      .size(documentSearch.size.getOrElse(10))
+      .minScore(documentSearch.min_score.getOrElse(Option{elasticClient.queryMinThreshold}.getOrElse(0.0f)))
+
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexMapping)
+      .searchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
 
@@ -396,14 +411,11 @@ trait QuestionAnswerService {
       case _ => ;
     }
 
-    searchBuilder.setQuery(boolQueryBuilder)
+    sourceReq.query(boolQueryBuilder)
 
-    val search_response : SearchResponse = searchBuilder
-      .setFrom(documentSearch.from.getOrElse(0)).setSize(documentSearch.size.getOrElse(10))
-      .execute()
-      .actionGet()
+    val searchResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
-    val documents : Option[List[SearchKBDocument]] = Option { search_response.getHits.getHits.toList.map( { case(e) =>
+    val documents : Option[List[SearchKBDocument]] = Option { searchResp.getHits.getHits.toList.map( { case(e) =>
 
       val item: SearchHit = e
 
@@ -512,7 +524,7 @@ trait QuestionAnswerService {
 
     val filteredDoc : List[SearchKBDocument] = documents.getOrElse(List[SearchKBDocument]())
 
-    val maxScore : Float = search_response.getHits.getMaxScore
+    val maxScore : Float = searchResp.getHits.getMaxScore
     val total : Int = filteredDoc.length
     val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, max_score = maxScore,
       hits = filteredDoc)
@@ -589,12 +601,15 @@ trait QuestionAnswerService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
-    val response: IndexResponse =
-      client.prepareIndex().setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
-        .setType(elasticClient.indexMapping)
-        .setId(document.id)
-        .setSource(builder).get()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val indexReq = new IndexRequest()
+      .index(Index.indexName(indexName, elasticClient.indexSuffix))
+      .`type`(elasticClient.indexMapping)
+      .id(document.id)
+      .source(builder)
+
+    val response: IndexResponse = client.index(indexReq, RequestOptions.DEFAULT)
 
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -700,12 +715,15 @@ trait QuestionAnswerService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
-    val response: UpdateResponse = client.prepareUpdate()
-      .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setType(elasticClient.indexMapping).setId(id)
-      .setDoc(builder)
-      .get()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val updateReq = new UpdateRequest()
+      .index(Index.indexName(indexName, elasticClient.indexSuffix))
+      .`type`(elasticClient.indexMapping)
+      .doc(builder)
+      .id(id)
+
+    val response: UpdateResponse = client.update(updateReq, RequestOptions.DEFAULT)
 
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -725,25 +743,33 @@ trait QuestionAnswerService {
   }
 
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elasticClient.client
-    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    val client: RestHighLevelClient = elasticClient.client
+
+    throw new Exception("Function to be implemented with version 7.0 of ES")
+    /* TODO: to be implemented with version 7.0 of ES
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
         .source(Index.indexName(indexName, elasticClient.indexSuffix))
-        .filter(qb)
+        .filter(QueryBuilders.matchAllQuery)
         .get()
 
     val deleted: Long = response.getDeleted
 
     val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
     Option {result}
+    */
+
   }
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elasticClient.client
-    val response: DeleteResponse = client.prepareDelete()
-      .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setType(elasticClient.indexMapping).setId(id).get()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val deleteReq = new DeleteRequest()
+      .index(Index.indexName(indexName, elasticClient.indexSuffix))
+      .`type`(elasticClient.indexMapping)
+      .id(id)
+
+    val response: DeleteResponse = client.delete(deleteReq, RequestOptions.DEFAULT)
 
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -763,11 +789,16 @@ trait QuestionAnswerService {
   }
 
   def read(indexName: String, ids: List[String]): Option[SearchKBDocumentsResults] = {
-    val client: TransportClient = elasticClient.client
-    val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
-    multigetBuilder.add(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, ids:_*)
-    val response: MultiGetResponse = multigetBuilder.get()
+    val client: RestHighLevelClient = elasticClient.client
 
+    val multigetReq = new MultiGetRequest()
+    ids.foreach{id =>
+      multigetReq.add(
+        new MultiGetRequest.Item(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, id)
+      )
+    }
+
+    val response: MultiGetResponse = client.mget(multigetReq, RequestOptions.DEFAULT)
 
     val documents : Option[List[SearchKBDocument]] = Option { response.getResponses
       .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
@@ -898,14 +929,18 @@ trait QuestionAnswerService {
   }
 
   def allDocuments(indexName: String, keepAlive: Long = 60000, size: Int = 100): Iterator[KBDocument] = {
-    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
-    var scrollResp: SearchResponse = client
-      .prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setScroll(new TimeValue(keepAlive))
-      .setQuery(qb)
-      .setSize(size).get()
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .query(QueryBuilders.matchAllQuery)
+      .size(size)
+
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexMapping)
+      .scroll(new TimeValue(keepAlive))
+
+    var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val iterator = Iterator.continually{
       val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
@@ -1009,8 +1044,7 @@ trait QuestionAnswerService {
           status = status)
       })
 
-      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId)
-        .setScroll(new TimeValue(keepAlive)).execute().actionGet()
+      scrollResp = client.search(searchReq, RequestOptions.DEFAULT)
       (documents, documents.nonEmpty)
     }.takeWhile{case (_, docNonEmpty) => docNonEmpty}
       .flatMap{case (doc, _) => doc}

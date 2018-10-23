@@ -164,7 +164,7 @@
       "jenny_delimited_double": {
         "tokenizer":"whitespace",
         "encoding": "double",
-        "filter": "delimited_payload_filter"
+        "filter": "delimited_payload"
       }
     }
   }

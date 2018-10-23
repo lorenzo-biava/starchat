@@ -10,9 +10,12 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities.{IndexManagementResponse, _}
 import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClient
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
-import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest
+import org.elasticsearch.action.admin.indices.create.{CreateIndexRequest, CreateIndexResponse}
+import org.elasticsearch.action.admin.indices.delete.{DeleteIndexRequest, DeleteIndexResponse}
+import org.elasticsearch.action.admin.indices.mapping.get.{GetMappingsRequest, GetMappingsResponse}
+import org.elasticsearch.action.admin.indices.mapping.put.{PutMappingRequest, PutMappingResponse}
+import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
 
@@ -51,7 +54,7 @@ object SystemIndexManagementService {
   )
 
   def create(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -70,10 +73,11 @@ object SystemIndexManagementService {
 
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
 
-      val createIndexRes: CreateIndexResponse =
-        client.admin().indices().prepareCreate(fullIndexName)
-          .setSettings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON))
-          .setSource(schemaJson, XContentType.JSON).get()
+      val createIndexReq = new CreateIndexRequest(fullIndexName)
+        .settings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON))
+        .source(schemaJson, XContentType.JSON)
+
+      val createIndexRes: CreateIndexResponse = client.indices.create(createIndexReq, RequestOptions.DEFAULT)
 
       item.indexSuffix + "(" + fullIndexName + ", " + createIndexRes.isAcknowledged.toString + ")"
     })
@@ -84,7 +88,7 @@ object SystemIndexManagementService {
   }
 
   def remove(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     if (! elasticClient.enableDeleteSystemIndex) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -99,8 +103,9 @@ object SystemIndexManagementService {
     }).map(item => {
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
 
-      val deleteIndexRes: DeleteIndexResponse =
-        client.admin().indices().prepareDelete(fullIndexName).get()
+      val deleteIndexReq = new DeleteIndexRequest(fullIndexName)
+
+      val deleteIndexRes: DeleteIndexResponse = client.indices.delete(deleteIndexReq, RequestOptions.DEFAULT)
 
       item.indexSuffix + "(" + fullIndexName + ", " + deleteIndexRes.isAcknowledged.toString + ")"
 
@@ -112,7 +117,7 @@ object SystemIndexManagementService {
   }
 
   def check(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -121,8 +126,12 @@ object SystemIndexManagementService {
       }
     }).map(item => {
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
-      val getMappingsReq = client.admin.indices.prepareGetMappings(fullIndexName).get()
-      val check = getMappingsReq.mappings.containsKey(fullIndexName)
+      val getMappingsReq: GetMappingsRequest = new GetMappingsRequest()
+        .indices(fullIndexName)
+
+      val getMappingsRes: GetMappingsResponse = client.indices.getMapping(getMappingsReq, RequestOptions.DEFAULT)
+
+      val check = getMappingsRes.mappings.containsKey(fullIndexName)
       item.indexSuffix + "(" + fullIndexName + ", " + check + ")"
     })
 
@@ -132,7 +141,7 @@ object SystemIndexManagementService {
   }
 
   def update(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -150,12 +159,14 @@ object SystemIndexManagementService {
 
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
 
-      val updateIndexRes  =
-        client.admin().indices().preparePutMapping().setIndices(fullIndexName)
-          .setType(item.indexSuffix)
-          .setSource(schemaJson, XContentType.JSON).get()
+      val putMappingReq = new PutMappingRequest().indices(fullIndexName)
+        .`type`(item.indexSuffix)
+        .source(schemaJson, XContentType.JSON)
 
-      item.indexSuffix + "(" + fullIndexName + ", " + updateIndexRes.isAcknowledged.toString + ")"
+      val putMappingRes: PutMappingResponse = client.indices
+        .putMapping(putMappingReq, RequestOptions.DEFAULT)
+
+      item.indexSuffix + "(" + fullIndexName + ", " + putMappingRes.isAcknowledged.toString + ")"
     })
 
     val message = "IndexUpdate: " + operationsMessage.mkString(" ")
@@ -184,9 +195,9 @@ object SystemIndexManagementService {
   }
 
   def indices: Future[List[String]] = Future {
-    val indicesRes = elasticClient.client
-      .admin.cluster.prepareState.get.getState.getMetaData.getIndices.asScala
-    indicesRes.map(x => x.key).toList
+    val clusterHealthReq = new ClusterHealthRequest()
+    val clusterHealthRes = elasticClient.client.cluster.health(clusterHealthReq, RequestOptions.DEFAULT)
+    clusterHealthRes.getIndices.asScala.map{ case(k, v) => k }.toList
   }
 
 

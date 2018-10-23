@@ -8,11 +8,10 @@ import java.net.InetAddress
 
 import com.getjenny.starchat.entities._
 import com.typesafe.config.{Config, ConfigFactory}
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import org.elasticsearch.client.transport.TransportClient
+import org.apache.http.HttpHost
+import org.elasticsearch.action.admin.indices.refresh.{RefreshRequest, RefreshResponse}
+import org.elasticsearch.client.{RequestOptions, RestClient, RestHighLevelClient}
 import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.common.transport.TransportAddress
-import org.elasticsearch.transport.client.PreBuiltTransportClient
 
 import scala.collection.immutable.{List, Map}
 
@@ -22,6 +21,7 @@ trait ElasticClient {
   val sniff: Boolean = config.getBoolean("es.enable_sniff")
   val ignoreClusterName: Boolean = config.getBoolean("es.ignore_cluster_name")
 
+  val hostProto : String = config.getString("es.host_proto")
   val hostMapStr : String = config.getString("es.host_map")
   val hostMap : Map[String, Int] = hostMapStr.split(";").map(x => x.split("=")).map(x => (x(0), x(1).toInt)).toMap
 
@@ -31,20 +31,21 @@ trait ElasticClient {
     .put("client.transport.sniff", sniff)
     .build()
 
-  val inetAddresses: List[TransportAddress] =
-    hostMap.map{ case(k,v) => new TransportAddress(InetAddress.getByName(k), v) }.toList
+  val inetAddresses: List[HttpHost] =
+    hostMap.map{ case(k,v) => new HttpHost(InetAddress.getByName(k), v, hostProto) }.toList
 
-  private[this] var transportClient : TransportClient = open()
+  private[this] var esClient : RestHighLevelClient = open()
 
-  def open(): TransportClient = {
-    val client: TransportClient = new PreBuiltTransportClient(settings)
-      .addTransportAddresses(inetAddresses:_*)
+  def open(): RestHighLevelClient = {
+    val client: RestHighLevelClient = new RestHighLevelClient(
+      RestClient.builder(inetAddresses:_*))
     client
   }
 
   def refresh(indexName: String): RefreshIndexResult = {
+    val refreshReq = new RefreshRequest(indexName)
     val refreshRes: RefreshResponse =
-      transportClient.admin().indices().prepareRefresh(indexName).get()
+      esClient.indices().refresh(refreshReq, RequestOptions.DEFAULT)
 
     val failedShards: List[FailedShard] = refreshRes.getShardFailures.map(item => {
       val failedShardItem = FailedShard(index_name = item.index,
@@ -65,11 +66,11 @@ trait ElasticClient {
     refreshIndexResult
   }
 
-  def client: TransportClient = {
-    this.transportClient
+  def client: RestHighLevelClient = {
+    this.esClient
   }
 
-  def close(client: TransportClient): Unit = {
+  def close(client: RestHighLevelClient): Unit = {
     client.close()
   }
 

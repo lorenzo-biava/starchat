@@ -13,19 +13,21 @@ import com.getjenny.starchat.analyzer.utils.TextToVectorsTools
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.TermElasticClient
 import com.getjenny.starchat.utils.Index
-import org.elasticsearch.action.admin.indices.analyze.{AnalyzeRequestBuilder, AnalyzeResponse}
 import org.elasticsearch.action.bulk._
-import org.elasticsearch.action.delete.DeleteRequestBuilder
-import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.action.admin.indices.analyze.{AnalyzeRequest, AnalyzeResponse}
+import org.elasticsearch.action.delete.DeleteRequest
+import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequest, MultiGetResponse}
+import org.elasticsearch.action.index.IndexRequest
+import org.elasticsearch.action.search.{SearchRequest, SearchResponse, SearchType}
+import org.elasticsearch.action.update.UpdateRequest
+import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
+import org.elasticsearch.search.builder.SearchSourceBuilder
 import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
@@ -219,9 +221,9 @@ object TermService {
     * @return list of indexing responses
     */
   def indexTerm(indexName: String, terms: Terms, refresh: Int) : Future[Option[IndexDocumentListResult]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
-    val bulkRequest : BulkRequestBuilder = client.prepareBulk()
+    val bulkReq = new BulkRequest()
 
     terms.terms.foreach( term => {
       val builder : XContentBuilder = jsonBuilder().startObject()
@@ -266,15 +268,15 @@ object TermService {
       }
       builder.endObject()
 
-      val indexTermReq = client.prepareIndex().setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
-        .setType(elasticClient.indexSuffix)
-        .setId(term.term)
-        .setSource(builder)
+      val indexTermReq = new IndexRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+        .`type`(elasticClient.indexSuffix)
+        .id(term.term)
+        .source(builder)
 
-      bulkRequest.add(indexTermReq)
+      bulkReq.add(indexTermReq)
     })
 
-    val bulkResponse: BulkResponse = bulkRequest.get()
+    val bulkResponse: BulkResponse = client.bulk(bulkReq, RequestOptions.DEFAULT)
 
     val listOfDocRes: List[IndexDocumentResult] = bulkResponse.getItems.map(x => {
       IndexDocumentResult(x.getIndex, x.getType, x.getId,
@@ -297,11 +299,18 @@ object TermService {
   def termsById(indexName: String,
                 termsRequest: TermIdsRequest) : Option[Terms] = {
     val documents: List[Term] = if(termsRequest.ids.nonEmpty) {
-      val client: TransportClient = elasticClient.client
-      val multiGetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
-      multiGetBuilder.add(Index.indexName(indexName, elasticClient.indexSuffix),
-        elasticClient.indexSuffix, termsRequest.ids: _*)
-      val response: MultiGetResponse = multiGetBuilder.get()
+      val client: RestHighLevelClient = elasticClient.client
+
+      val multiGetReq = new MultiGetRequest()
+
+      termsRequest.ids.foreach{id =>
+        multiGetReq.add(
+          new MultiGetRequest.Item(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, id)
+        )
+      }
+
+      val response: MultiGetResponse = client.mget(multiGetReq, RequestOptions.DEFAULT)
+
       response.getResponses.toList
         .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case (e) =>
         val item: GetResponse = e.getResponse
@@ -416,9 +425,9 @@ object TermService {
     * @return result of the update operations
     */
   private[this] def updateTerm(indexName: String, terms: Terms, refresh: Int) : Option[UpdateDocumentListResult] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
-    val bulkRequest : BulkRequestBuilder = client.prepareBulk()
+    val bulkReq : BulkRequest = new BulkRequest()
 
     terms.terms.foreach( term => {
       val builder : XContentBuilder = jsonBuilder().startObject()
@@ -463,14 +472,17 @@ object TermService {
       }
       builder.endObject()
 
-      bulkRequest.add(client.prepareUpdate().setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
-        .setType(elasticClient.indexSuffix)
-        .setDocAsUpsert(true)
-        .setId(term.term)
-        .setDoc(builder))
+      val updateTermReq = new UpdateRequest()
+        .index(Index.indexName(indexName, elasticClient.indexSuffix))
+        .`type`(elasticClient.indexSuffix)
+        .docAsUpsert(true)
+        .id(term.term)
+        .doc(builder)
+
+      bulkReq.add(updateTermReq)
     })
 
-    val bulkResponse: BulkResponse = bulkRequest.get()
+    val bulkRes: BulkResponse = client.bulk(bulkReq, RequestOptions.DEFAULT)
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -479,7 +491,7 @@ object TermService {
       }
     }
 
-    val listOfDocRes: List[UpdateDocumentResult] = bulkResponse.getItems.map(x => {
+    val listOfDocRes: List[UpdateDocumentResult] = bulkRes.getItems.map(x => {
       UpdateDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
         x.status === RestStatus.CREATED)
@@ -497,7 +509,9 @@ object TermService {
     * @return a DeleteDocumentsResult with the status of the delete operation
     */
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
+    throw new Exception("Function to be implemented with version 7.0 of ES")
+    /* TODO: to be implemented with version 7.0 of ES
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -509,6 +523,7 @@ object TermService {
 
     val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
     Option {result}
+    */
   }
 
   /** delete one or more terms
@@ -520,17 +535,19 @@ object TermService {
     */
   def delete(indexName: String, termGetRequest: TermIdsRequest, refresh: Int):
   Future[Option[DeleteDocumentListResult]] = Future {
-    val client: TransportClient = elasticClient.client
-    val bulkRequest : BulkRequestBuilder = client.prepareBulk()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val bulkReq : BulkRequest = new BulkRequest()
 
     termGetRequest.ids.foreach( id => {
-      val deleteRequest: DeleteRequestBuilder = client.prepareDelete()
-        .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
-        .setType(elasticClient.indexSuffix)
-        .setId(id)
-      bulkRequest.add(deleteRequest)
+      val deleteReq = new DeleteRequest()
+        .index(Index.indexName(indexName, elasticClient.indexSuffix))
+        .`type`(elasticClient.indexSuffix)
+        .id(id)
+      bulkReq.add(deleteReq)
     })
-    val bulkResponse: BulkResponse = bulkRequest.get()
+
+    val bulkRes: BulkResponse = client.bulk(bulkReq, RequestOptions.DEFAULT)
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -539,7 +556,7 @@ object TermService {
       }
     }
 
-    val listOfDocRes: List[DeleteDocumentResult] = bulkResponse.getItems.map(x => {
+    val listOfDocRes: List[DeleteDocumentResult] = bulkRes.getItems.map(x => {
       DeleteDocumentResult(x.getIndex, x.getType, x.getId,
         x.getVersion,
         x.status =/= RestStatus.NOT_FOUND)
@@ -558,7 +575,7 @@ object TermService {
     * @return the retrieved terms
     */
   def searchTerm(indexName: String, term: SearchTerm) : Option[TermsResults] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val analyzer = "space_punctuation"
     val analyzer_name = term.analyzer.getOrElse("space_punctuation")
@@ -571,10 +588,13 @@ object TermService {
             term.analyzer.getOrElse("") + ")")
       }
 
-    val searchBuilder : SearchRequestBuilder =
-      client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-        .setTypes(elasticClient.indexSuffix)
-        .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .version(true)
+
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexSuffix)
+      .searchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
 
@@ -620,11 +640,9 @@ object TermService {
       case _ => ;
     }
 
-    searchBuilder.setQuery(boolQueryBuilder)
+    sourceReq.query(boolQueryBuilder)
 
-    val searchResponse : SearchResponse = searchBuilder
-      .execute()
-      .actionGet()
+    val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val documents : List[Term] = searchResponse.getHits.getHits.toList.map({ case(e) =>
       val item: SearchHit = e
@@ -747,7 +765,7 @@ object TermService {
     */
   def search(indexName: String, text: String,
              analyzer: String = "space_punctuation"): Option[TermsResults] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val term_field_name = TokenizersDescription.analyzers_map.get(analyzer) match {
       case Some(anlrz) => "term." + analyzer
@@ -755,18 +773,19 @@ object TermService {
         throw TermServiceException("search: analyzer not found or not supported: (" + analyzer + ")")
     }
 
-    val searchBuilder : SearchRequestBuilder = client.prepareSearch()
-      .setIndices(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setTypes(elasticClient.indexSuffix)
-      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .version(true)
+
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexSuffix)
+      .searchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
     boolQueryBuilder.should(QueryBuilders.matchQuery(term_field_name, text))
-    searchBuilder.setQuery(boolQueryBuilder)
+    sourceReq.query(boolQueryBuilder)
 
-    val searchResponse : SearchResponse = searchBuilder
-      .execute()
-      .actionGet()
+    val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val documents : List[Term] = searchResponse.getHits.getHits.toList.map({ case(e) =>
       val item: SearchHit = e
@@ -869,15 +888,14 @@ object TermService {
         throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + query.tokenizer + ")")
     }
 
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
-    val analyzerBuilder: AnalyzeRequestBuilder = client.admin.indices.prepareAnalyze(query.text)
-    analyzerBuilder.setAnalyzer(analyzer)
-    analyzerBuilder.setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
+    val analyzerReq = new AnalyzeRequest()
+      .index(Index.indexName(indexName, elasticClient.indexSuffix))
+      .text(query.text)
+      .analyzer(analyzer)
 
-    val analyzeResponse: AnalyzeResponse = analyzerBuilder
-      .execute()
-      .actionGet()
+    val analyzeResponse: AnalyzeResponse = client.indices().analyze(analyzerReq, RequestOptions.DEFAULT)
 
     val tokens : List[TokenizerResponseItem] =
       analyzeResponse.getTokens.listIterator.asScala.toList.map(t => {
@@ -937,14 +955,18 @@ object TermService {
     * @return an iterator for Items
     */
   def allDocuments(indexName: String, keepAlive: Long = 60000): Iterator[Term] = {
-    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
-    var scrollResp: SearchResponse = client
-      .prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setScroll(new TimeValue(keepAlive))
-      .setQuery(qb)
-      .setSize(100).get()
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .query(QueryBuilders.matchAllQuery)
+      .size(100)
+
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexSuffix)
+      .scroll(new TimeValue(keepAlive))
+
+    var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val iterator = Iterator.continually{
       val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
@@ -1009,8 +1031,7 @@ object TermService {
           score = None: Option[Double])
       })
 
-      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId)
-        .setScroll(new TimeValue(keepAlive)).execute().actionGet()
+      scrollResp = client.search(searchReq, RequestOptions.DEFAULT)
       (documents, documents.nonEmpty)
     }.takeWhile{case (_, docNonEmpty) => docNonEmpty}
       .flatMap{case (doc, _) => doc}

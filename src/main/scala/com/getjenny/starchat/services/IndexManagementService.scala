@@ -11,11 +11,14 @@ import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.IndexManagementElasticClient
 import com.getjenny.starchat.utils.Index
-import org.elasticsearch.action.admin.indices.close.CloseIndexResponse
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
-import org.elasticsearch.action.admin.indices.open.OpenIndexResponse
-import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.action.admin.indices.close.{CloseIndexRequest, CloseIndexResponse}
+import org.elasticsearch.action.admin.indices.create.{CreateIndexRequest, CreateIndexResponse}
+import org.elasticsearch.action.admin.indices.delete.{DeleteIndexRequest, DeleteIndexResponse}
+import org.elasticsearch.action.admin.indices.mapping.get.{GetMappingsRequest, GetMappingsResponse}
+import org.elasticsearch.action.admin.indices.mapping.put.{PutMappingRequest, PutMappingResponse}
+import org.elasticsearch.action.admin.indices.open.{OpenIndexRequest, OpenIndexResponse}
+import org.elasticsearch.action.admin.indices.settings.put.{UpdateSettingsRequest, UpdateSettingsResponse}
+import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
 import scalaz.Scalaz._
@@ -59,7 +62,7 @@ object IndexManagementService {
 
   def create(indexName: String,
              indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     // extract language from index name
     val (_, language, _)= indexName match {
@@ -94,10 +97,11 @@ object IndexManagementService {
 
       val fullIndexName = indexName + "." + item.indexSuffix
 
-      val createIndexRes: CreateIndexResponse =
-        client.admin().indices().prepareCreate(fullIndexName)
-          .setSettings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON))
-          .setSource(schemaJson, XContentType.JSON).get()
+      val createIndexReq = new CreateIndexRequest(fullIndexName)
+        .settings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON))
+        .source(schemaJson, XContentType.JSON)
+
+      val createIndexRes: CreateIndexResponse = client.indices.create(createIndexReq, RequestOptions.DEFAULT)
 
       item.indexSuffix + "(" + fullIndexName + ", " + createIndexRes.isAcknowledged.toString + ")"
     })
@@ -109,7 +113,7 @@ object IndexManagementService {
 
   def remove(indexName: String,
              indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     if (! elasticClient.enableDeleteIndex) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -124,8 +128,9 @@ object IndexManagementService {
     }).map(item => {
       val fullIndexName = indexName + "." + item.indexSuffix
 
-      val deleteIndexRes: DeleteIndexResponse =
-        client.admin().indices().prepareDelete(fullIndexName).get()
+      val deleteIndexReq = new DeleteIndexRequest(fullIndexName)
+
+      val deleteIndexRes: DeleteIndexResponse = client.indices.delete(deleteIndexReq, RequestOptions.DEFAULT)
 
       item.indexSuffix + "(" + fullIndexName + ", " + deleteIndexRes.isAcknowledged.toString + ")"
 
@@ -138,7 +143,7 @@ object IndexManagementService {
 
   def check(indexName: String,
             indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -147,8 +152,13 @@ object IndexManagementService {
       }
     }).map(item => {
       val fullIndexName = indexName + "." + item.indexSuffix
-      val getMappingsReq = client.admin.indices.prepareGetMappings(fullIndexName).get()
-      val check = getMappingsReq.mappings.containsKey(fullIndexName)
+
+      val getMappingsReq: GetMappingsRequest = new GetMappingsRequest()
+        .indices(fullIndexName)
+
+      val getMappingsRes: GetMappingsResponse = client.indices.getMapping(getMappingsReq, RequestOptions.DEFAULT)
+
+      val check = getMappingsRes.mappings.containsKey(fullIndexName)
       item.indexSuffix + "(" + fullIndexName + ", " + check + ")"
     })
 
@@ -159,7 +169,7 @@ object IndexManagementService {
 
   def openClose(indexName: String, indexSuffix: Option[String] = None,
                 operation: String): Future[List[OpenCloseIndex]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
     schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t === item.indexSuffix
@@ -169,13 +179,15 @@ object IndexManagementService {
       val fullIndexName = indexName + "." + item.indexSuffix
       operation match {
         case "close" =>
-          val closeIndexResponse: CloseIndexResponse = client.admin().indices().prepareClose(fullIndexName).get()
+          val closeIndexReq = new CloseIndexRequest().indices(fullIndexName)
+          val closeIndexRes: CloseIndexResponse = client.indices.close(closeIndexReq, RequestOptions.DEFAULT)
           OpenCloseIndex(indexName = indexName, indexSuffix = item.indexSuffix, fullIndexName = fullIndexName,
-            operation = operation, acknowledgement = closeIndexResponse.isAcknowledged)
+            operation = operation, acknowledgement = closeIndexRes.isAcknowledged)
         case "open" =>
-          val openIndexResponse: OpenIndexResponse = client.admin().indices().prepareOpen(fullIndexName).get()
+          val openIndexReq = new OpenIndexRequest().indices(fullIndexName)
+          val openIndexRes: OpenIndexResponse = client.indices.open(openIndexReq, RequestOptions.DEFAULT)
           OpenCloseIndex(indexName = indexName, indexSuffix = item.indexSuffix, fullIndexName = fullIndexName,
-            operation = operation, acknowledgement = openIndexResponse.isAcknowledged)
+            operation = operation, acknowledgement = openIndexRes.isAcknowledged)
         case _ => throw IndexManagementServiceException("operation not supported on index: " + operation)
       }
     })
@@ -183,9 +195,9 @@ object IndexManagementService {
 
   def updateSettings(indexName: String,
                      indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
-    val (orgName, language, arbitrary) = Index.patternsFromIndex(indexName: String)
+    val (_, language, _) = Index.patternsFromIndex(indexName: String)
 
     val analyzerJsonPath: String = analyzerFiles(language).updatePath
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
@@ -203,10 +215,14 @@ object IndexManagementService {
       }
     }).map(item => {
       val fullIndexName = indexName + "." + item.indexSuffix
-      val updateIndexRes =
-        client.admin().indices().prepareUpdateSettings().setIndices(fullIndexName)
-          .setSettings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON)).get()
-      item.indexSuffix + "(" + fullIndexName + ", " + updateIndexRes.isAcknowledged.toString + ")"
+
+      val updateIndexSettingsReq = new UpdateSettingsRequest().indices(fullIndexName)
+        .settings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON))
+
+      val updateIndexSettingsRes: UpdateSettingsResponse = client.indices
+        .putSettings(updateIndexSettingsReq, RequestOptions.DEFAULT)
+
+      item.indexSuffix + "(" + fullIndexName + ", " + updateIndexSettingsRes.isAcknowledged.toString + ")"
     })
 
     val message = "IndexSettingsUpdate: " + operationsMessage.mkString(" ")
@@ -216,9 +232,7 @@ object IndexManagementService {
 
   def updateMappings(indexName: String,
                      indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.client
-
-    val (orgName, language, arbitrary) = Index.patternsFromIndex(indexName: String)
+    val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -237,15 +251,17 @@ object IndexManagementService {
 
       val fullIndexName = indexName + "." + item.indexSuffix
 
-      val updateIndexRes  =
-        client.admin().indices().preparePutMapping().setIndices(fullIndexName)
-          .setType(item.indexSuffix)
-          .setSource(schemaJson, XContentType.JSON).get()
+      val putMappingReq = new PutMappingRequest().indices(fullIndexName)
+          .`type`(item.indexSuffix)
+          .source(schemaJson, XContentType.JSON)
 
-      item.indexSuffix + "(" + fullIndexName + ", " + updateIndexRes.isAcknowledged.toString + ")"
+      val putMappingRes: PutMappingResponse = client.indices
+        .putMapping(putMappingReq, RequestOptions.DEFAULT)
+
+      item.indexSuffix + "(" + fullIndexName + ", " + putMappingRes.isAcknowledged.toString + ")"
     })
 
-    val message = "IndexUpdate: " + operationsMessage.mkString(" ")
+    val message = "IndexUpdateMappings: " + operationsMessage.mkString(" ")
 
     Option { IndexManagementResponse(message) }
   }

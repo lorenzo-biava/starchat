@@ -12,18 +12,19 @@ import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
 import com.getjenny.starchat.utils.Index
 import org.apache.lucene.search.join._
-import org.elasticsearch.action.delete.DeleteResponse
-import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.action.delete.{DeleteRequest, DeleteResponse}
+import org.elasticsearch.action.get._
+import org.elasticsearch.action.index.{IndexRequest, IndexResponse}
+import org.elasticsearch.action.search.{SearchRequest, SearchResponse, SearchType}
+import org.elasticsearch.action.update.{UpdateRequest, UpdateResponse}
+import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.unit._
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
+import org.elasticsearch.search.builder.SearchSourceBuilder
 import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
@@ -48,12 +49,15 @@ object DecisionTableService {
       "max" -> ScoreMode.Max, "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def search(indexName: String, documentSearch: DTDocumentSearch): Future[Option[SearchDTDocumentsResults]] = {
-    val client: TransportClient = elasticClient.client
-    val searchBuilder : SearchRequestBuilder =
-      client.prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-        .setTypes(elasticClient.indexSuffix)
-        .setVersion(true)
-        .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+    val client: RestHighLevelClient = elasticClient.client
+
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .version(true)
+
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexSuffix)
+      .searchType(SearchType.DFS_QUERY_THEN_FETCH)
 
     val minScore = documentSearch.min_score.getOrElse(
       Option{elasticClient.queryMinThreshold}.getOrElse(0.0f)
@@ -63,7 +67,7 @@ object DecisionTableService {
       Option{elasticClient.boostExactMatchFactor}.getOrElse(1.0f)
     )
 
-    searchBuilder.setMinScore(minScore)
+    sourceReq.minScore(minScore)
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
 
@@ -93,12 +97,12 @@ object DecisionTableService {
       case _ => ;
     }
 
-    searchBuilder.setQuery(boolQueryBuilder)
+    sourceReq.query(boolQueryBuilder)
 
-    val searchResponse : SearchResponse = searchBuilder
-      .setFrom(documentSearch.from.getOrElse(0)).setSize(documentSearch.size.getOrElse(10))
-      .execute()
-      .actionGet()
+    sourceReq.from(documentSearch.from.getOrElse(0))
+      .size(documentSearch.size.getOrElse(10))
+
+    val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val documents : Option[List[SearchDTDocument]] =
       Option { searchResponse.getHits.getHits.toList.map( { case(e) =>
@@ -270,11 +274,15 @@ object DecisionTableService {
     builder.field("enabled", enabled)
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
-    val response = client.prepareIndex().setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setType(elasticClient.indexSuffix)
-      .setId(document.state)
-      .setSource(builder).get()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val indexReq = new IndexRequest()
+      .index(Index.indexName(indexName, elasticClient.indexSuffix))
+      .`type`(elasticClient.indexSuffix)
+      .id(document.state)
+      .source(builder)
+
+    val response: IndexResponse = client.index(indexReq, RequestOptions.DEFAULT)
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -357,12 +365,15 @@ object DecisionTableService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.client
-    val response: UpdateResponse = client.prepareUpdate()
-      .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setType(elasticClient.indexSuffix).setId(id)
-      .setDoc(builder)
-      .get()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val updateReq = new UpdateRequest()
+      .index(Index.indexName(indexName, elasticClient.indexSuffix))
+      .`type`(elasticClient.indexSuffix)
+      .doc(builder)
+      .id(id)
+
+    val response: UpdateResponse = client.update(updateReq, RequestOptions.DEFAULT)
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -382,7 +393,10 @@ object DecisionTableService {
   }
 
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
+
+    throw new Exception("Function to be implemente dwith version 7.0 of ES")
+    /* TODO: to be implemented with version 7.0 of ES
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -394,13 +408,18 @@ object DecisionTableService {
 
     val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
     Option {result}
+    */
   }
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elasticClient.client
-    val response: DeleteResponse = client.prepareDelete()
-      .setIndex(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setType(elasticClient.indexSuffix).setId(id).get()
+    val client: RestHighLevelClient = elasticClient.client
+
+    val deleteReq = new DeleteRequest()
+      .index(Index.indexName(indexName, elasticClient.indexSuffix))
+      .`type`(elasticClient.indexSuffix)
+      .id(id)
+
+    val response: DeleteResponse = client.delete(deleteReq, RequestOptions.DEFAULT)
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient
@@ -421,16 +440,19 @@ object DecisionTableService {
   }
 
   def getDTDocuments(indexName: String): Future[Option[SearchDTDocumentsResults]] = {
-    val client: TransportClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.client
 
-    val qb : QueryBuilder = QueryBuilders.matchAllQuery()
-    val scrollResp : SearchResponse = client
-      .prepareSearch(Index.indexName(indexName, elasticClient.indexSuffix))
-      .setTypes(elasticClient.indexSuffix)
-      .setQuery(qb)
-      .setVersion(true)
-      .setScroll(new TimeValue(60000))
-      .setSize(10000).get()
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .query(QueryBuilders.matchAllQuery)
+      .size(10000)
+      .version(true)
+
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexSuffix)
+      .scroll(new TimeValue(60000))
+
+    var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
     val decisionTableContent : List[SearchDTDocument] = scrollResp.getHits.getHits.toList.map({ e =>
@@ -517,13 +539,19 @@ object DecisionTableService {
   }
 
   def read(indexName: String, ids: List[String]): Future[Option[SearchDTDocumentsResults]] = {
-    val client: TransportClient = elasticClient.client
-    val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
+    val client: RestHighLevelClient = elasticClient.client
 
     if(ids.nonEmpty) {
+      val multiGetReq = new MultiGetRequest()
+
       // a list of specific ids was requested
-      multigetBuilder.add(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, ids: _*)
-      val response: MultiGetResponse = multigetBuilder.get()
+      ids.foreach{id =>
+        multiGetReq.add(
+          new MultiGetRequest.Item(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, id)
+        )
+      }
+
+      val response: MultiGetResponse = client.mget(multiGetReq, RequestOptions.DEFAULT)
 
       val documents: Option[List[SearchDTDocument]] = Option {
         response.getResponses
