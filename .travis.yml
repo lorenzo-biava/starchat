@@ -5,14 +5,10 @@ jdk:
    - oraclejdk8
 sudo: required
 
-env:
-  global:
-      - secure: "ZzdJSb95zKH6Es1/4xkTRsf7UKvy2t+mq5e2RS7Z3+Zkv2lIx49YuuY2CLFh85yAVuEWO/vnCj4FLOyYWYdSJvtyU801aKhSk5YNV13jcVd0hc41MgHiEN9PiCd1PU+S+LvWzz6zgN9GzmxLzT3zIHQFVi8ptN5c6Jivl8qGgdHbewpR+Ria0empWj08prRjZTIoO9bdhUYH9u7vK02eUMEx6eKUtj2QmVp9NthOe+Lxhh1c+2FfIFHQlhdMiDq/j5Y1JYuWGW5rqC+NjEo5UImMvkXS3SueDY2PuLE6ztmiRPMvBHSIIR8eoochFltgPIwD9YuO8rUHb7ptqNmpx0MvI/imMhJHw0EMExqhj0mvrohSSp8ZSnWFXuPFY88rfbtWnvTBiPsApytDFVEh+5vvhNYegKAH3Fu1gpt+lsbS2D7tioxUF0XlTlE6ySmfstjs6HeWfxbVw5yLDRRg4LOYq34nqAUolqpDI3AWSNxw+IPkt0Mce31Cg80KwtbxROVxyHLsK8luPfouc9AIuww/vyr6kb9B/s2VGRPO4S35gRWGGJBuPtdIGyOyJ9UBAGUL4ZM6clbZhFvBxeVubevtgS8yZWE6ju4b8N25EZENi3KhDzS5fj/AzpwA+Ts7awFTtcimudlCutBs1v2+lw88EhMjS6wQpMMPLvNA2co="
-      - secure: "T7h3j7I1nmoiQ8l+vs0GwX8GGicGfKGrKybgWdd1b+ifiu7BTTA3ilDpY5bmqqMCl50mxrDiSl9chrQgUSq+IMUP5sNkfprWI5q31JMNlgN/lEjg95RWOZpFkMk7hAA072+Rdhy4Zcsb2tsgfA/h/wuceKEzzzLlolb1GNBWGGewCFML0aZ1MfhZlPxBiQ1VBGv9vlcSNDngtGmEhsLKzbIRiB6AbVY0xtpwZnFQs7W8pwxfLpxAbPq2+YKjOMc0WuojJd0dKXaRfVVKnqBUx8b5XL9v5zI0XkQ52lJa2xCVs0mjyl4rmX246h+BP98ZmWipfz8mKnIOm/gQq5OaCcFMt0F0VfuEZWUITyaQmHqymtTHMRH2pQxkehlycTkktqzmtW/rrkWRb2ONMoK9gX+dOv9mMhfsbpg/lEQJMCUCk6rZJZ3M0r7gc7C+1r4H6TnGGADk8qopRm+H+Op14l3vt8hOPEWorMN5N/83c2dg5GoQWowmrMfn+t8+ip91/8lUJ3r5WfKkJ5JYF3j3g0rbqiRKFo/g80WE5mBC+6D/37qW9vYYvaaALE5WWV/fFMTF5NbYOxkJxq3PyIgJglu7sfJb1XEY4FnKrFrXbeo+1eHbPSwb7BIcLwkdEDkrqLK7j+f8RG0aiyTqPOkqWhJ99VZGzXBF5ENCtV3Tn+Y="
-
 services:
   - docker
 script:
+   - mkdir ${HOME}/.sbt/1.1 && echo echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USERNAME}\", \"${SONATYPE_PASSWORD}\")" > ${HOME}/.sbt/1.1/sonatype.sbt
    - sbt ++$TRAVIS_SCALA_VERSION dockerComposeUp
    - nc -z 0.0.0.0 9200 && echo "OK PORT(9200)" || echo "FAILED PORT(9200)"
    - sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport codacyCoverage
