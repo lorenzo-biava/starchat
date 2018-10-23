@@ -24,7 +24,7 @@ case class Parameters(
          https_certificate: String,
          https_cert_pass: String)
 
-class StarChatService(parameters: Option[Parameters] = None) extends RestInterface {
+final class StarChatService(parameters: Option[Parameters] = None) extends RestInterface {
   val params: Option[Parameters] = if(parameters.nonEmpty) {
     parameters
   } else {
@@ -102,5 +102,5 @@ class StarChatService(parameters: Option[Parameters] = None) extends RestInterfa
 }
 
 object Main extends App {
-  val starchatService = new StarChatService
+  val starChatService = new StarChatService()
 }

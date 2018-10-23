@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 
 class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds.dilated(system))
-  val service = new StarChatService
+  val service = TestFixtures.service
   val routes = service.routes
 
   val testAdminCredentials = BasicHttpCredentials("admin", "adminp4ssw0rd")
@@ -67,7 +67,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
       Post(s"/index_getjenny_english_0/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.BadRequest
         val response = responseAs[IndexManagementResponse]
-        response.message should fullyMatch regex "index \\[.*\\] already exists"
+        response.message should fullyMatch regex "Elasticsearch exception \\[type=resource_already_exists_exception, reason=index \\[index_getjenny_.*\\] already exists\\]"
       }
     }
   }
