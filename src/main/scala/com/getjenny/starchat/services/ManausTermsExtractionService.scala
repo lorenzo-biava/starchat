@@ -17,9 +17,9 @@ import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object ManausTermsExtractionService {
+object ManausTermsExtractionService extends AbstractDataService {
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  private[this] val elasticClient: ManausTermsExtractionElasticClient.type = ManausTermsExtractionElasticClient
+  override val elasticClient: ManausTermsExtractionElasticClient.type = ManausTermsExtractionElasticClient
   private[this] val termService: TermService.type = TermService
   private[this] val priorDataService: PriorDataService.type = PriorDataService
   private[this] val convLogDataService: ConversationLogsService.type = ConversationLogsService
@@ -185,10 +185,7 @@ object ManausTermsExtractionService {
     val tokenizerReq = TokenizerQueryRequest(extractionRequest.tokenizer.getOrElse("base"),
       extractionRequest.text)
 
-    val tokens: TokenizerResponse = termService.esTokenizer(indexName, tokenizerReq) match {
-      case Some(t) => t
-      case _ => TokenizerResponse(tokens = List.empty[TokenizerResponseItem])
-    }
+    val tokens: TokenizerResponse = termService.esTokenizer(indexName, tokenizerReq)
 
     tokens
   }
@@ -285,11 +282,8 @@ object ManausTermsExtractionService {
 
     // extraction of vectorial terms representation
     val tokenTermsId: Set[String] = tokenizationRes.tokens.map(_.token).toSet // all tokens
-    val extractedSentenceTerms = termService.termsById(termsIndexName, TermIdsRequest(ids = tokenTermsId.toList))
-    val tokenTerms = extractedSentenceTerms match {
-      case Some(terms) => terms.terms.map { case(t) => (t.term, t) }.toMap
-      case _ => Map.empty[String, Term]
-    }
+    val extractedSentenceTerms = termService.termsById(termsIndexName, DocsIds(ids = tokenTermsId.toList))
+    val tokenTerms = extractedSentenceTerms.terms.map { case(t) => (t.term, t) }.toMap
 
     // extraction of vectorial synonyms representation, exclude terms already in tokens (used as a cache)
     val synsTermsId = tokenTerms.map { case(_, term) =>
@@ -298,11 +292,8 @@ object ManausTermsExtractionService {
         case _ => Set.empty[String]
       }
     }.toList.flatten.filter(! tokenTermsId.contains(_)).toSet
-    val extractedSynsTerms = termService.termsById(termsIndexName, TermIdsRequest(ids = synsTermsId.toList))
-    val synsTerms = extractedSynsTerms match {
-      case Some(terms) => terms.terms.map { case(t) => (t.term, t) }.toMap
-      case _ => Map.empty[String, Term]
-    }
+    val extractedSynsTerms = termService.termsById(termsIndexName, DocsIds(ids = synsTermsId.toList))
+    val synsTerms = extractedSynsTerms.terms.map { case(t) => (t.term, t) }.toMap
 
     // token and synonyms terms map
     val allTerms: Map[String, Term] = tokenTerms ++ synsTerms
@@ -350,17 +341,17 @@ object ManausTermsExtractionService {
                   text = "",
                   text_terms_n = numberOfTokens,
                   terms_found_n = synSentenceTermsLength,
-                  terms = Some(Terms(terms = synSentenceTerms)))
+                  terms = Terms(terms = synSentenceTerms))
 
                 val sentencesDistance = extractionRequest.distanceFunction match {
                   case SynonymExtractionDistanceFunction.EMDCOSINE =>
-                    EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                    EMDVectorDistances.distanceCosine(baseSentenceTextTerms, synSentenceTextTerms)
                   case SynonymExtractionDistanceFunction.SUMCOSINE =>
-                    SumVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                    SumVectorDistances.distanceCosine(baseSentenceTextTerms, synSentenceTextTerms)
                   case SynonymExtractionDistanceFunction.MEANCOSINE =>
-                    MeanVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                    MeanVectorDistances.distanceCosine(baseSentenceTextTerms, synSentenceTextTerms)
                   case _ =>
-                    EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                    EMDVectorDistances.distanceCosine(baseSentenceTextTerms, synSentenceTextTerms)
                 }
 
                 (t, s, sentencesDistance)

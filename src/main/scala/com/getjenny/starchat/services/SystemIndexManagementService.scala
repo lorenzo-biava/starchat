@@ -18,12 +18,12 @@ import org.elasticsearch.action.admin.indices.mapping.put.{PutMappingRequest, Pu
 import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
+import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
-import scalaz.Scalaz._
 
 case class SystemIndexManagementServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -31,7 +31,7 @@ case class SystemIndexManagementServiceException(message: String = "", cause: Th
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
-object SystemIndexManagementService {
+object SystemIndexManagementService extends AbstractDataService {
   val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
@@ -53,7 +53,7 @@ object SystemIndexManagementService {
       indexSuffix = elasticClient.systemRefreshDtIndexSuffix)
   )
 
-  def create(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+  def create(indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
@@ -84,10 +84,10 @@ object SystemIndexManagementService {
 
     val message = "IndexCreation: " + operationsMessage.mkString(" ")
 
-    Option { IndexManagementResponse(message) }
+    IndexManagementResponse(message)
   }
 
-  def remove(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+  def remove(indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
     if (! elasticClient.enableDeleteSystemIndex) {
@@ -113,10 +113,10 @@ object SystemIndexManagementService {
 
     val message = "IndexDeletion: " + operationsMessage.mkString(" ")
 
-    Option { IndexManagementResponse(message) }
+    IndexManagementResponse(message)
   }
 
-  def check(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+  def check(indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
@@ -137,10 +137,10 @@ object SystemIndexManagementService {
 
     val message = "IndexCheck: " + operationsMessage.mkString(" ")
 
-    Option { IndexManagementResponse(message) }
+    IndexManagementResponse(message)
   }
 
-  def update(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+  def update(indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
@@ -171,7 +171,7 @@ object SystemIndexManagementService {
 
     val message = "IndexUpdate: " + operationsMessage.mkString(" ")
 
-    Option { IndexManagementResponse(message) }
+    IndexManagementResponse(message)
   }
 
   def refresh(indexSuffix: Option[String] = None) : Future[Option[RefreshIndexResults]] = Future {

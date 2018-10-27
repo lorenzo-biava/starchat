@@ -11,7 +11,7 @@ import com.getjenny.starchat.services._
 object MeanVectorDistances {
   val termService: TermService.type = TermService
 
-  def distanceCosine(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms]): Double = {
+  def distanceCosine(textTerms1: TextTerms, textTerms2: TextTerms): Double = {
     val text1V = TextToVectorsTools.meanOfTermsVectors(textTerms1)
     val text2V = TextToVectorsTools.meanOfTermsVectors(textTerms2)
     val distance = VectorUtils.cosineDist(text1V._1, text2V._1)

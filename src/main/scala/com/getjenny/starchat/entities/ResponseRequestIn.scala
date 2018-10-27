@@ -8,11 +8,11 @@ import scala.collection.immutable.Map
 
 case class ResponseRequestInUserInput(text: Option[String], img: Option[String])
 
-case class ResponseRequestInValues(return_value: Option[String], data: Option[Map[String, String]])
-
 case class ResponseRequestIn(conversation_id: String,
-                            traversed_states: Option[List[String]],
-                            user_input: Option[ResponseRequestInUserInput],
-                            values: Option[ResponseRequestInValues],
-                            threshold: Option[Double],
-                            max_results: Option[Int])
+                             traversed_states: Option[List[String]],
+                             user_input: Option[ResponseRequestInUserInput],
+                             state: Option[String],
+                             data: Option[Map[String, String]],
+                             threshold: Option[Double],
+                             evaluation_class: Option[String],
+                             max_results: Option[Int])

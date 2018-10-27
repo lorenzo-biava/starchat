@@ -20,11 +20,11 @@ import scala.collection.immutable.List
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object SpellcheckService {
-  private[this] val elasticClient = KnowledgeBaseElasticClient
+object SpellcheckService extends AbstractDataService {
+  override val elasticClient = KnowledgeBaseElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  def termsSuggester(indexName: String, request: SpellcheckTermsRequest) : Future[Option[SpellcheckTermsResponse]] = Future {
+  def termsSuggester(indexName: String, request: SpellcheckTermsRequest) : Future[SpellcheckTermsResponse] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
     val suggestionBuilder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
@@ -48,7 +48,7 @@ object SpellcheckService {
 
     val termsSuggestions: List[SpellcheckToken] =
       searchResponse.getSuggest.getSuggestion[TermSuggestion]("suggestions")
-      .getEntries.asScala.toList.map({ case(suggestions) =>
+        .getEntries.asScala.toList.map({ case(suggestions) =>
         val item: TermSuggestion.Entry = suggestions
         val text = item.getText.toString
         val offset = item.getOffset
@@ -61,16 +61,13 @@ object SpellcheckService {
               text = suggestion.getText.toString
             )
             option
-        })
+          })
         val spellcheckToken =
           SpellcheckToken(text = text, offset = offset, length = length,
             options = options)
         spellcheckToken
-    })
+      })
 
-    val response = SpellcheckTermsResponse(tokens = termsSuggestions)
-    Option {
-      response
-    }
+    SpellcheckTermsResponse(tokens = termsSuggestions)
   }
 }

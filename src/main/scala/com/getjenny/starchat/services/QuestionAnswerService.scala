@@ -11,7 +11,6 @@ import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.QuestionAnswerElasticClient
 import com.getjenny.starchat.utils.Index
 import org.apache.lucene.search.join._
-import org.elasticsearch.action.delete.{DeleteRequest, DeleteResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequest, MultiGetResponse}
 import org.elasticsearch.action.index.{IndexRequest, IndexResponse}
 import org.elasticsearch.action.search.{SearchRequest, SearchResponse, SearchType}
@@ -37,8 +36,12 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-trait QuestionAnswerService {
-  val elasticClient: QuestionAnswerElasticClient
+case class QuestionAnswerServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
+trait QuestionAnswerService extends AbstractDataService {
+  override val elasticClient: QuestionAnswerElasticClient
+
   val manausTermsExtractionService: ManausTermsExtractionService.type = ManausTermsExtractionService
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
@@ -614,7 +617,7 @@ trait QuestionAnswerService {
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
+        throw QuestionAnswerServiceException("KnowledgeBase : index refresh failed: (" + indexName + ")")
       }
     }
 
@@ -728,7 +731,7 @@ trait QuestionAnswerService {
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
       if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
+        throw QuestionAnswerServiceException("KnowledgeBase : index refresh failed: (" + indexName + ")")
       }
     }
 
@@ -740,52 +743,6 @@ trait QuestionAnswerService {
     )
 
     docResult
-  }
-
-  def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: RestHighLevelClient = elasticClient.client
-
-    throw new Exception("Function to be implemented with version 7.0 of ES")
-    /* TODO: to be implemented with version 7.0 of ES
-    val response: BulkByScrollResponse =
-      DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(Index.indexName(indexName, elasticClient.indexSuffix))
-        .filter(QueryBuilders.matchAllQuery)
-        .get()
-
-    val deleted: Long = response.getDeleted
-
-    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
-    Option {result}
-    */
-
-  }
-
-  def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: RestHighLevelClient = elasticClient.client
-
-    val deleteReq = new DeleteRequest()
-      .index(Index.indexName(indexName, elasticClient.indexSuffix))
-      .`type`(elasticClient.indexMapping)
-      .id(id)
-
-    val response: DeleteResponse = client.delete(deleteReq, RequestOptions.DEFAULT)
-
-    if (refresh =/= 0) {
-      val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
-      if(refresh_index.failed_shards_n > 0) {
-        throw new Exception("KnowledgeBase : index refresh failed: (" + indexName + ")")
-      }
-    }
-
-    val docResult: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
-      dtype = response.getType,
-      id = response.getId,
-      version = response.getVersion,
-      found = response.status =/= RestStatus.NOT_FOUND
-    )
-
-    Option {docResult}
   }
 
   def read(indexName: String, ids: List[String]): Option[SearchKBDocumentsResults] = {
@@ -1047,8 +1004,8 @@ trait QuestionAnswerService {
       scrollResp = client.search(searchReq, RequestOptions.DEFAULT)
       (documents, documents.nonEmpty)
     }.takeWhile{case (_, docNonEmpty) => docNonEmpty}
-      .flatMap{case (doc, _) => doc}
     iterator
+      .flatMap{case (doc, _) => doc}
   }
 
   private[this] def extractionReq(text: String, er: UpdateQATermsRequest) = TermsExtractionRequest(text = text,

@@ -5,6 +5,7 @@ package com.getjenny.starchat.services.esclient
   */
 
 object KnowledgeBaseElasticClient extends QuestionAnswerElasticClient {
+  override val indexName: String = ""
   override val indexSuffix: String = kbIndexSuffix
   override val indexMapping: String = "question_answer"
   override val dictSizeCacheMaxSize: Int = config.getInt("es.dictSizeCacheMaxSize")

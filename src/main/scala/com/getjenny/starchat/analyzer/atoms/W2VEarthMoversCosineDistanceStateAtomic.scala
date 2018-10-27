@@ -56,23 +56,19 @@ class W2VEarthMoversCosineDistanceStateAtomic(val arguments: List[String], restr
     analyzerService.log.info(toString + " : initialized")
   }
 
-  val queriesVectors: List[Option[TextTerms]] = queriesSentences match {
-    case Some(sentences) => sentences.queries.map(item => Option{item})
-    case _ => List.empty[Option[TextTerms]]
+  val queriesVectors: List[TextTerms] = queriesSentences match {
+    case Some(sentences) => sentences.queries.map(item => item)
+    case _ => List.empty[TextTerms]
   }
 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val queryVectors = termService.textToVectors(indexName = indexName, text = query)
-    val emdDistQueries = queriesVectors.map(q => {
-      val dist = EMDVectorDistances.distanceCosine(q , queryVectors)
-      dist
-    })
+    val emdDistQueries = queriesVectors.map { case(textTerms) =>
+      EMDVectorDistances.distanceCosine(textTerms, queryVectors)
+    }.max
 
-    emdDistQueries match {
-      case _ :: _ => Result(score = emdDistQueries.max)
-      case _ => Result(score = 0.0)
-    }
+    Result(score = emdDistQueries)
   }
 
   // Similarity is normally the cosine itself. The threshold should be at least

@@ -9,15 +9,15 @@ import akka.stream.ActorMaterializer
 import breeze.io.CSVReader
 import com.getjenny.starchat.entities.DTDocument
 import com.getjenny.starchat.serializers.JsonSupport
+import scalaz.Scalaz._
 
 import scala.collection.immutable.{List, Map}
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
-import scalaz.Scalaz._
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 object FileToDTDocuments extends JsonSupport {
 
-  def getDTDocumentsFromCSV(log: LoggingAdapter, file: File, skiplines: Int = 1, separator: Char = ','):
+  def getDTDocumentsFromCSV(log: LoggingAdapter, file: File, skipLines: Int = 1, separator: Char = ','):
   List[DTDocument] = {
     implicit val system: ActorSystem = ActorSystem()
     implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -26,7 +26,7 @@ object FileToDTDocuments extends JsonSupport {
     val refnumcol = 11
     val fileReader = new FileReader(file)
     lazy val fileEntries = CSVReader.read(input=fileReader, separator=separator,
-      quote = '"', skipLines=skiplines)
+      quote = '"', skipLines=skipLines)
 
     val dtDocuments: List[DTDocument] = fileEntries.map(entry => {
       if (entry.length =/= refnumcol) {

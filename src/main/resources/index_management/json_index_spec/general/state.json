@@ -110,11 +110,11 @@
           "index": true,
           "null_value": ""
         },
-        "enabled": {
-          "type": "boolean",
+        "evaluation_class": {
+          "type": "keyword",
           "store": true,
-          "null_value": true,
-          "index": true
+          "index": true,
+          "null_value": "default"
         }
       }
     }

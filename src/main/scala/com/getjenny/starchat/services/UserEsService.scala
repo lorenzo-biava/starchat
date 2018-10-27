@@ -4,9 +4,7 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 01/12/17.
   */
 
-import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.RandomNumbers
-import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.auth.AbstractStarChatAuthenticator
 import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClient
@@ -35,7 +33,6 @@ case class UserEsServiceException(message: String = "", cause: Throwable = None.
 class UserEsService extends AbstractUserService {
   private[this] val config: Config = ConfigFactory.load()
   private[this] val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
-  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   private[this] val indexName: String = elasticClient.indexName + "." + elasticClient.userIndexSuffix
 
   private[this] val admin: String = config.getString("starchat.basic_http_es.admin")
@@ -79,7 +76,7 @@ class UserEsService extends AbstractUserService {
 
     val refreshIndex = elasticClient.refresh(indexName)
     if(refreshIndex.failed_shards_n > 0) {
-      throw new Exception("User : index refresh failed: (" + indexName + ")")
+      throw UserEsServiceException("User : index refresh failed: (" + indexName + ")")
     }
 
     val docResult: IndexDocumentResult = IndexDocumentResult(index = response.getIndex,
@@ -92,8 +89,7 @@ class UserEsService extends AbstractUserService {
     docResult
   }
 
-  def update(id: String, user: UserUpdate):
-  Future[UpdateDocumentResult] = Future {
+  def update(id: String, user: UserUpdate): Future[UpdateDocumentResult] = Future {
 
     if(id === "admin") {
       throw new AuthenticationException("admin user cannot be changed")
@@ -137,7 +133,7 @@ class UserEsService extends AbstractUserService {
 
     val refresh_index = elasticClient.refresh(indexName)
     if(refresh_index.failed_shards_n > 0) {
-      throw new Exception("User : index refresh failed: (" + indexName + ")")
+      throw UserEsServiceException("User : index refresh failed: (" + indexName + ")")
     }
 
     val docResult: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,

@@ -42,26 +42,19 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val textVectors = termService.textToVectors(indexName, query)
-    val distance: Double = textVectors match {
-      case Some(vectors) =>
-        val termVector = vectors.terms match {
-          case Some(terms) => terms.terms.map(term => term.vector.getOrElse(Vector.empty[Double]))
-            .filter(vector => vector.nonEmpty)
-          case _ => List.empty[Vector[Double]]
-        }
-        val distanceList = termVector.map(vector => {
-          if(vector.isEmpty || reliabilityFactor === 0.0) {
-            0.0
-          } else {
-            1 - cosineDist(vector, sentenceVector)
-          }
-        })
-        val dist = if (distanceList.nonEmpty) distanceList.max else 0.0
-        dist
-      case _ => 0.0
-    }
-    Result(score=distance)
+
+    val distanceList = textVectors.terms.terms.map(term => term.vector.getOrElse(Vector.empty[Double]))
+      .map { case(vector) =>
+        if(vector.isEmpty || reliabilityFactor === 0.0)
+          0.0
+        else
+          1 - cosineDist(vector, sentenceVector)
+      }
+
+    val score = if (distanceList.nonEmpty) distanceList.max else 0.0
+    Result(score=score)
   }
+
   // Similarity is normally the cosine itself. The threshold should be at least
   // angle < pi/2 (cosine > 0), but for synonyms let's put cosine > 0.6, i.e. self.evaluate > 0.8
   override val matchThreshold: Double = 0.8
