@@ -17,7 +17,7 @@ import scala.concurrent.Future
   * Implements functions, eventually used by LanguageGuesserResource
   */
 object LanguageGuesserService {
-  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+
   def guessLanguage(indexName: String, requestData: LanguageGuesserRequestIn):
   Future[LanguageGuesserRequestOut] = Future {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()

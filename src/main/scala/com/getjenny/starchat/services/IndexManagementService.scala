@@ -35,7 +35,6 @@ case class IndexManagementServiceException(message: String = "", cause: Throwabl
   */
 object IndexManagementService extends AbstractDataService {
   override val elasticClient: IndexManagementElasticClient.type = IndexManagementElasticClient
-  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   private[this] def analyzerFiles(language: String): JsonMappingAnalyzersIndexFiles =
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/" + language + "/analyzer.json",

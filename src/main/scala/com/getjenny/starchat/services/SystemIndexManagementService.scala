@@ -33,7 +33,6 @@ case class SystemIndexManagementServiceException(message: String = "", cause: Th
   */
 object SystemIndexManagementService extends AbstractDataService {
   val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
-  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   private[this] val analyzerJsonPath: String = "/index_management/json_index_spec/system/analyzer.json"
   private[this] val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
