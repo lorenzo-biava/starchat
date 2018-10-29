@@ -98,7 +98,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       CommonOrSpecificSearch.value(enumValue)
     }
 
-  implicit object commonOrSpecificSearchFormat extends JsonFormat[CommonOrSpecificSearch.Value] {
+  implicit object CommonOrSpecificSearchFormat extends JsonFormat[CommonOrSpecificSearch.Value] {
     def write(obj: CommonOrSpecificSearch.Value): JsValue = JsString(obj.toString)
     def read(json: JsValue): CommonOrSpecificSearch.Value = json match {
       case JsString(str) =>
@@ -115,7 +115,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     ObservedDataSources.value(enumValue)
   }
 
-  implicit object observedSearchDestFormat extends JsonFormat[ObservedDataSources.Value] {
+  implicit object ObservedSearchDestFormat extends JsonFormat[ObservedDataSources.Value] {
     def write(obj: ObservedDataSources.Value): JsValue = JsString(obj.toString)
     def read(json: JsValue): ObservedDataSources.Value = json match {
       case JsString(str) =>
@@ -133,7 +133,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       TermCountFields.value(enumValue)
     }
 
-  implicit object termCountFieldsFormat extends JsonFormat[TermCountFields.Value] {
+  implicit object TermCountFieldsFormat extends JsonFormat[TermCountFields.Value] {
     def write(obj: TermCountFields.Value): JsValue = JsString(obj.toString)
     def read(json: JsValue): TermCountFields.Value = json match {
       case JsString(str) =>
@@ -146,7 +146,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
 
-  implicit object synonymExtractionDistanceFunctionFormat extends JsonFormat[SynonymExtractionDistanceFunction.Value] {
+  implicit object SynonymExtractionDistanceFunctionFormat extends JsonFormat[SynonymExtractionDistanceFunction.Value] {
     def write(obj: SynonymExtractionDistanceFunction.Value): JsValue = JsString(obj.toString)
     def read(json: JsValue): SynonymExtractionDistanceFunction.Value = json match {
       case JsString(str) =>

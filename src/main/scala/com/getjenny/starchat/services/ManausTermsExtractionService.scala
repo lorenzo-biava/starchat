@@ -311,7 +311,7 @@ object ManausTermsExtractionService extends AbstractDataService {
           case Some(t) => (token.token, t.vector)
           case _ => (token.token, None)
         }
-    }.filter(_._2.nonEmpty).map { case (t) => t._2.get}.toVector
+    }.filter{case (_, vecs) => vecs.nonEmpty}.map { case (_, vecs) => vecs.get}.toVector
     val termsInSentence = sentenceVectors.length
 
     val indexedTokenizationRes = tokenizationRes.tokens.zipWithIndex
@@ -326,8 +326,9 @@ object ManausTermsExtractionService extends AbstractDataService {
     indexedTokenizationRes.map { case(token, index) =>
       // getting current token and rest of the sentence tokens
       val currentTokenTerm = allTerms.get(token.token)
-      val restOfTheListTerms = indexedTokenizationRes.filter(_._2 != index).map { case(t) =>
-        allTerms.get(t._1.token)
+      val restOfTheListTerms = indexedTokenizationRes.filter {case (_, tokenIdx) => tokenIdx != index}.map {
+        case (tRes, _) =>
+          allTerms.get(tRes.token)
       }.filter(_.nonEmpty).map(_.get).filter(_.vector.nonEmpty)
       // calculating vector representation of the sentence with the current token replaced by a synonym
       val replacedTokenInSentence = currentTokenTerm match {
@@ -336,11 +337,12 @@ object ManausTermsExtractionService extends AbstractDataService {
             case Some(_) =>
               // take all the synonyms and discard those without a vector representation
               val syns = t.synonyms.getOrElse(Map.empty[String, Double]).keys
-                .map { case(s) => allTerms.get(s) }.filter(_.nonEmpty).map(_.get)
+                .map { case syn: Any => allTerms.get(syn)
+                }.filter(_.nonEmpty).map(_.get)
                 .filter(_.vector.nonEmpty).toList
 
-              syns.map { case(s) =>
-                val synSentenceTerms = s :: restOfTheListTerms
+              syns.map { case term: Any =>
+                val synSentenceTerms = term :: restOfTheListTerms
                 val synSentenceTermsLength = synSentenceTerms.length
                 val synSentenceTextTerms = TextTerms(
                   text = "",
@@ -359,7 +361,7 @@ object ManausTermsExtractionService extends AbstractDataService {
                     EMDVectorDistances.distanceCosine(baseSentenceTextTerms, synSentenceTextTerms)
                 }
 
-                (t, s, sentencesDistance)
+                (t, term, sentencesDistance)
               }
             case _ =>
               List.empty[(Term, Term, Double)]

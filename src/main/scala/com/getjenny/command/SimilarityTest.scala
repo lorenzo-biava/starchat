@@ -20,11 +20,11 @@ import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
 
-import scala.util.{Failure, Success, Try}
 import scala.collection.immutable
 import scala.collection.immutable.Map
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.util.{Failure, Success}
 
 object SimilarityTest extends JsonSupport {
 
