@@ -47,11 +47,11 @@ object TextToDtFeatures extends JsonSupport {
     val reader: FileReader = new FileReader(params.inputfile)
     val docProcecessor: DocumentPreprocessor = new DocumentPreprocessor(reader)
     val sentencesIt = docProcecessor.iterator.asScala
-    val tokenizedSentencesUnfiltered0 = sentencesIt.map { case (sentence) =>
-      sentence.asScala.map { case(token) => token.word.toLowerCase }.toVector
+    val tokenizedSentencesUnfiltered0 = sentencesIt.map { case sentenceItem =>
+      sentenceItem.asScala.map { case token => token.word.toLowerCase }.toVector
     }.map{
-      case(sentence) =>
-        sentence.filter( ! _.matches("""([^\p{L}|^\d])"""))
+      case sentenceItem  =>
+        sentenceItem.filter( ! _.matches("""([^\p{L}|^\d])"""))
     }
 
     val tokenizedSentencesUnfiltered1 = if(params.filter.nonEmpty)
@@ -74,13 +74,13 @@ object TextToDtFeatures extends JsonSupport {
     val nullFeature: Long = 0
     val dict = mutable.Map[String, Long]()
     if(! params.omit_null_feature) dict("") = nullFeature // empty feature
-    val sentenceFeatures = tokenizedSentences.map { case(sentence) =>
-      sentence.map { case (token) =>
-        dict.get(token) match {
+    val sentenceFeatures = tokenizedSentences.map { case sentenceItem =>
+      sentenceItem.map { case tokenItem =>
+        dict.get(tokenItem) match {
           case Some(i) => i
           case _ =>
             val newIndex = dict.size.toLong
-            dict(token) = newIndex
+            dict(tokenItem) = newIndex
             newIndex
         }
       }
@@ -91,22 +91,22 @@ object TextToDtFeatures extends JsonSupport {
 
     val leftPad = center
     val rightPad = window - center + 1
-    val features = sentenceFeatures.map{ case (sentence) =>
-      val paddedSentence = Vector.fill(leftPad)(nullFeature) ++ sentence ++ Vector.fill(rightPad)(nullFeature)
+    val features = sentenceFeatures.map{ case sentenceItem =>
+      val paddedSentence = Vector.fill(leftPad)(nullFeature) ++ sentenceItem ++ Vector.fill(rightPad)(nullFeature)
       paddedSentence.sliding(window).filter(v => v(center) != nullFeature)
-    }.flatMap { case(vectors) =>
-      vectors.map { case (vector) =>
-        val centerValue = vector(center)
-        vector.patch(center, List[Long](), 1) ++ Vector[Long](centerValue)
+    }.flatMap { case vectorsItem =>
+      vectorsItem.map { case vectorItem =>
+        val centerValue = vectorItem(center)
+        vectorItem.patch(center, List[Long](), 1) ++ Vector[Long](centerValue)
       }
     }
 
     val featuresWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_training)))
     if(params.add_feature_id) {
-      features.zipWithIndex.map{ case(v) => v._1 ++ Vector(v._2.toLong)}
+      features.zipWithIndex.map{ case (featuresItem, index) => featuresItem ++ Vector(index.toLong)}
     } else {
       features
-    }.foreach { case(row) =>
+    }.foreach { case row =>
       val entry = row.mkString(",")
       featuresWriter.write(entry)
       featuresWriter.newLine()
@@ -123,13 +123,13 @@ object TextToDtFeatures extends JsonSupport {
     val dictSize = dict.size
 
     val names: List[String] = List("target.    | the target attribute") ++
-      List.range(0, window -1).map { case (e) =>
-        "e" + e + ":\t\t\t\t" + List.range(0, dictSize).mkString(",") + "."
+      List.range(0, window -1).map { case name =>
+        "e" + name + ":\t\t\t\t" + List.range(0, dictSize).mkString(",") + "."
       } ++ List("target:\t\t\t\t" + List.range(0, dictSize).mkString(",") + ".") ++
       List("ID:\t\t\t\tlabel.")
 
     val namesWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_names)))
-    names.foreach { case(line) =>
+    names.foreach { case line =>
       namesWriter.write(line)
       namesWriter.newLine()
     }

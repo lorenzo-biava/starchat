@@ -4,8 +4,6 @@ package com.getjenny.starchat.services
   * Created by angelo on 21/04/17.
   */
 
-import akka.event.{Logging, LoggingAdapter}
-import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.KnowledgeBaseElasticClient
 import com.getjenny.starchat.utils.Index
@@ -42,30 +40,31 @@ object SpellcheckService extends AbstractDataService {
       .source(sourceReq)
       .types(elasticClient.indexSuffix)
 
-
     val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val termsSuggestions: List[SpellcheckToken] =
       searchResponse.getSuggest.getSuggestion[TermSuggestion]("suggestions")
-        .getEntries.asScala.toList.map({ case(suggestions) =>
+        .getEntries.asScala.toList.map {
+        case suggestions: TermSuggestion.Entry =>
         val item: TermSuggestion.Entry = suggestions
         val text = item.getText.toString
         val offset = item.getOffset
         val length = item.getLength
         val options: List[SpellcheckTokenSuggestions] =
-          item.getOptions.asScala.toList.map({ case(suggestion) =>
+          item.getOptions.asScala.toList.map {
+            case suggestion: Any =>
             val option = SpellcheckTokenSuggestions(
               score = suggestion.getScore.toDouble,
               freq = suggestion.getFreq.toDouble,
               text = suggestion.getText.toString
             )
             option
-          })
+          }
         val spellcheckToken =
           SpellcheckToken(text = text, offset = offset, length = length,
             options = options)
         spellcheckToken
-      })
+      }
 
     SpellcheckTermsResponse(tokens = termsSuggestions)
   }

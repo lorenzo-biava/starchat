@@ -25,19 +25,22 @@ import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 import scala.util.Try
 
+case class IndexKnowledgeBaseException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 object IndexKnowledgeBase extends JsonSupport {
   private[this] case class Params(
-                             host: String = "http://localhost:8888",
-                             indexName: String = "index_english_0",
-                             path: String = "/knowledgebase",
-                             questionsPath: Option[String] = None: Option[String],
-                             answersPath: Option[String] = None: Option[String],
-                             associationsPath: Option[String] = None: Option[String],
-                             base64: Boolean = false,
-                             separator: Char = ';',
-                             timeout: Int = 60,
-                             headerKv: Seq[String] = Seq.empty[String]
-                           )
+                                   host: String = "http://localhost:8888",
+                                   indexName: String = "index_english_0",
+                                   path: String = "/knowledgebase",
+                                   questionsPath: Option[String] = None: Option[String],
+                                   answersPath: Option[String] = None: Option[String],
+                                   associationsPath: Option[String] = None: Option[String],
+                                   base64: Boolean = false,
+                                   separator: Char = ';',
+                                   timeout: Int = 60,
+                                   headerKv: Seq[String] = Seq.empty[String]
+                                 )
 
   private[this] def decodeBase64(in: String): String = {
     val decodedBytes = Base64.getDecoder.decode(in)
@@ -46,36 +49,41 @@ object IndexKnowledgeBase extends JsonSupport {
   }
 
   private[this] def loadData(params: Params, transform: String => String):
-      List[Map[String, String]] = {
-    val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.questionsPath.get), "UTF-8")
+  List[Map[String, String]] = {
+    val questionsPath = params.questionsPath match {
+      case Some(path) => path
+      case _ => throw IndexKnowledgeBaseException("questions path canno be empty")
+    }
+    val questionsInputStream: Reader =
+      new InputStreamReader(new FileInputStream(questionsPath), "UTF-8")
     lazy val questionsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,
       quote = '"', skipLines = 0)
 
-    val questionsMap = questionsEntries.zipWithIndex.map(entry => {
-      if (entry._1.size < 2) {
-        println("Error [questions] with line: " + entry._2)
-        (entry._2, false, "", "")
+    val questionsMap = questionsEntries.zipWithIndex.map { case (entry, index) =>
+      if (entry.size < 2) {
+        println("Error [questions] with line: " + index)
+        (index, false, "", "")
       } else {
-        val entry0: String = entry._1(0)
-        val entry1: String = entry._1(1)
-        (entry._2, true, entry0, transform(entry1))
+        val entry0: String = entry(0)
+        val entry1: String = entry(1)
+        (index, true, entry0, transform(entry1))
       }
-    }).filter(_._2).map(x => (x._3, x._4)).toMap
+    }.filter(_._2).map(x => (x._3, x._4)).toMap
 
     val answersInputStream: Reader = new InputStreamReader(new FileInputStream(params.answersPath.get), "UTF-8")
     lazy val answersEntries = CSVReader.read(input = answersInputStream, separator = params.separator,
       quote = '"', skipLines = 0)
 
-    val answerMap = answersEntries.zipWithIndex.map(entry => {
-      if (entry._1.size < 2) {
-        println("Error [answers] with line: " + entry._2)
-        (entry._2, false, "", "")
+    val answerMap = answersEntries.zipWithIndex.map{ case(entry, index) =>
+      if (entry.size < 2) {
+        println("Error [answers] with line: " + index)
+        (index, false, "", "")
       } else {
-        val entry0: String = entry._1(0)
-        val entry1: String = entry._1(1)
-        (entry._2, true, entry0, transform(entry1))
+        val entry0: String = entry(0)
+        val entry1: String = entry(1)
+        (index, true, entry0, transform(entry1))
       }
-    }).filter(_._2).map(x => (x._3, x._4)).toMap
+    }.filter(_._2).map(x => (x._3, x._4)).toMap
 
     val fileAssoc = new File(params.associationsPath.get)
     val fileReaderAssoc = new FileReader(fileAssoc)
@@ -105,17 +113,15 @@ object IndexKnowledgeBase extends JsonSupport {
     implicit val materializer: ActorMaterializer = ActorMaterializer()
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    val vecsize = 0
-
     val baseUrl = params.host + "/" + params.indexName + params.path
 
-    val convItems = if (params.base64) {
+    val conversationItems = if (params.base64) {
       loadData(params, decodeBase64)
     } else {
       loadData(params, identity)
     }
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.length > 0) {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
       val headers: Seq[RawHeader] = params.headerKv.map(x => {
         val header_opt = x.split(":")
         val key = header_opt(0)
@@ -129,7 +135,7 @@ object IndexKnowledgeBase extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
-    convItems.foreach(entry => {
+    conversationItems.foreach(entry => {
       val id: String = entry.toString().sha256
 
       val kbDocument: KBDocument = KBDocument(
@@ -184,7 +190,7 @@ object IndexKnowledgeBase extends JsonSupport {
         .action((x, c) => c.copy(answersPath = Option(x)))
       opt[String]("associations_path")
         .text(s"path of the file with answers in format: " +
-            "<question_id>;<conversation_id>;<pos. in conv.>;<answer_id>" +
+          "<question_id>;<conversation_id>;<pos. in conv.>;<answer_id>" +
           s"  default: ${defaultParams.associationsPath}")
         .action((x, c) => c.copy(associationsPath = Option(x)))
       opt[String]("host")

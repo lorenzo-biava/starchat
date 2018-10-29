@@ -110,10 +110,11 @@ class UserEsService extends AbstractUserService {
     user.permissions match {
       case Some(_) =>
         val permissions = builder.startObject("permissions")
-        user.permissions.getOrElse(Map.empty).foreach{case(permIndexName, userPermissions) =>
-          val array = permissions.field(permIndexName).startArray()
-          userPermissions.foreach(p => { array.value(p.toString)})
-          array.endArray()
+        user.permissions.getOrElse(Map.empty).foreach {
+          case(permIndexName, userPermissions) =>
+            val array = permissions.field(permIndexName).startArray()
+            userPermissions.foreach(p => { array.value(p.toString)})
+            array.endArray()
         }
         permissions.endObject()
       case None => ;

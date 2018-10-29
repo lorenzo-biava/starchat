@@ -4,8 +4,6 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/17.
   */
 
-import akka.event.{Logging, LoggingAdapter}
-import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities.{LanguageGuesserInformations, LanguageGuesserRequestIn, LanguageGuesserRequestOut}
 import org.apache.tika.langdetect.OptimaizeLangDetector
 import org.apache.tika.language.detect.{LanguageDetector, LanguageResult}

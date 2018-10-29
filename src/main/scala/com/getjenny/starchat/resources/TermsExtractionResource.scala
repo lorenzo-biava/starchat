@@ -23,7 +23,7 @@ trait TermsExtractionResource extends StarChatResource {
         pathEnd {
           post {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 extractRequest { request =>
@@ -59,7 +59,7 @@ trait TermsExtractionResource extends StarChatResource {
         pathEnd {
           post {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 extractRequest { request =>
@@ -67,8 +67,8 @@ trait TermsExtractionResource extends StarChatResource {
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(spellcheckService.textTermsFuture(indexName = indexName,
                       extractionRequest = extractionRequest)) {
-                      case Success(t) =>
-                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t._2)
+                      case Success((_, terms)) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, terms)
                       case Failure(e) =>
                         log.error("index(" + indexName + ") uri=(" + request.uri +
                           ") method=(" + request.method.name + ") : " + e.getMessage)
@@ -93,7 +93,7 @@ trait TermsExtractionResource extends StarChatResource {
         pathEnd {
           post {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 extractRequest { request =>

@@ -39,8 +39,9 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
-    "com.typesafe.akka" %% "akka-testkit" % AkkaVersion,
+    "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion % Test,
+    "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion % Test,
+    "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test,
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
     "ch.qos.logback" % "logback-classic" % LogbackVersion,
     "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
@@ -54,7 +55,7 @@ libraryDependencies ++= {
     "org.parboiled" %% "parboiled" % ParboiledVersion,
     "org.scalanlp" %% "breeze" % BreezeVersion,
     "org.scalanlp" %% "breeze-natives" % BreezeVersion,
-    "org.scalatest" %% "scalatest" % ScalatestVersion % "test",
+    "org.scalatest" %% "scalatest" % ScalatestVersion % Test,
     "org.scalaz" %% "scalaz-core" % ScalazVersion
   )
 }

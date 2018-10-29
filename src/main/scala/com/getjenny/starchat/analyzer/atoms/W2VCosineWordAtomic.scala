@@ -44,11 +44,12 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
     val textVectors = termService.textToVectors(indexName, query)
 
     val distanceList = textVectors.terms.terms.map(term => term.vector.getOrElse(Vector.empty[Double]))
-      .map { case wordVector =>
-        if(wordVector.isEmpty || reliabilityFactor === 0.0)
-          0.0
-        else
-          1 - cosineDist(wordVector, sentenceVector)
+      .map {
+        case wordVector: Vector[Double] =>
+          if(wordVector.isEmpty || reliabilityFactor === 0.0)
+            0.0
+          else
+            1 - cosineDist(wordVector, sentenceVector)
       }
 
     val score = if (distanceList.nonEmpty) distanceList.max else 0.0

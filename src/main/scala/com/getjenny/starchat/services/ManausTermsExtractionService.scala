@@ -130,7 +130,7 @@ object ManausTermsExtractionService extends AbstractDataService {
     val keywordsExtraction = new KeywordsExtraction(priorOccurrences=priorOccurrences,
       observedOccurrences=observedOccurrences)
 
-    val freqData: String = sentenceTokens.map { case(e) =>
+    val freqData: String = sentenceTokens.map { case e: Any =>
       "word(" + e + ") -> observedOccurrences(" + observedOccurrences.tokenOccurrence(e) + ") priorOccurrences(" +
         priorOccurrences.tokenOccurrence(e) + ") totalNumberOfObservedTokens(" +
         observedOccurrences.totalNumberOfTokens + ") totalNumberOfObservedTokens(" +
@@ -193,7 +193,7 @@ object ManausTermsExtractionService extends AbstractDataService {
   def termFrequency(indexName: String, extractionRequest: TermsExtractionRequest): TokenFrequency = {
     val tokens = tokenize(indexName, extractionRequest)
     val (priorOccurrences, observedOccurrences) = initTokenOccurrence(indexName, extractionRequest)
-    val freqItems = tokens.tokens.map(_.token).distinct.map { case (token) =>
+    val freqItems = tokens.tokens.map(_.token).distinct.map { case token: Any =>
       TokenFrequencyItem(
         token = token,
         priorFrequency = priorOccurrences.tokenOccurrence(token),
@@ -283,7 +283,9 @@ object ManausTermsExtractionService extends AbstractDataService {
     // extraction of vectorial terms representation
     val tokenTermsId: Set[String] = tokenizationRes.tokens.map(_.token).toSet // all tokens
     val extractedSentenceTerms = termService.termsById(termsIndexName, DocsIds(ids = tokenTermsId.toList))
-    val tokenTerms = extractedSentenceTerms.terms.map { case(t) => (t.term, t) }.toMap
+    val tokenTerms = extractedSentenceTerms.terms.map {
+      case t: Any => (t.term, t)
+    }.toMap
 
     // extraction of vectorial synonyms representation, exclude terms already in tokens (used as a cache)
     val synsTermsId = tokenTerms.map { case(_, term) =>
@@ -293,7 +295,9 @@ object ManausTermsExtractionService extends AbstractDataService {
       }
     }.toList.flatten.filter(! tokenTermsId.contains(_)).toSet
     val extractedSynsTerms = termService.termsById(termsIndexName, DocsIds(ids = synsTermsId.toList))
-    val synsTerms = extractedSynsTerms.terms.map { case(t) => (t.term, t) }.toMap
+    val synsTerms = extractedSynsTerms.terms.map {
+      case t: Any => (t.term, t)
+    }.toMap
 
     // token and synonyms terms map
     val allTerms: Map[String, Term] = tokenTerms ++ synsTerms
@@ -301,11 +305,12 @@ object ManausTermsExtractionService extends AbstractDataService {
     val numberOfTokens = tokenizationRes.tokens.length
 
     // calculate the vector representation for the sentence
-    val sentenceVectors = tokenizationRes.tokens.map{ case(token) =>
-      allTerms.get(token.token) match {
-        case Some(t) => (token.token, t.vector)
-        case _ => (token.token, None)
-      }
+    val sentenceVectors = tokenizationRes.tokens.map {
+      case token: Any =>
+        allTerms.get(token.token) match {
+          case Some(t) => (token.token, t.vector)
+          case _ => (token.token, None)
+        }
     }.filter(_._2.nonEmpty).map { case (t) => t._2.get}.toVector
     val termsInSentence = sentenceVectors.length
 

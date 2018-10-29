@@ -289,82 +289,83 @@ object TermService extends AbstractDataService {
       val response: MultiGetResponse = client.mget(multiGetReq, RequestOptions.DEFAULT)
 
       response.getResponses.toList
-        .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case (e) =>
-        val item: GetResponse = e.getResponse
-        val source: Map[String, Any] = item.getSource.asScala.toMap
+        .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map {
+        case e: MultiGetItemResponse =>
+          val item: GetResponse = e.getResponse
+          val source: Map[String, Any] = item.getSource.asScala.toMap
 
-        val term: String = source.get("term") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
-
-        val synonyms: Option[Map[String, Double]] = source.get("synonyms") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option {
-              payloadStringToMapStringDouble(value)
-            }
-          case None => None: Option[Map[String, Double]]
-        }
-
-        val antonyms: Option[Map[String, Double]] = source.get("antonyms") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option {
-              payloadStringToMapStringDouble(value)
-            }
-          case None => None: Option[Map[String, Double]]
-        }
-
-        val tags: Option[String] = source.get("tags") match {
-          case Some(t) => Option {
-            t.asInstanceOf[String]
+          val term: String = source.get("term") match {
+            case Some(t) => t.asInstanceOf[String]
+            case None => ""
           }
-          case None => None: Option[String]
-        }
 
-        val features: Option[Map[String, String]] = source.get("features") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option {
-              payloadStringToMapStringString(value)
-            }
-          case None => None: Option[Map[String, String]]
-        }
-
-        val frequencyBase: Option[Double] = source.get("frequency_base") match {
-          case Some(t) => Option {
-            t.asInstanceOf[Double]
+          val synonyms: Option[Map[String, Double]] = source.get("synonyms") match {
+            case Some(t) =>
+              val value: String = t.asInstanceOf[String]
+              Option {
+                payloadStringToMapStringDouble(value)
+              }
+            case None => None: Option[Map[String, Double]]
           }
-          case None => None: Option[Double]
-        }
 
-        val frequencyStem: Option[Double] = source.get("frequency_stem") match {
-          case Some(t) => Option {
-            t.asInstanceOf[Double]
+          val antonyms: Option[Map[String, Double]] = source.get("antonyms") match {
+            case Some(t) =>
+              val value: String = t.asInstanceOf[String]
+              Option {
+                payloadStringToMapStringDouble(value)
+              }
+            case None => None: Option[Map[String, Double]]
           }
-          case None => None: Option[Double]
-        }
 
-        val vector: Option[Vector[Double]] = source.get("vector") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option {
-              payloadStringToDoubleVector(value)
+          val tags: Option[String] = source.get("tags") match {
+            case Some(t) => Option {
+              t.asInstanceOf[String]
             }
-          case None => None: Option[Vector[Double]]
-        }
+            case None => None: Option[String]
+          }
 
-        Term(term = term,
-          synonyms = synonyms,
-          antonyms = antonyms,
-          tags = tags,
-          features = features,
-          frequency_base = frequencyBase,
-          frequency_stem = frequencyStem,
-          vector = vector,
-          score = None: Option[Double])
-      })
+          val features: Option[Map[String, String]] = source.get("features") match {
+            case Some(t) =>
+              val value: String = t.asInstanceOf[String]
+              Option {
+                payloadStringToMapStringString(value)
+              }
+            case None => None: Option[Map[String, String]]
+          }
+
+          val frequencyBase: Option[Double] = source.get("frequency_base") match {
+            case Some(t) => Option {
+              t.asInstanceOf[Double]
+            }
+            case None => None: Option[Double]
+          }
+
+          val frequencyStem: Option[Double] = source.get("frequency_stem") match {
+            case Some(t) => Option {
+              t.asInstanceOf[Double]
+            }
+            case None => None: Option[Double]
+          }
+
+          val vector: Option[Vector[Double]] = source.get("vector") match {
+            case Some(t) =>
+              val value: String = t.asInstanceOf[String]
+              Option {
+                payloadStringToDoubleVector(value)
+              }
+            case None => None: Option[Vector[Double]]
+          }
+
+          Term(term = term,
+            synonyms = synonyms,
+            antonyms = antonyms,
+            tags = tags,
+            features = features,
+            frequency_base = frequencyBase,
+            frequency_stem = frequencyStem,
+            vector = vector,
+            score = None: Option[Double])
+      }
     } else {
       List.empty[Term]
     }
@@ -551,68 +552,68 @@ object TermService extends AbstractDataService {
 
     val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
-    val documents : List[Term] = searchResponse.getHits.getHits.toList.map({ case(e) =>
-      val item: SearchHit = e
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+    val documents : List[Term] = searchResponse.getHits.getHits.toList.map {
+      case item: SearchHit =>
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-      val term : String = source.get("term") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val term : String = source.get("term") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
-        case Some(t) =>
-          val value: String = t.asInstanceOf[String]
-          Option{payloadStringToMapStringDouble(value)}
-        case None => None: Option[Map[String, Double]]
-      }
+        val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToMapStringDouble(value)}
+          case None => None: Option[Map[String, Double]]
+        }
 
-      val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
-        case Some(t) =>
-          val value: String = t.asInstanceOf[String]
-          Option{payloadStringToMapStringDouble(value)}
-        case None => None: Option[Map[String, Double]]
-      }
+        val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToMapStringDouble(value)}
+          case None => None: Option[Map[String, Double]]
+        }
 
-      val tags : Option[String] = source.get("tags") match {
-        case Some(t) => Option {t.asInstanceOf[String]}
-        case None => None: Option[String]
-      }
+        val tags : Option[String] = source.get("tags") match {
+          case Some(t) => Option {t.asInstanceOf[String]}
+          case None => None: Option[String]
+        }
 
-      val features : Option[Map[String, String]] = source.get("features") match {
-        case Some(t) =>
-          val value: String = t.asInstanceOf[String]
-          Option{payloadStringToMapStringString(value)}
-        case None => None: Option[Map[String, String]]
-      }
+        val features : Option[Map[String, String]] = source.get("features") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToMapStringString(value)}
+          case None => None: Option[Map[String, String]]
+        }
 
-      val frequencyBase : Option[Double] = source.get("frequency_base") match {
-        case Some(t) => Option {t.asInstanceOf[Double]}
-        case None => None: Option[Double]
-      }
+        val frequencyBase : Option[Double] = source.get("frequency_base") match {
+          case Some(t) => Option {t.asInstanceOf[Double]}
+          case None => None: Option[Double]
+        }
 
-      val frequencyStem : Option[Double] = source.get("frequency_stem") match {
-        case Some(t) => Option {t.asInstanceOf[Double]}
-        case None => None: Option[Double]
-      }
+        val frequencyStem : Option[Double] = source.get("frequency_stem") match {
+          case Some(t) => Option {t.asInstanceOf[Double]}
+          case None => None: Option[Double]
+        }
 
-      val vector : Option[Vector[Double]] = source.get("vector") match {
-        case Some(t) =>
-          val value: String = t.asInstanceOf[String]
-          Option{payloadStringToDoubleVector(value)}
-        case None => None: Option[Vector[Double]]
-      }
+        val vector : Option[Vector[Double]] = source.get("vector") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToDoubleVector(value)}
+          case None => None: Option[Vector[Double]]
+        }
 
-      Term(term = term,
-        synonyms = synonyms,
-        antonyms = antonyms,
-        tags = tags,
-        features = features,
-        frequency_base = frequencyBase,
-        frequency_stem = frequencyStem,
-        vector = vector,
-        score = Option{item.getScore.toDouble})
-    })
+        Term(term = term,
+          synonyms = synonyms,
+          antonyms = antonyms,
+          tags = tags,
+          features = features,
+          frequency_base = frequencyBase,
+          frequency_stem = frequencyStem,
+          vector = vector,
+          score = Option{item.getScore.toDouble})
+    }
 
     val terms: Terms = Terms(terms=documents)
 
@@ -687,68 +688,68 @@ object TermService extends AbstractDataService {
 
     val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
-    val documents : List[Term] = searchResponse.getHits.getHits.toList.map({ case(e) =>
-      val item: SearchHit = e
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+    val documents : List[Term] = searchResponse.getHits.getHits.toList.map {
+      case item: SearchHit =>
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-      val term : String = source.get("term") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val term : String = source.get("term") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
-        case Some(t) =>
-          val value: String = t.asInstanceOf[String]
-          Option{payloadStringToMapStringDouble(value)}
-        case None => None: Option[Map[String, Double]]
-      }
+        val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToMapStringDouble(value)}
+          case None => None: Option[Map[String, Double]]
+        }
 
-      val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
-        case Some(t) =>
-          val value: String = t.asInstanceOf[String]
-          Option{payloadStringToMapStringDouble(value)}
-        case None => None: Option[Map[String, Double]]
-      }
+        val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToMapStringDouble(value)}
+          case None => None: Option[Map[String, Double]]
+        }
 
-      val tags : Option[String] = source.get("tags") match {
-        case Some(t) => Option {t.asInstanceOf[String]}
-        case None => None: Option[String]
-      }
+        val tags : Option[String] = source.get("tags") match {
+          case Some(t) => Option {t.asInstanceOf[String]}
+          case None => None: Option[String]
+        }
 
-      val features : Option[Map[String, String]] = source.get("features") match {
-        case Some(t) =>
-          val value: String = t.asInstanceOf[String]
-          Option{payloadStringToMapStringString(value)}
-        case None => None: Option[Map[String, String]]
-      }
+        val features : Option[Map[String, String]] = source.get("features") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToMapStringString(value)}
+          case None => None: Option[Map[String, String]]
+        }
 
-      val frequencyBase : Option[Double] = source.get("frequency_base") match {
-        case Some(t) => Option {t.asInstanceOf[Double]}
-        case None => None: Option[Double]
-      }
+        val frequencyBase : Option[Double] = source.get("frequency_base") match {
+          case Some(t) => Option {t.asInstanceOf[Double]}
+          case None => None: Option[Double]
+        }
 
-      val frequencyStem : Option[Double] = source.get("frequency_stem") match {
-        case Some(t) => Option {t.asInstanceOf[Double]}
-        case None => None: Option[Double]
-      }
+        val frequencyStem : Option[Double] = source.get("frequency_stem") match {
+          case Some(t) => Option {t.asInstanceOf[Double]}
+          case None => None: Option[Double]
+        }
 
-      val vector : Option[Vector[Double]] = source.get("vector") match {
-        case Some(t) =>
-          val value: String = t.asInstanceOf[String]
-          Option{payloadStringToDoubleVector(value)}
-        case None => None: Option[Vector[Double]]
-      }
+        val vector : Option[Vector[Double]] = source.get("vector") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option{payloadStringToDoubleVector(value)}
+          case None => None: Option[Vector[Double]]
+        }
 
-      Term(term = term,
-        synonyms = synonyms,
-        antonyms = antonyms,
-        tags = tags,
-        features = features,
-        frequency_base = frequencyBase,
-        frequency_stem = frequencyStem,
-        vector = vector,
-        score = Option{item.getScore.toDouble})
-    })
+        Term(term = term,
+          synonyms = synonyms,
+          antonyms = antonyms,
+          tags = tags,
+          features = features,
+          frequency_base = frequencyBase,
+          frequency_stem = frequencyStem,
+          vector = vector,
+          score = Option{item.getScore.toDouble})
+    }
 
     val terms: Terms = Terms(terms=documents)
 
@@ -853,67 +854,68 @@ object TermService extends AbstractDataService {
     var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val iterator = Iterator.continually{
-      val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
-        val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
+      val documents = scrollResp.getHits.getHits.toList.map {
+        case e: SearchHit =>
+          val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
 
-        val term : String = source.get("term") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
+          val term : String = source.get("term") match {
+            case Some(t) => t.asInstanceOf[String]
+            case None => ""
+          }
 
-        val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option{payloadStringToMapStringDouble(value)}
-          case None => None: Option[Map[String, Double]]
-        }
+          val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
+            case Some(t) =>
+              val value: String = t.asInstanceOf[String]
+              Option{payloadStringToMapStringDouble(value)}
+            case None => None: Option[Map[String, Double]]
+          }
 
-        val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option{payloadStringToMapStringDouble(value)}
-          case None => None: Option[Map[String, Double]]
-        }
+          val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
+            case Some(t) =>
+              val value: String = t.asInstanceOf[String]
+              Option{payloadStringToMapStringDouble(value)}
+            case None => None: Option[Map[String, Double]]
+          }
 
-        val tags : Option[String] = source.get("tags") match {
-          case Some(t) => Option {t.asInstanceOf[String]}
-          case None => None: Option[String]
-        }
+          val tags : Option[String] = source.get("tags") match {
+            case Some(t) => Option {t.asInstanceOf[String]}
+            case None => None: Option[String]
+          }
 
-        val features : Option[Map[String, String]] = source.get("features") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option{payloadStringToMapStringString(value)}
-          case None => None: Option[Map[String, String]]
-        }
+          val features : Option[Map[String, String]] = source.get("features") match {
+            case Some(t) =>
+              val value: String = t.asInstanceOf[String]
+              Option{payloadStringToMapStringString(value)}
+            case None => None: Option[Map[String, String]]
+          }
 
-        val frequencyBase : Option[Double] = source.get("frequency_base") match {
-          case Some(t) => Option {t.asInstanceOf[Double]}
-          case None => None: Option[Double]
-        }
+          val frequencyBase : Option[Double] = source.get("frequency_base") match {
+            case Some(t) => Option {t.asInstanceOf[Double]}
+            case None => None: Option[Double]
+          }
 
-        val frequencyStem : Option[Double] = source.get("frequency_stem") match {
-          case Some(t) => Option {t.asInstanceOf[Double]}
-          case None => None: Option[Double]
-        }
+          val frequencyStem : Option[Double] = source.get("frequency_stem") match {
+            case Some(t) => Option {t.asInstanceOf[Double]}
+            case None => None: Option[Double]
+          }
 
-        val vector : Option[Vector[Double]] = source.get("vector") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option{payloadStringToDoubleVector(value)}
-          case None => None: Option[Vector[Double]]
-        }
+          val vector : Option[Vector[Double]] = source.get("vector") match {
+            case Some(t) =>
+              val value: String = t.asInstanceOf[String]
+              Option{payloadStringToDoubleVector(value)}
+            case None => None: Option[Vector[Double]]
+          }
 
-        Term(term = term,
-          synonyms = synonyms,
-          antonyms = antonyms,
-          tags = tags,
-          features = features,
-          frequency_base = frequencyBase,
-          frequency_stem = frequencyStem,
-          vector = vector,
-          score = None: Option[Double])
-      })
+          Term(term = term,
+            synonyms = synonyms,
+            antonyms = antonyms,
+            tags = tags,
+            features = features,
+            frequency_base = frequencyBase,
+            frequency_stem = frequencyStem,
+            vector = vector,
+            score = None: Option[Double])
+      }
 
       scrollResp = client.search(searchReq, RequestOptions.DEFAULT)
       (documents, documents.nonEmpty)

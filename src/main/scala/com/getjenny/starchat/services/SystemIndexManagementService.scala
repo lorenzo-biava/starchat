@@ -6,8 +6,6 @@ package com.getjenny.starchat.services
 
 import java.io._
 
-import akka.event.{Logging, LoggingAdapter}
-import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities.{IndexManagementResponse, _}
 import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClient
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest

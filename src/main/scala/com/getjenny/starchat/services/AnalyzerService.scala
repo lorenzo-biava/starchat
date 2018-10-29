@@ -85,56 +85,56 @@ object AnalyzerService extends AbstractDataService {
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
     val analyzersLHM = mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]
-    val analyzersData : List[(String, DecisionTableRuntimeItem)] = scrollResp.getHits.getHits.toList.map({ e =>
-      val item: SearchHit = e
-      val state : String = item.getId
-      val version : Long = item.getVersion
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+    val analyzersData : List[(String, DecisionTableRuntimeItem)] = scrollResp.getHits.getHits.toList.map {
+      case item: SearchHit =>
+        val state : String = item.getId
+        val version : Long = item.getVersion
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-      val analyzerDeclaration : String = source.get("analyzer") match {
-        case Some(t) => t.asInstanceOf[String]
-        case _ => ""
-      }
+        val analyzerDeclaration : String = source.get("analyzer") match {
+          case Some(t) => t.asInstanceOf[String]
+          case _ => ""
+        }
 
-      val executionOrder : Int = source.get("execution_order") match {
-        case Some(t) => t.asInstanceOf[Int]
-        case _ => 0
-      }
+        val executionOrder : Int = source.get("execution_order") match {
+          case Some(t) => t.asInstanceOf[Int]
+          case _ => 0
+        }
 
-      val maxStateCounter : Int = source.get("max_state_counter") match {
-        case Some(t) => t.asInstanceOf[Int]
-        case _ => 0
-      }
+        val maxStateCounter : Int = source.get("max_state_counter") match {
+          case Some(t) => t.asInstanceOf[Int]
+          case _ => 0
+        }
 
-      val evaluationClass : String = source.get("evaluation_class") match {
-        case Some(t) => t.asInstanceOf[String]
-        case  _ => "default"
-      }
+        val evaluationClass : String = source.get("evaluation_class") match {
+          case Some(t) => t.asInstanceOf[String]
+          case  _ => "default"
+        }
 
-      val queries : List[String] = source.get("queries") match {
-        case Some(t) =>
-          val queryArray = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
-            .map(q_e => q_e.get("query"))
-          queryArray
-        case None => List[String]()
-      }
+        val queries : List[String] = source.get("queries") match {
+          case Some(t) =>
+            val queryArray = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
+              .map(q_e => q_e.get("query"))
+            queryArray
+          case None => List[String]()
+        }
 
-      val queriesTerms: List[TextTerms] = queries.map(q => {
-        val queryTerms = termService.textToVectors(indexName, q)
-        queryTerms
-      }).filter(_.terms.terms.nonEmpty)
+        val queriesTerms: List[TextTerms] = queries.map(q => {
+          val queryTerms = termService.textToVectors(indexName, q)
+          queryTerms
+        }).filter(_.terms.terms.nonEmpty)
 
-      val decisionTableRuntimeItem: DecisionTableRuntimeItem =
-        DecisionTableRuntimeItem(executionOrder=executionOrder,
-          maxStateCounter=maxStateCounter,
-          analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=false,
-            analyzer = None,
-            message = "Analyzer index(" + indexName + ") state(" + state + ") not built"),
-          queries = queriesTerms,
-          evaluationClass = evaluationClass,
-          version = version)
-      (state, decisionTableRuntimeItem)
-    }).sortWith{
+        val decisionTableRuntimeItem: DecisionTableRuntimeItem =
+          DecisionTableRuntimeItem(executionOrder=executionOrder,
+            maxStateCounter=maxStateCounter,
+            analyzer=AnalyzerItem(declaration=analyzerDeclaration, build=false,
+              analyzer = None,
+              message = "Analyzer index(" + indexName + ") state(" + state + ") not built"),
+            queries = queriesTerms,
+            evaluationClass = evaluationClass,
+            version = version)
+        (state, decisionTableRuntimeItem)
+    }.sortWith{
       case ((_, decisionTableRuntimeItem1),(_, decisionTableRuntimeItem2)) =>
         decisionTableRuntimeItem1.executionOrder < decisionTableRuntimeItem2.executionOrder
     }

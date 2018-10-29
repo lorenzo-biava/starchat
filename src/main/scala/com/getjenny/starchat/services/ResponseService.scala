@@ -137,55 +137,56 @@ object ResponseService extends AbstractDataService {
             "The analyzers evaluation list is empty, threshold could be too high")
       }
 
-      decisionTableService.read(indexName, analyzersEvalData.keys.toList) map {
-        case docResults =>
-          val dtDocumentsList = docResults.hits.par.map(item => {
-            val doc: DTDocument = item.document
-            val state = doc.state
-            val evaluationRes: Result = analyzersEvalData(state)
-            val maxStateCount: Int = doc.max_state_count
-            val analyzer: String = doc.analyzer
-            var bubble: String = doc.bubble
-            var actionInput: Map[String, String] = doc.action_input
-            val stateData: Map[String, String] = doc.state_data
+      decisionTableService.read(indexName, analyzersEvalData.keys.toList).map {
+        case docResults: SearchDTDocumentsResults =>
+          val dtDocumentsList = docResults.hits.par.map {
+            case item: SearchDTDocument =>
+              val doc: DTDocument = item.document
+              val state = doc.state
+              val evaluationRes: Result = analyzersEvalData(state)
+              val maxStateCount: Int = doc.max_state_count
+              val analyzer: String = doc.analyzer
+              var bubble: String = doc.bubble
+              var actionInput: Map[String, String] = doc.action_input
+              val stateData: Map[String, String] = doc.state_data
 
-            for ((key, value) <- data.extracted_variables) {
-              bubble = bubble.replaceAll("%" + key + "%", value)
-              actionInput = doc.action_input map { case (ki, vi) =>
-                val newValue: String = vi.replaceAll("%" + key + "%", value)
-                (ki, newValue)
+              for ((key, value) <- data.extracted_variables) {
+                bubble = bubble.replaceAll("%" + key + "%", value)
+                actionInput = doc.action_input map { case (ki, vi) =>
+                  val newValue: String = vi.replaceAll("%" + key + "%", value)
+                  (ki, newValue)
+                }
               }
-            }
 
-            for ((key, value) <- evaluationRes.data.extracted_variables) {
-              bubble = bubble.replaceAll("%" + key + "%", value)
-              actionInput = doc.action_input map { case (ki, vi) =>
-                val newValue: String = vi.replaceAll("%" + key + "%", value)
-                (ki, newValue)
+              for ((key, value) <- evaluationRes.data.extracted_variables) {
+                bubble = bubble.replaceAll("%" + key + "%", value)
+                actionInput = doc.action_input map { case (ki, vi) =>
+                  val newValue: String = vi.replaceAll("%" + key + "%", value)
+                  (ki, newValue)
+                }
               }
-            }
 
-            val cleanedData =
-              data.extracted_variables ++
-                evaluationRes.data.extracted_variables
-                  .filter { case (key, _) => !(key matches "\\A__temp__.*") }
+              val cleanedData =
+                data.extracted_variables ++
+                  evaluationRes.data.extracted_variables
+                    .filter { case (key, _) => !(key matches "\\A__temp__.*") }
 
-            val traversedStatesUpdated: List[String] = traversedStates ++ List(state)
-            val responseItem: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
-              state = state,
-              max_state_count = maxStateCount,
-              traversed_states = traversedStatesUpdated,
-              analyzer = analyzer,
-              bubble = bubble,
-              action = doc.action,
-              data = cleanedData,
-              action_input = actionInput,
-              state_data = stateData,
-              success_value = doc.success_value,
-              failure_value = doc.failure_value,
-              score = evaluationRes.score)
-            responseItem
-          }).toList.sortWith(_.score > _.score)
+              val traversedStatesUpdated: List[String] = traversedStates ++ List(state)
+              val responseItem: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
+                state = state,
+                max_state_count = maxStateCount,
+                traversed_states = traversedStatesUpdated,
+                analyzer = analyzer,
+                bubble = bubble,
+                action = doc.action,
+                data = cleanedData,
+                action_input = actionInput,
+                state_data = stateData,
+                success_value = doc.success_value,
+                failure_value = doc.failure_value,
+                score = evaluationRes.score)
+              responseItem
+          }.toList.sortWith(_.score > _.score)
           ResponseRequestOutOperationResult(ReturnMessageData(200, ""),
             Option {dtDocumentsList})
       }
