@@ -30,8 +30,10 @@ libraryDependencies ++= {
   val TikaVersion	= "1.18"
   val ManausLibVersion = "1.0.1"
   val StanfordCoreNLP = "3.9.1"
+  val AnalyzerVersion = "1.0.0"
   Seq(
     "com.getjenny" %% "manaus-lib" % ManausLibVersion,
+    "com.getjenny" %% "analyzer" % AnalyzerVersion,
     "com.github.scopt" %% "scopt" % ScoptVersion,
     "com.roundeights" %% "hasher" % RoundeightsHasherVersion,
     "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
