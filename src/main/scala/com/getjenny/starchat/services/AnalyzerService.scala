@@ -86,7 +86,7 @@ object AnalyzerService extends AbstractDataService {
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
     val analyzersLHM = mutable.LinkedHashMap.empty[String, DecisionTableRuntimeItem]
     val analyzersData : List[(String, DecisionTableRuntimeItem)] = scrollResp.getHits.getHits.toList.map {
-      case item: SearchHit =>
+      item: SearchHit =>
         val state : String = item.getId
         val version : Long = item.getVersion
         val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap

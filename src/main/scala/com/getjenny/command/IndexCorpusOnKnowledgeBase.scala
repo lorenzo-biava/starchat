@@ -47,9 +47,6 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
     implicit val materializer: ActorMaterializer = ActorMaterializer()
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    val vecsize = 0
-    val skiplines = params.skiplines
-
     val baseUrl = params.host + "/" + params.indexName + params.path
     val lines = Source.fromFile(name=params.inputfile.get).getLines.toList
 
@@ -59,7 +56,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
       identity
     }
 
-    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.length > 0) {
+    val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
       val headers: Seq[RawHeader] = params.headerKv.map(x => {
         val header_opt = x.split(":")
         val key = header_opt(0)

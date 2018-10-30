@@ -129,7 +129,7 @@ object TextToDtFeatures extends JsonSupport {
       List("ID:\t\t\t\tlabel.")
 
     val namesWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_names)))
-    names.foreach { case line: Any =>
+    names.foreach { line =>
       namesWriter.write(line)
       namesWriter.newLine()
     }

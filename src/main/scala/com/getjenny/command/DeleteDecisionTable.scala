@@ -57,7 +57,6 @@ object DeleteDecisionTable extends JsonSupport {
 
     termTextEntries.drop(skiplines).foreach(entry => {
       val cols = entry.split(",").map(_.trim)
-      val numcols = cols.length
       val state = cols(0)
       val url = baseUrl + "/" + URLEncoder.encode(state, "UTF-8")
 

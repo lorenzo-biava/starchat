@@ -289,8 +289,7 @@ object TermService extends AbstractDataService {
       val response: MultiGetResponse = client.mget(multiGetReq, RequestOptions.DEFAULT)
 
       response.getResponses.toList
-        .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map {
-        case e: MultiGetItemResponse =>
+        .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map { e =>
           val item: GetResponse = e.getResponse
           val source: Map[String, Any] = item.getSource.asScala.toMap
 
@@ -552,8 +551,7 @@ object TermService extends AbstractDataService {
 
     val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
-    val documents : List[Term] = searchResponse.getHits.getHits.toList.map {
-      case item: SearchHit =>
+    val documents : List[Term] = searchResponse.getHits.getHits.toList.map { item =>
         val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
         val term : String = source.get("term") match {
@@ -629,7 +627,7 @@ object TermService extends AbstractDataService {
     */
   def termsDistance(indexName: String, termsReq: DocsIds): Future[List[TermsDistanceRes]] = Future {
     val extractedTerms = termsById(indexName, DocsIds(ids = termsReq.ids))
-    val retrievedTerms = extractedTerms.terms.map{ case(t) => (t.term, t) }.toMap
+    val retrievedTerms = extractedTerms.terms.map{ t => (t.term, t) }.toMap
 
     retrievedTerms
       .keys.flatMap(a => retrievedTerms.keys.map(b => (a, b)))
@@ -688,8 +686,7 @@ object TermService extends AbstractDataService {
 
     val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
-    val documents : List[Term] = searchResponse.getHits.getHits.toList.map {
-      case item: SearchHit =>
+    val documents : List[Term] = searchResponse.getHits.getHits.toList.map { item =>
         val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
         val term : String = source.get("term") match {
@@ -854,8 +851,7 @@ object TermService extends AbstractDataService {
     var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val iterator = Iterator.continually{
-      val documents = scrollResp.getHits.getHits.toList.map {
-        case e: SearchHit =>
+      val documents = scrollResp.getHits.getHits.toList.map { e =>
           val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
 
           val term : String = source.get("term") match {

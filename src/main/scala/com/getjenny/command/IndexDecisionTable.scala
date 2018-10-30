@@ -38,9 +38,6 @@ object IndexDecisionTable extends JsonSupport {
     implicit val materializer: ActorMaterializer = ActorMaterializer()
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    val vecsize = 0
-    val skiplines = params.skiplines
-
     val baseUrl = params.host + "/" + params.indexName + params.path
     val file = new File(params.inputfile)
 

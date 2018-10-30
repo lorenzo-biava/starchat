@@ -137,10 +137,8 @@ object ResponseService extends AbstractDataService {
             "The analyzers evaluation list is empty, threshold could be too high")
       }
 
-      decisionTableService.read(indexName, analyzersEvalData.keys.toList).map {
-        case docResults: SearchDTDocumentsResults =>
-          val dtDocumentsList = docResults.hits.par.map {
-            case item: SearchDTDocument =>
+      decisionTableService.read(indexName, analyzersEvalData.keys.toList).map { docResults =>
+          val dtDocumentsList = docResults.hits.par.map { item =>
               val doc: DTDocument = item.document
               val state = doc.state
               val evaluationRes: Result = analyzersEvalData(state)

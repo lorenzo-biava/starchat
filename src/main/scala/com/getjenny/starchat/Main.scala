@@ -6,13 +6,14 @@ package com.getjenny.starchat
 
 import java.io.InputStream
 import java.security.{KeyStore, SecureRandom}
-import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.stream.ActorMaterializer
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+
 import scala.concurrent.ExecutionContextExecutor
-import akka.http.scaladsl.server.Route
 
 case class Parameters(
                        http_enable: Boolean,
@@ -30,14 +31,14 @@ final class StarChatService(parameters: Option[Parameters] = None) extends RestI
     case Some(p) => p
     case _ =>
       Parameters(
-        http_enable = config.getBoolean("http.enable"),
-        http_host = config.getString("http.host"),
-        http_port = config.getInt("http.port"),
-        https_enable = config.getBoolean("https.enable"),
-        https_host = config.getString("https.host"),
-        https_port = config.getInt("https.port"),
-        https_certificate = config.getString("https.certificate"),
-        https_cert_pass = config.getString("https.password")
+        http_enable = config.getBoolean("starchat.http.enable"),
+        http_host = config.getString("starchat.http.host"),
+        http_port = config.getInt("starchat.http.port"),
+        https_enable = config.getBoolean("starchat.https.enable"),
+        https_host = config.getString("starchat.https.host"),
+        https_port = config.getInt("starchat.https.port"),
+        https_certificate = config.getString("starchat.https.certificate"),
+        https_cert_pass = config.getString("starchat.https.password")
       )
   }
 
@@ -50,12 +51,9 @@ final class StarChatService(parameters: Option[Parameters] = None) extends RestI
 
   if (params.https_enable) {
     val password: Array[Char] = params.https_cert_pass.toCharArray
-
     val ks: KeyStore = KeyStore.getInstance("PKCS12")
-
-    val keystore_path: String = "/tls/certs/" + params.https_certificate
-    val keystore: InputStream = getClass.getResourceAsStream(keystore_path)
-    //val keystore: InputStream = getClass.getClassLoader.getResourceAsStream(keystore_path)
+    val keystorePath: String = params.https_certificate
+    val keystore: InputStream = getClass.getResourceAsStream(keystorePath)
 
     require(keystore != None.orNull, "Keystore required!")
     ks.load(keystore, password)
@@ -79,8 +77,6 @@ final class StarChatService(parameters: Option[Parameters] = None) extends RestI
       system.log.error(s"REST (HTTPS) interface could not bind to ${params.https_host}:${params.https_port}",
         eX.getMessage)
     }
-
-
   }
 
   if((! params.https_enable) || params.http_enable) {

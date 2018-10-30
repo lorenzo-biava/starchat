@@ -47,20 +47,15 @@ trait AbstractDataService {
 
     var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
     val iterator = Iterator.continually {
-      scrollResp.getHits.getHits.toList.map {
-        case e: SearchHit => e.getId
+      scrollResp.getHits.getHits.toList.map { e: SearchHit => e.getId
       }
-    }.takeWhile {
-      case idsList: List[String] => idsList.nonEmpty
+    }.takeWhile { idsList: List[String] => idsList.nonEmpty
     }
 
-    val deleted = iterator.map { case ids: List[String] =>
+    val deleted = iterator.map { ids: List[String] =>
       Await.result(delete(indexName, DocsIds(ids = ids), 0).map {
-        case deleteDocRes: DeleteDocumentsResult =>
-          deleteDocRes.data.map(delItem => delItem.found match {
-            case true => 1;
-            case _ => 0
-          }).sum
+        deleteDocRes: DeleteDocumentsResult =>
+          deleteDocRes.data.map(delItem => if(delItem.found) 1 else 0).sum
       }, 10.second)
     }.sum
 

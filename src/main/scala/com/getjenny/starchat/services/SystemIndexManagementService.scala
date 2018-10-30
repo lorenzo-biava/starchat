@@ -194,8 +194,7 @@ object SystemIndexManagementService extends AbstractDataService {
   def indices: Future[List[String]] = Future {
     val clusterHealthReq = new ClusterHealthRequest()
     val clusterHealthRes = elasticClient.client.cluster.health(clusterHealthReq, RequestOptions.DEFAULT)
-    clusterHealthRes.getIndices.asScala.map{ case(k, v) => k }.toList
+    clusterHealthRes.getIndices.asScala.map{ case(k, _) => k }.toList
   }
-
 
 }

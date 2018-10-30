@@ -44,15 +44,13 @@ object SpellcheckService extends AbstractDataService {
 
     val termsSuggestions: List[SpellcheckToken] =
       searchResponse.getSuggest.getSuggestion[TermSuggestion]("suggestions")
-        .getEntries.asScala.toList.map {
-        case suggestions: TermSuggestion.Entry =>
+        .getEntries.asScala.toList.map { suggestions =>
         val item: TermSuggestion.Entry = suggestions
         val text = item.getText.toString
         val offset = item.getOffset
         val length = item.getLength
         val options: List[SpellcheckTokenSuggestions] =
-          item.getOptions.asScala.toList.map {
-            case suggestion: Any =>
+          item.getOptions.asScala.toList.map { suggestion =>
             val option = SpellcheckTokenSuggestions(
               score = suggestion.getScore.toDouble,
               freq = suggestion.getFreq.toDouble,

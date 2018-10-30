@@ -4,8 +4,6 @@ package com.getjenny.command
   * Created by angelo on 29/03/17.
   */
 
-import java.io.File
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
@@ -57,7 +55,7 @@ object IndexSubtitles extends JsonSupport {
 
     val lines = Source.fromFile(name=params.inputfile).getLines
 
-    val docs = lines.map{ case entry: Any =>
+    val docs = lines.map{ entry =>
       val fields = entry.split("\t")
       val doc = KBDocument(
         id = fields(0),

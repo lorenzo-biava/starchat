@@ -105,7 +105,7 @@ object DecisionTableService extends AbstractDataService {
 
     val documents : Option[List[SearchDTDocument]] =
       Option { searchResponse.getHits.getHits.toList.map {
-        case item: SearchHit =>
+        item: SearchHit =>
           val state : String = item.getId
 
           val version: Option[Long] = Some(item.getVersion)
@@ -228,7 +228,7 @@ object DecisionTableService extends AbstractDataService {
   def resultsToMap(results: SearchDTDocumentsResults): Map[String, Any] = {
     Map("dt_queries_search_result" ->
       results.hits.map {
-        case doc: Any =>
+        doc =>
           (doc.document.state, (doc.score, doc))
       }.toMap
     )
@@ -402,8 +402,7 @@ object DecisionTableService extends AbstractDataService {
     var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
-    val decisionTableContent : List[SearchDTDocument] = scrollResp.getHits.getHits.toList.map{
-      case item: SearchHit =>
+    val decisionTableContent : List[SearchDTDocument] = scrollResp.getHits.getHits.toList.map{ item =>
         val state : String = item.getId
         val version: Option[Long] = Some(item.getVersion)
         val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
@@ -498,8 +497,7 @@ object DecisionTableService extends AbstractDataService {
 
     val documents: Option[List[SearchDTDocument]] = Option {
       response.getResponses
-        .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map{
-        case e: MultiGetItemResponse =>
+        .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map{ e =>
 
           val item: GetResponse = e.getResponse
 

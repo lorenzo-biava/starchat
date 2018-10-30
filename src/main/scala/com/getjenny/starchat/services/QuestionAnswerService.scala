@@ -418,9 +418,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val searchResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
-    val documents : Option[List[SearchKBDocument]] = Option { searchResp.getHits.getHits.toList.map { case e: Any =>
-
-      val item: SearchHit = e
+    val documents : Option[List[SearchKBDocument]] = Option { searchResp.getHits.getHits.toList.map { item =>
 
       // val fields : Map[String, GetField] = item.getFields.toMap
       val id : String = item.getId
@@ -759,7 +757,7 @@ trait QuestionAnswerService extends AbstractDataService {
     val response: MultiGetResponse = client.mget(multigetReq, RequestOptions.DEFAULT)
 
     val documents : Option[List[SearchKBDocument]] = Option { response.getResponses
-      .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map { case e: Any =>
+      .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map { e =>
 
       val item: GetResponse = e.getResponse
 
@@ -902,8 +900,7 @@ trait QuestionAnswerService extends AbstractDataService {
     var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val iterator = Iterator.continually{
-      val documents = scrollResp.getHits.getHits.toList.map {
-        case e: SearchHit =>
+      val documents = scrollResp.getHits.getHits.toList.map { e =>
 
           val id : String = e.getId
           val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
@@ -1032,8 +1029,7 @@ trait QuestionAnswerService extends AbstractDataService {
     val ids: List[String] = List(extractionRequest.id)
     val q = this.read(indexName, ids)
     val hits = q.getOrElse(SearchKBDocumentsResults())
-    hits.hits.map {
-      case hit: SearchKBDocument =>
+    hits.hits.map { hit =>
         val extractionReqQ = extractionReq(text = hit.document.question, er = extractionRequest)
         val extractionReqA = extractionReq(text = hit.document.answer, er = extractionRequest)
         val (_, termsQ) = manausTermsExtractionService
@@ -1055,8 +1051,7 @@ trait QuestionAnswerService extends AbstractDataService {
   def updateAllTextTerms(indexName: String,
                          extractionRequest: UpdateQATermsRequest,
                          keepAlive: Long = 3600000): Iterator[UpdateDocumentResult] = {
-    allDocuments(indexName = indexName, keepAlive = keepAlive).map{
-      case item: KBDocument =>
+    allDocuments(indexName = indexName, keepAlive = keepAlive).map { item =>
         val extractionReqQ = extractionReq(text = item.question, er = extractionRequest)
         val extractionReqA = extractionReq(text = item.answer, er = extractionRequest)
         val (_, termsQ) = manausTermsExtractionService

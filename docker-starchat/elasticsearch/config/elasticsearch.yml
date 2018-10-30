@@ -58,8 +58,8 @@ http.host: 0.0.0.0
 #
 http.port: 9200
 
-#transport.host: 0.0.0.0
-#
+transport.host: 0.0.0.0
+
 # For more information, consult the network module documentation.
 #
 # --------------------------------- Discovery ----------------------------------
@@ -89,8 +89,18 @@ http.port: 9200
 #
 #action.destructive_requires_name: true
 
-xpack.security.enabled: false
+xpack.security.enabled: true
 xpack.graph.enabled: false
 xpack.ml.enabled: false
 xpack.monitoring.enabled: false
 xpack.watcher.enabled: false
+
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.verification_mode: certificate
+xpack.security.transport.ssl.keystore.path: certs/${node.name}.p12
+xpack.security.transport.ssl.truststore.path: certs/${node.name}.p12
+
+xpack.security.http.ssl.enabled: true
+xpack.security.http.ssl.keystore.path: certs/${node.name}.p12
+xpack.security.http.ssl.truststore.path: certs/${node.name}.p12
+
