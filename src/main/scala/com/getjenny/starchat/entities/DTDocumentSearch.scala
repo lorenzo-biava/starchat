@@ -10,6 +10,6 @@ case class DTDocumentSearch(from: Option[Int],
                             min_score: Option[Float],
                             boost_exact_match_factor: Option[Float],
                             state: Option[String],
-                            enabled: Option[Boolean],
+                            evaluation_class: Option[String],
                             queries: Option[String]
                            )

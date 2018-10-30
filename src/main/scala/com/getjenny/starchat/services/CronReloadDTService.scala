@@ -28,40 +28,32 @@ object CronReloadDTService  {
       case `tickMessage` =>
         val maxItemsIndexesToUpdate: Long = math.max(analyzerService.dtMaxTables, analyzerService.analyzersMap.size)
 
-        dtReloadService.allDTReloadTimestamp(Some(updateTimestamp), Some(maxItemsIndexesToUpdate)) match {
-          case Some(indices) =>
-            indices.foreach { dtReloadEntry =>
-              val indexAnalyzers: Option[ActiveAnalyzers] =
-                analyzerService.analyzersMap.get(dtReloadEntry.indexName)
-              val localReloadTimestamp = indexAnalyzers match {
-                case Some(ts) => ts.lastReloadingTimestamp
-                case _ => dtReloadService.DT_RELOAD_TIMESTAMP_DEFAULT
-              }
+        dtReloadService.allDTReloadTimestamp(Some(updateTimestamp), Some(maxItemsIndexesToUpdate))
+          .foreach { dtReloadEntry =>
+            val indexAnalyzers: Option[ActiveAnalyzers] =
+              analyzerService.analyzersMap.get(dtReloadEntry.indexName)
+            val localReloadTimestamp = indexAnalyzers match {
+              case Some(ts) => ts.lastReloadingTimestamp
+              case _ => dtReloadService.DT_RELOAD_TIMESTAMP_DEFAULT
+            }
 
-              if (dtReloadEntry.timestamp > 0 && localReloadTimestamp < dtReloadEntry.timestamp) {
-                log.info("dt reloading, timestamp for index(" + dtReloadEntry.indexName + "): "
-                  + dtReloadEntry.timestamp)
+            if (dtReloadEntry.timestamp > 0 && localReloadTimestamp < dtReloadEntry.timestamp) {
+              log.info("dt reloading, timestamp for index(" + dtReloadEntry.indexName + "): "
+                + dtReloadEntry.timestamp)
 
-                analyzerService.loadAnalyzers(indexName = dtReloadEntry.indexName).onComplete {
-                  case Success(relRes) =>
-                    relRes match {
-                      case Some(res) =>
-                        updateTimestamp = math.max(updateTimestamp, localReloadTimestamp)
-                        log.info("Analyzer loaded for index(" + dtReloadEntry + "), res(" + res +
-                          ") remote ts: " + dtReloadEntry )
-                        analyzerService.analyzersMap(dtReloadEntry.indexName)
-                          .lastReloadingTimestamp = dtReloadEntry.timestamp
-                      case _ => log.error("ReloadAnalyzersTickActor: getting an empty response reloading analyzers")
-                    }
-                  case Failure(e) =>
-                    log.error("unable to load analyzers for index(" + dtReloadEntry +
-                      ") from the cron job" + e.getMessage)
-                }
+              analyzerService.loadAnalyzers(indexName = dtReloadEntry.indexName).onComplete {
+                case Success(relRes) =>
+                  updateTimestamp = math.max(updateTimestamp, localReloadTimestamp)
+                  log.info("Analyzer loaded for index(" + dtReloadEntry + "), res(" + relRes +
+                    ") remote ts: " + dtReloadEntry )
+                  analyzerService.analyzersMap(dtReloadEntry.indexName)
+                    .lastReloadingTimestamp = dtReloadEntry.timestamp
+                case Failure(e) =>
+                  log.error("unable to load analyzers for index(" + dtReloadEntry +
+                    ") from the cron job" + e.getMessage)
               }
             }
-          case _ =>
-            log.debug("No entries on dt reload index")
-        }
+          }
     }
   }
 

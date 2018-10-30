@@ -6,6 +6,7 @@ package com.getjenny.starchat.resources
 
 import java.io.File
 
+import akka.http.javadsl.server.CircuitBreakerOpenRejection
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
@@ -14,13 +15,11 @@ import com.getjenny.analyzer.analyzers.AnalyzerEvaluationException
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services._
+import scalaz.Scalaz._
 
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
-import scalaz.Scalaz._
-import akka.http.javadsl.server.CircuitBreakerOpenRejection
-
 trait DecisionTableResource extends StarChatResource {
 
   private[this] val decisionTableService: DecisionTableService.type = DecisionTableService
@@ -98,18 +97,34 @@ trait DecisionTableResource extends StarChatResource {
               authenticator = authenticator.authenticator) { (user) =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(decisionTableService.deleteAll(indexName)) {
-                  case Success(t) =>
-                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                  case Failure(e) =>
-                    log.error("index(" + indexName + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
-                    completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        ReturnMessageData(code = 103, message = e.getMessage)
-                      })
+                parameters("refresh".as[Int] ? 0) { refresh =>
+                  entity(as[DocsIds]) { request_data =>
+                    if (request_data.ids.nonEmpty) {
+                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                      onCompleteWithBreaker(breaker)(decisionTableService.delete(indexName, request_data, refresh)) {
+                        case Success(t) =>
+                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                        case Failure(e) =>
+                          log.error("index(" + indexName + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest,
+                            Option {
+                              ReturnMessageData(code = 104, message = e.getMessage)
+                            })
+                      }
+                    } else {
+                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                      onCompleteWithBreaker(breaker)(decisionTableService.deleteAll(indexName)) {
+                        case Success(t) =>
+                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                        case Failure(e) =>
+                          log.error("index(" + indexName + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest,
+                            Option {
+                              ReturnMessageData(code = 105, message = e.getMessage)
+                            })
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -140,28 +155,7 @@ trait DecisionTableResource extends StarChatResource {
                 }
               }
             }
-          } ~
-            delete {
-              authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { user =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                  parameters("refresh".as[Int] ? 0) { refresh =>
-                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(decisionTableService.delete(indexName, id, refresh)) {
-                      case Success(opRes) =>
-                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, opRes)
-                      case Failure(e) =>
-                        log.error("index(" + indexName + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 105, message = e.getMessage)
-                          })
-                    }
-                  }
-                }
-              }
-            }
+          }
         }
     }
   }
@@ -380,24 +374,10 @@ trait DecisionTableResource extends StarChatResource {
                           )
                       }
                     case Success(response_value) =>
-                      response_value match {
-                        case Some(t) =>
-                          if (t.status.code === 200) {
-                            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t.response_request_out)
-                          } else {
-                            completeResponse(StatusCodes.NoContent) // no response found
-                          }
-                        case None =>
-                          log.error("index(" + indexName + ") DecisionTableResource: Unable to complete the request")
-                          completeResponse(StatusCodes.BadRequest,
-                            Option {
-                              ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 113, message = "unable to complete the response"),
-                                Option {
-                                  List.empty[ResponseRequestOut]
-                                })
-                            }
-                          )
+                      if (response_value.status.code === 200) {
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, response_value.response_request_out)
+                      } else {
+                        completeResponse(StatusCodes.NoContent) // no response found
                       }
                   }
               }

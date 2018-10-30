@@ -20,30 +20,30 @@ import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
 import scopt.OptionParser
 
-import scala.util.{Failure, Success, Try}
 import scala.collection.immutable
 import scala.collection.immutable.Map
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.util.{Failure, Success}
 
 object SimilarityTest extends JsonSupport {
 
   private[this] case class Params(
-                            host: String = "http://localhost:8888",
-                            indexName: String = "index_english_0",
-                            path: String = "/analyzers_playground",
-                            inputFile: String = "pairs.csv",
-                            outputFile: String = "output.csv",
-                            analyzer: String = "keyword(\"test\")",
-                            itemList: Seq[String] = Seq.empty[String],
-                            variables: Map[String, String] = Map.empty[String, String],
-                            text1Index: Int = 3,
-                            text2Index: Int = 4,
-                            separator: Char = ',',
-                            skipLines: Int = 1,
-                            timeout: Int = 60,
-                            headerKv: Seq[String] = Seq.empty[String]
-                           )
+                                   host: String = "http://localhost:8888",
+                                   indexName: String = "index_english_0",
+                                   path: String = "/analyzers_playground",
+                                   inputFile: String = "pairs.csv",
+                                   outputFile: String = "output.csv",
+                                   analyzer: String = "keyword(\"test\")",
+                                   itemList: Seq[String] = Seq.empty[String],
+                                   variables: Map[String, String] = Map.empty[String, String],
+                                   text1Index: Int = 3,
+                                   text2Index: Int = 4,
+                                   separator: Char = ',',
+                                   skipLines: Int = 1,
+                                   timeout: Int = 60,
+                                   headerKv: Seq[String] = Seq.empty[String]
+                                 )
 
   private[this] def execute(params: Params) {
     implicit val system: ActorSystem = ActorSystem()
@@ -101,7 +101,7 @@ object SimilarityTest extends JsonSupport {
           entity = entity))
       val result = Await.result(responseFuture, timeout)
       result.status match {
-        case StatusCodes.OK => {
+        case StatusCodes.OK =>
           val response =
             Unmarshal(result.entity).to[AnalyzerEvaluateResponse]
           val value = response.value match {
@@ -118,7 +118,6 @@ object SimilarityTest extends JsonSupport {
           val input_csv_fields = entry.toArray
           val csv_line = input_csv_fields ++ Array(score)
           outputCsv.writeNext(csv_line)
-        }
         case _ =>
           println("failed running analyzer(" + evaluate_request.analyzer
             + ") Query(" + evaluate_request.query + ")")
@@ -169,7 +168,7 @@ object SimilarityTest extends JsonSupport {
         .text(s"the index of the text1 element" +
           s"  default: ${defaultParams.text1Index}")
         .action((x, c) => c.copy(text1Index = x))
-       opt[Int]("text2_index")
+      opt[Int]("text2_index")
         .text(s"the index of the text2 element" +
           s"  default: ${defaultParams.text2Index}")
         .action((x, c) => c.copy(text2Index = x))

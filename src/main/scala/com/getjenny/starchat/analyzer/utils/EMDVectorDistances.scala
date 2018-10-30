@@ -3,7 +3,6 @@ package com.getjenny.starchat.analyzer.utils
 import com.getjenny.analyzer.util.VectorUtils._
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services._
-import com.getjenny.analyzer.util.VectorUtils
 
 /**
   * Created by angelo on 04/04/17.
@@ -17,21 +16,14 @@ object EMDVectorDistances {
   }
 
   //reduced EMD
-  private[this] def distanceReducedEMD(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms],
-                         dist_f: (Vector[Double], Vector[Double]) => Double): (Double, Double, Double) = {
+  private[this] def distanceReducedEMD(textTerms1: TextTerms, textTerms2: TextTerms,
+                                       dist_f: (Vector[Double], Vector[Double]) => Double): (Double, Double, Double) = {
 
     val vectors1 = TextToVectorsTools.textTermsToVectors(textTerms1)
     val vectors2 = TextToVectorsTools.textTermsToVectors(textTerms2)
 
-    val reliabilityFactor1 = textTerms1 match {
-      case Some(terms) => terms.terms_found_n.toDouble / terms.text_terms_n.toDouble
-      case _ => 0.0d
-    }
-
-    val reliabilityFactor2 = textTerms2 match {
-      case Some(terms) => terms.terms_found_n.toDouble / terms.text_terms_n.toDouble
-      case _ => 0.0d
-    }
+    val reliabilityFactor1 = textTerms1.terms_found_n.toDouble / math.max(textTerms1.text_terms_n.toDouble, 1.0)
+    val reliabilityFactor2 = textTerms2.terms_found_n.toDouble / math.max(textTerms2.text_terms_n.toDouble, 1.0)
 
     val words1 = vectors1.groupBy{case(term, _) => term}
       .map{case(term, termVectorPair) =>
@@ -107,13 +99,13 @@ object EMDVectorDistances {
     score
   }
 
-  def distanceEuclidean(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms]): Double = {
+  def distanceEuclidean(textTerms1: TextTerms, textTerms2: TextTerms): Double = {
     val (distanceScore, reliabilityFactor1, reliabilityFactor2) = distanceReducedEMD(textTerms1, textTerms2, euclideanDist)
     val score = (1.0 / (1 + distanceScore)) * (reliabilityFactor1 * reliabilityFactor2)
     score
   }
 
-  def distanceCosine(textTerms1: Option[TextTerms], textTerms2: Option[TextTerms]): Double = {
+  def distanceCosine(textTerms1: TextTerms, textTerms2: TextTerms): Double = {
     val (distanceScore, reliabilityFactor1, reliabilityFactor2) = distanceReducedEMD(textTerms1, textTerms2, cosineDist)
     val score = (1.0 / (1 + distanceScore )) * (reliabilityFactor1 * reliabilityFactor2)
     score

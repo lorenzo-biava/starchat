@@ -53,7 +53,7 @@ class W2VCosineStateAtomic(val arguments: List[String], restricted_args: Map[Str
   }
 
   val queryVectors: List[(Vector[Double], Double)] = queryTerms.map(item => {
-    val query_vector = TextToVectorsTools.sumOfTermsVectors(Option{item})
+    val query_vector = TextToVectorsTools.sumOfTermsVectors(item)
     query_vector
   })
 

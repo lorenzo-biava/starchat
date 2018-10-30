@@ -12,7 +12,6 @@ import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
 import com.getjenny.starchat.utils.Index
 import org.apache.lucene.search.join._
-import org.elasticsearch.action.delete.{DeleteRequest, DeleteResponse}
 import org.elasticsearch.action.get._
 import org.elasticsearch.action.index.{IndexRequest, IndexResponse}
 import org.elasticsearch.action.search.{SearchRequest, SearchResponse, SearchType}
@@ -40,15 +39,15 @@ case class DecisionTableServiceException(message: String = "", cause: Throwable 
 /**
   * Implements functions, eventually used by DecisionTableResource, for searching, get next response etc
   */
-object DecisionTableService {
-  private[this] val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
+object DecisionTableService extends AbstractDataService {
+  override val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   private[this] val queriesScoreMode: Map[String, ScoreMode] =
     Map[String, ScoreMode]("min" -> ScoreMode.Min,
       "max" -> ScoreMode.Max, "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
-  def search(indexName: String, documentSearch: DTDocumentSearch): Future[Option[SearchDTDocumentsResults]] = {
+  def search(indexName: String, documentSearch: DTDocumentSearch): Future[SearchDTDocumentsResults] = {
     val client: RestHighLevelClient = elasticClient.client
 
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
@@ -105,89 +104,88 @@ object DecisionTableService {
     val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val documents : Option[List[SearchDTDocument]] =
-      Option { searchResponse.getHits.getHits.toList.map( { case(e) =>
+      Option { searchResponse.getHits.getHits.toList.map {
+        item: SearchHit =>
+          val state : String = item.getId
 
-        val item: SearchHit = e
+          val version: Option[Long] = Some(item.getVersion)
 
-        val state : String = item.getId
+          val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-        val version: Option[Long] = Some(item.getVersion)
+          val executionOrder: Int = source.get("execution_order") match {
+            case Some(t) => t.asInstanceOf[Int]
+            case None => 0
+          }
 
-        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+          val maxStateCount : Int = source.get("max_state_count") match {
+            case Some(t) => t.asInstanceOf[Int]
+            case None => 0
+          }
 
-        val executionOrder: Int = source.get("execution_order") match {
-          case Some(t) => t.asInstanceOf[Int]
-          case None => 0
-        }
+          val analyzer : String = source.get("analyzer") match {
+            case Some(t) => t.asInstanceOf[String]
+            case None => ""
+          }
 
-        val maxStateCount : Int = source.get("max_state_count") match {
-          case Some(t) => t.asInstanceOf[Int]
-          case None => 0
-        }
+          val queries : List[String] = source.get("queries") match {
+            case Some(t) =>
+              val offsets = item.getInnerHits.get("queries").getHits.toList.map(innerHit => {
+                innerHit.getNestedIdentity.getOffset
+              })
+              val query_array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
+                .map(q_e => q_e.get("query"))
+              val queriesOrdered : List[String] = offsets.map(i => query_array(i))
+              queriesOrdered
+            case None => List.empty[String]
+          }
 
-        val analyzer : String = source.get("analyzer") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
+          val bubble : String = source.get("bubble") match {
+            case Some(t) => t.asInstanceOf[String]
+            case None => ""
+          }
 
-        val queries : List[String] = source.get("queries") match {
-          case Some(t) =>
-            val offsets = e.getInnerHits.get("queries").getHits.toList.map(innerHit => {
-              innerHit.getNestedIdentity.getOffset
-            })
-            val query_array = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
-              .map(q_e => q_e.get("query"))
-            val queriesOrdered : List[String] = offsets.map(i => query_array(i))
-            queriesOrdered
-          case None => List.empty[String]
-        }
+          val action : String = source.get("action") match {
+            case Some(t) => t.asInstanceOf[String]
+            case None => ""
+          }
 
-        val bubble : String = source.get("bubble") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
+          val actionInput : Map[String,String] = source.get("action_input") match {
+            case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+            case None => Map[String, String]()
+          }
 
-        val action : String = source.get("action") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
+          val stateData : Map[String,String] = source.get("state_data") match {
+            case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+            case None => Map[String, String]()
+          }
 
-        val actionInput : Map[String,String] = source.get("action_input") match {
-          case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
-          case None => Map[String, String]()
-        }
+          val successValue : String = source.get("success_value") match {
+            case Some(t) => t.asInstanceOf[String]
+            case None => ""
+          }
 
-        val stateData : Map[String,String] = source.get("state_data") match {
-          case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
-          case None => Map[String, String]()
-        }
+          val failureValue : String = source.get("failure_value") match {
+            case Some(t) => t.asInstanceOf[String]
+            case None => ""
+          }
 
-        val successValue : String = source.get("success_value") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
+          val evaluationClass : String = source.get("evaluation_class") match {
+            case Some(t) => t.asInstanceOf[String]
+            case None => "default"
+          }
 
-        val failureValue : String = source.get("failure_value") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
+          val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
+            max_state_count = maxStateCount,
+            analyzer = analyzer, queries = queries, bubble = bubble,
+            action = action, action_input = actionInput, state_data = stateData,
+            success_value = successValue, failure_value = failureValue,
+            evaluation_class = Some(evaluationClass), version = version
+          )
 
-        val enabled : Boolean = source.get("enabled") match {
-          case Some(t) => t.asInstanceOf[Boolean]
-          case None => true
-        }
-
-        val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
-          max_state_count = maxStateCount,
-          analyzer = analyzer, queries = queries, bubble = bubble,
-          action = action, action_input = actionInput, state_data = stateData,
-          success_value = successValue, failure_value = failureValue,
-          enabled = Some(enabled), version = version
-        )
-
-        val searchDocument : SearchDTDocument = SearchDTDocument(score = item.getScore, document = document)
-        searchDocument
-      }) }
+          val searchDocument : SearchDTDocument = SearchDTDocument(score = item.getScore, document = document)
+          searchDocument
+      }
+      }
 
     val filteredDoc : List[SearchDTDocument] = documents.getOrElse(List[SearchDTDocument]())
 
@@ -201,11 +199,12 @@ object DecisionTableService {
     val searchResults : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = maxScore,
       hits = filteredDoc)
 
-    val searchResultsOption : Future[Option[SearchDTDocumentsResults]] = Future { Option { searchResults } }
+    val searchResultsOption : Future[SearchDTDocumentsResults] = Future { searchResults }
     searchResultsOption
   }
 
-  def searchDtQueries(indexName: String, userText: String): Future[Option[SearchDTDocumentsResults]] = {
+  def searchDtQueries(indexName: String, userText: String,
+                      evaluationClass: Option[String]): Future[SearchDTDocumentsResults] = {
     val dtDocumentSearch: DTDocumentSearch =
       DTDocumentSearch(
         from = Option {0},
@@ -220,27 +219,22 @@ object DecisionTableService {
         state = None: Option[String], queries = Option {
           userText
         },
-        enabled = Some(true)
+        evaluation_class = evaluationClass
       )
 
-    this.search(indexName, dtDocumentSearch).map {
-      case Some(results) => Some(results)
-      case _ => throw DecisionTableServiceException("Search resulted in an empty data structure")
-    }
+    this.search(indexName, dtDocumentSearch)
   }
 
-  def resultsToMap(results: Option[SearchDTDocumentsResults]): Map[String, Any] = {
-    results match {
-      case Some(searchRes) =>
-        val m: Map[String, (Float, SearchDTDocument)] = searchRes.hits.map(doc => {
+  def resultsToMap(results: SearchDTDocumentsResults): Map[String, Any] = {
+    Map("dt_queries_search_result" ->
+      results.hits.map {
+        doc =>
           (doc.document.state, (doc.score, doc))
-        }).toMap
-        Map("dt_queries_search_result" -> Option{m})
-      case _ => Map.empty[String, (Float, SearchDTDocument)]
-    }
+      }.toMap
+    )
   }
 
-  def create(indexName: String, document: DTDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(indexName: String, document: DTDocument, refresh: Int): Future[IndexDocumentResult] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     builder.field("state", document.state)
@@ -267,11 +261,11 @@ object DecisionTableService {
 
     builder.field("success_value", document.success_value)
     builder.field("failure_value", document.failure_value)
-    val enabled = document.enabled match {
+    val evaluationClass = document.evaluation_class match {
       case Some(t) => t
-      case _ => true
+      case _ => "default"
     }
-    builder.field("enabled", enabled)
+    builder.field("evaluation_class", evaluationClass)
     builder.endObject()
 
     val client: RestHighLevelClient = elasticClient.client
@@ -298,11 +292,11 @@ object DecisionTableService {
       created = response.status === RestStatus.CREATED
     )
 
-    Option {docResult}
+    docResult
   }
 
   def update(indexName: String, id: String, document: DTDocumentUpdate, refresh: Int):
-  Future[Option[UpdateDocumentResult]] = Future {
+  Future[UpdateDocumentResult] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.analyzer match {
@@ -358,8 +352,8 @@ object DecisionTableService {
       case Some(t) => builder.field("failure_value", t)
       case None => ;
     }
-    document.enabled match {
-      case Some(t) => builder.field("enabled", t)
+    document.evaluation_class match {
+      case Some(t) => builder.field("evaluation_class", t)
       case None => ;
     }
 
@@ -389,57 +383,10 @@ object DecisionTableService {
       created = response.status === RestStatus.CREATED
     )
 
-    Option {docResult}
+    docResult
   }
 
-  def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: RestHighLevelClient = elasticClient.client
-
-    throw new Exception("Function to be implemented with version 7.0 of ES")
-    /* TODO: to be implemented with version 7.0 of ES
-    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    val response: BulkByScrollResponse =
-      DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(Index.indexName(indexName, elasticClient.indexSuffix))
-        .filter(qb)
-        .get()
-
-    val deleted: Long = response.getDeleted
-
-    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
-    Option {result}
-    */
-  }
-
-  def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: RestHighLevelClient = elasticClient.client
-
-    val deleteReq = new DeleteRequest()
-      .index(Index.indexName(indexName, elasticClient.indexSuffix))
-      .`type`(elasticClient.indexSuffix)
-      .id(id)
-
-    val response: DeleteResponse = client.delete(deleteReq, RequestOptions.DEFAULT)
-
-    if (refresh =/= 0) {
-      val refreshIndex = elasticClient
-        .refresh(Index.indexName(indexName, elasticClient.indexSuffix))
-      if(refreshIndex.failed_shards_n > 0) {
-        throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")
-      }
-    }
-
-    val docResult: DeleteDocumentResult = DeleteDocumentResult(index = response.getIndex,
-      dtype = response.getType,
-      id = response.getId,
-      version = response.getVersion,
-      found = response.status =/= RestStatus.NOT_FOUND
-    )
-
-    Option {docResult}
-  }
-
-  def getDTDocuments(indexName: String): Future[Option[SearchDTDocumentsResults]] = {
+  def getDTDocuments(indexName: String): Future[SearchDTDocumentsResults] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
@@ -455,107 +402,102 @@ object DecisionTableService {
     var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     //get a map of stateId -> AnalyzerItem (only if there is smt in the field "analyzer")
-    val decisionTableContent : List[SearchDTDocument] = scrollResp.getHits.getHits.toList.map({ e =>
-      val item: SearchHit = e
-      val state : String = item.getId
-      val version: Option[Long] = Some(item.getVersion)
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+    val decisionTableContent : List[SearchDTDocument] = scrollResp.getHits.getHits.toList.map{ item =>
+        val state : String = item.getId
+        val version: Option[Long] = Some(item.getVersion)
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-      val executionOrder : Int = source.get("execution_order") match {
-        case Some(t) => t.asInstanceOf[Int]
-        case None => 0
-      }
+        val executionOrder : Int = source.get("execution_order") match {
+          case Some(t) => t.asInstanceOf[Int]
+          case None => 0
+        }
 
-      val maxStateCount : Int = source.get("max_state_count") match {
-        case Some(t) => t.asInstanceOf[Int]
-        case None => 0
-      }
+        val maxStateCount : Int = source.get("max_state_count") match {
+          case Some(t) => t.asInstanceOf[Int]
+          case None => 0
+        }
 
-      val analyzer : String = source.get("analyzer") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val analyzer : String = source.get("analyzer") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val queries : List[String] = source.get("queries") match {
-        case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-          .asScala.map(query =>
-          query.asScala.get("query")).filter(_.nonEmpty).toList.map(_.get)
-        case None => List[String]()
-      }
+        val queries : List[String] = source.get("queries") match {
+          case Some(t) => t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+            .asScala.map(query =>
+            query.asScala.get("query")).filter(_.nonEmpty).toList.map(_.get)
+          case None => List[String]()
+        }
 
-      val bubble : String = source.get("bubble") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val bubble : String = source.get("bubble") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val action : String = source.get("action") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val action : String = source.get("action") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val actionInput : Map[String,String] = source.get("action_input") match {
-        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
-        case None => Map[String,String]()
-      }
+        val actionInput : Map[String,String] = source.get("action_input") match {
+          case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+          case None => Map[String,String]()
+        }
 
-      val stateData : Map[String,String] = source.get("state_data") match {
-        case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
-        case None => Map[String,String]()
-      }
+        val stateData : Map[String,String] = source.get("state_data") match {
+          case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
+          case None => Map[String,String]()
+        }
 
-      val successValue : String = source.get("success_value") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val successValue : String = source.get("success_value") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val failureValue : String = source.get("failure_value") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val failureValue : String = source.get("failure_value") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val enabled : Boolean = source.get("enabled") match {
-        case Some(t) => t.asInstanceOf[Boolean]
-        case None => true
-      }
+        val evaluationClass : String = source.get("evaluation_class") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => "default"
+        }
 
-      val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
-        max_state_count = maxStateCount,
-        analyzer = analyzer, queries = queries, bubble = bubble,
-        action = action, action_input = actionInput, state_data = stateData,
-        success_value = successValue, failure_value = failureValue,
-        enabled = Some(enabled), version = version
-      )
+        val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
+          max_state_count = maxStateCount,
+          analyzer = analyzer, queries = queries, bubble = bubble,
+          action = action, action_input = actionInput, state_data = stateData,
+          success_value = successValue, failure_value = failureValue,
+          evaluation_class = Some(evaluationClass), version = version
+        )
 
-      val searchDocument : SearchDTDocument = SearchDTDocument(score = .0f, document = document)
-      searchDocument
-    }).sortBy(_.document.state)
+        val searchDocument : SearchDTDocument = SearchDTDocument(score = .0f, document = document)
+        searchDocument
+    }.sortBy(_.document.state)
 
     val maxScore : Float = .0f
     val total : Int = decisionTableContent.length
-    val searchResults : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = maxScore,
-      hits = decisionTableContent)
-
-    Future{Option{searchResults}}
+    SearchDTDocumentsResults(total = total, max_score = maxScore, hits = decisionTableContent)
   }
 
-  def read(indexName: String, ids: List[String]): Future[Option[SearchDTDocumentsResults]] = {
+  def read(indexName: String, ids: List[String]): Future[SearchDTDocumentsResults] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
-    if(ids.nonEmpty) {
-      val multiGetReq = new MultiGetRequest()
+    val multiGetReq = new MultiGetRequest()
 
-      // a list of specific ids was requested
-      ids.foreach{id =>
-        multiGetReq.add(
-          new MultiGetRequest.Item(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, id)
-        )
-      }
+    // a list of specific ids was requested
+    ids.foreach{id =>
+      multiGetReq.add(
+        new MultiGetRequest.Item(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, id)
+      )
+    }
 
-      val response: MultiGetResponse = client.mget(multiGetReq, RequestOptions.DEFAULT)
+    val response: MultiGetResponse = client.mget(multiGetReq, RequestOptions.DEFAULT)
 
-      val documents: Option[List[SearchDTDocument]] = Option {
-        response.getResponses
-          .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map({ case (e) =>
+    val documents: Option[List[SearchDTDocument]] = Option {
+      response.getResponses
+        .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map{ e =>
 
           val item: GetResponse = e.getResponse
 
@@ -617,9 +559,9 @@ object DecisionTableService {
             case None => ""
           }
 
-          val enabled : Boolean = source.get("enabled") match {
-            case Some(t) => t.asInstanceOf[Boolean]
-            case None => true
+          val evaluationClass : String = source.get("evaluation_class") match {
+            case Some(t) => t.asInstanceOf[String]
+            case None => "default"
           }
 
           val document: DTDocument = DTDocument(state = state, execution_order = executionOrder,
@@ -627,43 +569,34 @@ object DecisionTableService {
             analyzer = analyzer, queries = queries, bubble = bubble,
             action = action, action_input = actionInput, state_data = stateData,
             success_value = successValue, failure_value = failureValue,
-            enabled = Some(enabled), version = version
+            evaluation_class = Some(evaluationClass), version = version
           )
 
           val searchDocument: SearchDTDocument = SearchDTDocument(score = .0f, document = document)
           searchDocument
-        })
       }
-
-      val filteredDoc: List[SearchDTDocument] = documents.getOrElse(List[SearchDTDocument]())
-
-      val maxScore: Float = .0f
-      val total: Int = filteredDoc.length
-      val searchResults: SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = maxScore,
-        hits = filteredDoc)
-
-      Future {
-        Option {
-          searchResults
-        }
-      }
-    } else {
-      // fetching all documents
-      getDTDocuments(indexName)
     }
+
+    val filteredDoc: List[SearchDTDocument] = documents.getOrElse(List[SearchDTDocument]())
+
+    val maxScore: Float = .0f
+    val total: Int = filteredDoc.length
+    SearchDTDocumentsResults(total = total, max_score = maxScore, hits = filteredDoc)
   }
 
 
-  def indexCSVFileIntoDecisionTable(indexName: String, file: File, skiplines: Int = 1, separator: Char = ','):
-  Future[Option[IndexDocumentListResult]] = {
-    val documents: Try[Option[List[DTDocument]]] =
+  def indexCSVFileIntoDecisionTable(indexName: String, file: File, skipLines: Int = 1, separator: Char = ','):
+  Future[IndexDocumentListResult] = Future {
+    val documents: Try[List[DTDocument]] =
       Await.ready(
         Future{
-          Option{
-            FileToDTDocuments.getDTDocumentsFromCSV(log = log, file = file, skiplines = skiplines, separator = separator)
-          }
+          FileToDTDocuments.getDTDocumentsFromCSV(log = log, file = file, skipLines = skipLines, separator = separator)
         }, 30.seconds).value
-        .getOrElse(Failure(throw new Exception("indexCSVFileIntoDecisionTable: empty list of documents from csv")))
+        .getOrElse(
+          Failure(
+            throw DecisionTableServiceException("indexCSVFileIntoDecisionTable: empty list of documents from csv")
+          )
+        )
 
     val documentList = documents match {
       case Success(t) =>
@@ -674,34 +607,21 @@ object DecisionTableService {
         throw new Exception(message, e)
     }
 
-    val indexDocumentListResult = documentList match {
-      case Some(t) =>
-        val values = t.map(dtDocument => {
-          val indexingResult: Try[Option[IndexDocumentResult]] =
-            Await.ready(create(indexName, dtDocument, 1), 10.seconds).value.getOrElse(
-              Failure(throw new Exception("indexCSVFileIntoDecisionTable: operation result was empty"))
-            )
-          indexingResult match {
-            case Success(result) =>
-              result match {
-                case Some(indexingDocuments) => indexingDocuments
-                case _ =>
-                  throw new Exception("indexCSVFileIntoDecisionTable: indexingDocuments was empty")
-              }
-            case Failure(e) =>
-              val message = "Cannot index document: " + dtDocument.state
-              log.error(message + " : " + e.getMessage)
-              throw new Exception(message, e)
-          }
-        })
-        Option { IndexDocumentListResult(data = values) }
-      case _ =>
-        val message = "I could not index any document"
-        log.error(message)
-        throw new Exception(message)
-    }
-
-    Future { indexDocumentListResult }
+    val indexDocumentListResult = documentList.map(dtDocument => {
+      val indexingResult: Try[IndexDocumentResult] =
+        Await.ready(create(indexName, dtDocument, 1), 10.seconds).value.getOrElse(
+          Failure(throw DecisionTableServiceException("indexCSVFileIntoDecisionTable: operation result was empty"))
+        )
+      indexingResult match {
+        case Success(result) =>
+          log.info("indexCSVFileIntoDecisionTable: " + result.id)
+          result
+        case Failure(e) =>
+          val message = "Cannot index document: " + dtDocument.state
+          log.error(message + " : " + e.getMessage)
+          throw DecisionTableServiceException(message, e)
+      }
+    })
+    IndexDocumentListResult(data = indexDocumentListResult)
   }
-
 }

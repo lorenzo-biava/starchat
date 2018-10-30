@@ -4,39 +4,19 @@ package com.getjenny.command
   * Created by angelo on 29/03/17.
   */
 
-import java.io.File
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.ActorMaterializer
-import com.getjenny.starchat.serializers.JsonSupport
-import com.getjenny.starchat.services.FileToDTDocuments
-import scopt.OptionParser
-
-import scala.collection.immutable
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import scala.concurrent.duration._
-import scala.io.Source
-import java.util.Base64
-
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.{HttpRequest, _}
-import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.serializers.JsonSupport
-import com.roundeights.hasher.Implicits._
 import scopt.OptionParser
 
 import scala.collection.immutable
-import scala.collection.immutable.List
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.io.Source
 
 object IndexSubtitles extends JsonSupport {
@@ -57,11 +37,7 @@ object IndexSubtitles extends JsonSupport {
     implicit val materializer: ActorMaterializer = ActorMaterializer()
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    val vecsize = 0
-    val skiplines = params.skiplines
-
     val baseUrl = params.host + "/" + params.indexName + params.path
-    val file = new File(params.inputfile)
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
       val headers: Seq[RawHeader] = params.headerKv.map(x => {
@@ -79,7 +55,7 @@ object IndexSubtitles extends JsonSupport {
 
     val lines = Source.fromFile(name=params.inputfile).getLines
 
-    val docs = lines.map{ case(entry) =>
+    val docs = lines.map{ entry =>
       val fields = entry.split("\t")
       val doc = KBDocument(
         id = fields(0),

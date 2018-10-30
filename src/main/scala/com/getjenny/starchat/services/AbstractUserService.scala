@@ -9,7 +9,7 @@ import com.getjenny.starchat.services.auth.AbstractStarChatAuthenticator
 
 import scala.concurrent.Future
 
-abstract class AbstractUserService {
+trait AbstractUserService {
   def create(user: User): Future[IndexDocumentResult]
   def update(id: String, user: UserUpdate): Future[UpdateDocumentResult]
   def delete(id: String): Future[DeleteDocumentResult]

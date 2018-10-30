@@ -27,9 +27,9 @@ import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object  DtReloadService {
+object DtReloadService extends AbstractDataService {
   val DT_RELOAD_TIMESTAMP_DEFAULT : Long = -1
-  private[this] val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
+  override val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   def setDTReloadTimestamp(indexName: String, refresh: Int = 0):
@@ -93,7 +93,7 @@ object  DtReloadService {
   }
 
   def allDTReloadTimestamp(minTimestamp: Option[Long] = None,
-                           maxItems: Option[Long] = None): Option[List[DtReloadTimestamp]] = {
+                           maxItems: Option[Long] = None): List[DtReloadTimestamp] = {
     val client: RestHighLevelClient = elasticClient.client
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
     minTimestamp match {
@@ -126,7 +126,7 @@ object  DtReloadService {
 
       DtReloadTimestamp(docId, timestamp)
     })
-    Option {dtReloadTimestamps}
+    dtReloadTimestamps
   }
 
 }

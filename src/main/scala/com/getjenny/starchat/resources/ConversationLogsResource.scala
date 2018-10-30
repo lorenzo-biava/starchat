@@ -12,6 +12,7 @@ import akka.stream.scaladsl.Source
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.{ConversationLogsService, QuestionAnswerService}
+
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
@@ -121,8 +122,7 @@ trait ConversationLogsResource extends StarChatResource {
   }
 
   def clQuestionAnswerStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix(indexRegex ~ Slash ~ """stream""" ~ Slash ~
-        routeName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ """stream""" ~ Slash ~ routeName) { indexName =>
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm,
@@ -261,24 +261,41 @@ trait ConversationLogsResource extends StarChatResource {
               }
             }
           } ~
-            delete {
-              authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { user =>
-                extractRequest { request =>
-                  authorizeAsync(_ =>
-                    authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                    parameters("refresh".as[Int] ? 0) { refresh =>
-                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, id, refresh)) {
-                        case Success(t) =>
-                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                        case Failure(e) =>
-                          log.error("index(" + indexName + ") uri=(" + request.uri +
-                            ") method=(" + request.method.name + ") : " + e.getMessage)
-                          completeResponse(StatusCodes.BadRequest,
-                            Option {
-                              ReturnMessageData(code = 109, message = e.getMessage)
-                            })
+            pathEnd {
+              delete {
+                authenticateBasicAsync(realm = authRealm,
+                  authenticator = authenticator.authenticator) { (user) =>
+                  extractRequest { request =>
+                    authorizeAsync(_ =>
+                      authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                      parameters("refresh".as[Int] ? 0) { refresh =>
+                        entity(as[DocsIds]) { request_data =>
+                          if (request_data.ids.nonEmpty) {
+                            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                            onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, request_data, refresh)) {
+                              case Success(t) =>
+                                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                              case Failure(e) =>
+                                log.error("index(" + indexName + ") uri=(" + request.uri + ") method=DELETE : " + e.getMessage)
+                                completeResponse(StatusCodes.BadRequest,
+                                  Option {
+                                    ReturnMessageData(code = 104, message = e.getMessage)
+                                  })
+                            }
+                          } else {
+                            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                            onCompleteWithBreaker(breaker)(questionAnswerService.deleteAll(indexName)) {
+                              case Success(t) =>
+                                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                              case Failure(e) =>
+                                log.error("index(" + indexName + ") uri=(" + request.uri + ") method=DELETE : " + e.getMessage)
+                                completeResponse(StatusCodes.BadRequest,
+                                  Option {
+                                    ReturnMessageData(code = 105, message = e.getMessage)
+                                  })
+                            }
+                          }
+                        }
                       }
                     }
                   }

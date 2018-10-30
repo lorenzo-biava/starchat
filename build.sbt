@@ -21,7 +21,6 @@ libraryDependencies ++= {
   val AkkaVersion	= "2.5.17"
   val BreezeVersion	= "0.13.2"
   val ESClientVersion	= "6.4.2"
-  val Log4JVersion	= "2.9.1"
   val LogbackVersion	= "1.2.3"
   val ParboiledVersion	= "2.1.4"
   val RoundeightsHasherVersion	= "1.2.0"
@@ -33,7 +32,6 @@ libraryDependencies ++= {
   val StanfordCoreNLP = "3.9.1"
   Seq(
     "com.getjenny" %% "manaus-lib" % ManausLibVersion,
-    "ch.qos.logback" % "logback-classic" % LogbackVersion,
     "com.github.scopt" %% "scopt" % ScoptVersion,
     "com.roundeights" %% "hasher" % RoundeightsHasherVersion,
     "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
@@ -41,12 +39,12 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion % Test,
+    "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion % Test,
+    "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test,
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
+    "ch.qos.logback" % "logback-classic" % LogbackVersion,
     "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
-    "com.typesafe.akka" %% "akka-testkit" % AkkaVersion,
-    "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
-    "org.apache.logging.log4j" % "log4j-core" % Log4JVersion,
     "org.apache.tika" % "tika-app" % TikaVersion,
     "org.apache.tika" % "tika-core" % TikaVersion,
     "org.apache.tika" % "tika-parsers" % TikaVersion,
@@ -57,7 +55,7 @@ libraryDependencies ++= {
     "org.parboiled" %% "parboiled" % ParboiledVersion,
     "org.scalanlp" %% "breeze" % BreezeVersion,
     "org.scalanlp" %% "breeze-natives" % BreezeVersion,
-    "org.scalatest" %% "scalatest" % ScalatestVersion % "test",
+    "org.scalatest" %% "scalatest" % ScalatestVersion % Test,
     "org.scalaz" %% "scalaz-core" % ScalazVersion
   )
 }

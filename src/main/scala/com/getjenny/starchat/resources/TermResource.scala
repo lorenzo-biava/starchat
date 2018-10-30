@@ -75,7 +75,7 @@ trait TermResource extends StarChatResource {
                 authenticator = authenticator.authenticator) { (user) =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                  entity(as[TermIdsRequest]) { requestData =>
+                  entity(as[DocsIds]) { requestData =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(
                       termService.termsDistance( indexName = indexName, termsReq = requestData)
@@ -125,7 +125,7 @@ trait TermResource extends StarChatResource {
                 authenticator = authenticator.authenticator) { (user) =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                  entity(as[TermIdsRequest]) { request_data =>
+                  entity(as[DocsIds]) { request_data =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(
                       termService.getTermsByIdFuture(
@@ -160,7 +160,7 @@ trait TermResource extends StarChatResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("refresh".as[Int] ? 0) { refresh =>
-                  entity(as[TermIdsRequest]) { request_data =>
+                  entity(as[DocsIds]) { request_data =>
                     if (request_data.ids.nonEmpty) {
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       onCompleteWithBreaker(breaker)(termService.delete(indexName, request_data, refresh)) {

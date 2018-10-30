@@ -17,9 +17,9 @@ import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object ManausTermsExtractionService {
+object ManausTermsExtractionService extends AbstractDataService {
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  private[this] val elasticClient: ManausTermsExtractionElasticClient.type = ManausTermsExtractionElasticClient
+  override val elasticClient: ManausTermsExtractionElasticClient.type = ManausTermsExtractionElasticClient
   private[this] val termService: TermService.type = TermService
   private[this] val priorDataService: PriorDataService.type = PriorDataService
   private[this] val convLogDataService: ConversationLogsService.type = ConversationLogsService
@@ -130,7 +130,7 @@ object ManausTermsExtractionService {
     val keywordsExtraction = new KeywordsExtraction(priorOccurrences=priorOccurrences,
       observedOccurrences=observedOccurrences)
 
-    val freqData: String = sentenceTokens.map { case(e) =>
+    val freqData: String = sentenceTokens.map { e =>
       "word(" + e + ") -> observedOccurrences(" + observedOccurrences.tokenOccurrence(e) + ") priorOccurrences(" +
         priorOccurrences.tokenOccurrence(e) + ") totalNumberOfObservedTokens(" +
         observedOccurrences.totalNumberOfTokens + ") totalNumberOfObservedTokens(" +
@@ -185,10 +185,7 @@ object ManausTermsExtractionService {
     val tokenizerReq = TokenizerQueryRequest(extractionRequest.tokenizer.getOrElse("base"),
       extractionRequest.text)
 
-    val tokens: TokenizerResponse = termService.esTokenizer(indexName, tokenizerReq) match {
-      case Some(t) => t
-      case _ => TokenizerResponse(tokens = List.empty[TokenizerResponseItem])
-    }
+    val tokens: TokenizerResponse = termService.esTokenizer(indexName, tokenizerReq)
 
     tokens
   }
@@ -196,7 +193,7 @@ object ManausTermsExtractionService {
   def termFrequency(indexName: String, extractionRequest: TermsExtractionRequest): TokenFrequency = {
     val tokens = tokenize(indexName, extractionRequest)
     val (priorOccurrences, observedOccurrences) = initTokenOccurrence(indexName, extractionRequest)
-    val freqItems = tokens.tokens.map(_.token).distinct.map { case (token) =>
+    val freqItems = tokens.tokens.map(_.token).distinct.map { token =>
       TokenFrequencyItem(
         token = token,
         priorFrequency = priorOccurrences.tokenOccurrence(token),
@@ -285,11 +282,8 @@ object ManausTermsExtractionService {
 
     // extraction of vectorial terms representation
     val tokenTermsId: Set[String] = tokenizationRes.tokens.map(_.token).toSet // all tokens
-    val extractedSentenceTerms = termService.termsById(termsIndexName, TermIdsRequest(ids = tokenTermsId.toList))
-    val tokenTerms = extractedSentenceTerms match {
-      case Some(terms) => terms.terms.map { case(t) => (t.term, t) }.toMap
-      case _ => Map.empty[String, Term]
-    }
+    val extractedSentenceTerms = termService.termsById(termsIndexName, DocsIds(ids = tokenTermsId.toList))
+    val tokenTerms = extractedSentenceTerms.terms.map { t => (t.term, t) }.toMap
 
     // extraction of vectorial synonyms representation, exclude terms already in tokens (used as a cache)
     val synsTermsId = tokenTerms.map { case(_, term) =>
@@ -298,11 +292,8 @@ object ManausTermsExtractionService {
         case _ => Set.empty[String]
       }
     }.toList.flatten.filter(! tokenTermsId.contains(_)).toSet
-    val extractedSynsTerms = termService.termsById(termsIndexName, TermIdsRequest(ids = synsTermsId.toList))
-    val synsTerms = extractedSynsTerms match {
-      case Some(terms) => terms.terms.map { case(t) => (t.term, t) }.toMap
-      case _ => Map.empty[String, Term]
-    }
+    val extractedSynsTerms = termService.termsById(termsIndexName, DocsIds(ids = synsTermsId.toList))
+    val synsTerms = extractedSynsTerms.terms.map { t => (t.term, t) }.toMap
 
     // token and synonyms terms map
     val allTerms: Map[String, Term] = tokenTerms ++ synsTerms
@@ -310,12 +301,12 @@ object ManausTermsExtractionService {
     val numberOfTokens = tokenizationRes.tokens.length
 
     // calculate the vector representation for the sentence
-    val sentenceVectors = tokenizationRes.tokens.map{ case(token) =>
-      allTerms.get(token.token) match {
-        case Some(t) => (token.token, t.vector)
-        case _ => (token.token, None)
-      }
-    }.filter(_._2.nonEmpty).map { case (t) => t._2.get}.toVector
+    val sentenceVectors = tokenizationRes.tokens.map { token =>
+        allTerms.get(token.token) match {
+          case Some(t) => (token.token, t.vector)
+          case _ => (token.token, None)
+        }
+    }.filter{case (_, vecs) => vecs.nonEmpty}.map { case (_, vecs) => vecs.get}.toVector
     val termsInSentence = sentenceVectors.length
 
     val indexedTokenizationRes = tokenizationRes.tokens.zipWithIndex
@@ -330,8 +321,9 @@ object ManausTermsExtractionService {
     indexedTokenizationRes.map { case(token, index) =>
       // getting current token and rest of the sentence tokens
       val currentTokenTerm = allTerms.get(token.token)
-      val restOfTheListTerms = indexedTokenizationRes.filter(_._2 != index).map { case(t) =>
-        allTerms.get(t._1.token)
+      val restOfTheListTerms = indexedTokenizationRes.filter {case (_, tokenIdx) => tokenIdx != index}.map {
+        case (tRes, _) =>
+          allTerms.get(tRes.token)
       }.filter(_.nonEmpty).map(_.get).filter(_.vector.nonEmpty)
       // calculating vector representation of the sentence with the current token replaced by a synonym
       val replacedTokenInSentence = currentTokenTerm match {
@@ -340,30 +332,31 @@ object ManausTermsExtractionService {
             case Some(_) =>
               // take all the synonyms and discard those without a vector representation
               val syns = t.synonyms.getOrElse(Map.empty[String, Double]).keys
-                .map { case(s) => allTerms.get(s) }.filter(_.nonEmpty).map(_.get)
+                .map { syn => allTerms.get(syn)
+                }.filter(_.nonEmpty).map(_.get)
                 .filter(_.vector.nonEmpty).toList
 
-              syns.map { case(s) =>
-                val synSentenceTerms = s :: restOfTheListTerms
+              syns.map { term =>
+                val synSentenceTerms = term :: restOfTheListTerms
                 val synSentenceTermsLength = synSentenceTerms.length
                 val synSentenceTextTerms = TextTerms(
                   text = "",
                   text_terms_n = numberOfTokens,
                   terms_found_n = synSentenceTermsLength,
-                  terms = Some(Terms(terms = synSentenceTerms)))
+                  terms = Terms(terms = synSentenceTerms))
 
                 val sentencesDistance = extractionRequest.distanceFunction match {
                   case SynonymExtractionDistanceFunction.EMDCOSINE =>
-                    EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                    EMDVectorDistances.distanceCosine(baseSentenceTextTerms, synSentenceTextTerms)
                   case SynonymExtractionDistanceFunction.SUMCOSINE =>
-                    SumVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                    SumVectorDistances.distanceCosine(baseSentenceTextTerms, synSentenceTextTerms)
                   case SynonymExtractionDistanceFunction.MEANCOSINE =>
-                    MeanVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                    MeanVectorDistances.distanceCosine(baseSentenceTextTerms, synSentenceTextTerms)
                   case _ =>
-                    EMDVectorDistances.distanceCosine(Some(baseSentenceTextTerms), Some(synSentenceTextTerms))
+                    EMDVectorDistances.distanceCosine(baseSentenceTextTerms, synSentenceTextTerms)
                 }
 
-                (t, s, sentencesDistance)
+                (t, term, sentencesDistance)
               }
             case _ =>
               List.empty[(Term, Term, Double)]
