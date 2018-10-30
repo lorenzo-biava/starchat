@@ -32,9 +32,9 @@ trait ElasticClient {
     .map(x => x.split("=")).map(x => (x(0), x(1).toInt)).toMap
 
   val keystore: String = config.getString("starchat.client.https.keystore")
-  val keystore_type: String = config.getString("starchat.client.https.keystore_type")
-  val keystore_password: String = config.getString("starchat.client.https.keystore_password")
-  val disable_host_validation: Boolean = config.getBoolean("starchat.client.https.disable_host_validation")
+  val keystoreType: String = config.getString("starchat.client.https.keystore_type")
+  val keystorePassword: String = config.getString("starchat.client.https.keystore_password")
+  val disableHostValidation: Boolean = config.getBoolean("starchat.client.https.disable_host_validation")
 
   val inetAddresses: List[HttpHost] =
     hostMap.map{ case(k,v) => new HttpHost(InetAddress.getByName(k), v, hostProto) }.toList
@@ -47,16 +47,18 @@ trait ElasticClient {
   object httpClientConfigCallback extends RestClientBuilder.HttpClientConfigCallback {
     override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
       val httpBuilder = httpClientBuilder.setSSLContext(sslContext)
-      if(disable_host_validation)
+      if(disableHostValidation)
         httpBuilder.setSSLHostnameVerifier(allHostsValid)
       httpBuilder
     }
   }
 
   def sslContext: SSLContext = {
-    val password = keystore_password.toCharArray
+    val password = if(keystorePassword.nonEmpty)
+      keystorePassword.toCharArray
+    else null
 
-    val ks = KeyStore.getInstance(keystore_type)
+    val ks = KeyStore.getInstance(keystoreType)
 
     val keystoreIs: InputStream = if(keystore.startsWith("/tls/certs/")) {
       getClass.getResourceAsStream(keystore)
