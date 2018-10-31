@@ -13,7 +13,7 @@ import scalaz.Scalaz._
   * Created by mal on 20/02/2017.
   */
 
-class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
+class W2VCosineWordAtomic(arguments: List[String], restrictedArgs: Map[String, String]) extends AbstractAtomic {
   /**
     * Return the normalized w2vcosine similarity of the nearest word
     */
@@ -33,7 +33,7 @@ class W2VCosineWordAtomic(arguments: List[String], restricted_args: Map[String, 
 
   val termService: TermService.type = TermService
 
-  val originalIndexName: String = restricted_args("index_name")
+  val originalIndexName: String = restrictedArgs("index_name")
   val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
 
   val (sentenceVector: Vector[Double], reliabilityFactor: Double) =

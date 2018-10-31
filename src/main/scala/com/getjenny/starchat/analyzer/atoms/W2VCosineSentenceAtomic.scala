@@ -12,7 +12,7 @@ import com.getjenny.starchat.utils.Index
   * Created by mal on 20/02/2017.
   */
 
-class W2VCosineSentenceAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic  {
+class W2VCosineSentenceAtomic(val arguments: List[String], restrictedArgs: Map[String, String]) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -37,7 +37,7 @@ class W2VCosineSentenceAtomic(val arguments: List[String], restricted_args: Map[
   override def toString: String = "similar(\"" + sentence + "\")"
   val isEvaluateNormalized: Boolean = true
 
-  val originalIndexName: String = restricted_args("index_name")
+  val originalIndexName: String = restrictedArgs("index_name")
 
   val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
   val sentenceVector: (Vector[Double], Double) = TextToVectorsTools.sumOfVectorsFromText(indexName, sentence)

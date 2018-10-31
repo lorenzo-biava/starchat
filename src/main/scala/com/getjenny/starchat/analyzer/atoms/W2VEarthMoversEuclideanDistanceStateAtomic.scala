@@ -11,7 +11,7 @@ import com.getjenny.starchat.entities.{CommonOrSpecificSearch, TextTerms}
 import com.getjenny.starchat.services._
 import com.getjenny.starchat.utils.Index
 
-class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], restricted_args: Map[String, String])
+class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], restrictedArgs: Map[String, String])
   extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
@@ -42,7 +42,7 @@ class W2VEarthMoversEuclideanDistanceStateAtomic(val arguments: List[String], re
 
   val analyzerService: AnalyzerService.type = AnalyzerService
 
-  val originalIndexName: String = restricted_args("index_name")
+  val originalIndexName: String = restrictedArgs("index_name")
   val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
 
   val queriesSentences: Option[DecisionTableRuntimeItem] =

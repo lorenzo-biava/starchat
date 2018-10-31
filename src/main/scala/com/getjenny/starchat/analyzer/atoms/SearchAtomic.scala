@@ -12,7 +12,7 @@ import com.getjenny.starchat.services._
 /**
   * Query ElasticSearch
   */
-class SearchAtomic(arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
+class SearchAtomic(arguments: List[String], restrictedArgs: Map[String, String]) extends AbstractAtomic {
   val state: String = arguments.headOption match {
     case Some(t) => t
     case _ =>

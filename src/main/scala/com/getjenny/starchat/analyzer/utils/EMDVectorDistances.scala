@@ -51,21 +51,21 @@ object EMDVectorDistances {
       val weightedWords1 = words1.map(x => (x._1, (x._2._1 / words2.size, x._2._2)))
       val weightedWords2 = words2.map(x => (x._1, (x._2._1 / words1.size, x._2._2)))
 
-      val workFromVtoU = weightedWords1.map({ case((term1, (weight1, vector1))) =>
-        val min_term = weightedWords2.map({ case((term2, (weight2, vector2))) =>
+      val workFromVtoU = weightedWords1.map { case (term1, (weight1, vector1)) =>
+        val min_term = weightedWords2.map({ case (term2, (weight2, vector2)) =>
           val distance: Double = dist_f(vector1, vector2)
           (term1, term2, weight1, weight2, vector1, vector2, distance, weight1 * distance)
         }).minBy{case (_, _, _, _, _, _, distance, _) => distance}
         min_term._8
-      }).map(x => math.abs(x)).sum
+      }.map(x => math.abs(x)).sum
 
-      val workFromUtoV = weightedWords2.map({ case((term1, (weight1, vector1))) =>
-        val min_term = weightedWords1.map({ case((term2, (weight2, vector2))) =>
+      val workFromUtoV = weightedWords2.map { case (term1, (weight1, vector1)) =>
+        val min_term = weightedWords1.map({ case (term2, (weight2, vector2)) =>
           val distance: Double = dist_f(vector1, vector2)
           (term1, term2, weight1, weight2, vector1, vector2, distance, weight1 * distance)
         }).minBy{case (_, _, _, _, _, _, distance, _) => distance}
         min_term._8
-      }).map(x => math.abs(x)).sum
+      }.map(x => math.abs(x)).sum
 
       val dist = math.max(workFromUtoV, workFromVtoU)
       /*println("Info: work_from_u_to_v("

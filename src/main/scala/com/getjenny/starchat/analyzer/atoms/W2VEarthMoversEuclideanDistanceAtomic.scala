@@ -11,7 +11,8 @@ import com.getjenny.starchat.utils.Index
   * Created by angelo on 04/04/17.
   */
 
-class W2VEarthMoversEuclideanDistanceAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic  {
+class W2VEarthMoversEuclideanDistanceAtomic(val arguments: List[String],
+                                            restrictedArgs: Map[String, String]) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *
@@ -33,7 +34,7 @@ class W2VEarthMoversEuclideanDistanceAtomic(val arguments: List[String], restric
 
   val termService: TermService.type = TermService
 
-  val originalIndexName: String = restricted_args("index_name")
+  val originalIndexName: String = restrictedArgs("index_name")
   val indexName: String = Index.resolveIndexName(originalIndexName, commonOrSpecific)
 
   override def toString: String = "similarEucEmd(\"" + sentence + "\")"

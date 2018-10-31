@@ -14,7 +14,7 @@ import scalaz.Scalaz._
   */
 
 
-class PrevTravStateIsAtomic(val arguments: List[String], restricted_args: Map[String, String])
+class PrevTravStateIsAtomic(val arguments: List[String], restrictedArgs: Map[String, String])
   extends AbstractAtomic {
   val name: String = arguments.headOption match {
     case Some(t) => t

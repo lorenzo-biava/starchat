@@ -14,7 +14,7 @@ import com.getjenny.analyzer.expressions.{AnalyzersDataInternal, Result}
   * @param arguments of the state to be checked
   */
 
-class HasTravStateAtomic(val arguments: List[String], restricted_args: Map[String, String]) extends AbstractAtomic {
+class HasTravStateAtomic(val arguments: List[String], restrictedArgs: Map[String, String]) extends AbstractAtomic {
   val name: String = arguments.headOption match {
     case Some(t) => t
     case _ =>
