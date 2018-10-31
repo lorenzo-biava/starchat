@@ -108,7 +108,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           query = "query",
           analyzer = """hasTravState("one")""",
           data = Option{
-            AnalyzersData(traversed_states=List("one", "two"), extracted_variables = Map.empty[String, String])
+            AnalyzersData(traversedStates=Vector("one", "two"), extractedVariables = Map.empty[String, String])
           }
         )
 
@@ -129,7 +129,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           query = "query",
           analyzer = """bnot(hasTravState("three"))""",
           data = Option{
-            AnalyzersData(traversed_states=List("one", "two"), extracted_variables = Map.empty[String, String])
+            AnalyzersData(traversedStates=Vector("one", "two"), extractedVariables = Map.empty[String, String])
           }
         )
 
@@ -150,7 +150,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           query = "query",
           analyzer = """lastTravStateIs("two")""",
           data = Option{
-            AnalyzersData(traversed_states=List("one", "two"), extracted_variables = Map.empty[String, String])
+            AnalyzersData(traversedStates=Vector("one", "two"), extractedVariables = Map.empty[String, String])
           }
         )
 
@@ -171,7 +171,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           query = "query",
           analyzer = """prevTravStateIs("one")""",
           data = Option{
-            AnalyzersData(traversed_states=List("one", "two"), extracted_variables = Map.empty[String, String])
+            AnalyzersData(traversedStates=Vector("one", "two"), extractedVariables = Map.empty[String, String])
           }
         )
 
@@ -193,8 +193,8 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           analyzer =
             """band(prevTravStateIs("one"),binarize(keyword("on")),matchPatternRegex("[day,month,year](?:(0[1-9]|[12][0-9]|3[01])(?:[- \/\.])(0[1-9]|1[012])(?:[- \/\.])((?:19|20)\d\d))"))""",
           data = Option{
-            AnalyzersData(traversed_states=List("one", "two"),
-              extracted_variables = Map.empty[String, String])
+            AnalyzersData(traversedStates=Vector("one", "two"),
+              extractedVariables = Map.empty[String, String])
           }
         )
 
@@ -205,9 +205,9 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
         response.build_message should be ("success")
         response.value should be (1.0)
         response.data.nonEmpty should be (true)
-        response.data.getOrElse(AnalyzersData()).extracted_variables.exists(_ == ("month.0", "11")) should be (true)
-        response.data.getOrElse(AnalyzersData()).extracted_variables.exists(_ == ("day.0", "31")) should be (true)
-        response.data.getOrElse(AnalyzersData()).extracted_variables.exists(_ == ("year.0", "1900")) should be (true)
+        response.data.getOrElse(AnalyzersData()).extractedVariables.exists(_ == ("month.0", "11")) should be (true)
+        response.data.getOrElse(AnalyzersData()).extractedVariables.exists(_ == ("day.0", "31")) should be (true)
+        response.data.getOrElse(AnalyzersData()).extractedVariables.exists(_ == ("year.0", "1900")) should be (true)
       }
     }
   }
@@ -220,8 +220,8 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           analyzer =
             """existsVariable("month.0")""",
           data = Option{
-            AnalyzersData(traversed_states=List("one", "two"),
-              extracted_variables =
+            AnalyzersData(traversedStates=Vector("one", "two"),
+              extractedVariables =
                 Map[String, String](
                   "month.0" -> "11",
                   "day.0" -> "31",

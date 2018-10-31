@@ -12,7 +12,8 @@ import com.getjenny.starchat.utils.Index
   * Created by mal on 20/02/2017.
   */
 
-class W2VCosineSentenceAtomic(val arguments: List[String], restrictedArgs: Map[String, String]) extends AbstractAtomic  {
+class W2VCosineSentenceAtomic(val arguments: List[String],
+                              restrictedArgs: Map[String, String]) extends AbstractAtomic  {
   /**
     * cosine distance between sentences renormalized at [0, 1]: (cosine + 1)/2
     *

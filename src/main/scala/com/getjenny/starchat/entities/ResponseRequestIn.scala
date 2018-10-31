@@ -9,7 +9,7 @@ import scala.collection.immutable.Map
 case class ResponseRequestInUserInput(text: Option[String], img: Option[String])
 
 case class ResponseRequestIn(conversation_id: String,
-                             traversed_states: Option[List[String]],
+                             traversed_states: Option[Vector[String]],
                              user_input: Option[ResponseRequestInUserInput],
                              state: Option[String],
                              data: Option[Map[String, String]],

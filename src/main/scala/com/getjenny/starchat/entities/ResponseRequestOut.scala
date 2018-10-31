@@ -8,7 +8,7 @@ import scala.collection.immutable.Map
 
 case class ResponseRequestOut(conversation_id: String,
                               state: String,
-                              traversed_states: List[String],
+                              traversed_states: Vector[String],
                               max_state_count: Int,
                               analyzer: String,
                               bubble: String,

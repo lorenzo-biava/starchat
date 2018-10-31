@@ -88,7 +88,8 @@ object SimilarityTest extends JsonSupport {
       val evaluate_request = AnalyzerEvaluateRequest(
         analyzer = analyzer,
         query = text2,
-        data = Option{ AnalyzersData(extracted_variables = params.variables, traversed_states = params.itemList.toList) }
+        data = Option{ AnalyzersData(extractedVariables = params.variables,
+          traversedStates = params.itemList.toVector) }
       )
 
       val entityFuture = Marshal(evaluate_request).to[MessageEntity]
@@ -108,7 +109,7 @@ object SimilarityTest extends JsonSupport {
             case Some(evalResponse) => evalResponse match {
               case Success(t) => t
               case Failure(e) => AnalyzerEvaluateResponse(
-                build = false, value = 0.0, build_message = "Failed evaluating response", data = None)
+                build = false, value = 0.0, build_message = "Failed evaluating response: " + e.getMessage, data = None)
             }
             case _ =>
               AnalyzerEvaluateResponse(

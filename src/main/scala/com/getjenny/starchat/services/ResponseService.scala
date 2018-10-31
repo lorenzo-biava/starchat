@@ -60,7 +60,7 @@ object ResponseService extends AbstractDataService {
 
     val variables : Map[String, String] = request.data.getOrElse(Map.empty[String, String])
 
-    val traversedStates: List[String] = request.traversed_states.getOrElse(List.empty[String])
+    val traversedStates: Vector[String] = request.traversed_states.getOrElse(Vector.empty[String])
     val traversedStatesCount: Map[String, Int] =
       traversedStates.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
 
@@ -77,7 +77,7 @@ object ResponseService extends AbstractDataService {
     val searchResAnalyzers =
       decisionTableService.searchDtQueries(indexName, userText, request.evaluation_class).map(searchRes => {
         val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
-        AnalyzersDataInternal(extracted_variables = variables, traversed_states = traversedStates,
+        AnalyzersDataInternal(extractedVariables = variables, traversedStates = traversedStates,
           data = analyzersInternalData)
       })
 
@@ -148,7 +148,7 @@ object ResponseService extends AbstractDataService {
               var actionInput: Map[String, String] = doc.action_input
               val stateData: Map[String, String] = doc.state_data
 
-              for ((key, value) <- data.extracted_variables) {
+              for ((key, value) <- data.extractedVariables) {
                 bubble = bubble.replaceAll("%" + key + "%", value)
                 actionInput = doc.action_input map { case (ki, vi) =>
                   val newValue: String = vi.replaceAll("%" + key + "%", value)
@@ -156,7 +156,7 @@ object ResponseService extends AbstractDataService {
                 }
               }
 
-              for ((key, value) <- evaluationRes.data.extracted_variables) {
+              for ((key, value) <- evaluationRes.data.extractedVariables) {
                 bubble = bubble.replaceAll("%" + key + "%", value)
                 actionInput = doc.action_input map { case (ki, vi) =>
                   val newValue: String = vi.replaceAll("%" + key + "%", value)
@@ -165,11 +165,11 @@ object ResponseService extends AbstractDataService {
               }
 
               val cleanedData =
-                data.extracted_variables ++
-                  evaluationRes.data.extracted_variables
+                data.extractedVariables ++
+                  evaluationRes.data.extractedVariables
                     .filter { case (key, _) => !(key matches "\\A__temp__.*") }
 
-              val traversedStatesUpdated: List[String] = traversedStates ++ List(state)
+              val traversedStatesUpdated: Vector[String] = traversedStates ++ Vector(state)
               val responseItem: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
                 state = state,
                 max_state_count = maxStateCount,

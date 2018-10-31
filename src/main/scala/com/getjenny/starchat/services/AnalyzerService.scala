@@ -276,12 +276,13 @@ object AnalyzerService extends AbstractDataService {
             decisionTableService.searchDtQueries(indexName,
               analyzerRequest.query, analyzerRequest.evaluation_class).map(searchRes => {
               val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
-              val dataInternal = AnalyzersDataInternal(traversed_states = data.traversed_states,
-                extracted_variables = data.extracted_variables, data = analyzersInternalData)
+              val dataInternal = AnalyzersDataInternal(traversedStates = data.traversedStates,
+                extractedVariables = data.extractedVariables, data = analyzersInternalData)
               val evalRes = result.evaluate(analyzerRequest.query, dataInternal)
-              val returnData = if(evalRes.data.extracted_variables.nonEmpty || evalRes.data.traversed_states.nonEmpty) {
+              val returnData = if(evalRes.data.extractedVariables.nonEmpty || evalRes.data.traversedStates.nonEmpty) {
                 val dataInternal = evalRes.data
-                Some(AnalyzersData(traversed_states = dataInternal.traversed_states, extracted_variables = dataInternal.extracted_variables))
+                Some(AnalyzersData(traversedStates = dataInternal.traversedStates,
+                  extractedVariables = dataInternal.extractedVariables))
               } else {
                 Option.empty[AnalyzersData]
               }
