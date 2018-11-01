@@ -24,6 +24,8 @@ trait ElasticClient {
   val clusterName: String = config.getString("es.cluster_name")
   val sniff: Boolean = config.getBoolean("es.enable_sniff")
   val ignoreClusterName: Boolean = config.getBoolean("es.ignore_cluster_name")
+  val numberOfShards: Int = config.getInt("es.number_of_shards")
+  val numberOfReplicas: Int = config.getInt("es.number_of_replicas")
 
   val hostProto : String = config.getString("es.host_proto")
   val hostMapStr : String = config.getString("es.host_map")

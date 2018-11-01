@@ -97,7 +97,10 @@ object IndexManagementService extends AbstractDataService {
       val fullIndexName = indexName + "." + item.indexSuffix
 
       val createIndexReq = new CreateIndexRequest(fullIndexName)
-        .settings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON))
+        .settings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON)
+          .put("index.number_of_shards", elasticClient.numberOfShards)
+          .put("index.number_of_replicas", elasticClient.numberOfReplicas)
+        )
         .source(schemaJson, XContentType.JSON)
 
       val createIndexRes: CreateIndexResponse = client.indices.create(createIndexReq, RequestOptions.DEFAULT)
