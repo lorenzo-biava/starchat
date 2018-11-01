@@ -19,11 +19,12 @@ trait RootAPIResource extends StarChatResource {
     pathPrefix("") {
       pathEnd {
         get {
-          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(maxFailure = 5, callTimeout = 5.second)
+          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(maxFailure = 5,
+            callTimeout = 5.second)
           onCompleteWithBreaker(breaker)(Future {
             None
           }) {
-            case Success(v) =>
+            case Success(_) =>
               completeResponse(StatusCodes.OK)
             case Failure(e) =>
               log.error("route=RootRoutes method=GET: " + e.getMessage)

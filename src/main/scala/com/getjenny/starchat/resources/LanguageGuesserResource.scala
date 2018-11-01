@@ -22,7 +22,7 @@ trait LanguageGuesserResource extends StarChatResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[LanguageGuesserRequestIn]) { request_data =>
@@ -47,7 +47,7 @@ trait LanguageGuesserResource extends StarChatResource {
         path(Segment) { language: String =>
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()

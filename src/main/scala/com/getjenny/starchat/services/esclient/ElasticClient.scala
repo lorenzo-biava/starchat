@@ -104,8 +104,8 @@ trait ElasticClient {
       esClient.indices().refresh(refreshReq, RequestOptions.DEFAULT)
 
     val failedShards: List[FailedShard] = refreshRes.getShardFailures.map(item => {
-      val failedShardItem = FailedShard(index_name = item.index,
-        shard_id = item.shardId,
+      val failedShardItem = FailedShard(indexName = item.index,
+        shardId = item.shardId,
         reason = item.reason,
         status = item.status.getStatus
       )
@@ -113,11 +113,11 @@ trait ElasticClient {
     }).toList
 
     val refreshIndexResult =
-      RefreshIndexResult(index_name = indexName,
-        failed_shards_n = refreshRes.getFailedShards,
-        successful_shards_n = refreshRes.getSuccessfulShards,
-        total_shards_n = refreshRes.getTotalShards,
-        failed_shards = failedShards
+      RefreshIndexResult(indexName = indexName,
+        failedShardsN = refreshRes.getFailedShards,
+        successfulShardsN = refreshRes.getSuccessfulShards,
+        totalShardsN = refreshRes.getTotalShards,
+        failedShards = failedShards
       )
     refreshIndexResult
   }

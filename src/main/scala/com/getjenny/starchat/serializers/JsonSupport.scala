@@ -88,7 +88,8 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit val userFormat = jsonFormat4(User)
-  implicit val userUpdateFormat = jsonFormat3(UserUpdate)
+  implicit val userUpdateFormat = jsonFormat4(UserUpdate)
+  implicit val userDelete = jsonFormat1(UserId)
   implicit val dtReloadTimestamp = jsonFormat2(DtReloadTimestamp)
   implicit val openCloseIndexFormat = jsonFormat5(OpenCloseIndex)
 

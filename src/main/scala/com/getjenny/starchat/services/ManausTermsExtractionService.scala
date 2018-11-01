@@ -313,8 +313,8 @@ object ManausTermsExtractionService extends AbstractDataService {
 
     val baseSentenceTextTerms = TextTerms(
       text = "",
-      text_terms_n = numberOfTokens,
-      terms_found_n = termsInSentence,
+      textTermsN = numberOfTokens,
+      termsFoundN = termsInSentence,
       terms = extractedSentenceTerms)
 
     // iterate over tokens and calculate the synonyms score
@@ -341,8 +341,8 @@ object ManausTermsExtractionService extends AbstractDataService {
                 val synSentenceTermsLength = synSentenceTerms.length
                 val synSentenceTextTerms = TextTerms(
                   text = "",
-                  text_terms_n = numberOfTokens,
-                  terms_found_n = synSentenceTermsLength,
+                  textTermsN = numberOfTokens,
+                  termsFoundN = synSentenceTermsLength,
                   terms = Terms(terms = synSentenceTerms))
 
                 val sentencesDistance = extractionRequest.distanceFunction match {

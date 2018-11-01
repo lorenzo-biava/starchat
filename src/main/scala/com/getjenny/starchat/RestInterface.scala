@@ -83,6 +83,6 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
     LoggingEntities.logRequestAndResult(postUserRoutes) ~
     LoggingEntities.logRequestAndResult(putUserRoutes) ~
     LoggingEntities.logRequestAndResult(getUserRoutes) ~
-    LoggingEntities.logRequestAndResult(deleteUserRoutes) ~
+    LoggingEntities.logRequestAndResult(delUserRoutes) ~
     LoggingEntities.logRequestAndResult(genUserRoutes)
 }

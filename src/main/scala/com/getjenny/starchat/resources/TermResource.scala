@@ -49,7 +49,7 @@ trait TermResource extends StarChatResource {
           operation match {
             case "index" =>
               authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { (user) =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.write)) {
                   parameters("refresh".as[Int] ? 0) { refresh =>
@@ -72,7 +72,7 @@ trait TermResource extends StarChatResource {
               }
             case "distance" =>
               authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { (user) =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
                   entity(as[DocsIds]) { requestData =>
@@ -96,7 +96,7 @@ trait TermResource extends StarChatResource {
             case "index_default_synonyms" =>
               withoutRequestTimeout {
                 authenticateBasicAsync(realm = authRealm,
-                  authenticator = authenticator.authenticator) { (user) =>
+                  authenticator = authenticator.authenticator) { user =>
                   authorizeAsync(_ =>
                     authenticator.hasPermissions(user, indexName, Permissions.write)) {
                     parameters("refresh".as[Int] ? 0, "groupsize".as[Int] ? 1000) { (refresh, groupSize) =>
@@ -122,15 +122,15 @@ trait TermResource extends StarChatResource {
               }
             case "get" =>
               authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { (user) =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                  entity(as[DocsIds]) { request_data =>
+                  entity(as[DocsIds]) { requestData =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(
                       termService.getTermsByIdFuture(
                         indexName = indexName,
-                        termsRequest = request_data)
+                        termsRequest = requestData)
                     ) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
@@ -156,14 +156,14 @@ trait TermResource extends StarChatResource {
         pathEnd {
           delete {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("refresh".as[Int] ? 0) { refresh =>
-                  entity(as[DocsIds]) { request_data =>
-                    if (request_data.ids.nonEmpty) {
+                  entity(as[DocsIds]) { requestData =>
+                    if (requestData.ids.nonEmpty) {
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(termService.delete(indexName, request_data, refresh)) {
+                      onCompleteWithBreaker(breaker)(termService.delete(indexName, requestData, refresh)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>
@@ -193,7 +193,7 @@ trait TermResource extends StarChatResource {
           } ~
             put {
               authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { (user) =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.write)) {
                   parameters("refresh".as[Int] ? 0) { refresh =>
@@ -217,7 +217,7 @@ trait TermResource extends StarChatResource {
         path(Segment) { operation: String =>
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ => authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 operation match {
                   case "term" =>
@@ -225,7 +225,7 @@ trait TermResource extends StarChatResource {
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       parameters("analyzer".as[String] ? "space_punctuation") { analyzer =>
                         onCompleteWithBreaker(breaker)(
-                          termService.searchTermFuture(indexName = indexName, term = requestData)
+                          termService.searchFuture(indexName = indexName, query = requestData, analyzer = analyzer)
                         ) {
                           case Success(t) =>
                             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
@@ -245,7 +245,7 @@ trait TermResource extends StarChatResource {
                       parameters("analyzer".as[String] ? "space_punctuation") { analyzer =>
                         onCompleteWithBreaker(breaker)(
                           termService.searchFuture(indexName = indexName,
-                            text = requestData, analyzer = analyzer)
+                            query = requestData, analyzer = analyzer)
                         ) {
                           case Success(t) =>
                             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)

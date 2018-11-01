@@ -20,7 +20,7 @@ trait IndexManagementResource extends StarChatResource {
 
   def postIndexManagementCreateRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix(indexRegex ~ Slash ~ "index_management" ~ Slash ~ """create""") {
-      (indexName) =>
+      indexName =>
         post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
@@ -32,7 +32,7 @@ trait IndexManagementResource extends StarChatResource {
                 onCompleteWithBreaker(breaker)(
                   indexManagementService.create(indexName = indexName, indexSuffix = indexSuffix)
                 ) {
-                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                  case Success(t) => completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
                     t
                   })
                   case Failure(e) => completeResponse(StatusCodes.BadRequest,
@@ -78,7 +78,7 @@ trait IndexManagementResource extends StarChatResource {
 
   def postIndexManagementRefreshRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix(indexRegex ~ Slash ~ "index_management" ~ Slash ~ """refresh""") {
-      (indexName) =>
+      indexName =>
         post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
@@ -141,7 +141,7 @@ trait IndexManagementResource extends StarChatResource {
 
   def indexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix(indexRegex ~ Slash ~ "index_management") {
-      (indexName) =>
+      indexName =>
         pathEnd {
           get {
             authenticateBasicAsync(realm = authRealm,
@@ -167,7 +167,7 @@ trait IndexManagementResource extends StarChatResource {
           } ~
             delete {
               authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { (user) =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                   parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>

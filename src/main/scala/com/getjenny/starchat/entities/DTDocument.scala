@@ -7,16 +7,16 @@ package com.getjenny.starchat.entities
 import scala.collection.immutable.{List, Map}
 
 case class DTDocument(state: String,
-                      execution_order: Int,
-                      max_state_count: Int,
+                      executionOrder: Int,
+                      maxStateCount: Int,
                       analyzer: String,
                       queries: List[String],
                       bubble: String,
                       action: String,
-                      action_input: Map[String, String],
-                      state_data: Map[String, String],
-                      success_value: String,
-                      failure_value: String,
-                      evaluation_class: Option[String] = Some("default"),
+                      actionInput: Map[String, String],
+                      stateData: Map[String, String],
+                      successValue: String,
+                      failureValue: String,
+                      evaluationClass: Option[String] = Some("default"),
                       version: Option[Long] = Some(0L)
                      )

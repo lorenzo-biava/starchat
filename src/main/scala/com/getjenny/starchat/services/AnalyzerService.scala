@@ -79,7 +79,7 @@ object AnalyzerService extends AbstractDataService {
     var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
-    if(refreshIndex.failed_shards_n > 0) {
+    if(refreshIndex.failedShardsN > 0) {
       throw AnalyzerServiceException("DecisionTable : index refresh failed: (" + indexName + ")")
     }
 
@@ -216,7 +216,7 @@ object AnalyzerService extends AbstractDataService {
     val analyzerMap = buildAnalyzers(indexName = indexName,
       analyzersMap = getAnalyzers(indexName), incremental = incremental)
 
-    val dtAnalyzerLoad = DTAnalyzerLoad(num_of_entries=analyzerMap.size)
+    val dtAnalyzerLoad = DTAnalyzerLoad(numOfEntries=analyzerMap.size)
     val activeAnalyzers: ActiveAnalyzers = ActiveAnalyzers(analyzerMap = analyzerMap,
       lastEvaluationTimestamp = 0, lastReloadingTimestamp = 0)
     AnalyzerService.analyzersMap(indexName) = activeAnalyzers
@@ -274,7 +274,7 @@ object AnalyzerService extends AbstractDataService {
           case Some(data) =>
             // prepare search result for search analyzer
             decisionTableService.searchDtQueries(indexName,
-              analyzerRequest.query, analyzerRequest.evaluation_class).map(searchRes => {
+              analyzerRequest.query, analyzerRequest.evaluationClass).map(searchRes => {
               val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
               val dataInternal = AnalyzersDataInternal(traversedStates = data.traversedStates,
                 extractedVariables = data.extractedVariables, data = analyzersInternalData)
@@ -287,12 +287,12 @@ object AnalyzerService extends AbstractDataService {
                 Option.empty[AnalyzersData]
               }
               Some(AnalyzerEvaluateResponse(build = true,
-                value = evalRes.score, data = returnData, build_message = "success"))
+                value = evalRes.score, data = returnData, buildMessage = "success"))
             })
           case _ =>
             Future{
               Some(AnalyzerEvaluateResponse(build = true,
-                value = 0.0, data = Option.empty[AnalyzersData], build_message = "success"))
+                value = 0.0, data = Option.empty[AnalyzersData], buildMessage = "success"))
             }
         }
     }

@@ -15,6 +15,8 @@ object Index {
   private[this] val langRegex: String = "[a-z]{1,256}"
   private[this] val arbitraryPatternRegex: String = "[A-Za-z0-9_]{1,256}"
 
+  val orgNameMatchRegexDelimited: Regex = ("^(" + orgNameRegex + ")$").r
+
   /** regular expression to match index names */
   val systemIndexMatchRegex: Regex = "(starchat_system_[A-Za-z0-9\\-]{1,256})".r
   val systemIndexMatchRegexDelimited: Regex = ("^" + systemIndexMatchRegex + "$").r
@@ -30,7 +32,7 @@ object Index {
   /** Extract language from index name
     *
     * @param indexName the full index name
-    * @return a tuple with the two component of the index (language, arbitrary pattern)
+    * @return a tuple with the two component of the index (org, language, arbitrary)
     */
   def patternsFromIndex(indexName: String): (String, String, String) = {
     val (organization, language, arbitrary) = indexName match {

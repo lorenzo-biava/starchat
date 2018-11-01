@@ -53,11 +53,11 @@ object IndexDecisionTableJSON extends JsonSupport {
           case Success(dtDocumentResult) => dtDocumentResult
           case Failure(e) =>
             println("Error: " + e)
-            SearchDTDocumentsResults(total = 0, max_score = .0f, hits = List.empty[SearchDTDocument])
+            SearchDTDocumentsResults(total = 0, maxScore = .0f, hits = List.empty[SearchDTDocument])
         }
         case _ =>
           println("Error: empty response")
-          SearchDTDocumentsResults(total = 0, max_score = .0f, hits = List.empty[SearchDTDocument])
+          SearchDTDocumentsResults(total = 0, maxScore = .0f, hits = List.empty[SearchDTDocument])
       }
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.headerKv.nonEmpty) {
@@ -77,16 +77,16 @@ object IndexDecisionTableJSON extends JsonSupport {
     listOfDocuments.hits.foreach(item => {
       val entry = item.document
       val state = DTDocument(state = entry.state,
-        execution_order = entry.execution_order,
-        max_state_count = entry.max_state_count,
+        executionOrder = entry.executionOrder,
+        maxStateCount = entry.maxStateCount,
         analyzer = entry.analyzer,
         queries = entry.queries,
         bubble = entry.bubble,
         action = entry.action,
-        action_input = entry.action_input,
-        state_data = entry.state_data,
-        success_value = entry.success_value,
-        failure_value = entry.failure_value
+        actionInput = entry.actionInput,
+        stateData = entry.stateData,
+        successValue = entry.successValue,
+        failureValue = entry.failureValue
       )
 
       val entity_future = Marshal(state).to[MessageEntity]

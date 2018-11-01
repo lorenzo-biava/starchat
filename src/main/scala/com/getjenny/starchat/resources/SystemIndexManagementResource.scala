@@ -22,9 +22,9 @@ trait SystemIndexManagementResource extends StarChatResource {
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              authenticator.hasPermissions(user, "admin", Permissions.read)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(systemIndexManagementService.indices) {
                 case Success(t) =>
@@ -48,9 +48,9 @@ trait SystemIndexManagementResource extends StarChatResource {
       path(Segment) { operation: String =>
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              authenticator.hasPermissions(user, "admin", Permissions.write)) {
               operation match {
                 case "refresh" =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -66,7 +66,7 @@ trait SystemIndexManagementResource extends StarChatResource {
                 case "create" =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(systemIndexManagementService.create()) {
-                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    case Success(t) => completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
                       t
                     })
                     case Failure(e) => completeResponse(StatusCodes.BadRequest,
@@ -86,9 +86,9 @@ trait SystemIndexManagementResource extends StarChatResource {
         pathEnd {
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                authenticator.hasPermissions(user, "admin", Permissions.read)) {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(systemIndexManagementService.check()) {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
@@ -104,9 +104,9 @@ trait SystemIndexManagementResource extends StarChatResource {
           } ~
             delete {
               authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { (user) =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                  authenticator.hasPermissions(user, "admin", Permissions.write)) {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(systemIndexManagementService.remove()) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
@@ -122,9 +122,9 @@ trait SystemIndexManagementResource extends StarChatResource {
             } ~
             put {
               authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { (user) =>
+                authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                  authenticator.hasPermissions(user, "admin", Permissions.write)) {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(systemIndexManagementService.update()) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {

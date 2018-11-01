@@ -6,11 +6,11 @@ curl -v -H "Authorization: Basic $(echo -n 'admin:adminp4ssw0rd' | base64)" \
   -H "Content-Type: application/json" -X POST http://localhost:${PORT}/${INDEX_NAME}/knowledgebase -d '{
 	"id": "0",
 	"conversation": "id:1000",
-	"index_in_conversation": 1,
+	"indexInConversation": 1,
 	"question": "thank you",
-        "question_negative": ["ok, I will not talk with you anymore", "thank you anyway"],
+        "questionNegative": ["ok, I will not talk with you anymore", "thank you anyway"],
 	"answer": "you are welcome! you very welcome!",
-	"question_scored_terms": [
+	"questionScoredTerms": [
 		[
 			"currently",
 			1.0901874131103333

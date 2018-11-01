@@ -25,9 +25,9 @@ object SpellcheckService extends AbstractDataService {
     val client: RestHighLevelClient = elasticClient.client
 
     val suggestionBuilder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
-    suggestionBuilder.maxEdits(request.max_edit)
-      .prefixLength(request.prefix_length)
-      .minDocFreq(request.min_doc_freq)
+    suggestionBuilder.maxEdits(request.maxEdit)
+      .prefixLength(request.prefixLength)
+      .minDocFreq(request.minDocFreq)
 
     val suggestBuilder: SuggestBuilder = new SuggestBuilder()
     suggestBuilder.setGlobalText(request.text)

@@ -6,10 +6,10 @@ package com.getjenny.starchat.entities
 
 case class DTDocumentSearch(from: Option[Int],
                             size: Option[Int],
-                            execution_order: Option[Int],
-                            min_score: Option[Float],
-                            boost_exact_match_factor: Option[Float],
+                            executionOrder: Option[Int],
+                            minScore: Option[Float],
+                            boostExactMatchFactor: Option[Float],
                             state: Option[String],
-                            evaluation_class: Option[String],
+                            evaluationClass: Option[String],
                             queries: Option[String]
                            )

@@ -7,8 +7,8 @@ curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
 	"terms": [
 	    {
             "term": "मराठी",
-            "frequency_base": 1.0,
-            "frequency_stem": 1.0,
+            "frequencyBase": 1.0,
+            "frequencyStem": 1.0,
             "vector": [1.2, 2.3, 3.4, 4.5],
             "synonyms":
             {
@@ -29,8 +29,8 @@ curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
 	    },
 	    {
             "term": "term2",
-            "frequency_base": 1.0,
-            "frequency_stem": 1.0,
+            "frequencyBase": 1.0,
+            "frequencyStem": 1.0,
             "vector": [1.6, 2.7, 3.8, 5.9],
             "synonyms":
             {

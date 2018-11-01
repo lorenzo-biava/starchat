@@ -232,11 +232,11 @@ object TermService extends AbstractDataService {
           builder.field("features", indexable)
         case None => ;
       }
-      term.frequency_base match {
+      term.frequencyBase match {
         case Some(t) => builder.field("frequency_base", t)
         case None => ;
       }
-      term.frequency_stem match {
+      term.frequencyStem match {
         case Some(t) => builder.field("frequency_stem", t)
         case None => ;
       }
@@ -290,80 +290,80 @@ object TermService extends AbstractDataService {
 
       response.getResponses.toList
         .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map { e =>
-          val item: GetResponse = e.getResponse
-          val source: Map[String, Any] = item.getSource.asScala.toMap
+        val item: GetResponse = e.getResponse
+        val source: Map[String, Any] = item.getSource.asScala.toMap
 
-          val term: String = source.get("term") match {
-            case Some(t) => t.asInstanceOf[String]
-            case None => ""
-          }
+        val term: String = source.get("term") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-          val synonyms: Option[Map[String, Double]] = source.get("synonyms") match {
-            case Some(t) =>
-              val value: String = t.asInstanceOf[String]
-              Option {
-                payloadStringToMapStringDouble(value)
-              }
-            case None => None: Option[Map[String, Double]]
-          }
-
-          val antonyms: Option[Map[String, Double]] = source.get("antonyms") match {
-            case Some(t) =>
-              val value: String = t.asInstanceOf[String]
-              Option {
-                payloadStringToMapStringDouble(value)
-              }
-            case None => None: Option[Map[String, Double]]
-          }
-
-          val tags: Option[String] = source.get("tags") match {
-            case Some(t) => Option {
-              t.asInstanceOf[String]
+        val synonyms: Option[Map[String, Double]] = source.get("synonyms") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option {
+              payloadStringToMapStringDouble(value)
             }
-            case None => None: Option[String]
-          }
+          case None => None: Option[Map[String, Double]]
+        }
 
-          val features: Option[Map[String, String]] = source.get("features") match {
-            case Some(t) =>
-              val value: String = t.asInstanceOf[String]
-              Option {
-                payloadStringToMapStringString(value)
-              }
-            case None => None: Option[Map[String, String]]
-          }
-
-          val frequencyBase: Option[Double] = source.get("frequency_base") match {
-            case Some(t) => Option {
-              t.asInstanceOf[Double]
+        val antonyms: Option[Map[String, Double]] = source.get("antonyms") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option {
+              payloadStringToMapStringDouble(value)
             }
-            case None => None: Option[Double]
-          }
+          case None => None: Option[Map[String, Double]]
+        }
 
-          val frequencyStem: Option[Double] = source.get("frequency_stem") match {
-            case Some(t) => Option {
-              t.asInstanceOf[Double]
+        val tags: Option[String] = source.get("tags") match {
+          case Some(t) => Option {
+            t.asInstanceOf[String]
+          }
+          case None => None: Option[String]
+        }
+
+        val features: Option[Map[String, String]] = source.get("features") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option {
+              payloadStringToMapStringString(value)
             }
-            case None => None: Option[Double]
-          }
+          case None => None: Option[Map[String, String]]
+        }
 
-          val vector: Option[Vector[Double]] = source.get("vector") match {
-            case Some(t) =>
-              val value: String = t.asInstanceOf[String]
-              Option {
-                payloadStringToDoubleVector(value)
-              }
-            case None => None: Option[Vector[Double]]
+        val frequencyBase: Option[Double] = source.get("frequency_base") match {
+          case Some(t) => Option {
+            t.asInstanceOf[Double]
           }
+          case None => None: Option[Double]
+        }
 
-          Term(term = term,
-            synonyms = synonyms,
-            antonyms = antonyms,
-            tags = tags,
-            features = features,
-            frequency_base = frequencyBase,
-            frequency_stem = frequencyStem,
-            vector = vector,
-            score = None: Option[Double])
+        val frequencyStem: Option[Double] = source.get("frequency_stem") match {
+          case Some(t) => Option {
+            t.asInstanceOf[Double]
+          }
+          case None => None: Option[Double]
+        }
+
+        val vector: Option[Vector[Double]] = source.get("vector") match {
+          case Some(t) =>
+            val value: String = t.asInstanceOf[String]
+            Option {
+              payloadStringToDoubleVector(value)
+            }
+          case None => None: Option[Vector[Double]]
+        }
+
+        Term(term = term,
+          synonyms = synonyms,
+          antonyms = antonyms,
+          tags = tags,
+          features = features,
+          frequencyBase = frequencyBase,
+          frequencyStem = frequencyStem,
+          vector = vector,
+          score = None: Option[Double])
       }
     } else {
       List.empty[Term]
@@ -433,11 +433,11 @@ object TermService extends AbstractDataService {
           builder.field("features", indexable)
         case None => ;
       }
-      term.frequency_base match {
+      term.frequencyBase match {
         case Some(t) => builder.field("frequency_base", t)
         case None => ;
       }
-      term.frequency_stem match {
+      term.frequencyStem match {
         case Some(t) => builder.field("frequency_stem", t)
         case None => ;
       }
@@ -463,7 +463,7 @@ object TermService extends AbstractDataService {
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
-      if(refreshIndex.failed_shards_n > 0) {
+      if(refreshIndex.failedShardsN > 0) {
         throw TermServiceException("Term : index refresh failed: (" + indexName + ")")
       }
     }
@@ -475,148 +475,6 @@ object TermService extends AbstractDataService {
     }).toList
 
     UpdateDocumentListResult(listOfDocRes)
-  }
-
-  /** search terms
-    *
-    * @param indexName index name
-    * @param term search data structure
-    * @return the retrieved terms
-    */
-  def searchTerm(indexName: String, term: SearchTerm) : TermsResults = {
-    val client: RestHighLevelClient = elasticClient.client
-
-    val analyzer = "space_punctuation"
-    val analyzer_name = term.analyzer.getOrElse("space_punctuation")
-
-    val term_field_name = if(TokenizersDescription.analyzers_map.contains(analyzer_name))
-      "term." + analyzer
-    else
-      throw TermServiceException("searchTerm: analyzer not found or not supported: (" +
-        term.analyzer.getOrElse("") + ")")
-
-    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
-      .version(true)
-
-    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
-      .source(sourceReq)
-      .types(elasticClient.indexSuffix)
-      .searchType(SearchType.DFS_QUERY_THEN_FETCH)
-
-    val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
-
-    term.term match {
-      case Some(term_property) =>
-        boolQueryBuilder.must(QueryBuilders.termQuery(term_field_name, term_property))
-      case _ => ;
-    }
-
-    term.frequency_base match {
-      case Some(term_property) =>
-        boolQueryBuilder.must(QueryBuilders.termQuery("frequency_base", term_property))
-      case _ => ;
-    }
-
-    term.frequency_stem match {
-      case Some(term_property) =>
-        boolQueryBuilder.must(QueryBuilders.termQuery("frequency_stem", term_property))
-      case _ => ;
-    }
-
-    term.synonyms match {
-      case Some(term_property) =>
-        boolQueryBuilder.must(QueryBuilders.termQuery("synonyms", term_property))
-      case _ => ;
-    }
-
-    term.antonyms match {
-      case Some(term_property) =>
-        boolQueryBuilder.must(QueryBuilders.termQuery("antonyms", term_property))
-      case _ => ;
-    }
-
-    term.tags match {
-      case Some(term_property) =>
-        boolQueryBuilder.must(QueryBuilders.termQuery("tags", term_property))
-      case _ => ;
-    }
-
-    term.features match {
-      case Some(term_property) =>
-        boolQueryBuilder.must(QueryBuilders.termQuery("features", term_property))
-      case _ => ;
-    }
-
-    sourceReq.query(boolQueryBuilder)
-
-    val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
-
-    val documents : List[Term] = searchResponse.getHits.getHits.toList.map { item =>
-        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
-
-        val term : String = source.get("term") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
-        }
-
-        val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option{payloadStringToMapStringDouble(value)}
-          case None => None: Option[Map[String, Double]]
-        }
-
-        val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option{payloadStringToMapStringDouble(value)}
-          case None => None: Option[Map[String, Double]]
-        }
-
-        val tags : Option[String] = source.get("tags") match {
-          case Some(t) => Option {t.asInstanceOf[String]}
-          case None => None: Option[String]
-        }
-
-        val features : Option[Map[String, String]] = source.get("features") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option{payloadStringToMapStringString(value)}
-          case None => None: Option[Map[String, String]]
-        }
-
-        val frequencyBase : Option[Double] = source.get("frequency_base") match {
-          case Some(t) => Option {t.asInstanceOf[Double]}
-          case None => None: Option[Double]
-        }
-
-        val frequencyStem : Option[Double] = source.get("frequency_stem") match {
-          case Some(t) => Option {t.asInstanceOf[Double]}
-          case None => None: Option[Double]
-        }
-
-        val vector : Option[Vector[Double]] = source.get("vector") match {
-          case Some(t) =>
-            val value: String = t.asInstanceOf[String]
-            Option{payloadStringToDoubleVector(value)}
-          case None => None: Option[Vector[Double]]
-        }
-
-        Term(term = term,
-          synonyms = synonyms,
-          antonyms = antonyms,
-          tags = tags,
-          features = features,
-          frequency_base = frequencyBase,
-          frequency_stem = frequencyStem,
-          vector = vector,
-          score = Option{item.getScore.toDouble})
-    }
-
-    val terms: Terms = Terms(terms=documents)
-
-    val maxScore : Float = searchResponse.getHits.getMaxScore
-    TermsResults(total = terms.terms.length, max_score = maxScore, hits = terms)
   }
 
   /** fetch two terms and calculate the distance between them
@@ -645,25 +503,20 @@ object TermService extends AbstractDataService {
     }.toList
   }
 
-  /** search terms on Elasticsearch
-    *
-    * @param indexName the index name
-    * @param term term search data structure
-    * @return fetched terms
-    */
-  def searchTermFuture(indexName: String,
-                       term: SearchTerm): Future[TermsResults] = Future {
-    searchTerm(indexName, term)
+  class StringOrSearchTerm[T]
+  object StringOrSearchTerm {
+    implicit object SearchTermWitness extends StringOrSearchTerm[SearchTerm]
+    implicit object StringWitness extends StringOrSearchTerm[String]
   }
 
   /** given a text, return all the matching terms
     *
     * @param indexName index term
-    * @param text input text
+    * @param query input text or SearchTerm entity
     * @param analyzer the analyzer name to be used for text tokenization
     * @return the terms found
     */
-  def search(indexName: String, text: String,
+  def search[T: StringOrSearchTerm](indexName: String, query: T,
              analyzer: String = "space_punctuation"): TermsResults = {
     val client: RestHighLevelClient = elasticClient.client
 
@@ -680,14 +533,225 @@ object TermService extends AbstractDataService {
       .types(elasticClient.indexSuffix)
       .searchType(SearchType.DFS_QUERY_THEN_FETCH)
 
-    val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
-    boolQueryBuilder.should(QueryBuilders.matchQuery(term_field_name, text))
+    val boolQueryBuilder: BoolQueryBuilder = QueryBuilders.boolQuery()
+
+    query match {
+      case term: SearchTerm =>
+        term.term match {
+          case Some(termProperty) =>
+            boolQueryBuilder.must(QueryBuilders.termQuery(term_field_name, termProperty))
+          case _ => ;
+        }
+
+        term.frequencyBase match {
+          case Some(termProperty) =>
+            boolQueryBuilder.must(QueryBuilders.termQuery("frequency_base", termProperty))
+          case _ => ;
+        }
+
+        term.frequencyStem match {
+          case Some(termProperty) =>
+            boolQueryBuilder.must(QueryBuilders.termQuery("frequency_stem", termProperty))
+          case _ => ;
+        }
+
+        term.synonyms match {
+          case Some(termProperty) =>
+            boolQueryBuilder.must(QueryBuilders.termQuery("synonyms", termProperty))
+          case _ => ;
+        }
+
+        term.antonyms match {
+          case Some(termProperty) =>
+            boolQueryBuilder.must(QueryBuilders.termQuery("antonyms", termProperty))
+          case _ => ;
+        }
+
+        term.tags match {
+          case Some(termProperty) =>
+            boolQueryBuilder.must(QueryBuilders.termQuery("tags", termProperty))
+          case _ => ;
+        }
+
+        term.features match {
+          case Some(termProperty) =>
+            boolQueryBuilder.must(QueryBuilders.termQuery("features", termProperty))
+          case _ => ;
+        }
+      case text: String =>
+        boolQueryBuilder.should(QueryBuilders.matchQuery(term_field_name, text))
+    }
+
     sourceReq.query(boolQueryBuilder)
 
     val searchResponse : SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
     val documents : List[Term] = searchResponse.getHits.getHits.toList.map { item =>
-        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+
+      val term : String = source.get("term") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringDouble(value)}
+        case None => None: Option[Map[String, Double]]
+      }
+
+      val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringDouble(value)}
+        case None => None: Option[Map[String, Double]]
+      }
+
+      val tags : Option[String] = source.get("tags") match {
+        case Some(t) => Option {t.asInstanceOf[String]}
+        case None => None: Option[String]
+      }
+
+      val features : Option[Map[String, String]] = source.get("features") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToMapStringString(value)}
+        case None => None: Option[Map[String, String]]
+      }
+
+      val frequencyBase : Option[Double] = source.get("frequency_base") match {
+        case Some(t) => Option {t.asInstanceOf[Double]}
+        case None => None: Option[Double]
+      }
+
+      val frequencyStem : Option[Double] = source.get("frequency_stem") match {
+        case Some(t) => Option {t.asInstanceOf[Double]}
+        case None => None: Option[Double]
+      }
+
+      val vector : Option[Vector[Double]] = source.get("vector") match {
+        case Some(t) =>
+          val value: String = t.asInstanceOf[String]
+          Option{payloadStringToDoubleVector(value)}
+        case None => None: Option[Vector[Double]]
+      }
+
+      Term(term = term,
+        synonyms = synonyms,
+        antonyms = antonyms,
+        tags = tags,
+        features = features,
+        frequencyBase = frequencyBase,
+        frequencyStem = frequencyStem,
+        vector = vector,
+        score = Option{item.getScore.toDouble})
+    }
+
+    val terms: Terms = Terms(terms=documents)
+
+    val maxScore : Float = searchResponse.getHits.getMaxScore
+    TermsResults(total = terms.terms.length, maxScore = maxScore, hits = terms)
+  }
+
+  /** given a text, return all the matching terms
+    *
+    * @param indexName index term
+    * @param query input text or SearchTerm entity
+    * @param analyzer the analyzer name to be used for text tokenization
+    * @return the terms found
+    */
+  def searchFuture[T: StringOrSearchTerm](indexName: String, query: T,
+                                    analyzer: String = "space_punctuation"): Future[TermsResults] = Future {
+    search(indexName, query, analyzer)
+  }
+
+    /** tokenize a text
+    *
+    * @param indexName index name
+    * @param query a TokenizerQueryRequest with the text to tokenize
+    * @return a TokenizerResponse with the result of the tokenization
+    */
+  def esTokenizer(indexName: String, query: TokenizerQueryRequest) : TokenizerResponse = {
+    val analyzer = TokenizersDescription.analyzers_map.get(query.tokenizer) match {
+      case Some((analyzerEsName, _)) => analyzerEsName
+      case _ =>
+        throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + query.tokenizer + ")")
+    }
+
+    val client: RestHighLevelClient = elasticClient.client
+
+    val analyzerReq = new AnalyzeRequest()
+      .index(Index.indexName(indexName, elasticClient.indexSuffix))
+      .text(query.text)
+      .analyzer(analyzer)
+
+    val analyzeResponse: AnalyzeResponse = client.indices().analyze(analyzerReq, RequestOptions.DEFAULT)
+
+    val tokens : List[TokenizerResponseItem] =
+      analyzeResponse.getTokens.listIterator.asScala.toList.map(t => {
+        val responseItem: TokenizerResponseItem =
+          TokenizerResponseItem(startOffset = t.getStartOffset,
+            position = t.getPosition,
+            endOffset = t.getEndOffset,
+            token = t.getTerm,
+            tokenType = t.getType)
+        responseItem
+      })
+
+    TokenizerResponse(tokens = tokens)
+  }
+
+  /** tokenize a sentence and extract term vectors for each token
+    *
+    * @param indexName index name
+    * @param text input text
+    * @param analyzer analyzer name
+    * @param unique if true exclude from results duplicated terms
+    * @return the TextTerms
+    */
+  def textToVectors(indexName: String, text: String, analyzer: String = "stop",
+                    unique: Boolean = false): TextTerms = {
+    val analyzerRequest =
+      TokenizerQueryRequest(tokenizer = analyzer, text = text) // analyzer is checked by esTokenizer
+    val fullTokenList = esTokenizer(indexName, analyzerRequest).tokens
+      .map(e => e.token)
+
+    val tokenList = if (unique) fullTokenList.toSet.toList else fullTokenList
+    val termsRequest = DocsIds(ids = tokenList)
+    val termList = termsById(indexName, termsRequest)
+
+    val textTerms = TextTerms(text = text,
+      textTermsN = tokenList.length,
+      termsFoundN = termList.terms.length,
+      terms = termList
+    )
+    textTerms
+  }
+
+  /** fetch all documents and serve them through an iterator
+    *
+    * @param indexName index name
+    * @param keepAlive the keep alive timeout for the ElasticSearch document scroller
+    * @return an iterator for Items
+    */
+  def allDocuments(indexName: String, keepAlive: Long = 60000): Iterator[Term] = {
+    val client: RestHighLevelClient = elasticClient.client
+
+    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
+      .query(QueryBuilders.matchAllQuery)
+      .size(100)
+
+    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+      .source(sourceReq)
+      .types(elasticClient.indexSuffix)
+      .scroll(new TimeValue(keepAlive))
+
+    var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
+
+    val iterator = Iterator.continually{
+      val documents = scrollResp.getHits.getHits.toList.map { e =>
+        val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
 
         val term : String = source.get("term") match {
           case Some(t) => t.asInstanceOf[String]
@@ -742,175 +806,10 @@ object TermService extends AbstractDataService {
           antonyms = antonyms,
           tags = tags,
           features = features,
-          frequency_base = frequencyBase,
-          frequency_stem = frequencyStem,
+          frequencyBase = frequencyBase,
+          frequencyStem = frequencyStem,
           vector = vector,
-          score = Option{item.getScore.toDouble})
-    }
-
-    val terms: Terms = Terms(terms=documents)
-
-    val maxScore : Float = searchResponse.getHits.getMaxScore
-    TermsResults(total = terms.terms.length, max_score = maxScore, hits = terms)
-  }
-
-  /** given a text, return all the matching terms
-    *
-    * @param indexName index term
-    * @param text input text
-    * @param analyzer the analyzer name to be used for text tokenization
-    * @return fetched terms
-    */
-  def searchFuture(indexName: String,
-                   text: String,
-                   analyzer: String = "space_punctuation") : Future[TermsResults] = Future {
-    search(indexName, text, analyzer)
-  }
-
-  /** tokenize a text
-    *
-    * @param indexName index name
-    * @param query a TokenizerQueryRequest with the text to tokenize
-    * @return a TokenizerResponse with the result of the tokenization
-    */
-  def esTokenizer(indexName: String, query: TokenizerQueryRequest) : TokenizerResponse = {
-    val analyzer = TokenizersDescription.analyzers_map.get(query.tokenizer) match {
-      case Some((analyzerEsName, _)) => analyzerEsName
-      case _ =>
-        throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + query.tokenizer + ")")
-    }
-
-    val client: RestHighLevelClient = elasticClient.client
-
-    val analyzerReq = new AnalyzeRequest()
-      .index(Index.indexName(indexName, elasticClient.indexSuffix))
-      .text(query.text)
-      .analyzer(analyzer)
-
-    val analyzeResponse: AnalyzeResponse = client.indices().analyze(analyzerReq, RequestOptions.DEFAULT)
-
-    val tokens : List[TokenizerResponseItem] =
-      analyzeResponse.getTokens.listIterator.asScala.toList.map(t => {
-        val responseItem: TokenizerResponseItem =
-          TokenizerResponseItem(start_offset = t.getStartOffset,
-            position = t.getPosition,
-            end_offset = t.getEndOffset,
-            token = t.getTerm,
-            token_type = t.getType)
-        responseItem
-      })
-
-    TokenizerResponse(tokens = tokens)
-  }
-
-  /** tokenize a sentence and extract term vectors for each token
-    *
-    * @param indexName index name
-    * @param text input text
-    * @param analyzer analyzer name
-    * @param unique if true exclude from results duplicated terms
-    * @return the TextTerms
-    */
-  def textToVectors(indexName: String, text: String, analyzer: String = "stop",
-                    unique: Boolean = false): TextTerms = {
-    val analyzerRequest =
-      TokenizerQueryRequest(tokenizer = analyzer, text = text) // analyzer is checked by esTokenizer
-    val fullTokenList = esTokenizer(indexName, analyzerRequest).tokens
-      .map(e => e.token)
-
-    val tokenList = if (unique) fullTokenList.toSet.toList else fullTokenList
-    val termsRequest = DocsIds(ids = tokenList)
-    val termList = termsById(indexName, termsRequest)
-
-    val textTerms = TextTerms(text = text,
-      text_terms_n = tokenList.length,
-      terms_found_n = termList.terms.length,
-      terms = termList
-    )
-    textTerms
-  }
-
-  /** fetch all documents and serve them through an iterator
-    *
-    * @param indexName index name
-    * @param keepAlive the keep alive timeout for the ElasticSearch document scroller
-    * @return an iterator for Items
-    */
-  def allDocuments(indexName: String, keepAlive: Long = 60000): Iterator[Term] = {
-    val client: RestHighLevelClient = elasticClient.client
-
-    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
-      .query(QueryBuilders.matchAllQuery)
-      .size(100)
-
-    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
-      .source(sourceReq)
-      .types(elasticClient.indexSuffix)
-      .scroll(new TimeValue(keepAlive))
-
-    var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
-
-    val iterator = Iterator.continually{
-      val documents = scrollResp.getHits.getHits.toList.map { e =>
-          val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
-
-          val term : String = source.get("term") match {
-            case Some(t) => t.asInstanceOf[String]
-            case None => ""
-          }
-
-          val synonyms : Option[Map[String, Double]] = source.get("synonyms") match {
-            case Some(t) =>
-              val value: String = t.asInstanceOf[String]
-              Option{payloadStringToMapStringDouble(value)}
-            case None => None: Option[Map[String, Double]]
-          }
-
-          val antonyms : Option[Map[String, Double]] = source.get("antonyms") match {
-            case Some(t) =>
-              val value: String = t.asInstanceOf[String]
-              Option{payloadStringToMapStringDouble(value)}
-            case None => None: Option[Map[String, Double]]
-          }
-
-          val tags : Option[String] = source.get("tags") match {
-            case Some(t) => Option {t.asInstanceOf[String]}
-            case None => None: Option[String]
-          }
-
-          val features : Option[Map[String, String]] = source.get("features") match {
-            case Some(t) =>
-              val value: String = t.asInstanceOf[String]
-              Option{payloadStringToMapStringString(value)}
-            case None => None: Option[Map[String, String]]
-          }
-
-          val frequencyBase : Option[Double] = source.get("frequency_base") match {
-            case Some(t) => Option {t.asInstanceOf[Double]}
-            case None => None: Option[Double]
-          }
-
-          val frequencyStem : Option[Double] = source.get("frequency_stem") match {
-            case Some(t) => Option {t.asInstanceOf[Double]}
-            case None => None: Option[Double]
-          }
-
-          val vector : Option[Vector[Double]] = source.get("vector") match {
-            case Some(t) =>
-              val value: String = t.asInstanceOf[String]
-              Option{payloadStringToDoubleVector(value)}
-            case None => None: Option[Vector[Double]]
-          }
-
-          Term(term = term,
-            synonyms = synonyms,
-            antonyms = antonyms,
-            tags = tags,
-            features = features,
-            frequency_base = frequencyBase,
-            frequency_stem = frequencyStem,
-            vector = vector,
-            score = None: Option[Double])
+          score = None: Option[Double])
       }
 
       scrollResp = client.search(searchReq, RequestOptions.DEFAULT)

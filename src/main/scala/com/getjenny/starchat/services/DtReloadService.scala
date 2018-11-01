@@ -56,7 +56,7 @@ object DtReloadService extends AbstractDataService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient
         .refresh(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
-      if(refreshIndex.failed_shards_n > 0) {
+      if(refreshIndex.failedShardsN > 0) {
         throw new Exception("System: index refresh failed: (" + indexName + ")")
       }
     }

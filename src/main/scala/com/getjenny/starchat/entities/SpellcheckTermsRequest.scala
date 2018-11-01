@@ -5,9 +5,9 @@ package com.getjenny.starchat.entities
   */
 
 case class SpellcheckTermsRequest(
-  text: String,
-  prefix_length: Int = 3,
-  min_doc_freq: Int = 1,
-  max_edit: Int = 2
+                                   text: String,
+                                   prefixLength: Int = 3,
+                                   minDocFreq: Int = 1,
+                                   maxEdit: Int = 2
 )
 

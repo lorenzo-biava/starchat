@@ -109,11 +109,11 @@ object SimilarityTest extends JsonSupport {
             case Some(evalResponse) => evalResponse match {
               case Success(t) => t
               case Failure(e) => AnalyzerEvaluateResponse(
-                build = false, value = 0.0, build_message = "Failed evaluating response: " + e.getMessage, data = None)
+                build = false, value = 0.0, buildMessage = "Failed evaluating response: " + e.getMessage, data = None)
             }
             case _ =>
               AnalyzerEvaluateResponse(
-                build = false, value = 0.0, build_message = "Response is empty", data = None)
+                build = false, value = 0.0, buildMessage = "Response is empty", data = None)
           }
           val score = value.value.toString
           val input_csv_fields = entry.toArray

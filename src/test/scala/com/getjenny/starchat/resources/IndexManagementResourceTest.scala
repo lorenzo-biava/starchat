@@ -22,9 +22,9 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
   val testUserCredentials = BasicHttpCredentials("test_user", "p4ssw0rd")
 
   "StarChat" should {
-    "return an HTTP code 200 when creating a new system index" in {
+    "return an HTTP code 201 when creating a new system index" in {
       Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
-        status shouldEqual StatusCodes.OK
+        status shouldEqual StatusCodes.Created
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
           "(?:[A-Za-z0-9_]+)\\(" + Index.systemIndexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
@@ -34,7 +34,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
   }
 
   it should {
-     "return an HTTP code 200 when creating a new user" in {
+     "return an HTTP code 201 when creating a new user" in {
       val user = User(
         id = "test_user",
         password = "3c98bf19cb962ac4cd0227142b3495ab1be46534061919f792254b80c0f3e566f7819cae73bdc616af0ff555f7460ac96d88d56338d659ebd93e2be858ce1cf9",
@@ -42,15 +42,15 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
         permissions = Map[String, Set[Permissions.Value]]("index_getjenny_english_0" -> Set(Permissions.read, Permissions.write))
       )
       Post(s"/user", user) ~> addCredentials(testAdminCredentials) ~> routes ~> check {
-        status shouldEqual StatusCodes.OK
+        status shouldEqual StatusCodes.Created
       }
     }
   }
 
   it should {
-    "return an HTTP code 200 when creating a new index" in {
+    "return an HTTP code 201 when creating a new index" in {
       Post(s"/index_getjenny_english_0/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
-        status shouldEqual StatusCodes.OK
+        status shouldEqual StatusCodes.Created
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
           "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +

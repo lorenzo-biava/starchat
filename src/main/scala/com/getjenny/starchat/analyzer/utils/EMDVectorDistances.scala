@@ -22,8 +22,8 @@ object EMDVectorDistances {
     val vectors1 = TextToVectorsTools.textTermsToVectors(textTerms1)
     val vectors2 = TextToVectorsTools.textTermsToVectors(textTerms2)
 
-    val reliabilityFactor1 = textTerms1.terms_found_n.toDouble / math.max(textTerms1.text_terms_n.toDouble, 1.0)
-    val reliabilityFactor2 = textTerms2.terms_found_n.toDouble / math.max(textTerms2.text_terms_n.toDouble, 1.0)
+    val reliabilityFactor1 = textTerms1.termsFoundN.toDouble / math.max(textTerms1.textTermsN.toDouble, 1.0)
+    val reliabilityFactor2 = textTerms2.termsFoundN.toDouble / math.max(textTerms2.textTermsN.toDouble, 1.0)
 
     val words1 = vectors1.groupBy{case(term, _) => term}
       .map{case(term, termVectorPair) =>

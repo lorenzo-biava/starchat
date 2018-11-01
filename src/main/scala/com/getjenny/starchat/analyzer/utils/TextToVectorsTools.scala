@@ -28,7 +28,7 @@ object TextToVectorsTools {
       emptyVec(length)
 
     val reliabilityFactor =
-      textTerms.terms_found_n.toDouble / math.max(1, textTerms.text_terms_n.toDouble)
+      textTerms.termsFoundN.toDouble / math.max(1, textTerms.textTermsN.toDouble)
     (sentenceVector, reliabilityFactor)
   }
 
@@ -40,7 +40,7 @@ object TextToVectorsTools {
       emptyVec(length)
 
     val reliabilityFactor =
-      textTerms.terms_found_n.toDouble / math.max(1, textTerms.text_terms_n.toDouble)
+      textTerms.termsFoundN.toDouble / math.max(1, textTerms.textTermsN.toDouble)
     (sentenceVector, reliabilityFactor)
   }
 

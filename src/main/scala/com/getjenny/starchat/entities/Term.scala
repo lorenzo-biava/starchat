@@ -11,8 +11,8 @@ case class Term(term: String,
                 antonyms: Option[Map[String, Double]] = None,
                 tags: Option[String] = None,
                 features: Option[Map[String, String]] = None,
-                frequency_base: Option[Double] = None,
-                frequency_stem: Option[Double] = None,
+                frequencyBase: Option[Double] = None,
+                frequencyStem: Option[Double] = None,
                 vector: Option[Vector[Double]] = None,
                 score: Option[Double] = None
                )
@@ -22,8 +22,8 @@ case class SearchTerm(term: Option[String] = None,
                       antonyms: Option[Map[String, Double]] = None,
                       tags: Option[String] = None,
                       features: Option[Map[String, String]] = None,
-                      frequency_base: Option[Double] = None,
-                      frequency_stem: Option[Double] = None,
+                      frequencyBase: Option[Double] = None,
+                      frequencyStem: Option[Double] = None,
                       vector: Option[Vector[Double]] = None,
                       score: Option[Double] = None,
                       analyzer: Option[String] = None
@@ -31,11 +31,11 @@ case class SearchTerm(term: Option[String] = None,
 
 case class Terms(terms: List[Term])
 
-case class TermsResults(total: Int, max_score: Float, hits: Terms)
+case class TermsResults(total: Int, maxScore: Float, hits: Terms)
 
 case class TextTerms(
                       text: String,
-                      text_terms_n: Int,
-                      terms_found_n: Int,
+                      textTermsN: Int,
+                      termsFoundN: Int,
                       terms: Terms
                     )

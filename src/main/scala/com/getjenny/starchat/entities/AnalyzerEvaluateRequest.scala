@@ -9,5 +9,5 @@ import com.getjenny.analyzer.expressions.AnalyzersData
 case class AnalyzerEvaluateRequest(analyzer: String,
                                    query: String,
                                    data: Option[AnalyzersData],
-                                   evaluation_class: Option[String] = Some("default")
+                                   evaluationClass: Option[String] = Some("default")
                                   )

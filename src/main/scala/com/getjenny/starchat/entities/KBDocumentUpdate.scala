@@ -5,12 +5,12 @@ package com.getjenny.starchat.entities
   */
 
 case class KBDocumentUpdate(conversation: Option[String] = None,
-                            index_in_conversation: Option[Int] = None,
+                            indexInConversation: Option[Int] = None,
                             question: Option[String] = None,
-                            question_negative: Option[List[String]] = None,
-                            question_scored_terms: Option[List[(String, Double)]] = None,
+                            questionNegative: Option[List[String]] = None,
+                            questionScoredTerms: Option[List[(String, Double)]] = None,
                             answer: Option[String] = None,
-                            answer_scored_terms: Option[List[(String, Double)]] = None,
+                            answerScoredTerms: Option[List[(String, Double)]] = None,
                             verified: Option[Boolean] = None,
                             topics: Option[String] = None,
                             dclass: Option[String] = None,

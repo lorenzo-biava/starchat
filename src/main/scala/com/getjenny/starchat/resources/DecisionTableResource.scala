@@ -32,7 +32,7 @@ trait DecisionTableResource extends StarChatResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
               parameters("refresh".as[Int] ? 0) { refresh =>
@@ -55,7 +55,7 @@ trait DecisionTableResource extends StarChatResource {
         } ~
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
@@ -94,7 +94,7 @@ trait DecisionTableResource extends StarChatResource {
           } ~
           delete {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("refresh".as[Int] ? 0) { refresh =>
@@ -133,7 +133,7 @@ trait DecisionTableResource extends StarChatResource {
         path(Segment) { id =>
           put {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 entity(as[DTDocumentUpdate]) { update =>
@@ -201,9 +201,9 @@ trait DecisionTableResource extends StarChatResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(dtReloadService.setDTReloadTimestamp(indexName, refresh = 1)) {
                 case Success(t) =>
@@ -229,9 +229,9 @@ trait DecisionTableResource extends StarChatResource {
       pathEnd {
         get {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(analyzerService.getDTAnalyzerMap(indexName)) {
                 case Success(t) =>
@@ -250,7 +250,7 @@ trait DecisionTableResource extends StarChatResource {
         } ~
           post {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("propagate".as[Boolean] ? true,
@@ -263,7 +263,8 @@ trait DecisionTableResource extends StarChatResource {
                         t
                       })
                     case Failure(e) =>
-                      log.error("index(" + indexName + ") route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
+                      log.error("index(" + indexName +
+                        ") route=decisionTableAnalyzerRoutes method=POST: " + e.getMessage)
                       completeResponse(StatusCodes.BadRequest,
                         Option {
                           ReturnMessageData(code = 107, message = e.getMessage)
@@ -282,7 +283,7 @@ trait DecisionTableResource extends StarChatResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[DTDocumentSearch]) { docsearch =>
@@ -312,7 +313,7 @@ trait DecisionTableResource extends StarChatResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[ResponseRequestIn]) {
@@ -373,9 +374,9 @@ trait DecisionTableResource extends StarChatResource {
                             }
                           )
                       }
-                    case Success(response_value) =>
-                      if (response_value.status.code === 200) {
-                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, response_value.response_request_out)
+                    case Success(responseValue) =>
+                      if (responseValue.status.code === 200) {
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, responseValue.responseRequestOut)
                       } else {
                         completeResponse(StatusCodes.NoContent) // no response found
                       }

@@ -25,11 +25,11 @@ case class TokenizerQueryRequest(
 )
 
 case class TokenizerResponseItem(
-  start_offset: Int,
-  position: Int,
-  end_offset: Int,
-  token: String,
-  token_type: String
+                                  startOffset: Int,
+                                  position: Int,
+                                  endOffset: Int,
+                                  token: String,
+                                  tokenType: String
 )
 
 case class TokenizerResponse(

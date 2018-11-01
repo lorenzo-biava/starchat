@@ -58,16 +58,16 @@ object FileToDTDocuments extends JsonSupport {
         val stateData = Await.result(stateDataFuture, 10.second)
 
         val document = DTDocument(state = entry(0),
-          execution_order = entry(1).toInt,
-          max_state_count = entry(2).toInt,
+          executionOrder = entry(1).toInt,
+          maxStateCount = entry(2).toInt,
           analyzer = entry(3),
           queries = queries,
           bubble = entry(5),
           action = entry(6),
-          action_input = actionInput,
-          state_data = stateData,
-          success_value = entry(9),
-          failure_value = entry(10)
+          actionInput = actionInput,
+          stateData = stateData,
+          successValue = entry(9),
+          failureValue = entry(10)
         )
 
         document

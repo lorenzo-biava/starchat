@@ -6,15 +6,15 @@ package com.getjenny.starchat.entities
 
 import scala.collection.immutable.{List, Map}
 
-case class DTDocumentUpdate(execution_order: Option[Int],
-                            max_state_count: Option[Int],
+case class DTDocumentUpdate(executionOrder: Option[Int],
+                            maxStateCount: Option[Int],
                             analyzer: Option[String],
                             queries: Option[List[String]],
                             bubble: Option[String],
                             action: Option[String],
-                            action_input: Option[Map[String, String]],
-                            state_data: Option[Map[String, String]],
-                            success_value: Option[String],
-                            failure_value: Option[String],
-                            evaluation_class: Option[String]
+                            actionInput: Option[Map[String, String]],
+                            stateData: Option[Map[String, String]],
+                            successValue: Option[String],
+                            failureValue: Option[String],
+                            evaluationClass: Option[String]
                            )

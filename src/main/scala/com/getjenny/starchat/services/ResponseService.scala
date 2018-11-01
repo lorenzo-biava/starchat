@@ -38,7 +38,7 @@ object ResponseService extends AbstractDataService {
 
   def getNextResponse(indexName: String, request: ResponseRequestIn): Future[ResponseRequestOutOperationResult] = Future {
 
-    val evaluationClass = request.evaluation_class match {
+    val evaluationClass = request.evaluationClass match {
       case Some(c) => c
       case _ => "default"
     }
@@ -50,17 +50,17 @@ object ResponseService extends AbstractDataService {
       throw ResponseServiceDTNotLoadedException(message)
     }
 
-    val userText: String = request.user_input match {
+    val userText: String = request.userInput match {
       case Some(t) =>
         t.text.getOrElse("")
       case _ => ""
     }
 
-    val conversationId: String = request.conversation_id
+    val conversationId: String = request.conversationId
 
     val variables : Map[String, String] = request.data.getOrElse(Map.empty[String, String])
 
-    val traversedStates: Vector[String] = request.traversed_states.getOrElse(Vector.empty[String])
+    val traversedStates: Vector[String] = request.traversedStates.getOrElse(Vector.empty[String])
     val traversedStatesCount: Map[String, Int] =
       traversedStates.foldLeft(Map.empty[String, Int])((map, word) => map + (word -> (map.getOrElse(word,0) + 1)))
 
@@ -75,7 +75,7 @@ object ResponseService extends AbstractDataService {
 
     // prepare search result for search analyzer
     val searchResAnalyzers =
-      decisionTableService.searchDtQueries(indexName, userText, request.evaluation_class).map(searchRes => {
+      decisionTableService.searchDtQueries(indexName, userText, request.evaluationClass).map(searchRes => {
         val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
         AnalyzersDataInternal(extractedVariables = variables, traversedStates = traversedStates,
           data = analyzersInternalData)
@@ -83,7 +83,7 @@ object ResponseService extends AbstractDataService {
 
     val returnState: Future[ResponseRequestOutOperationResult] = searchResAnalyzers.map( data => {
       // No states in the return values
-      val maxResults: Int = request.max_results.getOrElse(2)
+      val maxResults: Int = request.maxResults.getOrElse(2)
       val threshold: Double = request.threshold.getOrElse(0.0d)
       val evaluationList = request.state match {
         case Some(state) =>
@@ -142,15 +142,15 @@ object ResponseService extends AbstractDataService {
               val doc: DTDocument = item.document
               val state = doc.state
               val evaluationRes: Result = analyzersEvalData(state)
-              val maxStateCount: Int = doc.max_state_count
+              val maxStateCount: Int = doc.maxStateCount
               val analyzer: String = doc.analyzer
               var bubble: String = doc.bubble
-              var actionInput: Map[String, String] = doc.action_input
-              val stateData: Map[String, String] = doc.state_data
+              var actionInput: Map[String, String] = doc.actionInput
+              val stateData: Map[String, String] = doc.stateData
 
               for ((key, value) <- data.extractedVariables) {
                 bubble = bubble.replaceAll("%" + key + "%", value)
-                actionInput = doc.action_input map { case (ki, vi) =>
+                actionInput = doc.actionInput map { case (ki, vi) =>
                   val newValue: String = vi.replaceAll("%" + key + "%", value)
                   (ki, newValue)
                 }
@@ -158,7 +158,7 @@ object ResponseService extends AbstractDataService {
 
               for ((key, value) <- evaluationRes.data.extractedVariables) {
                 bubble = bubble.replaceAll("%" + key + "%", value)
-                actionInput = doc.action_input map { case (ki, vi) =>
+                actionInput = doc.actionInput map { case (ki, vi) =>
                   val newValue: String = vi.replaceAll("%" + key + "%", value)
                   (ki, newValue)
                 }
@@ -170,18 +170,18 @@ object ResponseService extends AbstractDataService {
                     .filter { case (key, _) => !(key matches "\\A__temp__.*") }
 
               val traversedStatesUpdated: Vector[String] = traversedStates ++ Vector(state)
-              val responseItem: ResponseRequestOut = ResponseRequestOut(conversation_id = conversationId,
+              val responseItem: ResponseRequestOut = ResponseRequestOut(conversationId = conversationId,
                 state = state,
-                max_state_count = maxStateCount,
-                traversed_states = traversedStatesUpdated,
+                maxStateCount = maxStateCount,
+                traversedStates = traversedStatesUpdated,
                 analyzer = analyzer,
                 bubble = bubble,
                 action = doc.action,
                 data = cleanedData,
-                action_input = actionInput,
-                state_data = stateData,
-                success_value = doc.success_value,
-                failure_value = doc.failure_value,
+                actionInput = actionInput,
+                stateData = stateData,
+                successValue = doc.successValue,
+                failureValue = doc.failureValue,
                 score = evaluationRes.score)
               responseItem
           }.toList.sortWith(_.score > _.score)

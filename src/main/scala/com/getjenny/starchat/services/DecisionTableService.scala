@@ -58,11 +58,11 @@ object DecisionTableService extends AbstractDataService {
       .types(elasticClient.indexSuffix)
       .searchType(SearchType.DFS_QUERY_THEN_FETCH)
 
-    val minScore = documentSearch.min_score.getOrElse(
+    val minScore = documentSearch.minScore.getOrElse(
       Option{elasticClient.queryMinThreshold}.getOrElse(0.0f)
     )
 
-    val boostExactMatchFactor = documentSearch.boost_exact_match_factor.getOrElse(
+    val boostExactMatchFactor = documentSearch.boostExactMatchFactor.getOrElse(
       Option{elasticClient.boostExactMatchFactor}.getOrElse(1.0f)
     )
 
@@ -75,7 +75,7 @@ object DecisionTableService extends AbstractDataService {
       case _ => ;
     }
 
-    documentSearch.execution_order match {
+    documentSearch.executionOrder match {
       case Some(value) =>
         boolQueryBuilder.must(QueryBuilders.matchQuery("execution_order", value))
       case _ => ;
@@ -174,12 +174,12 @@ object DecisionTableService extends AbstractDataService {
             case None => "default"
           }
 
-          val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
-            max_state_count = maxStateCount,
+          val document : DTDocument = DTDocument(state = state, executionOrder = executionOrder,
+            maxStateCount = maxStateCount,
             analyzer = analyzer, queries = queries, bubble = bubble,
-            action = action, action_input = actionInput, state_data = stateData,
-            success_value = successValue, failure_value = failureValue,
-            evaluation_class = Some(evaluationClass), version = version
+            action = action, actionInput = actionInput, stateData = stateData,
+            successValue = successValue, failureValue = failureValue,
+            evaluationClass = Some(evaluationClass), version = version
           )
 
           val searchDocument : SearchDTDocument = SearchDTDocument(score = item.getScore, document = document)
@@ -196,7 +196,7 @@ object DecisionTableService extends AbstractDataService {
     }
 
     val total : Int = filteredDoc.length
-    val searchResults : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, max_score = maxScore,
+    val searchResults : SearchDTDocumentsResults = SearchDTDocumentsResults(total = total, maxScore = maxScore,
       hits = filteredDoc)
 
     val searchResultsOption : Future[SearchDTDocumentsResults] = Future { searchResults }
@@ -209,17 +209,17 @@ object DecisionTableService extends AbstractDataService {
       DTDocumentSearch(
         from = Option {0},
         size = Option {10000},
-        min_score = Option {
+        minScore = Option {
           elasticClient.queryMinThreshold
         },
-        execution_order = None: Option[Int],
-        boost_exact_match_factor = Option {
+        executionOrder = None: Option[Int],
+        boostExactMatchFactor = Option {
           elasticClient.boostExactMatchFactor
         },
         state = None: Option[String], queries = Option {
           userText
         },
-        evaluation_class = evaluationClass
+        evaluationClass = evaluationClass
       )
 
     this.search(indexName, dtDocumentSearch)
@@ -238,8 +238,8 @@ object DecisionTableService extends AbstractDataService {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     builder.field("state", document.state)
-    builder.field("execution_order", document.execution_order)
-    builder.field("max_state_count", document.max_state_count)
+    builder.field("execution_order", document.executionOrder)
+    builder.field("max_state_count", document.maxStateCount)
     builder.field("analyzer", document.analyzer)
 
     val array = builder.startArray("queries")
@@ -252,16 +252,16 @@ object DecisionTableService extends AbstractDataService {
     builder.field("action", document.action)
 
     val actionInputBuilder : XContentBuilder = builder.startObject("action_input")
-    for ((k,v) <- document.action_input) actionInputBuilder.field(k,v)
+    for ((k,v) <- document.actionInput) actionInputBuilder.field(k,v)
     actionInputBuilder.endObject()
 
     val stateDataBuilder : XContentBuilder = builder.startObject("state_data")
-    for ((k,v) <- document.state_data) stateDataBuilder.field(k,v)
+    for ((k,v) <- document.stateData) stateDataBuilder.field(k,v)
     stateDataBuilder.endObject()
 
-    builder.field("success_value", document.success_value)
-    builder.field("failure_value", document.failure_value)
-    val evaluationClass = document.evaluation_class match {
+    builder.field("success_value", document.successValue)
+    builder.field("failure_value", document.failureValue)
+    val evaluationClass = document.evaluationClass match {
       case Some(t) => t
       case _ => "default"
     }
@@ -280,7 +280,7 @@ object DecisionTableService extends AbstractDataService {
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
-      if(refreshIndex.failed_shards_n > 0) {
+      if(refreshIndex.failedShardsN > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")
       }
     }
@@ -304,11 +304,11 @@ object DecisionTableService extends AbstractDataService {
       case None => ;
     }
 
-    document.execution_order match {
+    document.executionOrder match {
       case Some(t) => builder.field("execution_order", t)
       case None => ;
     }
-    document.max_state_count match {
+    document.maxStateCount match {
       case Some(t) => builder.field("max_state_count", t)
       case None => ;
     }
@@ -330,29 +330,29 @@ object DecisionTableService extends AbstractDataService {
       case Some(t) => builder.field("action", t)
       case None => ;
     }
-    document.action_input match {
+    document.actionInput match {
       case Some(t) =>
         val actionInputBuilder : XContentBuilder = builder.startObject("action_input")
         for ((k,v) <- t) actionInputBuilder.field(k,v)
         actionInputBuilder.endObject()
       case None => ;
     }
-    document.state_data match {
+    document.stateData match {
       case Some(t) =>
         val stateDataBuilder : XContentBuilder = builder.startObject("state_data")
         for ((k,v) <- t) stateDataBuilder.field(k,v)
         stateDataBuilder.endObject()
       case None => ;
     }
-    document.success_value match {
+    document.successValue match {
       case Some(t) => builder.field("success_value", t)
       case None => ;
     }
-    document.failure_value match {
+    document.failureValue match {
       case Some(t) => builder.field("failure_value", t)
       case None => ;
     }
-    document.evaluation_class match {
+    document.evaluationClass match {
       case Some(t) => builder.field("evaluation_class", t)
       case None => ;
     }
@@ -371,7 +371,7 @@ object DecisionTableService extends AbstractDataService {
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
-      if(refreshIndex.failed_shards_n > 0) {
+      if(refreshIndex.failedShardsN > 0) {
         throw new Exception("DecisionTable : index refresh failed: (" + indexName + ")")
       }
     }
@@ -464,12 +464,12 @@ object DecisionTableService extends AbstractDataService {
           case None => "default"
         }
 
-        val document : DTDocument = DTDocument(state = state, execution_order = executionOrder,
-          max_state_count = maxStateCount,
+        val document : DTDocument = DTDocument(state = state, executionOrder = executionOrder,
+          maxStateCount = maxStateCount,
           analyzer = analyzer, queries = queries, bubble = bubble,
-          action = action, action_input = actionInput, state_data = stateData,
-          success_value = successValue, failure_value = failureValue,
-          evaluation_class = Some(evaluationClass), version = version
+          action = action, actionInput = actionInput, stateData = stateData,
+          successValue = successValue, failureValue = failureValue,
+          evaluationClass = Some(evaluationClass), version = version
         )
 
         val searchDocument : SearchDTDocument = SearchDTDocument(score = .0f, document = document)
@@ -478,7 +478,7 @@ object DecisionTableService extends AbstractDataService {
 
     val maxScore : Float = .0f
     val total : Int = decisionTableContent.length
-    SearchDTDocumentsResults(total = total, max_score = maxScore, hits = decisionTableContent)
+    SearchDTDocumentsResults(total = total, maxScore = maxScore, hits = decisionTableContent)
   }
 
   def read(indexName: String, ids: List[String]): Future[SearchDTDocumentsResults] = Future {
@@ -564,12 +564,12 @@ object DecisionTableService extends AbstractDataService {
             case None => "default"
           }
 
-          val document: DTDocument = DTDocument(state = state, execution_order = executionOrder,
-            max_state_count = maxStateCount,
+          val document: DTDocument = DTDocument(state = state, executionOrder = executionOrder,
+            maxStateCount = maxStateCount,
             analyzer = analyzer, queries = queries, bubble = bubble,
-            action = action, action_input = actionInput, state_data = stateData,
-            success_value = successValue, failure_value = failureValue,
-            evaluation_class = Some(evaluationClass), version = version
+            action = action, actionInput = actionInput, stateData = stateData,
+            successValue = successValue, failureValue = failureValue,
+            evaluationClass = Some(evaluationClass), version = version
           )
 
           val searchDocument: SearchDTDocument = SearchDTDocument(score = .0f, document = document)
@@ -581,7 +581,7 @@ object DecisionTableService extends AbstractDataService {
 
     val maxScore: Float = .0f
     val total: Int = filteredDoc.length
-    SearchDTDocumentsResults(total = total, max_score = maxScore, hits = filteredDoc)
+    SearchDTDocumentsResults(total = total, maxScore = maxScore, hits = filteredDoc)
   }
 
 

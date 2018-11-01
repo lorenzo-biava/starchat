@@ -148,7 +148,7 @@ trait PriorDataResource extends StarChatResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             extractRequest { request =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
@@ -186,7 +186,7 @@ trait PriorDataResource extends StarChatResource {
         } ~
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
@@ -212,7 +212,7 @@ trait PriorDataResource extends StarChatResource {
           } ~
           delete {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.write)) {
@@ -255,7 +255,7 @@ trait PriorDataResource extends StarChatResource {
         path(Segment) { id =>
           put {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.write)) {
@@ -292,7 +292,7 @@ trait PriorDataResource extends StarChatResource {
             authenticator = authenticator.authenticator) { user =>
             extractRequest { request =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 entity(as[KBDocumentSearch]) { docsearch =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(questionAnswerService.search(indexName, docsearch)) {
@@ -324,7 +324,7 @@ trait PriorDataResource extends StarChatResource {
         put {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
               extractRequest { request =>
                 entity(as[UpdateQATermsRequest]) { extractionRequest =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -350,7 +350,7 @@ trait PriorDataResource extends StarChatResource {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.stream)) {
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
               entity(as[UpdateQATermsRequest]) { extractionRequest =>
                 extractRequest { request =>
                   val entryIterator = questionAnswerService.updateAllTextTerms(indexName = indexName,
@@ -382,9 +382,7 @@ trait PriorDataResource extends StarChatResource {
                     questionAnswerService.resetCountersCache
                   }) {
                   case Success(t) =>
-                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Some(t))
                   case Failure(e) =>
                     log.error("index(" + indexName + ") uri=(" + request.uri +
                       ") method=(" + request.method.name + ") : " + e.getMessage)

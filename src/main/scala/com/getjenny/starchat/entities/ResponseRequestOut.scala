@@ -6,17 +6,17 @@ package com.getjenny.starchat.entities
 
 import scala.collection.immutable.Map
 
-case class ResponseRequestOut(conversation_id: String,
+case class ResponseRequestOut(conversationId: String,
                               state: String,
-                              traversed_states: Vector[String],
-                              max_state_count: Int,
+                              traversedStates: Vector[String],
+                              maxStateCount: Int,
                               analyzer: String,
                               bubble: String,
                               action: String,
                               data: Map[String, String],
-                              action_input: Map[String, String],
-                              state_data: Map[String, String],
-                              success_value: String,
-                              failure_value: String,
+                              actionInput: Map[String, String],
+                              stateData: Map[String, String],
+                              successValue: String,
+                              failureValue: String,
                               score: Double
                              )

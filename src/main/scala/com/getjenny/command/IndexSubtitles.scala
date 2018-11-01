@@ -60,7 +60,7 @@ object IndexSubtitles extends JsonSupport {
       val doc = KBDocument(
         id = fields(0),
         conversation = fields(1),
-        index_in_conversation = Some(fields(2).toInt),
+        indexInConversation = Some(fields(2).toInt),
         question = fields(3),
         answer = ""
       )

@@ -141,12 +141,12 @@ object IndexKnowledgeBase extends JsonSupport {
       val kbDocument: KBDocument = KBDocument(
         id = id,
         conversation = entry("conversation_id"),
-        index_in_conversation =  Option { entry("position").toInt },
+        indexInConversation =  Option { entry("position").toInt },
         question = entry("question"),
-        question_negative = None: Option[List[String]],
-        question_scored_terms = None: Option[List[(String, Double)]],
+        questionNegative = None: Option[List[String]],
+        questionScoredTerms = None: Option[List[(String, Double)]],
         answer = entry("answer"),
-        answer_scored_terms = None: Option[List[(String, Double)]],
+        answerScoredTerms = None: Option[List[(String, Double)]],
         topics = None: Option[String],
         dclass = None: Option[String],
         doctype = doctypes.normal,
@@ -165,7 +165,7 @@ object IndexKnowledgeBase extends JsonSupport {
       result.status match {
         case StatusCodes.Created | StatusCodes.OK => println("indexed: " + kbDocument.id +
           " conv(" + kbDocument.conversation + ")" +
-          " position(" + kbDocument.index_in_conversation.get + ")" +
+          " position(" + kbDocument.indexInConversation.get + ")" +
           " q_id(" + entry("question_id") + ")" +
           " a_id(" + entry("answer_id") + ")")
         case _ =>

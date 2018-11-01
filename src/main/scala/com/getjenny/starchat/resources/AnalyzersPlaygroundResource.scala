@@ -12,7 +12,6 @@ import com.getjenny.starchat.routing._
 import com.getjenny.starchat.services.AnalyzerService
 
 import scala.util.{Failure, Success}
-import com.getjenny.starchat.utils.Index
 
 trait AnalyzersPlaygroundResource extends StarChatResource {
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
@@ -22,9 +21,10 @@ trait AnalyzersPlaygroundResource extends StarChatResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              authenticator.hasPermissions(user, indexName,
+                Set(Permissions.read, Permissions.write, Permissions.read))) {
               entity(as[AnalyzerEvaluateRequest]) { request =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(analyzerService.evaluateAnalyzer(indexName, request)) {

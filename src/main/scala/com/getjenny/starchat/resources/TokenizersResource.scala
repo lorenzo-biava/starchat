@@ -22,9 +22,9 @@ trait TokenizersResource extends StarChatResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              authenticator.hasPermissions(user, indexName, Permissions.read)) {
               entity(as[TokenizerQueryRequest]) { request_data =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(Future {
@@ -46,7 +46,7 @@ trait TokenizersResource extends StarChatResource {
         } ~ {
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 val analyzers_description: Map[String, String] =

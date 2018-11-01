@@ -315,7 +315,7 @@ trait QuestionAnswerService extends AbstractDataService {
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
       .from(documentSearch.from.getOrElse(0))
       .size(documentSearch.size.getOrElse(10))
-      .minScore(documentSearch.min_score.getOrElse(Option{elasticClient.queryMinThreshold}.getOrElse(0.0f)))
+      .minScore(documentSearch.minScore.getOrElse(Option{elasticClient.queryMinThreshold}.getOrElse(0.0f)))
 
     val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
       .source(sourceReq)
@@ -385,7 +385,7 @@ trait QuestionAnswerService extends AbstractDataService {
       case _ => ;
     }
 
-    documentSearch.question_scored_terms match {
+    documentSearch.questionScoredTerms match {
       case Some(questionScoredTerms) =>
         val queryTerms = QueryBuilders.boolQuery()
           .should(QueryBuilders.matchQuery("question_scored_terms.term", questionScoredTerms))
@@ -507,11 +507,11 @@ trait QuestionAnswerService extends AbstractDataService {
       }
 
       val document : KBDocument = KBDocument(id = id, conversation = conversation,
-        index_in_conversation = indexInConversation, question = question,
-        question_negative = questionNegative,
-        question_scored_terms = questionScoredTerms,
+        indexInConversation = indexInConversation, question = question,
+        questionNegative = questionNegative,
+        questionScoredTerms = questionScoredTerms,
         answer = answer,
-        answer_scored_terms = answerScoredTerms,
+        answerScoredTerms = answerScoredTerms,
         verified = verified,
         topics = topics,
         dclass = dclass,
@@ -528,7 +528,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val maxScore : Float = searchResp.getHits.getMaxScore
     val total : Int = filteredDoc.length
-    val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, max_score = maxScore,
+    val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, maxScore = maxScore,
       hits = filteredDoc)
 
     val searchResultsOption : Future[Option[SearchKBDocumentsResults]] = Future { Option { searchResults } }
@@ -541,14 +541,14 @@ trait QuestionAnswerService extends AbstractDataService {
     builder.field("id", document.id)
     builder.field("conversation", document.conversation)
 
-    document.index_in_conversation match {
+    document.indexInConversation match {
       case Some(t) => builder.field("index_in_conversation", t)
       case None => ;
     }
 
     builder.field("question", document.question)
 
-    document.question_negative match {
+    document.questionNegative match {
       case Some(t) =>
         val array = builder.startArray("question_negative")
         t.foreach(q => {
@@ -558,7 +558,7 @@ trait QuestionAnswerService extends AbstractDataService {
       case None => ;
     }
 
-    document.question_scored_terms match {
+    document.questionScoredTerms match {
       case Some(t) =>
         val array = builder.startArray("question_scored_terms")
         t.foreach{case(term, score) =>
@@ -571,7 +571,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
     builder.field("answer", document.answer)
 
-    document.answer_scored_terms match {
+    document.answerScoredTerms match {
       case Some(t) =>
         val array = builder.startArray("answer_scored_terms")
         t.foreach{case(term, score) =>
@@ -615,8 +615,8 @@ trait QuestionAnswerService extends AbstractDataService {
 
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
-      if(refresh_index.failed_shards_n > 0) {
-        throw QuestionAnswerServiceException("KnowledgeBase : index refresh failed: (" + indexName + ")")
+      if(refresh_index.failedShardsN > 0) {
+        throw QuestionAnswerServiceException("index refresh failed: (" + indexName + ")")
       }
     }
 
@@ -643,7 +643,7 @@ trait QuestionAnswerService extends AbstractDataService {
       case None => ;
     }
 
-    document.question_negative match {
+    document.questionNegative match {
       case Some(t) =>
         val array = builder.startArray("question_negative")
         t.foreach(q => {
@@ -653,7 +653,7 @@ trait QuestionAnswerService extends AbstractDataService {
       case None => ;
     }
 
-    document.question_scored_terms match {
+    document.questionScoredTerms match {
       case Some(t) =>
         val array = builder.startArray("question_scored_terms")
         t.foreach{case(term, score) =>
@@ -664,7 +664,7 @@ trait QuestionAnswerService extends AbstractDataService {
       case None => ;
     }
 
-    document.index_in_conversation match {
+    document.indexInConversation match {
       case Some(t) => builder.field("index_in_conversation", t)
       case None => ;
     }
@@ -674,7 +674,7 @@ trait QuestionAnswerService extends AbstractDataService {
       case None => ;
     }
 
-    document.answer_scored_terms match {
+    document.answerScoredTerms match {
       case Some(t) =>
         val array = builder.startArray("answer_scored_terms")
         t.foreach{
@@ -729,8 +729,8 @@ trait QuestionAnswerService extends AbstractDataService {
 
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
-      if(refresh_index.failed_shards_n > 0) {
-        throw QuestionAnswerServiceException("KnowledgeBase : index refresh failed: (" + indexName + ")")
+      if(refresh_index.failedShardsN > 0) {
+        throw QuestionAnswerServiceException("index refresh failed: (" + indexName + ")")
       }
     }
 
@@ -847,12 +847,12 @@ trait QuestionAnswerService extends AbstractDataService {
       }
 
       val document : KBDocument = KBDocument(id = id, conversation = conversation,
-        index_in_conversation = indexInConversation,
+        indexInConversation = indexInConversation,
         question = question,
-        question_negative = questionNegative,
-        question_scored_terms = questionScoredTerms,
+        questionNegative = questionNegative,
+        questionScoredTerms = questionScoredTerms,
         answer = answer,
-        answer_scored_terms = answerScoredTerms,
+        answerScoredTerms = answerScoredTerms,
         verified = verified,
         topics = topics,
         dclass = dclass,
@@ -869,7 +869,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val maxScore : Float = .0f
     val total : Int = filteredDoc.length
-    val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, max_score = maxScore,
+    val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, maxScore = maxScore,
       hits = filteredDoc)
 
     val searchResultsOption : Option[SearchKBDocumentsResults] = Option { searchResults }
@@ -987,12 +987,12 @@ trait QuestionAnswerService extends AbstractDataService {
           }
 
           KBDocument(id = id, conversation = conversation,
-            index_in_conversation = indexInConversation,
+            indexInConversation = indexInConversation,
             question = question,
-            question_negative = questionNegative,
-            question_scored_terms = questionScoredTerms,
+            questionNegative = questionNegative,
+            questionScoredTerms = questionScoredTerms,
             answer = answer,
-            answer_scored_terms = answerScoredTerms,
+            answerScoredTerms = answerScoredTerms,
             verified = verified,
             topics = topics,
             dclass = dclass,
@@ -1036,8 +1036,8 @@ trait QuestionAnswerService extends AbstractDataService {
           .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
         val (_, termsA) = manausTermsExtractionService
           .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
-        val scoredTermsUpdateReq = KBDocumentUpdate(question_scored_terms = Some(termsQ.toList),
-          answer_scored_terms = Some(termsA.toList))
+        val scoredTermsUpdateReq = KBDocumentUpdate(questionScoredTerms = Some(termsQ.toList),
+          answerScoredTerms = Some(termsA.toList))
         update(indexName = indexName, id = hit.document.id, document = scoredTermsUpdateReq, refresh = 0)
     }
   }
@@ -1058,8 +1058,8 @@ trait QuestionAnswerService extends AbstractDataService {
           .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
         val (_, termsA) = manausTermsExtractionService
           .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
-        val scoredTermsUpdateReq = KBDocumentUpdate(question_scored_terms = Some(termsQ.toList),
-          answer_scored_terms = Some(termsA.toList))
+        val scoredTermsUpdateReq = KBDocumentUpdate(questionScoredTerms = Some(termsQ.toList),
+          answerScoredTerms = Some(termsA.toList))
         update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
     }
   }

@@ -129,12 +129,10 @@ trait ConversationLogsResource extends StarChatResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.stream)) {
-              extractRequest { request =>
-                val entryIterator = questionAnswerService.allDocuments(indexName)
-                val entries: Source[KBDocument, NotUsed] =
-                  Source.fromIterator(() => entryIterator)
-                complete(entries)
-              }
+              val entryIterator = questionAnswerService.allDocuments(indexName)
+              val entries: Source[KBDocument, NotUsed] =
+                Source.fromIterator(() => entryIterator)
+              complete(entries)
             }
           }
         }
@@ -147,7 +145,7 @@ trait ConversationLogsResource extends StarChatResource {
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { (user) =>
+            authenticator = authenticator.authenticator) { user =>
             extractRequest { request =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
@@ -185,7 +183,7 @@ trait ConversationLogsResource extends StarChatResource {
         } ~
           get {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
@@ -211,7 +209,7 @@ trait ConversationLogsResource extends StarChatResource {
           } ~
           delete {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.write)) {
@@ -237,7 +235,7 @@ trait ConversationLogsResource extends StarChatResource {
         path(Segment) { id =>
           put {
             authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { (user) =>
+              authenticator = authenticator.authenticator) { user =>
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.write)) {
@@ -264,7 +262,7 @@ trait ConversationLogsResource extends StarChatResource {
             pathEnd {
               delete {
                 authenticateBasicAsync(realm = authRealm,
-                  authenticator = authenticator.authenticator) { (user) =>
+                  authenticator = authenticator.authenticator) { user =>
                   extractRequest { request =>
                     authorizeAsync(_ =>
                       authenticator.hasPermissions(user, indexName, Permissions.write)) {
@@ -316,7 +314,7 @@ trait ConversationLogsResource extends StarChatResource {
             authenticator = authenticator.authenticator) { user =>
             extractRequest { request =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 entity(as[KBDocumentSearch]) { docsearch =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(questionAnswerService.search(indexName, docsearch)) {
@@ -348,7 +346,7 @@ trait ConversationLogsResource extends StarChatResource {
         put {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
               extractRequest { request =>
                 entity(as[UpdateQATermsRequest]) { extractionRequest =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -374,15 +372,13 @@ trait ConversationLogsResource extends StarChatResource {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.stream)) {
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
               entity(as[UpdateQATermsRequest]) { extractionRequest =>
-                extractRequest { request =>
-                  val entryIterator = questionAnswerService.updateAllTextTerms(indexName = indexName,
-                    extractionRequest = extractionRequest)
-                  val entries: Source[UpdateDocumentResult, NotUsed] =
-                    Source.fromIterator(() => entryIterator)
-                  complete(entries)
-                }
+                val entryIterator = questionAnswerService.updateAllTextTerms(indexName = indexName,
+                  extractionRequest = extractionRequest)
+                val entries: Source[UpdateDocumentResult, NotUsed] =
+                  Source.fromIterator(() => entryIterator)
+                complete(entries)
               }
             }
           }
@@ -402,9 +398,7 @@ trait ConversationLogsResource extends StarChatResource {
               extractRequest { request =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(
-                  Future {
-                    questionAnswerService.resetCountersCache
-                  }) {
+                  Future {questionAnswerService.resetCountersCache}) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
@@ -454,9 +448,7 @@ trait ConversationLogsResource extends StarChatResource {
               extractRequest { request =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(
-                  Future {
-                    questionAnswerService.countersCacheParameters
-                  }) {
+                  Future {questionAnswerService.countersCacheParameters}) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t

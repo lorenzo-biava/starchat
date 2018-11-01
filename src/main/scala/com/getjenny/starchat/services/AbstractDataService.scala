@@ -87,7 +87,7 @@ trait AbstractDataService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient
         .refresh(Index.indexName(indexName, elasticClient.indexSuffix))
-      if(refreshIndex.failed_shards_n > 0) {
+      if(refreshIndex.failedShardsN > 0) {
         throw DeleteDataServiceException("index refresh failed: (" + indexName + ")")
       }
     }

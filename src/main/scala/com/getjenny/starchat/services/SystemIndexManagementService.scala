@@ -180,8 +180,8 @@ object SystemIndexManagementService extends AbstractDataService {
     }).map(item => {
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
       val refreshIndexRes: RefreshIndexResult = elasticClient.refresh(fullIndexName)
-      if (refreshIndexRes.failed_shards_n > 0) {
-        val indexRefreshMessage = item.indexSuffix + "(" + fullIndexName + ", " + refreshIndexRes.failed_shards_n + ")"
+      if (refreshIndexRes.failedShardsN > 0) {
+        val indexRefreshMessage = item.indexSuffix + "(" + fullIndexName + ", " + refreshIndexRes.failedShardsN + ")"
         throw SystemIndexManagementServiceException(indexRefreshMessage)
       }
 

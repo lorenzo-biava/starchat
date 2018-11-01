@@ -275,9 +275,9 @@ object IndexManagementService extends AbstractDataService {
     }).map(item => {
       val fullIndexName = indexName + "." + item.indexSuffix
       val refreshIndexRes: RefreshIndexResult = elasticClient.refresh(fullIndexName)
-      if (refreshIndexRes.failed_shards_n > 0) {
+      if (refreshIndexRes.failedShardsN > 0) {
         val indexRefreshMessage = item.indexSuffix + "(" + fullIndexName + ", " +
-          refreshIndexRes.failed_shards_n + ")"
+          refreshIndexRes.failedShardsN + ")"
         throw new Exception(indexRefreshMessage)
       }
 

@@ -11,8 +11,8 @@ import scala.concurrent.Future
 
 trait AbstractUserService {
   def create(user: User): Future[IndexDocumentResult]
-  def update(id: String, user: UserUpdate): Future[UpdateDocumentResult]
-  def delete(id: String): Future[DeleteDocumentResult]
-  def read(id: String): Future[User]
-  def genUser(id: String, user: UserUpdate, authenticator: AbstractStarChatAuthenticator): Future[User]
+  def update(user: UserUpdate): Future[UpdateDocumentResult]
+  def delete(user: UserId): Future[DeleteDocumentResult]
+  def read(user: UserId): Future[User]
+  def genUser(user: UserUpdate, authenticator: AbstractStarChatAuthenticator): Future[User]
 }

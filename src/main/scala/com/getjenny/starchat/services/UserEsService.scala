@@ -38,7 +38,7 @@ class UserEsService extends AbstractUserService {
   private[this] val admin: String = config.getString("starchat.basic_http_es.admin")
   private[this] val password: String = config.getString("starchat.basic_http_es.password")
   private[this] val salt: String = config.getString("starchat.basic_http_es.salt")
-  private[this] val admin_user = User(id = admin, password = password, salt = salt,
+  private[this] val adminUser = User(id = admin, password = password, salt = salt,
     permissions = Map("admin" -> Set(Permissions.admin)))
 
   def create(user: User): Future[IndexDocumentResult] = Future {
@@ -75,7 +75,7 @@ class UserEsService extends AbstractUserService {
     val response: IndexResponse = client.index(indexReq, RequestOptions.DEFAULT)
 
     val refreshIndex = elasticClient.refresh(indexName)
-    if(refreshIndex.failed_shards_n > 0) {
+    if(refreshIndex.failedShardsN > 0) {
       throw UserEsServiceException("User : index refresh failed: (" + indexName + ")")
     }
 
@@ -89,9 +89,9 @@ class UserEsService extends AbstractUserService {
     docResult
   }
 
-  def update(id: String, user: UserUpdate): Future[UpdateDocumentResult] = Future {
+  def update(user: UserUpdate): Future[UpdateDocumentResult] = Future {
 
-    if(id === "admin") {
+    if(user.id === "admin") {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
@@ -128,12 +128,12 @@ class UserEsService extends AbstractUserService {
       .index(indexName)
       .`type`(elasticClient.userIndexSuffix)
       .doc(builder)
-      .id(id)
+      .id(user.id)
 
     val response: UpdateResponse = client.update(updateReq, RequestOptions.DEFAULT)
 
     val refresh_index = elasticClient.refresh(indexName)
-    if(refresh_index.failed_shards_n > 0) {
+    if(refresh_index.failedShardsN > 0) {
       throw UserEsServiceException("User : index refresh failed: (" + indexName + ")")
     }
 
@@ -147,9 +147,9 @@ class UserEsService extends AbstractUserService {
     docResult
   }
 
-  def delete(id: String): Future[DeleteDocumentResult] = Future {
+  def delete(user: UserId): Future[DeleteDocumentResult] = Future {
 
-    if(id === "admin") {
+    if(user.id === "admin") {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
@@ -158,12 +158,12 @@ class UserEsService extends AbstractUserService {
     val deleteReq = new DeleteRequest()
       .index(indexName)
       .`type`(elasticClient.userIndexSuffix)
-      .id(id)
+      .id(user.id)
 
     val response: DeleteResponse = client.delete(deleteReq, RequestOptions.DEFAULT)
 
     val refreshIndex = elasticClient.refresh(indexName)
-    if(refreshIndex.failed_shards_n > 0) {
+    if(refreshIndex.failedShardsN > 0) {
       throw new Exception("User: index refresh failed: (" + indexName + ")")
     }
 
@@ -177,9 +177,9 @@ class UserEsService extends AbstractUserService {
     docResult
   }
 
-  def read(id: String): Future[User] = Future {
-    if(id === "admin") {
-      admin_user
+  def read(user: UserId): Future[User] = Future {
+    if(user.id === "admin") {
+      adminUser
     } else {
 
       val client: RestHighLevelClient = elasticClient.client
@@ -187,7 +187,7 @@ class UserEsService extends AbstractUserService {
       val getReq = new GetRequest()
         .index(indexName)
         .`type`(elasticClient.userIndexSuffix)
-        .id(id)
+        .id(user.id)
 
       val response: GetResponse = client.get(getReq, RequestOptions.DEFAULT)
       val source = if(response.getSource != None.orNull) {
@@ -224,7 +224,7 @@ class UserEsService extends AbstractUserService {
   }
 
   /** given id and optionally password and permissions, generate a new user */
-  def genUser(id: String, user: UserUpdate, authenticator: AbstractStarChatAuthenticator): Future[User] = Future {
+  def genUser(user: UserUpdate, authenticator: AbstractStarChatAuthenticator): Future[User] = Future {
 
     val passwordPlain = user.password match {
       case Some(t) => t
@@ -246,7 +246,7 @@ class UserEsService extends AbstractUserService {
         Map.empty[String, Set[Permissions.Value]]
     }
 
-    User(id = id, password = password, salt = salt, permissions = permissions)
+    User(id = user.id, password = password, salt = salt, permissions = permissions)
   }
 
   def generatePassword(size: Int = 16): String = {

@@ -19,7 +19,7 @@ object LanguageGuesserService {
   def guessLanguage(indexName: String, requestData: LanguageGuesserRequestIn):
   Future[LanguageGuesserRequestOut] = Future {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()
-    val result: LanguageResult = detector.detect(requestData.input_text)
+    val result: LanguageResult = detector.detect(requestData.inputText)
 
     LanguageGuesserRequestOut(result.getLanguage, result.getRawScore,
       result.getConfidence.name,

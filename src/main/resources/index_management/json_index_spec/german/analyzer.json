@@ -55,13 +55,6 @@
         "min_shingle_size": 4,
         "max_shingle_size": 4,
         "output_unigrams": true
-      },
-      "jenny_german_shingle_2_10":
-      {
-        "type":	"shingle",
-        "min_shingle_size": 2,
-        "max_shingle_size": 10,
-        "output_unigrams": true
       }
     },
     "analyzer":
@@ -148,18 +141,6 @@
         "tokenizer":    "standard",
         "char_filter":  [ "html_strip", "&_to_and" ],
         "filter":       [ "lowercase", "german_stemmer", "jenny_german_shingle_4"]
-      },
-      "jenny_shingles_2_10_analyzer":
-      {
-        "tokenizer":    "standard",
-        "char_filter":  [ "html_strip", "&_to_and" ],
-        "filter":       [ "lowercase", "jenny_german_shingle_2_10"]
-      },
-      "jenny_stemmed_shingles_2_10_analyzer":
-      {
-        "tokenizer":    "standard",
-        "char_filter":  [ "html_strip", "&_to_and" ],
-        "filter":       [ "lowercase", "german_stemmer", "jenny_german_shingle_2_10"]
       },
       "jenny_delimited_double": {
         "tokenizer":"whitespace",
