@@ -398,7 +398,7 @@ trait ConversationLogsResource extends StarChatResource {
               extractRequest { request =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(
-                  Future {questionAnswerService.resetCountersCache}) {
+                  Future {questionAnswerService.countersCacheReset}) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
@@ -423,7 +423,7 @@ trait ConversationLogsResource extends StarChatResource {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(
                     Future {
-                      questionAnswerService.setCountersCacheParameters(cacheSize)
+                      questionAnswerService.countersCacheParameters(cacheSize)
                     }) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {

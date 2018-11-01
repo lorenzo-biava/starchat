@@ -64,10 +64,8 @@ class W2VEarthMoversCosineDistanceStateAtomic(val arguments: List[String], restr
   val isEvaluateNormalized: Boolean = true
   def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
     val queryVectors = termService.textToVectors(indexName = indexName, text = query)
-    val emdDistQueries = queriesVectors.map {
-      case queryTerms: TextTerms =>
-        EMDVectorDistances.distanceCosine(queryTerms, queryVectors)
-    }.max
+    val emdDistQueries = queriesVectors.map(queryTerms =>
+        EMDVectorDistances.distanceCosine(queryTerms, queryVectors)).max
 
     Result(score = emdDistQueries)
   }

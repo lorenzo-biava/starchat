@@ -379,7 +379,7 @@ trait PriorDataResource extends StarChatResource {
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(
                   Future {
-                    questionAnswerService.resetCountersCache
+                    questionAnswerService.countersCacheReset
                   }) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Some(t))
@@ -403,7 +403,7 @@ trait PriorDataResource extends StarChatResource {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(
                     Future {
-                      questionAnswerService.setCountersCacheParameters(cacheSize)
+                      questionAnswerService.countersCacheParameters(cacheSize)
                     }) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {

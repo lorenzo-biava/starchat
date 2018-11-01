@@ -377,7 +377,7 @@ trait KnowledgeBaseResource extends StarChatResource {
               extractRequest { request =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(
-                  Future {questionAnswerService.resetCountersCache}) {
+                  Future {questionAnswerService.countersCacheReset}) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Some(t))
                   case Failure(e) =>
@@ -400,7 +400,7 @@ trait KnowledgeBaseResource extends StarChatResource {
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(
                     Future {
-                      questionAnswerService.setCountersCacheParameters(cacheSize)
+                      questionAnswerService.countersCacheParameters(cacheSize)
                     }) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {

@@ -10,6 +10,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.getjenny.starchat.serializers.JsonSupport
 import edu.stanford.nlp.process.DocumentPreprocessor
+import scalaz.Scalaz._
 import scopt.OptionParser
 
 import scala.collection.JavaConverters._
@@ -47,12 +48,9 @@ object TextToDtFeatures extends JsonSupport {
     val reader: FileReader = new FileReader(params.inputfile)
     val docProcecessor: DocumentPreprocessor = new DocumentPreprocessor(reader)
     val sentencesIt = docProcecessor.iterator.asScala
-    val tokenizedSentencesUnfiltered0 = sentencesIt.map { case sentenceItem: Any =>
-      sentenceItem.asScala.map { case token: Any => token.word.toLowerCase }.toVector
-    }.map{
-      case sentenceItem  =>
-        sentenceItem.filter( ! _.matches("""([^\p{L}|^\d])"""))
-    }
+    val tokenizedSentencesUnfiltered0 = sentencesIt.map (sentenceItem =>
+      sentenceItem.asScala.map(token => token.word.toLowerCase).toVector
+    ).map(sentenceItem => sentenceItem.filter( ! _.matches("""([^\p{L}|^\d])""")))
 
     val tokenizedSentencesUnfiltered1 = if(params.filter.nonEmpty)
       tokenizedSentencesUnfiltered0.filter(v => ! v.exists(! _.matches(params.filter)))
@@ -74,8 +72,8 @@ object TextToDtFeatures extends JsonSupport {
     val nullFeature: Long = 0
     val dict = mutable.Map[String, Long]()
     if(! params.omit_null_feature) dict("") = nullFeature // empty feature
-    val sentenceFeatures = tokenizedSentences.map { case sentenceItem: Any =>
-      sentenceItem.map { case tokenItem: Any =>
+    val sentenceFeatures = tokenizedSentences.map (sentenceItem =>
+      sentenceItem.map (tokenItem =>
         dict.get(tokenItem) match {
           case Some(i) => i
           case _ =>
@@ -83,19 +81,19 @@ object TextToDtFeatures extends JsonSupport {
             dict(tokenItem) = newIndex
             newIndex
         }
-      }
-    }.filter(_.length > 1)
+      )
+    ).filter(_.length > 1)
 
     val window = params.window
     val center = params.center
 
     val leftPad = center
     val rightPad = window - center + 1
-    val features = sentenceFeatures.map{ case sentenceItem: Any =>
+    val features = sentenceFeatures.map { sentenceItem =>
       val paddedSentence = Vector.fill(leftPad)(nullFeature) ++ sentenceItem ++ Vector.fill(rightPad)(nullFeature)
-      paddedSentence.sliding(window).filter(v => v(center) != nullFeature)
-    }.flatMap { case vectorsItem: Any =>
-      vectorsItem.map { case vectorItem: Any =>
+      paddedSentence.sliding(window).filter(v => v(center) =/= nullFeature)
+    }.flatMap { vectorsItem =>
+      vectorsItem.map { vectorItem =>
         val centerValue = vectorItem(center)
         vectorItem.patch(center, List[Long](), 1) ++ Vector[Long](centerValue)
       }
@@ -106,11 +104,11 @@ object TextToDtFeatures extends JsonSupport {
       features.zipWithIndex.map{ case (featuresItem, index) => featuresItem ++ Vector(index.toLong)}
     } else {
       features
-    }.foreach { case row: Any =>
+    }.foreach(row => {
       val entry = row.mkString(",")
       featuresWriter.write(entry)
       featuresWriter.newLine()
-    }
+    })
     featuresWriter.close()
 
     val dictionaryWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_dictionary)))
@@ -123,9 +121,9 @@ object TextToDtFeatures extends JsonSupport {
     val dictSize = dict.size
 
     val names: List[String] = List("target.    | the target attribute") ++
-      List.range(0, window -1).map { case name: Any =>
+      List.range(0, window -1).map(name =>
         "e" + name + ":\t\t\t\t" + List.range(0, dictSize).mkString(",") + "."
-      } ++ List("target:\t\t\t\t" + List.range(0, dictSize).mkString(",") + ".") ++
+      ) ++ List("target:\t\t\t\t" + List.range(0, dictSize).mkString(",") + ".") ++
       List("ID:\t\t\t\tlabel.")
 
     val namesWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(params.out_names)))

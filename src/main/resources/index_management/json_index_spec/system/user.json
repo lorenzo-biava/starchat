@@ -14,20 +14,7 @@
           "type": "keyword",
           "store": true
         },
-        "orgPermissions": {
-          "type": "nested",
-          "properties": {
-            "index": {
-              "type": "keyword",
-              "store": true
-            },
-            "permission": {
-              "type": "keyword",
-              "store": true
-            }
-          }
-        },
-        "indexPermissions": {
+        "permissions": {
           "type": "nested",
           "properties": {
             "index": {

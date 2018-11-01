@@ -72,7 +72,7 @@ object IndexTerms extends JsonSupport {
         val term = Term(term = termText,
           vector = Some{termVector})
 
-        val method: HttpMethod = if (params.method.toUpperCase() == "POST") {
+        val method: HttpMethod = if (params.method.toUpperCase() === "POST") {
           HttpMethods.POST
         } else {
           HttpMethods.PUT
@@ -91,7 +91,7 @@ object IndexTerms extends JsonSupport {
         result.status match {
           case StatusCodes.OK => println("indexed: " + term.term)
           case _ =>
-            println("failed indexing term(" + term.term + ") Row(" + entry + ") Message(" + result.toString() + ")")
+            println(s"failed indexing term(${term.term}) Row($entry) Message(${result.toString})")
         }
       }
     })

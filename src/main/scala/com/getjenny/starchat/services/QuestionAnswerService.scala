@@ -23,7 +23,6 @@ import org.elasticsearch.index.query.functionscore._
 import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.script._
-import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
 import org.elasticsearch.search.aggregations.metrics.sum.Sum
@@ -258,7 +257,7 @@ trait QuestionAnswerService extends AbstractDataService {
     termCount(indexName, field, term, stale)
   }
 
-  def setCountersCacheParameters(parameters: CountersCacheParameters): CountersCacheParameters = {
+  def countersCacheParameters(parameters: CountersCacheParameters): CountersCacheParameters = {
     parameters.dictSizeCacheMaxSize match {
       case Some(v) => this.dictSizeCacheMaxSize = v
       case _ => ;
@@ -302,7 +301,7 @@ trait QuestionAnswerService extends AbstractDataService {
   }
 
 
-  def resetCountersCache: (CountersCacheParameters, CountersCacheSize) = {
+  def countersCacheReset: (CountersCacheParameters, CountersCacheSize) = {
     dictSizeCache.clear()
     countTermCache.clear()
     totalTermsCache.clear()

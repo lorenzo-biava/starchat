@@ -12,6 +12,7 @@ import com.getjenny.starchat.analyzer.utils.{EMDVectorDistances, MeanVectorDista
 import com.getjenny.starchat.entities.{TermsExtractionRequest, _}
 import com.getjenny.starchat.services.esclient.ManausTermsExtractionElasticClient
 import com.getjenny.starchat.utils.Index
+import scalaz.Scalaz._
 
 import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -321,7 +322,7 @@ object ManausTermsExtractionService extends AbstractDataService {
     indexedTokenizationRes.map { case(token, index) =>
       // getting current token and rest of the sentence tokens
       val currentTokenTerm = allTerms.get(token.token)
-      val restOfTheListTerms = indexedTokenizationRes.filter {case (_, tokenIdx) => tokenIdx != index}.map {
+      val restOfTheListTerms = indexedTokenizationRes.filter {case (_, tokenIdx) => tokenIdx =/= index}.map {
         case (tRes, _) =>
           allTerms.get(tRes.token)
       }.filter(_.nonEmpty).map(_.get).filter(_.vector.nonEmpty)

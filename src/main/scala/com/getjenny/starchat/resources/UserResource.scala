@@ -36,8 +36,8 @@ trait UserResource extends StarChatResource {
                       completeResponse(StatusCodes.Unauthorized, authException.getMessage)
                     case NonFatal(nonFatalE) =>
                       completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
-                    case genericException: Exception =>
-                      completeResponse(StatusCodes.BadRequest, genericException.getMessage)
+                    case _: Exception =>
+                      completeResponse(StatusCodes.BadRequest, e.getMessage)
                   }
               }
             }
@@ -64,8 +64,8 @@ trait UserResource extends StarChatResource {
                       completeResponse(StatusCodes.Unauthorized, authException.getMessage)
                     case NonFatal(nonFatalE) =>
                       completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
-                    case genericException: Exception =>
-                      completeResponse(StatusCodes.BadRequest, genericException.getMessage)
+                    case _: Exception =>
+                      completeResponse(StatusCodes.BadRequest, e.getMessage)
                   }
               }
             }
@@ -92,8 +92,8 @@ trait UserResource extends StarChatResource {
                       completeResponse(StatusCodes.Unauthorized, authException.getMessage)
                     case NonFatal(nonFatalE) =>
                       completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
-                    case genericException: Exception =>
-                      completeResponse(StatusCodes.BadRequest, genericException.getMessage)
+                    case _: Exception =>
+                      completeResponse(StatusCodes.BadRequest, e.getMessage)
                   }
               }
             }
@@ -120,8 +120,8 @@ trait UserResource extends StarChatResource {
                       completeResponse(StatusCodes.Unauthorized, authException.getMessage)
                     case NonFatal(nonFatalE) =>
                       completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
-                    case genericException: Exception =>
-                      completeResponse(StatusCodes.BadRequest, genericException.getMessage)
+                    case _: Exception =>
+                      completeResponse(StatusCodes.BadRequest, e.getMessage)
                   }
               }
             }
@@ -150,8 +150,8 @@ trait UserResource extends StarChatResource {
                       completeResponse(StatusCodes.Unauthorized, authException.getMessage)
                     case NonFatal(nonFatalE) =>
                       completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
-                    case genericException: Exception =>
-                      completeResponse(StatusCodes.BadRequest, genericException.getMessage)
+                    case _: Exception =>
+                      completeResponse(StatusCodes.BadRequest, e.getMessage)
                   }
               }
             }

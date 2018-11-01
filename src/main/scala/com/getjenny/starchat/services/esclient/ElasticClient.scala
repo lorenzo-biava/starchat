@@ -19,7 +19,6 @@ import scalaz.Scalaz._
 
 import scala.collection.immutable.{List, Map}
 
-
 trait ElasticClient {
   val config: Config = ConfigFactory.load()
   val clusterName: String = config.getString("es.cluster_name")
@@ -44,7 +43,7 @@ trait ElasticClient {
     def verify(hostname: String, session: SSLSession) = true
   }
 
-  object httpClientConfigCallback extends RestClientBuilder.HttpClientConfigCallback {
+  object HttpClientConfigCallback extends RestClientBuilder.HttpClientConfigCallback {
     override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
       val httpBuilder = httpClientBuilder.setSSLContext(sslContext)
       if(disableHostValidation)
@@ -85,7 +84,7 @@ trait ElasticClient {
       RestClient.builder(inetAddresses:_*)
     } else {
       RestClient.builder(inetAddresses:_*)
-        .setHttpClientConfigCallback(httpClientConfigCallback)
+        .setHttpClientConfigCallback(HttpClientConfigCallback)
     }
   }
 

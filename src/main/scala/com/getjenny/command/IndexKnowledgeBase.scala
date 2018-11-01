@@ -108,7 +108,7 @@ object IndexKnowledgeBase extends JsonSupport {
     convPairs.toList
   }
 
-  private def execute(params: Params) {
+  private[this] def execute(params: Params) {
     implicit val system: ActorSystem = ActorSystem()
     implicit val materializer: ActorMaterializer = ActorMaterializer()
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher

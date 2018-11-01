@@ -25,7 +25,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import org.elasticsearch.rest.RestStatus
-import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import scalaz.Scalaz._
 
@@ -580,6 +579,8 @@ object TermService extends AbstractDataService {
         }
       case text: String =>
         boolQueryBuilder.should(QueryBuilders.matchQuery(term_field_name, text))
+      case _ =>
+        throw TermServiceException("Unexpected query type for terms search")
     }
 
     sourceReq.query(boolQueryBuilder)
