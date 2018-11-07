@@ -145,7 +145,7 @@ object TermService extends AbstractDataService {
     * @return a return message with the number of successfully and failed indexing operations
     */
   def indexDefaultSynonyms(indexName: String,
-                           refresh: Int = 0) : Future[IndexDocumentListResult] = {
+                           refresh: Int = 0) : Future[UpdateDocumentListResult] = {
     val (_, language, _) = Index.patternsFromIndex(indexName)
     val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.csv"
     val synonymsResource: URL = getClass.getResource(synonymsPath)
@@ -162,10 +162,10 @@ object TermService extends AbstractDataService {
     * @return the IndexDocumentListResult with the indexing result
     */
   def indexSynonymsFromCsvFile(indexName: String, file: File, skipLines: Int = 1, separator: Char = ','):
-  Future[IndexDocumentListResult] = Future {
+  Future[UpdateDocumentListResult] = Future {
     val documents = FileToDocuments.getTermsDocumentsFromCSV(log = log,
       file = file, skipLines = skipLines, separator = separator).toList
-    indexTerm(indexName, Terms(terms = documents), 0)
+    updateTerm(indexName, Terms(terms = documents), 0)
   }
 
   /** index terms on Elasticsearch
