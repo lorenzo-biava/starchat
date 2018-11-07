@@ -4,7 +4,8 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/17.
   */
 
-import java.io.{FileNotFoundException, InputStream}
+import java.io.File
+import java.net.URL
 
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.VectorUtils
@@ -32,7 +33,6 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.io.Source
 
 case class TermServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -138,58 +138,34 @@ object TermService extends AbstractDataService {
     }).toMap
   }
 
-  /** extract synonyms for a term
-    *
-    * @param lemma the lemma for which extract synonyms
-    * @param synset the set of synonyms
-    * @return the synonyms for the terms
-    */
-  private[this] def extractSyns(lemma: String, synset: Array[String]): Map[String, Double] = {
-    synset.filter(_ =/= lemma).map(synLemma => (synLemma, 0.5d)).toMap
-  }
-
   /** Populate synonyms from resource file (a default synonyms list)
     *
     * @param indexName name of the index
-    * @param groupSize a group size used to call a bulk indexing operation on ElasticSearch
     * @param refresh whether to call an index update on ElasticSearch or not
     * @return a return message with the number of successfully and failed indexing operations
     */
-  def indexDefaultSynonyms(indexName: String, groupSize: Int = 2000,
-                           refresh: Int = 0) : Future[ReturnMessageData] = Future {
+  def indexDefaultSynonyms(indexName: String,
+                           refresh: Int = 0) : Future[IndexDocumentListResult] = {
     val (_, language, _) = Index.patternsFromIndex(indexName)
-    val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.txt"
-    val synonymsIs: Option[InputStream] = Some(getClass.getResourceAsStream(synonymsPath))
-    val analyzerSource: Source = synonymsIs match {
-      case Some(stream) => Source.fromInputStream(stream, "utf-8")
-      case _ =>
-        val message = "Check the file: (" + synonymsPath + ")"
-        throw new FileNotFoundException(message)
-    }
+    val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.csv"
+    val synonymsResource: URL = getClass.getResource(synonymsPath)
+    val synFile = new File(synonymsResource.toString.replaceFirst("file:", ""))
+    this.indexSynonymsFromCsvFile(indexName = indexName, file = synFile, skipLines = 0)
+  }
 
-    val results = analyzerSource.getLines.grouped(groupSize).map(group => {
-      val termList = group.par.map(entry => {
-        val (typeAndLemma, synSet) = entry.split(",").splitAt(2)
-        val (category, lemma) = (typeAndLemma.headOption.getOrElse(""), typeAndLemma.lastOption.getOrElse(""))
-        category match {
-          case "SYN" =>
-            Term(term = lemma, synonyms = Some(extractSyns(lemma, synSet)))
-          case "ANT" =>
-            Term(term = lemma, antonyms = Some(extractSyns(lemma, synSet)))
-          case _ =>
-            throw TermServiceException(message = "Unknown term category for lemma(" + lemma + "): " + category)
-        }
-      }).filter(t => t.antonyms.nonEmpty || t.synonyms.nonEmpty).toList
-      Terms(terms = termList)
-    }).filter(_.terms.nonEmpty).map(terms => {
-      val updateRes = updateTerm(indexName = indexName, terms = terms, refresh = refresh)
-      log.info(s"Indexed block of $groupSize synonyms : " + updateRes.data.length)
-      updateRes.data.nonEmpty
-    })
-    val success = results.count(_ === true)
-    val failure = results.count(_ === false)
-    ReturnMessageData(code=100, message = s"Indexed synonyms," +
-      s" blocks of $groupSize items => success($success) failures($failure)")
+  /** upload a file with Synonyms, it replace existing terms but does not remove synonyms for terms not in file.
+    *
+    * @param indexName the index name
+    * @param file a File object with the synonyms
+    * @param skipLines how many lines to skip
+    * @param separator a separator, usually the comma character
+    * @return the IndexDocumentListResult with the indexing result
+    */
+  def indexSynonymsFromCsvFile(indexName: String, file: File, skipLines: Int = 1, separator: Char = ','):
+  Future[IndexDocumentListResult] = Future {
+    val documents = FileToDocuments.getTermsDocumentsFromCSV(log = log,
+      file = file, skipLines = skipLines, separator = separator).toList
+    indexTerm(indexName, Terms(terms = documents), 0)
   }
 
   /** index terms on Elasticsearch
@@ -199,7 +175,18 @@ object TermService extends AbstractDataService {
     * @param refresh whether to call an index update on ElasticSearch or not
     * @return list of indexing responses
     */
-  def indexTerm(indexName: String, terms: Terms, refresh: Int) : Future[IndexDocumentListResult] = Future {
+  def indexTermFuture(indexName: String, terms: Terms, refresh: Int) : Future[IndexDocumentListResult] = Future {
+    indexTerm(indexName, terms, refresh)
+  }
+
+  /** index terms on Elasticsearch
+    *
+    * @param indexName the index name
+    * @param terms the terms
+    * @param refresh whether to call an index update on ElasticSearch or not
+    * @return list of indexing responses
+    */
+  def indexTerm(indexName: String, terms: Terms, refresh: Int) : IndexDocumentListResult = {
     val client: RestHighLevelClient = elasticClient.client
 
     val bulkReq = new BulkRequest()
@@ -279,10 +266,9 @@ object TermService extends AbstractDataService {
 
       val multiGetReq = new MultiGetRequest()
 
-      termsRequest.ids.foreach{id =>
-        multiGetReq.add(
-          new MultiGetRequest.Item(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, id)
-        )
+      termsRequest.ids.foreach{id => multiGetReq.add(
+        new MultiGetRequest.Item(Index.indexName(indexName, elasticClient.indexSuffix),
+          elasticClient.indexSuffix, id))
       }
 
       val response: MultiGetResponse = client.mget(multiGetReq, RequestOptions.DEFAULT)
@@ -516,7 +502,7 @@ object TermService extends AbstractDataService {
     * @return the terms found
     */
   def search[T: StringOrSearchTerm](indexName: String, query: T,
-             analyzer: String = "space_punctuation"): TermsResults = {
+                                    analyzer: String = "space_punctuation"): TermsResults = {
     val client: RestHighLevelClient = elasticClient.client
 
     val term_field_name = if (TokenizersDescription.analyzers_map.contains(analyzer))
@@ -663,11 +649,11 @@ object TermService extends AbstractDataService {
     * @return the terms found
     */
   def searchFuture[T: StringOrSearchTerm](indexName: String, query: T,
-                                    analyzer: String = "space_punctuation"): Future[TermsResults] = Future {
+                                          analyzer: String = "space_punctuation"): Future[TermsResults] = Future {
     search(indexName, query, analyzer)
   }
 
-    /** tokenize a text
+  /** tokenize a text
     *
     * @param indexName index name
     * @param query a TokenizerQueryRequest with the text to tokenize

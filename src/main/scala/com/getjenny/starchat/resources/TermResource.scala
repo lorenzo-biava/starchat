@@ -55,7 +55,7 @@ trait TermResource extends StarChatResource {
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     entity(as[Terms]) { request_data =>
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(termService.indexTerm(indexName, request_data, refresh)) {
+                      onCompleteWithBreaker(breaker)(termService.indexTermFuture(indexName, request_data, refresh)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>
@@ -99,13 +99,12 @@ trait TermResource extends StarChatResource {
                   authenticator = authenticator.authenticator) { user =>
                   authorizeAsync(_ =>
                     authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                    parameters("refresh".as[Int] ? 0, "groupsize".as[Int] ? 1000) { (refresh, groupSize) =>
+                    parameters("refresh".as[Int] ? 0) { refresh =>
                       val breaker: CircuitBreaker =
-                        StarChatCircuitBreaker.getCircuitBreaker(maxFailure = 5,
-                          callTimeout = 120.seconds, resetTimeout = 120.seconds)
+                        StarChatCircuitBreaker.getCircuitBreaker(maxFailure = 5, callTimeout = 120.seconds,
+                          resetTimeout = 120.seconds)
                       onCompleteWithBreaker(breaker)(
-                        termService.indexDefaultSynonyms(
-                          indexName = indexName, groupSize = groupSize, refresh = refresh)) {
+                        termService.indexDefaultSynonyms(indexName = indexName, refresh = refresh)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>
@@ -116,6 +115,38 @@ trait TermResource extends StarChatResource {
                               ReturnMessageData(code = 102, message = e.getMessage)
                             })
                       }
+                    }
+                  }
+                }
+              }
+            case "index_synonyms" =>
+              withoutRequestTimeout {
+                authenticateBasicAsync(realm = authRealm,
+                  authenticator = authenticator.authenticator) { user =>
+                  authorizeAsync(_ =>
+                    authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                    storeUploadedFile("csv", tempDestination) {
+                      case (_, file) =>
+                        val breaker: CircuitBreaker =
+                          StarChatCircuitBreaker.getCircuitBreaker(maxFailure = 5,
+                            callTimeout = 120.seconds, resetTimeout = 120.seconds)
+                        onCompleteWithBreaker(breaker)(termService.indexSynonymsFromCsvFile(indexName, file)) {
+                          case Success(t) =>
+                            file.delete()
+                            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                              t
+                            })
+                          case Failure(e) =>
+                            log.error("index(" + indexName + ") " +
+                              "route=termRoutes method=POST function=index_synonyms : " + e.getMessage)
+                            if (file.exists()) {
+                              file.delete()
+                            }
+                            completeResponse(StatusCodes.BadRequest,
+                              Option {
+                                ReturnMessageData(code = 103, message = e.getMessage)
+                              })
+                        }
                     }
                   }
                 }
@@ -139,7 +170,7 @@ trait TermResource extends StarChatResource {
                           e.getMessage)
                         completeResponse(StatusCodes.BadRequest,
                           Option {
-                            ReturnMessageData(code = 103, message = e.getMessage)
+                            ReturnMessageData(code = 104, message = e.getMessage)
                           })
                     }
                   }
@@ -170,7 +201,7 @@ trait TermResource extends StarChatResource {
                           log.error("index(" + indexName + ") route=termRoutes method=DELETE : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
-                              ReturnMessageData(code = 104, message = e.getMessage)
+                              ReturnMessageData(code = 105, message = e.getMessage)
                             })
                       }
                     } else {
@@ -182,7 +213,7 @@ trait TermResource extends StarChatResource {
                           log.error("index(" + indexName + ") route=termRoutes method=DELETE : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
-                              ReturnMessageData(code = 105, message = e.getMessage)
+                              ReturnMessageData(code = 106, message = e.getMessage)
                             })
                       }
                     }

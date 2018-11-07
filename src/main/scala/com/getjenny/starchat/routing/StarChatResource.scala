@@ -1,11 +1,13 @@
 package com.getjenny.starchat.routing
 
+import java.io.File
 import java.util.concurrent.TimeoutException
 
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.server.directives.FileInfo
 import akka.http.scaladsl.server.{Directives, ExceptionHandler, Route}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.serializers.JsonSupport
@@ -29,6 +31,9 @@ trait StarChatResource extends Directives with JsonSupport {
 
   val indexRegex: Regex = Index.indexMatchRegexDelimited
   val orgNameRegex: Regex = Index.orgNameMatchRegexDelimited
+
+  def tempDestination(fileInfo: FileInfo): File =
+    File.createTempFile("uploadedFile", ".csv")
 
   val routesExceptionHandler = ExceptionHandler {
     case e: IndexNotFoundException =>

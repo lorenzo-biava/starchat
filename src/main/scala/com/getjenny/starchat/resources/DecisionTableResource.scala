@@ -4,12 +4,10 @@ package com.getjenny.starchat.resources
   * Created by Angelo Leto <angelo@getjenny.com> on 27/06/16.
   */
 
-import java.io.File
 
 import akka.http.javadsl.server.CircuitBreakerOpenRejection
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.FileInfo
 import akka.pattern.CircuitBreaker
 import com.getjenny.analyzer.analyzers.AnalyzerEvaluationException
 import com.getjenny.starchat.entities._
@@ -38,7 +36,7 @@ trait DecisionTableResource extends StarChatResource {
               parameters("refresh".as[Int] ? 0) { refresh =>
                 entity(as[DTDocument]) { document =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(decisionTableService.create(indexName, document, refresh)) {
+                  onCompleteWithBreaker(breaker)(decisionTableService.createFuture(indexName, document, refresh)) {
                     case Success(t) =>
                       completeResponse(StatusCodes.Created, StatusCodes.BadRequest, t)
                     case Failure(e) =>
@@ -160,9 +158,6 @@ trait DecisionTableResource extends StarChatResource {
     }
   }
 
-  def tempDestination(fileInfo: FileInfo): File =
-    File.createTempFile("DecisionTableCSV", ".csv")
-
   def decisionTableUploadCSVRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix(indexRegex ~ Slash ~ "decisiontable_upload_csv") { indexName =>
       pathEnd {
@@ -171,7 +166,7 @@ trait DecisionTableResource extends StarChatResource {
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, indexName, Permissions.write)) {
             storeUploadedFile("csv", tempDestination) {
-              case (metadata, file) =>
+              case (_, file) =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
                 onCompleteWithBreaker(breaker)(decisionTableService.indexCSVFileIntoDecisionTable(indexName, file)) {
                   case Success(t) =>
