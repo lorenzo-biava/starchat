@@ -17,7 +17,7 @@ trait AnalyzersPlaygroundResource extends StarChatResource {
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
 
   def analyzersPlaygroundRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix(indexRegex ~ Slash ~ "analyzers_playground") { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ "analyzer" ~ Slash ~ "playground") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

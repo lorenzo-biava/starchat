@@ -187,7 +187,7 @@ trait ConversationLogsResource extends StarChatResource {
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                  parameters("ids".as[String].*) { ids =>
+                  parameters("id".as[String].*) { ids =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(questionAnswerService.readFuture(indexName, ids.toList)) {
                       case Success(t) =>
@@ -266,32 +266,30 @@ trait ConversationLogsResource extends StarChatResource {
                   extractRequest { request =>
                     authorizeAsync(_ =>
                       authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                      parameters("refresh".as[Int] ? 0) { refresh =>
-                        entity(as[DocsIds]) { request_data =>
-                          if (request_data.ids.nonEmpty) {
-                            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                            onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, request_data, refresh)) {
-                              case Success(t) =>
-                                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                              case Failure(e) =>
-                                log.error("index(" + indexName + ") uri=(" + request.uri + ") method=DELETE : " + e.getMessage)
-                                completeResponse(StatusCodes.BadRequest,
-                                  Option {
-                                    ReturnMessageData(code = 104, message = e.getMessage)
-                                  })
-                            }
-                          } else {
-                            val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                            onCompleteWithBreaker(breaker)(questionAnswerService.deleteAll(indexName)) {
-                              case Success(t) =>
-                                completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                              case Failure(e) =>
-                                log.error("index(" + indexName + ") uri=(" + request.uri + ") method=DELETE : " + e.getMessage)
-                                completeResponse(StatusCodes.BadRequest,
-                                  Option {
-                                    ReturnMessageData(code = 105, message = e.getMessage)
-                                  })
-                            }
+                      parameters("id".as[String].*, "refresh".as[Int] ? 0) { (ids, refresh) =>
+                        if (ids.nonEmpty) {
+                          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                          onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, ids.toList, refresh)) {
+                            case Success(t) =>
+                              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                            case Failure(e) =>
+                              log.error("index(" + indexName + ") uri=(" + request.uri + ") method=DELETE : " + e.getMessage)
+                              completeResponse(StatusCodes.BadRequest,
+                                Option {
+                                  ReturnMessageData(code = 104, message = e.getMessage)
+                                })
+                          }
+                        } else {
+                          val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                          onCompleteWithBreaker(breaker)(questionAnswerService.deleteAll(indexName)) {
+                            case Success(t) =>
+                              completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                            case Failure(e) =>
+                              log.error("index(" + indexName + ") uri=(" + request.uri + ") method=DELETE : " + e.getMessage)
+                              completeResponse(StatusCodes.BadRequest,
+                                Option {
+                                  ReturnMessageData(code = 105, message = e.getMessage)
+                                })
                           }
                         }
                       }
@@ -306,8 +304,7 @@ trait ConversationLogsResource extends StarChatResource {
 
   def clQuestionAnswerSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
     val localRouteName: String = routeName + "_search"
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
-      Slash ~  localRouteName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~  localRouteName) { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

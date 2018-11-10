@@ -150,7 +150,7 @@ object TermService extends AbstractDataService {
     val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.csv"
     val synonymsResource: URL = getClass.getResource(synonymsPath)
     val synFile = new File(synonymsResource.toString.replaceFirst("file:", ""))
-    this.indexSynonymsFromCsvFile(indexName = indexName, file = synFile, skipLines = 0)
+    this.indexSynonymsFromCsvFile(indexName = indexName, file = synFile)
   }
 
   /** upload a file with Synonyms, it replace existing terms but does not remove synonyms for terms not in file.
@@ -161,7 +161,7 @@ object TermService extends AbstractDataService {
     * @param separator a separator, usually the comma character
     * @return the IndexDocumentListResult with the indexing result
     */
-  def indexSynonymsFromCsvFile(indexName: String, file: File, skipLines: Int = 1, separator: Char = ','):
+  def indexSynonymsFromCsvFile(indexName: String, file: File, skipLines: Int = 0, separator: Char = ','):
   Future[UpdateDocumentListResult] = Future {
     val documents = FileToDocuments.getTermsDocumentsFromCSV(log = log,
       file = file, skipLines = skipLines, separator = separator).toList

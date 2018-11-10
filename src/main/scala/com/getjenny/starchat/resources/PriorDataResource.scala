@@ -130,7 +130,7 @@ trait PriorDataResource extends StarChatResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.stream)) {
-              extractRequest { request =>
+              extractRequest { _ =>
                 val entryIterator = questionAnswerService.allDocuments(indexName)
                 val entries: Source[KBDocument, NotUsed] =
                   Source.fromIterator(() => entryIterator)
@@ -190,7 +190,7 @@ trait PriorDataResource extends StarChatResource {
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                  parameters("ids".as[String].*) { ids =>
+                  parameters("id".as[String].*) { ids =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(questionAnswerService.readFuture(indexName, ids.toList)) {
                       case Success(t) =>
@@ -216,34 +216,32 @@ trait PriorDataResource extends StarChatResource {
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                  parameters("refresh".as[Int] ? 0) { refresh =>
-                    entity(as[DocsIds]) { request_data =>
-                      if (request_data.ids.nonEmpty) {
-                        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                        onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, request_data, refresh)) {
-                          case Success(t) =>
-                            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                          case Failure(e) =>
-                            log.error("index(" + indexName + ") uri=(" + request.uri +
-                              ") method=(" + request.method.name + ") : " + e.getMessage)
-                            completeResponse(StatusCodes.BadRequest,
-                              Option {
-                                ReturnMessageData(code = 104, message = e.getMessage)
-                              })
-                        }
-                      } else {
-                        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                        onCompleteWithBreaker(breaker)(questionAnswerService.deleteAll(indexName)) {
-                          case Success(t) =>
-                            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                          case Failure(e) =>
-                            log.error("index(" + indexName + ") uri=(" + request.uri +
-                              ") method=(" + request.method.name + ") : " + e.getMessage)
-                            completeResponse(StatusCodes.BadRequest,
-                              Option {
-                                ReturnMessageData(code = 105, message = e.getMessage)
-                              })
-                        }
+                  parameters("id".as[String].*, "refresh".as[Int] ? 0) { (ids, refresh) =>
+                    if (ids.nonEmpty) {
+                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                      onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, ids.toList, refresh)) {
+                        case Success(t) =>
+                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                        case Failure(e) =>
+                          log.error("index(" + indexName + ") uri=(" + request.uri +
+                            ") method=(" + request.method.name + ") : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest,
+                            Option {
+                              ReturnMessageData(code = 104, message = e.getMessage)
+                            })
+                      }
+                    } else {
+                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                      onCompleteWithBreaker(breaker)(questionAnswerService.deleteAll(indexName)) {
+                        case Success(t) =>
+                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                        case Failure(e) =>
+                          log.error("index(" + indexName + ") uri=(" + request.uri +
+                            ") method=(" + request.method.name + ") : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest,
+                            Option {
+                              ReturnMessageData(code = 105, message = e.getMessage)
+                            })
                       }
                     }
                   }
@@ -352,7 +350,7 @@ trait PriorDataResource extends StarChatResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
               entity(as[UpdateQATermsRequest]) { extractionRequest =>
-                extractRequest { request =>
+                extractRequest { _ =>
                   val entryIterator = questionAnswerService.updateAllTextTerms(indexName = indexName,
                     extractionRequest = extractionRequest)
                   val entries: Source[UpdateDocumentResult, NotUsed] =

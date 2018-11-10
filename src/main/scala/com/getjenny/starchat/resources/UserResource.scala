@@ -21,24 +21,26 @@ trait UserResource extends StarChatResource {
 
   def postUserRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("user") {
-      post {
-        authenticateBasicAsync(realm = authRealm,
-          authenticator = authenticator.authenticator) { user =>
-          authorizeAsync(_ =>
-            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-            entity(as[User]) { userEntity =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(userService.create(userEntity)) {
-                case Success(t) => completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Some(t))
-                case Failure(e) =>
-                  e match {
-                    case authException : AuthenticationException =>
-                      completeResponse(StatusCodes.Unauthorized, authException.getMessage)
-                    case NonFatal(nonFatalE) =>
-                      completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
-                    case _: Exception =>
-                      completeResponse(StatusCodes.BadRequest, e.getMessage)
-                  }
+      pathEnd {
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              entity(as[User]) { userEntity =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(userService.create(userEntity)) {
+                  case Success(t) => completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Some(t))
+                  case Failure(e) =>
+                    e match {
+                      case authException: AuthenticationException =>
+                        completeResponse(StatusCodes.Unauthorized, authException.getMessage)
+                      case NonFatal(nonFatalE) =>
+                        completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
+                      case _: Exception =>
+                        completeResponse(StatusCodes.BadRequest, e.getMessage)
+                    }
+                }
               }
             }
           }
@@ -49,24 +51,26 @@ trait UserResource extends StarChatResource {
 
   def putUserRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("user") {
-      put {
-        authenticateBasicAsync(realm = authRealm,
-          authenticator = authenticator.authenticator) { user =>
-          authorizeAsync(_ =>
-            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-            entity(as[UserUpdate]) { userEntity =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(userService.update(userEntity)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Some(t))
-                case Failure(e) =>
-                  e match {
-                    case authException : AuthenticationException =>
-                      completeResponse(StatusCodes.Unauthorized, authException.getMessage)
-                    case NonFatal(nonFatalE) =>
-                      completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
-                    case _: Exception =>
-                      completeResponse(StatusCodes.BadRequest, e.getMessage)
-                  }
+      pathEnd {
+        put {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              entity(as[UserUpdate]) { userEntity =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(userService.update(userEntity)) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Some(t))
+                  case Failure(e) =>
+                    e match {
+                      case authException: AuthenticationException =>
+                        completeResponse(StatusCodes.Unauthorized, authException.getMessage)
+                      case NonFatal(nonFatalE) =>
+                        completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
+                      case _: Exception =>
+                        completeResponse(StatusCodes.BadRequest, e.getMessage)
+                    }
+                }
               }
             }
           }
@@ -76,8 +80,8 @@ trait UserResource extends StarChatResource {
   }
 
   def delUserRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("user") {
-      delete {
+    pathPrefix("user" ~ Slash ~ "delete") {
+      post {
         authenticateBasicAsync(realm = authRealm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
@@ -104,25 +108,27 @@ trait UserResource extends StarChatResource {
   }
 
   def getUserRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("user") {
-      get {
-        authenticateBasicAsync(realm = authRealm,
-          authenticator = authenticator.authenticator) { user =>
-          authorizeAsync(_ =>
-            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-            entity(as[UserId]) { userEntity =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(userService.read(userEntity)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Some(t))
-                case Failure(e) =>
-                  e match {
-                    case authException : AuthenticationException =>
-                      completeResponse(StatusCodes.Unauthorized, authException.getMessage)
-                    case NonFatal(nonFatalE) =>
-                      completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
-                    case _: Exception =>
-                      completeResponse(StatusCodes.BadRequest, e.getMessage)
-                  }
+    pathPrefix("user" ~ Slash ~ "get") {
+      pathEnd {
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              entity(as[UserId]) { userEntity =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(userService.read(userEntity)) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Some(t))
+                  case Failure(e) =>
+                    e match {
+                      case authException: AuthenticationException =>
+                        completeResponse(StatusCodes.Unauthorized, authException.getMessage)
+                      case NonFatal(nonFatalE) =>
+                        completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
+                      case _: Exception =>
+                        completeResponse(StatusCodes.BadRequest, e.getMessage)
+                    }
+                }
               }
             }
           }
@@ -132,27 +138,29 @@ trait UserResource extends StarChatResource {
   }
 
   def genUserRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("user") {
-      post {
-        authenticateBasicAsync(realm = authRealm,
-          authenticator = authenticator.authenticator) { user =>
-          authorizeAsync(_ =>
-            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-            entity(as[UserUpdate]) { userEntity =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(Future {
-                userService.genUser(userEntity, authenticator)
-              }) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Some(t))
-                case Failure(e) =>
-                  e match {
-                    case authException : AuthenticationException =>
-                      completeResponse(StatusCodes.Unauthorized, authException.getMessage)
-                    case NonFatal(nonFatalE) =>
-                      completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
-                    case _: Exception =>
-                      completeResponse(StatusCodes.BadRequest, e.getMessage)
-                  }
+    pathPrefix("user" ~ Slash ~ "generate") {
+      pathEnd {
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              entity(as[UserUpdate]) { userEntity =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(Future {
+                  userService.genUser(userEntity, authenticator)
+                }) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Some(t))
+                  case Failure(e) =>
+                    e match {
+                      case authException: AuthenticationException =>
+                        completeResponse(StatusCodes.Unauthorized, authException.getMessage)
+                      case NonFatal(nonFatalE) =>
+                        completeResponse(StatusCodes.Unauthorized, nonFatalE.getMessage)
+                      case _: Exception =>
+                        completeResponse(StatusCodes.BadRequest, e.getMessage)
+                    }
+                }
               }
             }
           }

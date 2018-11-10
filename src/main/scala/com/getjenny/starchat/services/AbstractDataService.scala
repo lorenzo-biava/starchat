@@ -53,7 +53,7 @@ trait AbstractDataService {
     }
 
     val deleted = iterator.map { ids: List[String] =>
-      Await.result(delete(indexName, DocsIds(ids = ids), 0).map {
+      Await.result(delete(indexName, ids, 0).map {
         deleteDocRes: DeleteDocumentsResult =>
           deleteDocRes.data.map(delItem => if(delItem.found) 1 else 0).sum
       }, 10.second)
@@ -69,12 +69,12 @@ trait AbstractDataService {
     * @param refresh whether to call an index update on ElasticSearch or not
     * @return DeleteDocumentListResult with the result of term delete operations
     */
-  def delete(indexName: String, docIds: DocsIds, refresh: Int): Future[DeleteDocumentsResult] = Future {
+  def delete(indexName: String, ids: List[String], refresh: Int): Future[DeleteDocumentsResult] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
     val bulkReq : BulkRequest = new BulkRequest()
 
-    docIds.ids.foreach( id => {
+    ids.foreach( id => {
       val deleteReq = new DeleteRequest()
         .index(Index.indexName(indexName, elasticClient.indexSuffix))
         .`type`(elasticClient.indexSuffix)

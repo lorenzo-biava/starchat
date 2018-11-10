@@ -31,7 +31,7 @@ object SimilarityTest extends JsonSupport {
   private[this] case class Params(
                                    host: String = "http://localhost:8888",
                                    indexName: String = "index_english_0",
-                                   path: String = "/analyzers_playground",
+                                   path: String = "/analyzer/playground",
                                    inputFile: String = "pairs.csv",
                                    outputFile: String = "output.csv",
                                    analyzer: String = "keyword(\"test\")",

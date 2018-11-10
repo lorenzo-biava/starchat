@@ -176,6 +176,42 @@ trait TermResource extends StarChatResource {
                   }
                 }
               }
+            case "delete" =>
+              authenticateBasicAsync(realm = authRealm,
+                authenticator = authenticator.authenticator) { user =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                  parameters("refresh".as[Int] ? 0) { refresh =>
+                    entity(as[DocsIds]) { requestData =>
+                      if (requestData.ids.nonEmpty) {
+                        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                        onCompleteWithBreaker(breaker)(termService.delete(indexName, requestData.ids, refresh)) {
+                          case Success(t) =>
+                            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                          case Failure(e) =>
+                            log.error("index(" + indexName + ") route=termRoutes method=DELETE : " + e.getMessage)
+                            completeResponse(StatusCodes.BadRequest,
+                              Option {
+                                ReturnMessageData(code = 105, message = e.getMessage)
+                              })
+                        }
+                      } else {
+                        val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                        onCompleteWithBreaker(breaker)(termService.deleteAll(indexName)) {
+                          case Success(t) =>
+                            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                          case Failure(e) =>
+                            log.error("index(" + indexName + ") route=termRoutes method=DELETE : " + e.getMessage)
+                            completeResponse(StatusCodes.BadRequest,
+                              Option {
+                                ReturnMessageData(code = 106, message = e.getMessage)
+                              })
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             case _ => completeResponse(StatusCodes.BadRequest,
               Option {
                 IndexManagementResponse(message = "index(" + indexName + ") Operation not supported: " +
@@ -185,68 +221,31 @@ trait TermResource extends StarChatResource {
         }
       } ~
         pathEnd {
-          delete {
+          put {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("refresh".as[Int] ? 0) { refresh =>
-                  entity(as[DocsIds]) { requestData =>
-                    if (requestData.ids.nonEmpty) {
-                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(termService.delete(indexName, requestData, refresh)) {
-                        case Success(t) =>
-                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                        case Failure(e) =>
-                          log.error("index(" + indexName + ") route=termRoutes method=DELETE : " + e.getMessage)
-                          completeResponse(StatusCodes.BadRequest,
-                            Option {
-                              ReturnMessageData(code = 105, message = e.getMessage)
-                            })
-                      }
-                    } else {
-                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(termService.deleteAll(indexName)) {
-                        case Success(t) =>
-                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                        case Failure(e) =>
-                          log.error("index(" + indexName + ") route=termRoutes method=DELETE : " + e.getMessage)
-                          completeResponse(StatusCodes.BadRequest,
-                            Option {
-                              ReturnMessageData(code = 106, message = e.getMessage)
-                            })
-                      }
+                  entity(as[Terms]) { request_data =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(termService.updateTermFuture(indexName, request_data, refresh)) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                      case Failure(e) =>
+                        log.error("index(" + indexName + ") route=termRoutes method=PUT : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest, Option {
+                          IndexManagementResponse(message = e.getMessage)
+                        })
                     }
                   }
                 }
               }
             }
-          } ~
-            put {
-              authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { user =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                  parameters("refresh".as[Int] ? 0) { refresh =>
-                    entity(as[Terms]) { request_data =>
-                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(termService.updateTermFuture(indexName, request_data, refresh)) {
-                        case Success(t) =>
-                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                        case Failure(e) =>
-                          log.error("index(" + indexName + ") route=termRoutes method=PUT : " + e.getMessage)
-                          completeResponse(StatusCodes.BadRequest, Option {
-                            IndexManagementResponse(message = e.getMessage)
-                          })
-                      }
-                    }
-                  }
-                }
-              }
-            }
+          }
         } ~
         path(Segment) { operation: String =>
-          get {
+          post {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ => authenticator.hasPermissions(user, indexName, Permissions.read)) {

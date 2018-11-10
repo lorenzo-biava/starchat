@@ -130,7 +130,7 @@ trait KnowledgeBaseResource extends StarChatResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.stream)) {
-              extractRequest { request =>
+              extractRequest { _ =>
                 val entryIterator = questionAnswerService.allDocuments(indexName)
                 val entries: Source[KBDocument, NotUsed] =
                   Source.fromIterator(() => entryIterator)
@@ -190,7 +190,7 @@ trait KnowledgeBaseResource extends StarChatResource {
               extractRequest { request =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                  parameters("ids".as[String].*) { ids =>
+                  parameters("id".as[String].*) { ids =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(questionAnswerService.readFuture(indexName, ids.toList)) {
                       case Success(t) =>
@@ -215,11 +215,11 @@ trait KnowledgeBaseResource extends StarChatResource {
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                parameters("refresh".as[Int] ? 0) { refresh =>
+                parameters("id".as[String].*, "refresh".as[Int] ? 0) { (ids, refresh) =>
                   entity(as[DocsIds]) { request_data =>
                     if (request_data.ids.nonEmpty) {
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, request_data, refresh)) {
+                      onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, ids.toList, refresh)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>
@@ -281,8 +281,7 @@ trait KnowledgeBaseResource extends StarChatResource {
 
   def kbQuestionAnswerSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
     val localRouteName: String = routeName + "_search"
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
-      Slash ~  localRouteName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~  localRouteName) { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
@@ -315,9 +314,7 @@ trait KnowledgeBaseResource extends StarChatResource {
   }
 
   def kbUpdateTermsRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """updateTerms""" ~ Slash ~
-      routeName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ """updateTerms""" ~ Slash ~ routeName) { indexName =>
       pathEnd {
         put {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
@@ -350,7 +347,7 @@ trait KnowledgeBaseResource extends StarChatResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.stream)) {
               entity(as[UpdateQATermsRequest]) { extractionRequest =>
-                extractRequest { request =>
+                extractRequest { _ =>
                   val entryIterator = questionAnswerService.updateAllTextTerms(indexName = indexName,
                     extractionRequest = extractionRequest)
                   val entries: Source[UpdateDocumentResult, NotUsed] =
@@ -366,9 +363,7 @@ trait KnowledgeBaseResource extends StarChatResource {
   }
 
   def kbCountersCacheSizeRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
-      """cache""" ~ Slash ~
-      routeName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ """cache""" ~ Slash ~ routeName) { indexName =>
       pathEnd {
         delete {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>

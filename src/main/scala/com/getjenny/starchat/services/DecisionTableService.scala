@@ -297,7 +297,7 @@ object DecisionTableService extends AbstractDataService {
     docResult
   }
 
-  def update(indexName: String, id: String, document: DTDocumentUpdate, refresh: Int):
+  def update(indexName: String, document: DTDocumentUpdate, refresh: Int):
   Future[UpdateDocumentResult] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
@@ -367,7 +367,7 @@ object DecisionTableService extends AbstractDataService {
       .index(Index.indexName(indexName, elasticClient.indexSuffix))
       .`type`(elasticClient.indexSuffix)
       .doc(builder)
-      .id(id)
+      .id(document.state)
 
     val response: UpdateResponse = client.update(updateReq, RequestOptions.DEFAULT)
 
