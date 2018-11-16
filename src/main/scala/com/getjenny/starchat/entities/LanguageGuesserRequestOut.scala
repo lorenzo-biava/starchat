@@ -6,5 +6,5 @@ package com.getjenny.starchat.entities
 case class LanguageGuesserRequestOut(language: String,
                                      score: Float,
                                      confidence: String,
-                                     enhoughText: Boolean
+                                     enoughText: Boolean
                                     )
