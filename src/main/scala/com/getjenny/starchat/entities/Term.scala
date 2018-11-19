@@ -25,8 +25,7 @@ case class SearchTerm(term: Option[String] = None,
                       frequencyBase: Option[Double] = None,
                       frequencyStem: Option[Double] = None,
                       vector: Option[Vector[Double]] = None,
-                      score: Option[Double] = None,
-                      analyzer: Option[String] = None
+                      score: Option[Double] = None
                      )
 
 case class Terms(terms: List[Term])
