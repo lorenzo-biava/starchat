@@ -31,6 +31,7 @@ class SpellcheckResourceTest extends WordSpec with Matchers with ScalatestRouteT
       )
       Post(s"/SpellcheckResourse") ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
+      }
     }
   }
 }
