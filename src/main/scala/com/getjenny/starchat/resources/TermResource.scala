@@ -274,8 +274,7 @@ trait TermResource extends StarChatResource {
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       parameters("analyzer".as[String] ? "space_punctuation") { analyzer =>
                         onCompleteWithBreaker(breaker)(
-                          termService.searchFuture(indexName = indexName,
-                            query = requestData, analyzer = analyzer)
+                          termService.searchFuture(indexName = indexName, query = requestData, analyzer = analyzer)
                         ) {
                           case Success(t) =>
                             completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)

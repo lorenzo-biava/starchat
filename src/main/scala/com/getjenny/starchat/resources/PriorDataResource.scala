@@ -282,8 +282,7 @@ trait PriorDataResource extends StarChatResource {
   }
 
   def pdQuestionAnswerSearchRoutes: Route = handleExceptions(routesExceptionHandler) {
-    val localRouteName: String = routeName + "_search"
-    pathPrefix(indexRegex ~ Slash ~  localRouteName) { indexName =>
+    pathPrefix(indexRegex ~ Slash ~ routeName ~ Slash ~ "search") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
@@ -344,7 +343,7 @@ trait PriorDataResource extends StarChatResource {
               }
             }
           }
-        } ~ get {
+        } ~ post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
@@ -372,7 +371,7 @@ trait PriorDataResource extends StarChatResource {
         delete {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               extractRequest { request =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(
@@ -395,7 +394,7 @@ trait PriorDataResource extends StarChatResource {
         } ~ post {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               extractRequest { request =>
                 entity(as[CountersCacheParameters]) { cacheSize =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
@@ -422,7 +421,7 @@ trait PriorDataResource extends StarChatResource {
         } ~ get {
           authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.read)) {
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               extractRequest { request =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(
