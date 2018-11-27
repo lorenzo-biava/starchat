@@ -15,9 +15,12 @@ import org.elasticsearch.common.unit._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
 
+import java.util.concurrent.ConcurrentHashMap
+
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.collection.mutable
+import scala.collection.{concurrent, mutable}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -47,7 +50,7 @@ case class ActiveAnalyzers(
                           )
 
 object AnalyzerService {
-  var analyzersMap : mutable.Map[String, ActiveAnalyzers] = mutable.Map.empty[String, ActiveAnalyzers]
+  var analyzersMap : concurrent.Map[String, ActiveAnalyzers] = new ConcurrentHashMap[String, ActiveAnalyzers]().asScala
   val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   private[this] val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
   private[this] val termService: TermService.type = TermService
@@ -212,7 +215,11 @@ object AnalyzerService {
     val dtAnalyzerLoad = DTAnalyzerLoad(num_of_entries=analyzerMap.size)
     val activeAnalyzers: ActiveAnalyzers = ActiveAnalyzers(analyzerMap = analyzerMap,
       lastEvaluationTimestamp = 0, lastReloadingTimestamp = 0)
-    AnalyzerService.analyzersMap(indexName) = activeAnalyzers
+    if (AnalyzerService.analyzersMap.contains(indexName)) {
+      AnalyzerService.analyzersMap.replace(indexName, activeAnalyzers)
+    } else {
+      AnalyzerService.analyzersMap.putIfAbsent(indexName, activeAnalyzers)
+    }
 
     if (propagate) {
       Try(dtReloadService.setDTReloadTimestamp(indexName, refresh = 1)) match {
