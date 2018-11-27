@@ -219,7 +219,11 @@ object AnalyzerService extends AbstractDataService {
     val dtAnalyzerLoad = DTAnalyzerLoad(numOfEntries=analyzerMap.size)
     val activeAnalyzers: ActiveAnalyzers = ActiveAnalyzers(analyzerMap = analyzerMap,
       lastEvaluationTimestamp = 0, lastReloadingTimestamp = 0)
-    AnalyzerService.analyzersMap(indexName) = activeAnalyzers
+    if (AnalyzerService.analyzersMap.contains(indexName)) {
+      AnalyzerService.analyzersMap.replace(indexName, activeAnalyzers)
+    } else {
+      AnalyzerService.analyzersMap.putIfAbsent(indexName, activeAnalyzers)
+    }
 
     if (propagate) {
       Try(dtReloadService.setDTReloadTimestamp(indexName, refresh = 1)) match {

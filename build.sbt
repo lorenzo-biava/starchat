@@ -18,7 +18,7 @@ resolvers +=
 
 libraryDependencies ++= {
   val AkkaHttpVersion	= "10.1.5"
-  val AkkaVersion	= "2.5.17"
+  val AkkaVersion	= "2.5.18"
   val BreezeVersion	= "0.13.2"
   val ESClientVersion	= "6.4.3"
   val LogbackVersion	= "1.2.3"
