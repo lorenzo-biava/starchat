@@ -38,7 +38,7 @@ trait AbstractDataService {
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
       .query(QueryBuilders.matchAllQuery)
       .fetchSource(Array.empty[String], Array.empty[String])
-      .size(0)
+      .size(100)
 
     val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
       .source(sourceReq)
@@ -47,7 +47,9 @@ trait AbstractDataService {
 
     var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
     val iterator = Iterator.continually {
-      scrollResp.getHits.getHits.toList.map { e: SearchHit => e.getId
+      scrollResp.getHits.getHits.toList.map { e: SearchHit =>
+        println(e)
+        e.getId
       }
     }.takeWhile { idsList: List[String] => idsList.nonEmpty
     }

@@ -25,121 +25,6 @@ trait DecisionTableResource extends StarChatResource {
   private[this] val responseService: ResponseService.type = ResponseService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
 
-  def decisionTableRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix(indexRegex ~ Slash ~ "decisiontable") { indexName =>
-      pathEnd {
-        post {
-          authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
-            authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.write)) {
-              parameters("refresh".as[Int] ? 0) { refresh =>
-                entity(as[DTDocument]) { document =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(decisionTableService.createFuture(indexName, document, refresh)) {
-                    case Success(t) =>
-                      completeResponse(StatusCodes.Created, StatusCodes.BadRequest, t)
-                    case Failure(e) =>
-                      log.error("index(" + indexName + ") route=decisionTableRoutes method=POST: " + e.getMessage)
-                      completeResponse(StatusCodes.BadRequest,
-                        Option {
-                          ReturnMessageData(code = 100, message = e.getMessage)
-                        })
-                  }
-                }
-              }
-            }
-          }
-        } ~
-          get {
-            authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                parameters("id".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
-                  if (!dump) {
-                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(decisionTableService.read(indexName, ids.toList)) {
-                      case Success(t) =>
-                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                          t
-                        })
-                      case Failure(e) =>
-                        log.error("index(" + indexName + ") route=decisionTableRoutes method=GET: " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 101, message = e.getMessage)
-                          })
-                    }
-                  } else {
-                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(decisionTableService.getDTDocuments(indexName)) {
-                      case Success(t) =>
-                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                          t
-                        })
-                      case Failure(e) =>
-                        log.error("index(" + indexName + ") route=decisionTableRoutes method=GET: " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 102, message = e.getMessage)
-                          })
-                    }
-                  }
-                }
-              }
-            }
-          } ~
-          delete {
-            authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                parameters("id".as[String].*, "refresh".as[Int] ? 0) { (ids, refresh) =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(decisionTableService.delete(indexName, ids.toList, refresh)) {
-                    case Success(t) =>
-                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                    case Failure(e) =>
-                      log.error("index(" + indexName + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
-                      completeResponse(StatusCodes.BadRequest,
-                        Option {
-                          ReturnMessageData(code = 104, message = e.getMessage)
-                        })
-                  }
-                }
-              }
-            }
-          }
-      } ~
-        put {
-          authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
-            authorizeAsync(_ =>
-              authenticator.hasPermissions(user, indexName, Permissions.write)) {
-              entity(as[DTDocumentUpdate]) { update =>
-                parameters("refresh".as[Int] ? 0) { refresh =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(decisionTableService.update(indexName, update, refresh)) {
-                    case Success(t) =>
-                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                        t
-                      })
-                    case Failure(e) =>
-                      log.error("index(" + indexName + ") route=decisionTableRoutes method=PUT : " + e.getMessage)
-                      completeResponse(StatusCodes.BadRequest,
-                        Option {
-                          ReturnMessageData(code = 104, message = e.getMessage)
-                        })
-                  }
-                }
-              }
-            }
-          }
-        }
-    }
-  }
-
   def decisionTableRoutesAll: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix(indexRegex ~ Slash ~ "decisiontable" ~ Slash ~ "all") { indexName =>
       pathEnd {
@@ -388,6 +273,121 @@ trait DecisionTableResource extends StarChatResource {
           }
         }
       }
+    }
+  }
+
+  def decisionTableRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix(indexRegex ~ Slash ~ "decisiontable") { indexName =>
+      pathEnd {
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              parameters("refresh".as[Int] ? 0) { refresh =>
+                entity(as[DTDocument]) { document =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(decisionTableService.createFuture(indexName, document, refresh)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.Created, StatusCodes.BadRequest, t)
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") route=decisionTableRoutes method=POST: " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 100, message = e.getMessage)
+                        })
+                  }
+                }
+              }
+            }
+          }
+        } ~
+          get {
+            authenticateBasicAsync(realm = authRealm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, indexName, Permissions.read)) {
+                parameters("id".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
+                  if (!dump) {
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(decisionTableService.read(indexName, ids.toList)) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                          t
+                        })
+                      case Failure(e) =>
+                        log.error("index(" + indexName + ") route=decisionTableRoutes method=GET: " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 101, message = e.getMessage)
+                          })
+                    }
+                  } else {
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(decisionTableService.getDTDocuments(indexName)) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                          t
+                        })
+                      case Failure(e) =>
+                        log.error("index(" + indexName + ") route=decisionTableRoutes method=GET: " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 102, message = e.getMessage)
+                          })
+                    }
+                  }
+                }
+              }
+            }
+          } ~
+          delete {
+            authenticateBasicAsync(realm = authRealm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, indexName, Permissions.write)) {
+                parameters("id".as[String].*, "refresh".as[Int] ? 0) { (ids, refresh) =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(decisionTableService.delete(indexName, ids.toList, refresh)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 104, message = e.getMessage)
+                        })
+                  }
+                }
+              }
+            }
+          }
+      } ~
+        put {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.write)) {
+              entity(as[DTDocumentUpdate]) { update =>
+                parameters("refresh".as[Int] ? 0) { refresh =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(decisionTableService.update(indexName, update, refresh)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
+                      })
+                    case Failure(e) =>
+                      log.error("index(" + indexName + ") route=decisionTableRoutes method=PUT : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 104, message = e.getMessage)
+                        })
+                  }
+                }
+              }
+            }
+          }
+        }
     }
   }
 }

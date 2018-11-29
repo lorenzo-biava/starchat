@@ -12,8 +12,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 object CronCleanDTService {
-  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
+//  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
 

@@ -62,6 +62,7 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
     LoggingEntities.logRequestAndResult(synExtractionRoutes) ~
     LoggingEntities.logRequestAndResult(freqExtractionRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableRoutes) ~
+    LoggingEntities.logRequestAndResult(decisionTableRoutesAll) ~
     LoggingEntities.logRequestAndResult(decisionTableUploadCSVRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableSearchRoutes) ~
     LoggingEntities.logRequestAndResult(decisionTableAsyncReloadRoutes) ~

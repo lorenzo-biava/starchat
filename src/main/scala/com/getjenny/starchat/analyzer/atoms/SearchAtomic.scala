@@ -28,14 +28,12 @@ class SearchAtomic(arguments: List[String], restrictedArgs: Map[String, String])
 
   def evaluate(query: String, data: AnalyzersDataInternal = AnalyzersDataInternal()): Result = {
 
-    val searchResOpt = data.data.getOrElse("dt_queries_search_result", None)
-      .asInstanceOf[Option[Map[String, (Float, SearchDTDocument)]]]
-
-    val score = searchResOpt match {
+    val score = data.data.get("dt_queries_search_result") match {
       case Some(searchResult) =>
-        searchResult.get(state) match {
+        val res = searchResult.asInstanceOf[Map[String, (Float, SearchDTDocument)]]
+        res.get(state) match {
           case Some((referenceStateScore, _)) =>
-            val scoreWeight = searchResult.map { case (_, (docScore, _)) => docScore }.sum + 1
+            val scoreWeight = res.map { case (_, (docScore, _)) => docScore }.sum + 1
             referenceStateScore / scoreWeight
           case _ => 0.0d
         }

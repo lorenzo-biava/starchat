@@ -114,7 +114,7 @@ object ResponseService extends AbstractDataService {
                   stateName + ") Query(" + userText + ") Score(" + evalRes.toString + ")")
                 evalRes
               case Failure(e) =>
-                val message = "ResponseService: Evaluation of (" + stateName + ") : " + e.getMessage
+                val message = "ResponseService: Evaluation of State(" + stateName + ") : " + e.getMessage
                 log.error(message)
                 throw AnalyzerEvaluationException(message, e)
             }

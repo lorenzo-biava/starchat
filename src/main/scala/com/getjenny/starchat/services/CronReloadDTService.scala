@@ -13,8 +13,10 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 object CronReloadDTService  {
-  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
+//  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
