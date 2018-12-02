@@ -34,7 +34,6 @@ object CronReloadDTService  {
 
         dtReloadService.allDTReloadTimestamp(Some(updateTimestamp), Some(maxItemsIndexesToUpdate))
           .foreach { dtReloadEntry =>
-            log.info("Reloading analyzers: " + dtReloadEntry)
             val indexAnalyzers: Option[ActiveAnalyzers] =
               analyzerService.analyzersMap.get(dtReloadEntry.indexName)
             val localReloadIndexTimestamp = indexAnalyzers match {
