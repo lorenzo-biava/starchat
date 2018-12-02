@@ -21,7 +21,6 @@ import org.elasticsearch.rest.RestStatus
 import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 case class UserEsServiceException(message: String = "", cause: Throwable = None.orNull)

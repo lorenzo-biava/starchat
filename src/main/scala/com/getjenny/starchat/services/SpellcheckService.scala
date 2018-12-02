@@ -15,7 +15,6 @@ import org.elasticsearch.search.suggest.term.{TermSuggestion, TermSuggestionBuil
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.List
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object SpellcheckService extends AbstractDataService {

@@ -142,7 +142,7 @@ trait DecisionTableResource extends StarChatResource {
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("propagate".as[Boolean] ? true,
                   "incremental".as[Boolean] ? true) { (propagate, incremental) =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 120.seconds)
                   onCompleteWithBreaker(breaker)(analyzerService.loadAnalyzers(indexName = indexName,
                     incremental = incremental, propagate = propagate)) {
                     case Success(t) =>

@@ -15,7 +15,6 @@ import com.getjenny.starchat.utils.Index
 import scalaz.Scalaz._
 
 import scala.collection.immutable.Map
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object ManausTermsExtractionService extends AbstractDataService {

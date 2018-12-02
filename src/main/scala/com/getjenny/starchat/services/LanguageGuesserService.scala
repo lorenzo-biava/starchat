@@ -4,18 +4,18 @@ package com.getjenny.starchat.services
   * Created by Angelo Leto <angelo@getjenny.com> on 10/03/17.
   */
 
+import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities.{LanguageGuesserInformations, LanguageGuesserRequestIn, LanguageGuesserRequestOut}
 import org.apache.tika.langdetect.OptimaizeLangDetector
 import org.apache.tika.language.detect.{LanguageDetector, LanguageResult}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Implements functions, eventually used by LanguageGuesserResource
   */
 object LanguageGuesserService {
-
+  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
   def guessLanguage(indexName: String, requestData: LanguageGuesserRequestIn):
   Future[LanguageGuesserRequestOut] = Future {
     val detector: LanguageDetector = new OptimaizeLangDetector().loadModels()

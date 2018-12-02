@@ -10,16 +10,16 @@ import com.getjenny.starchat.entities.{IndexManagementResponse, _}
 import com.getjenny.starchat.services.esclient.SystemIndexManagementElasticClient
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest
 import org.elasticsearch.action.admin.indices.create.{CreateIndexRequest, CreateIndexResponse}
-import org.elasticsearch.action.admin.indices.delete.{DeleteIndexRequest, DeleteIndexResponse}
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.action.admin.indices.mapping.get.{GetMappingsRequest, GetMappingsResponse}
-import org.elasticsearch.action.admin.indices.mapping.put.{PutMappingRequest, PutMappingResponse}
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest
+import org.elasticsearch.action.support.master.AcknowledgedResponse
 import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
 import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
 
@@ -105,7 +105,7 @@ object SystemIndexManagementService extends AbstractDataService {
 
       val deleteIndexReq = new DeleteIndexRequest(fullIndexName)
 
-      val deleteIndexRes: DeleteIndexResponse = client.indices.delete(deleteIndexReq, RequestOptions.DEFAULT)
+      val deleteIndexRes: AcknowledgedResponse = client.indices.delete(deleteIndexReq, RequestOptions.DEFAULT)
 
       item.indexSuffix + "(" + fullIndexName + ", " + deleteIndexRes.isAcknowledged.toString + ")"
 
@@ -163,7 +163,7 @@ object SystemIndexManagementService extends AbstractDataService {
         .`type`(item.indexSuffix)
         .source(schemaJson, XContentType.JSON)
 
-      val putMappingRes: PutMappingResponse = client.indices
+      val putMappingRes: AcknowledgedResponse = client.indices
         .putMapping(putMappingReq, RequestOptions.DEFAULT)
 
       item.indexSuffix + "(" + fullIndexName + ", " + putMappingRes.isAcknowledged.toString + ")"

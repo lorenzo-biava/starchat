@@ -1,6 +1,7 @@
 package com.getjenny.starchat.services
 
-import com.getjenny.starchat.entities.{DeleteDocumentResult, DeleteDocumentsResult, DeleteDocumentsSummaryResult, DocsIds}
+import com.getjenny.starchat.SCActorSystem
+import com.getjenny.starchat.entities.{DeleteDocumentResult, DeleteDocumentsResult, DeleteDocumentsSummaryResult}
 import com.getjenny.starchat.services.esclient.ElasticClient
 import com.getjenny.starchat.utils.Index
 import org.elasticsearch.action.bulk.{BulkRequest, BulkResponse}
@@ -13,16 +14,19 @@ import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import scalaz.Scalaz._
+import org.elasticsearch.client.RequestOptions
+import org.elasticsearch.index.reindex.BulkByScrollResponse
 
 import scala.collection.immutable.List
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import org.elasticsearch.index.reindex.DeleteByQueryRequest
 
 case class DeleteDataServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 trait AbstractDataService {
+  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatchers.lookup("starchat.dispatcher")
 
   val elasticClient: ElasticClient
 
@@ -34,34 +38,14 @@ trait AbstractDataService {
   def deleteAll(indexName: String): Future[DeleteDocumentsSummaryResult] = Future {
     val client: RestHighLevelClient = elasticClient.client
 
-    /* TODO: to be implemented with deleteByQuery when it will be integrated in ES 7.0 */
-    val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
-      .query(QueryBuilders.matchAllQuery)
-      .fetchSource(Array.empty[String], Array.empty[String])
-      .size(100)
+    val request: DeleteByQueryRequest =
+      new DeleteByQueryRequest(Index.indexName(indexName, elasticClient.indexSuffix))
+    request.setConflicts("proceed")
+    request.setQuery(QueryBuilders.matchAllQuery)
 
-    val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
-      .source(sourceReq)
-      .types(elasticClient.indexSuffix)
-      .scroll(new TimeValue(60000))
+    val bulkResponse = client.deleteByQuery(request, RequestOptions.DEFAULT)
 
-    var scrollResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
-    val iterator = Iterator.continually {
-      scrollResp.getHits.getHits.toList.map { e: SearchHit =>
-        println(e)
-        e.getId
-      }
-    }.takeWhile { idsList: List[String] => idsList.nonEmpty
-    }
-
-    val deleted = iterator.map { ids: List[String] =>
-      Await.result(delete(indexName, ids, 0).map {
-        deleteDocRes: DeleteDocumentsResult =>
-          deleteDocRes.data.map(delItem => if(delItem.found) 1 else 0).sum
-      }, 10.second)
-    }.sum
-
-    DeleteDocumentsSummaryResult(message = "delete", deleted = deleted)
+    DeleteDocumentsSummaryResult(message = "delete", deleted = bulkResponse.getTotal)
   }
 
   /** delete one or more terms

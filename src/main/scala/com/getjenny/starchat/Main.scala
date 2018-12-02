@@ -90,7 +90,7 @@ final class StarChatService(parameters: Option[Parameters] = None) extends RestI
   }
 
   /* activate cron jobs for data synchronization */
-  cronReloadDTService.reloadAnalyzers()
+  cronReloadDTService.scheduleReloadAnalyzers()
   cronCleanDTService.cleanDecisionTables()
 }
 

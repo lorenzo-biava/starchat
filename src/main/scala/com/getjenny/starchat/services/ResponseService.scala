@@ -13,7 +13,6 @@ import com.getjenny.starchat.services.esclient.DecisionTableElasticClient
 import scalaz.Scalaz._
 
 import scala.collection.immutable.{List, Map}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
@@ -46,7 +45,7 @@ object ResponseService extends AbstractDataService {
     if(! AnalyzerService.analyzersMap.contains(indexName)) {
       val message = "Decision table not ready for index(" + indexName + "), triggering reloading, please retry later"
       log.debug(message)
-      cronReloadDTService.reloadAnalyzersOnce()
+      cronReloadDTService.scheduleOnceReloadAnalyzers()
       throw ResponseServiceDTNotLoadedException(message)
     }
 

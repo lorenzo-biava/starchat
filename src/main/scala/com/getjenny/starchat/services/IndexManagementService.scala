@@ -6,24 +6,22 @@ package com.getjenny.starchat.services
 
 import java.io._
 
-import akka.event.{Logging, LoggingAdapter}
-import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
 import com.getjenny.starchat.services.esclient.IndexManagementElasticClient
 import com.getjenny.starchat.utils.Index
-import org.elasticsearch.action.admin.indices.close.{CloseIndexRequest, CloseIndexResponse}
+import org.elasticsearch.action.admin.indices.close.CloseIndexRequest
 import org.elasticsearch.action.admin.indices.create.{CreateIndexRequest, CreateIndexResponse}
-import org.elasticsearch.action.admin.indices.delete.{DeleteIndexRequest, DeleteIndexResponse}
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.action.admin.indices.mapping.get.{GetMappingsRequest, GetMappingsResponse}
-import org.elasticsearch.action.admin.indices.mapping.put.{PutMappingRequest, PutMappingResponse}
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest
 import org.elasticsearch.action.admin.indices.open.{OpenIndexRequest, OpenIndexResponse}
-import org.elasticsearch.action.admin.indices.settings.put.{UpdateSettingsRequest, UpdateSettingsResponse}
+import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest
+import org.elasticsearch.action.support.master.AcknowledgedResponse
 import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.settings._
 import org.elasticsearch.common.xcontent.XContentType
 import scalaz.Scalaz._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
 
@@ -132,7 +130,7 @@ object IndexManagementService extends AbstractDataService {
 
       val deleteIndexReq = new DeleteIndexRequest(fullIndexName)
 
-      val deleteIndexRes: DeleteIndexResponse = client.indices.delete(deleteIndexReq, RequestOptions.DEFAULT)
+      val deleteIndexRes: AcknowledgedResponse = client.indices.delete(deleteIndexReq, RequestOptions.DEFAULT)
 
       item.indexSuffix + "(" + fullIndexName + ", " + deleteIndexRes.isAcknowledged.toString + ")"
 
@@ -182,7 +180,7 @@ object IndexManagementService extends AbstractDataService {
       operation match {
         case "close" =>
           val closeIndexReq = new CloseIndexRequest().indices(fullIndexName)
-          val closeIndexRes: CloseIndexResponse = client.indices.close(closeIndexReq, RequestOptions.DEFAULT)
+          val closeIndexRes: AcknowledgedResponse = client.indices.close(closeIndexReq, RequestOptions.DEFAULT)
           OpenCloseIndex(indexName = indexName, indexSuffix = item.indexSuffix, fullIndexName = fullIndexName,
             operation = operation, acknowledgement = closeIndexRes.isAcknowledged)
         case "open" =>
@@ -221,7 +219,7 @@ object IndexManagementService extends AbstractDataService {
       val updateIndexSettingsReq = new UpdateSettingsRequest().indices(fullIndexName)
         .settings(Settings.builder().loadFromSource(analyzerJson, XContentType.JSON))
 
-      val updateIndexSettingsRes: UpdateSettingsResponse = client.indices
+      val updateIndexSettingsRes: AcknowledgedResponse = client.indices
         .putSettings(updateIndexSettingsReq, RequestOptions.DEFAULT)
 
       item.indexSuffix + "(" + fullIndexName + ", " + updateIndexSettingsRes.isAcknowledged.toString + ")"
@@ -257,7 +255,7 @@ object IndexManagementService extends AbstractDataService {
         .`type`(item.indexSuffix)
         .source(schemaJson, XContentType.JSON)
 
-      val putMappingRes: PutMappingResponse = client.indices
+      val putMappingRes: AcknowledgedResponse = client.indices
         .putMapping(putMappingReq, RequestOptions.DEFAULT)
 
       item.indexSuffix + "(" + fullIndexName + ", " + putMappingRes.isAcknowledged.toString + ")"

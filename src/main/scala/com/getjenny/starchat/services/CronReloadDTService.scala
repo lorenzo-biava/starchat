@@ -13,10 +13,10 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object CronReloadDTService  {
-//  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
+  implicit def executionContext: ExecutionContext =
+    SCActorSystem.system.dispatchers.lookup("starchat.blocking-dispatcher")
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
@@ -59,7 +59,7 @@ object CronReloadDTService  {
     }
   }
 
-  def reloadAnalyzers(): Unit = {
+  def scheduleReloadAnalyzers(): Unit = {
     if (systemIndexManagementService.elasticClient.dtReloadCheckFrequency > 0) {
       val reloadDecisionTableActorRef =
         SCActorSystem.system.actorOf(Props(new ReloadAnalyzersTickActor))
@@ -79,7 +79,7 @@ object CronReloadDTService  {
     }
   }
 
-  def reloadAnalyzersOnce(): Unit = {
+  def scheduleOnceReloadAnalyzers(): Unit = {
     val updateEventsActorRef = SCActorSystem.system.actorOf(Props(new ReloadAnalyzersTickActor))
     SCActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, tickMessage)
   }
