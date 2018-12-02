@@ -90,7 +90,7 @@ object  DtReloadService {
   }
 
   def allDTReloadTimestamp(minTimestamp: Option[Long] = None,
-                           maxItems: Option[Long] = None): Option[List[DtReloadTimestamp]] = {
+                           maxItems: Option[Long] = None): List[DtReloadTimestamp] = {
     val client: TransportClient = elasticClient.getClient()
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
     minTimestamp match {
@@ -117,7 +117,7 @@ object  DtReloadService {
 
       DtReloadTimestamp(docId, timestamp)
     })
-    Option {dtReloadTimestamps}
+    dtReloadTimestamps
   }
 
 }

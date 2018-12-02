@@ -8,88 +8,70 @@ import akka.actor.{Actor, Props}
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 object CronReloadDTService  {
-  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
+  implicit def executionContext: ExecutionContext =
+    SCActorSystem.system.dispatchers.lookup("starchat.blocking-dispatcher")
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
   private[this] val systemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
-  private[this] var updateTimestamp: Long = 0
+  private[this] var updateTimestamp: Long = -1
 
-  val tickMessage = "tick"
+  private[this] val tickMessage: String = "tick"
 
   class ReloadAnalyzersTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
       case `tickMessage` =>
-        val maxItemsIndexesToUpdate: Long = if (analyzerService.dtMaxTables > analyzerService.analyzersMap.size) {
-          analyzerService.dtMaxTables - analyzerService.analyzersMap.size
-        } else 0L
+        val startUpdateTimestamp: Long = System.currentTimeMillis
+        val maxItemsIndexesToUpdate: Long = math.max(analyzerService.dtMaxTables, analyzerService.analyzersMap.size)
 
-        dtReloadService.allDTReloadTimestamp(Some(updateTimestamp), Some(maxItemsIndexesToUpdate)) match {
-          case Some(indices) =>
-            indices.foreach { dtReloadEntry =>
-              val indexAnalyzers: Option[ActiveAnalyzers] =
-                analyzerService.analyzersMap.get(dtReloadEntry.indexName)
-              val localReloadTimestamp = indexAnalyzers match {
-                case Some(ts) => ts.lastReloadingTimestamp
-                case _ => dtReloadService.DT_RELOAD_TIMESTAMP_DEFAULT
-              }
+        log.info("Start DT reloading session: " + startUpdateTimestamp + " items(" + maxItemsIndexesToUpdate + ")")
 
-              if (dtReloadEntry.timestamp > 0 && localReloadTimestamp < dtReloadEntry.timestamp) {
-                log.info("dt reloading, timestamp for index(" + dtReloadEntry.indexName + "): "
-                  + dtReloadEntry.timestamp)
-
-                analyzerService.loadAnalyzers(indexName = dtReloadEntry.indexName).onComplete {
-                  case Success(relRes) =>
-                    relRes match {
-                      case Some(res) =>
-                        updateTimestamp = math.max(updateTimestamp, localReloadTimestamp)
-                        log.info("Analyzer loaded for index(" + dtReloadEntry + "), res(" + res +
-                          ") remote ts: " + dtReloadEntry )
-                        analyzerService.analyzersMap(dtReloadEntry.indexName)
-                          .lastReloadingTimestamp = dtReloadEntry.timestamp
-                      case _ => log.error("ReloadAnalyzersTickActor: getting an empty response reloading analyzers")
-                    }
-                  case Failure(e) =>
-                    log.error("unable to load analyzers for index(" + dtReloadEntry +
-                      ") from the cron job" + e.getMessage)
-                }
-              }
+        dtReloadService.allDTReloadTimestamp(Some(updateTimestamp), Some(maxItemsIndexesToUpdate))
+          .foreach { dtReloadEntry =>
+            log.info("Reloading analyzers: " + dtReloadEntry)
+            val indexAnalyzers: Option[ActiveAnalyzers] =
+              analyzerService.analyzersMap.get(dtReloadEntry.indexName)
+            val localReloadIndexTimestamp = indexAnalyzers match {
+              case Some(ts) => ts.lastReloadingTimestamp
+              case _ => dtReloadService.DT_RELOAD_TIMESTAMP_DEFAULT
             }
-          case _ =>
-            log.debug("No entries on dt reload index")
-        }
+
+            if (dtReloadEntry.timestamp > 0 && localReloadIndexTimestamp < dtReloadEntry.timestamp) {
+              log.info("dt reloading for index(" + dtReloadEntry.indexName +
+                ") timestamp (" + startUpdateTimestamp + ") : " + dtReloadEntry.timestamp)
+
+              Try(Await.result(analyzerService.loadAnalyzers(indexName = dtReloadEntry.indexName), 120.second)) match {
+                case Success(relRes) =>
+                  updateTimestamp = math.max(updateTimestamp, localReloadIndexTimestamp)
+                  log.info("Analyzer loaded for index(" + dtReloadEntry + "), timestamp (" +
+                    startUpdateTimestamp + ") res(" + relRes + ") remote ts: " + dtReloadEntry )
+                  analyzerService.analyzersMap(dtReloadEntry.indexName)
+                    .lastReloadingTimestamp = dtReloadEntry.timestamp
+                case Failure(e) =>
+                  log.error("unable to load analyzers for index(" + dtReloadEntry +
+                    "), timestamp(" + startUpdateTimestamp + "), cron job" + e.getMessage)
+              }
+
+            }
+          }
     }
   }
 
-  def reloadAnalyzers(): Unit = {
+  def scheduleReloadAnalyzers(): Unit = {
     if (systemIndexManagementService.elasticClient.dtReloadCheckFrequency > 0) {
       val reloadDecisionTableActorRef =
         SCActorSystem.system.actorOf(Props(new ReloadAnalyzersTickActor))
-      val delay: Int = if(systemIndexManagementService.elasticClient.dtReloadCheckDelay >= 0) {
-        systemIndexManagementService.elasticClient.dtReloadCheckDelay
-      } else {
-        val r = scala.util.Random
-        val d = r.nextInt(math.abs(systemIndexManagementService.elasticClient.dtReloadCheckDelay))
-        d
-      }
-
       SCActorSystem.system.scheduler.schedule(
-        delay seconds,
+        0 seconds,
         systemIndexManagementService.elasticClient.dtReloadCheckFrequency seconds,
         reloadDecisionTableActorRef,
         tickMessage)
     }
   }
-
-  def reloadAnalyzersOnce(): Unit = {
-    val updateEventsActorRef = SCActorSystem.system.actorOf(Props(new ReloadAnalyzersTickActor))
-    SCActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, tickMessage)
-  }
-
 }

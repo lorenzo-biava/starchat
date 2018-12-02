@@ -7,7 +7,6 @@ package com.getjenny.starchat.services
 object SystemIndexManagementElasticClient extends ElasticClient {
   val indexName: String = config.getString("es.system_index_name")
 
-  val dtReloadCheckDelay : Int = config.getInt("es.dt_reload_check_delay")
   val dtReloadCheckFrequency : Int = config.getInt("es.dt_reload_check_frequency")
   val dtReloadTimestampFieldName = "state_refresh_ts"
   val systemRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")

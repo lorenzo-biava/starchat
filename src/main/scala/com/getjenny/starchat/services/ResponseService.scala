@@ -41,7 +41,6 @@ object ResponseService {
     if(! AnalyzerService.analyzersMap.contains(indexName)) {
       val message = "Decision table not ready for index(" + indexName + "), triggering reloading, please retry later"
       log.debug(message)
-      cronReloadDTService.reloadAnalyzersOnce()
       throw ResponseServiceDTNotLoadedException(message)
     }
 

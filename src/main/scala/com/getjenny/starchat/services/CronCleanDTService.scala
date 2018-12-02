@@ -13,7 +13,9 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object CronCleanDTService {
-  implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatcher
+  implicit val executionContext: ExecutionContext =
+    SCActorSystem.system.dispatchers.lookup("starchat.blocking-dispatcher")
+
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   private[this] val analyzerService: AnalyzerService.type = AnalyzerService
 
@@ -48,11 +50,6 @@ object CronCleanDTService {
       30 seconds,
       reloadDecisionTableActorRef,
       tickMessage)
-  }
-
-  def reloadAnalyzersOnce(): Unit = {
-    val updateEventsActorRef = SCActorSystem.system.actorOf(Props(new CleanDecisionTablesTickActor))
-    SCActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, tickMessage)
   }
 
 }

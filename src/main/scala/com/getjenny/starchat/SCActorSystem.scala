@@ -7,5 +7,5 @@ package com.getjenny.starchat
 import akka.actor.ActorSystem
 
 object SCActorSystem {
-  val system = ActorSystem("starchat-service")
+  val system = ActorSystem("starchat-actor-system")
 }
