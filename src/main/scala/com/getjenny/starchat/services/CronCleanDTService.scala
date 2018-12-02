@@ -52,9 +52,4 @@ object CronCleanDTService {
       tickMessage)
   }
 
-  def reloadAnalyzersOnce(): Unit = {
-    val updateEventsActorRef = SCActorSystem.system.actorOf(Props(new CleanDecisionTablesTickActor))
-    SCActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, tickMessage)
-  }
-
 }

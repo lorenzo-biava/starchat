@@ -43,9 +43,8 @@ object ResponseService extends AbstractDataService {
     }
 
     if(! AnalyzerService.analyzersMap.contains(indexName)) {
-      val message = "Decision table not ready for index(" + indexName + "), triggering reloading, please retry later"
+      val message = "Decision table not ready for index(" + indexName + "), please retry later"
       log.debug(message)
-      cronReloadDTService.scheduleOnceReloadAnalyzers()
       throw ResponseServiceDTNotLoadedException(message)
     }
 
