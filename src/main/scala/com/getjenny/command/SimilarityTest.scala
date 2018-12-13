@@ -85,9 +85,11 @@ object SimilarityTest extends JsonSupport {
 
       val analyzer: String =
         params.analyzer.replace("%text1", escaped_text1).replace("%text2", escaped_text2)
+
       val evaluate_request = AnalyzerEvaluateRequest(
         analyzer = analyzer,
         query = text2,
+        searchAlgorithm = Some(SearchAlgorithm.DEFAULT),
         data = Option{ AnalyzersData(extractedVariables = params.variables,
           traversedStates = params.itemList.toVector) }
       )

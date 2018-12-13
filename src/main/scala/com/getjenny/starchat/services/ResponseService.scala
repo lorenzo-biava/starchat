@@ -72,8 +72,10 @@ object ResponseService extends AbstractDataService {
     }
 
     // prepare search result for search analyzer
+    val analyzerEvaluateRequest = AnalyzerEvaluateRequest(analyzer = "", query = userText, data = None,
+      searchAlgorithm = request.searchAlgorithm, evaluationClass = request.evaluationClass)
     val searchResAnalyzers =
-      decisionTableService.searchDtQueries(indexName, userText, request.evaluationClass).map(searchRes => {
+      decisionTableService.searchDtQueries(indexName, analyzerEvaluateRequest).map(searchRes => {
         val analyzersInternalData = decisionTableService.resultsToMap(searchRes)
         AnalyzersDataInternal(extractedVariables = variables, traversedStates = traversedStates,
           data = analyzersInternalData)

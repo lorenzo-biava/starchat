@@ -15,4 +15,6 @@ case class ResponseRequestIn(conversationId: String,
                              data: Option[Map[String, String]],
                              threshold: Option[Double],
                              evaluationClass: Option[String],
-                             maxResults: Option[Int])
+                             maxResults: Option[Int],
+                             searchAlgorithm: Option[SearchAlgorithm.Value]
+                            )

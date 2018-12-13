@@ -30,7 +30,7 @@ object CronReloadDTService  {
         val startUpdateTimestamp: Long = System.currentTimeMillis
         val maxItemsIndexesToUpdate: Long = math.max(analyzerService.dtMaxTables, analyzerService.analyzersMap.size)
 
-        log.info("Start DT reloading session: " + startUpdateTimestamp + " items(" + maxItemsIndexesToUpdate + ")")
+        log.debug("Start DT reloading session: " + startUpdateTimestamp + " items(" + maxItemsIndexesToUpdate + ")")
 
         dtReloadService.allDTReloadTimestamp(Some(updateTimestamp), Some(maxItemsIndexesToUpdate))
           .foreach { dtReloadEntry =>

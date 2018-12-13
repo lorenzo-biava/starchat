@@ -25,9 +25,27 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       .withFramingRendererFlow(Flow[ByteString].intersperse(start, sep, end).asJava)
       .withParallelMarshalling(parallelism = 8, unordered = true)
 
+  implicit val SearchAlgorithmUnmarshalling:
+    Unmarshaller[String, SearchAlgorithm.Value] =
+    Unmarshaller.strict[String, SearchAlgorithm.Value] { enumValue =>
+      SearchAlgorithm.value(enumValue)
+    }
+
+  implicit object SearchAlgorithmFormat extends JsonFormat[SearchAlgorithm.Value] {
+    def write(obj: SearchAlgorithm.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): SearchAlgorithm.Value = json match {
+      case JsString(str) =>
+        SearchAlgorithm.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("SearchAlgorithm string is invalid")
+        }
+      case _ => throw DeserializationException("SearchAlgorithm string expected")
+    }
+  }
+
   implicit val responseMessageDataFormat = jsonFormat2(ReturnMessageData)
   implicit val responseRequestUserInputFormat = jsonFormat2(ResponseRequestInUserInput)
-  implicit val responseRequestInputFormat = jsonFormat8(ResponseRequestIn)
+  implicit val responseRequestInputFormat = jsonFormat9(ResponseRequestIn)
   implicit val responseRequestOutputFormat = jsonFormat13(ResponseRequestOut)
   implicit val dtDocumentFormat = jsonFormat13(DTDocument)
   implicit val dtDocumentUpdateFormat = jsonFormat12(DTDocumentUpdate)
@@ -38,7 +56,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val searchKBResultsFormat = jsonFormat3(SearchKBDocumentsResults)
   implicit val searchDTResultsFormat = jsonFormat3(SearchDTDocumentsResults)
   implicit val kbDocumentSearchFormat = jsonFormat16(KBDocumentSearch)
-  implicit val dtDocumentSearchFormat = jsonFormat8(DTDocumentSearch)
+  implicit val dtDocumentSearchFormat = jsonFormat9(DTDocumentSearch)
   implicit val indexDocumentResultFormat = jsonFormat5(IndexDocumentResult)
   implicit val updateDocumentResultFormat = jsonFormat5(UpdateDocumentResult)
   implicit val deleteDocumentResultFormat = jsonFormat5(DeleteDocumentResult)
@@ -67,7 +85,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val analyzerResponseItemFormat = jsonFormat5(TokenizerResponseItem)
   implicit val analyzerResponseFormat = jsonFormat1(TokenizerResponse)
   implicit val analyzerDataFormat = jsonFormat2(AnalyzersData)
-  implicit val analyzerEvaluateRequestFormat = jsonFormat4(AnalyzerEvaluateRequest)
+  implicit val analyzerEvaluateRequestFormat = jsonFormat5(AnalyzerEvaluateRequest)
   implicit val analyzerEvaluateResponseFormat = jsonFormat4(AnalyzerEvaluateResponse)
   implicit val spellcheckTokenSuggestionsFormat = jsonFormat3(SpellcheckTokenSuggestions)
   implicit val spellcheckTokenFormat = jsonFormat4(SpellcheckToken)
@@ -146,6 +164,11 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
+  implicit val synonymExtractionDistanceFunctionUnmarshalling:
+    Unmarshaller[String, SynonymExtractionDistanceFunction.Value] =
+    Unmarshaller.strict[String, SynonymExtractionDistanceFunction.Value] { enumValue =>
+      SynonymExtractionDistanceFunction.value(enumValue)
+    }
 
   implicit object SynonymExtractionDistanceFunctionFormat extends JsonFormat[SynonymExtractionDistanceFunction.Value] {
     def write(obj: SynonymExtractionDistanceFunction.Value): JsValue = JsString(obj.toString)

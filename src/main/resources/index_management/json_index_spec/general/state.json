@@ -77,6 +77,54 @@
                 "stemmed_shingles_4": {
                   "type": "text",
                   "analyzer": "jenny_stemmed_shingles_4_analyzer"
+                },
+                "ngram_2": {
+                  "type": "text",
+                  "store": true,
+                  "index": true,
+                  "fielddata": "true",
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_ngram_2_analyzer"
+                },
+                "stemmed_ngram_2": {
+                  "type": "text",
+                  "store": true,
+                  "index": true,
+                  "fielddata": "true",
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_stemmed_ngram_2_analyzer"
+                },
+                "ngram_3": {
+                  "type": "text",
+                  "store": true,
+                  "index": true,
+                  "fielddata": "true",
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_ngram_3_analyzer"
+                },
+                "stemmed_ngram_3": {
+                  "type": "text",
+                  "store": true,
+                  "index": true,
+                  "fielddata": "true",
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_stemmed_ngram_3_analyzer"
+                },
+                "ngram_4": {
+                  "type": "text",
+                  "store": true,
+                  "index": true,
+                  "fielddata": "true",
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_ngram_4_analyzer"
+                },
+                "stemmed_ngram_4": {
+                  "type": "text",
+                  "store": true,
+                  "index": true,
+                  "fielddata": "true",
+                  "term_vector": "with_positions_offsets",
+                  "analyzer": "jenny_stemmed_ngram_4_analyzer"
                 }
               }
             }
@@ -90,7 +138,9 @@
         "bubble": {
           "type": "text",
           "store": true,
-          "index": true
+          "index": true,
+          "fielddata": "true",
+          "term_vector": "with_positions_offsets"
         },
         "action": {
           "type": "keyword",

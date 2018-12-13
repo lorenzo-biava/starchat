@@ -11,5 +11,6 @@ case class DTDocumentSearch(from: Option[Int],
                             boostExactMatchFactor: Option[Float],
                             state: Option[String],
                             evaluationClass: Option[String],
-                            queries: Option[String]
+                            queries: Option[String],
+                            searchAlgorithm: Option[SearchAlgorithm.Value]
                            )
