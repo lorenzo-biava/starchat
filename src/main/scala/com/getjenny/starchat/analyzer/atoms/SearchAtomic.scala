@@ -33,8 +33,7 @@ class SearchAtomic(arguments: List[String], restrictedArgs: Map[String, String])
         val res = searchResult.asInstanceOf[Map[String, (Float, SearchDTDocument)]]
         res.get(state) match {
           case Some((referenceStateScore, _)) =>
-            val scoreWeight = res.map { case (_, (docScore, _)) => docScore }.sum + 1
-            referenceStateScore / scoreWeight
+            referenceStateScore
           case _ => 0.0d
         }
       case _ => 0.0d
@@ -42,5 +41,4 @@ class SearchAtomic(arguments: List[String], restrictedArgs: Map[String, String])
 
     Result(score=score)
   } // returns elasticsearch score of the highest query in queries
-
 }
