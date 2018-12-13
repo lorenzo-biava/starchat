@@ -262,7 +262,7 @@ object DecisionTableService extends AbstractDataService {
             queriesScoreMode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Max)
           ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100)),
           responseToDtDocumentDefault)
-      case SearchAlgorithm.SHINGLES2 =>
+      case SearchAlgorithm.SHINGLES2 | SearchAlgorithm.DEFAULT => /** default case */
         (QueryBuilders.nestedQuery(
           "queries",
           QueryBuilders.boolQuery()
@@ -270,7 +270,7 @@ object DecisionTableService extends AbstractDataService {
           queriesScoreMode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Max)
         ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100)),
           responseToDtDocumentDefault)
-      case SearchAlgorithm.SHINGLES3 | SearchAlgorithm.DEFAULT => /** default case */
+      case SearchAlgorithm.SHINGLES3 =>
         (QueryBuilders.nestedQuery(
           "queries",
           QueryBuilders.boolQuery()
