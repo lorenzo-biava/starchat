@@ -237,7 +237,6 @@ object DecisionTableService extends AbstractDataService {
       }).max
       (searchDocument, score)
     }.map{ case(searchDtDocument, score) =>
-      println(score)
       val document : DTDocument = searchDtDocument.document
       SearchDTDocument(score = score.toFloat, document = document)
     }
