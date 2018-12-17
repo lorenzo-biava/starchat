@@ -219,6 +219,19 @@ trait DecisionTableResource extends StarChatResource {
                                 })
                             }
                           )
+                        case e @ (_: ResponseServiceNoResponseException | _: AnalyzerEvaluationException) =>
+                          val message = "index(" + indexName + ") DecisionTableResource: " +
+                            "Unable to complete the request: " + e.getMessage
+                          log.error(message = message)
+                          completeResponse(StatusCodes.NoContent,
+                            Option {
+                              ResponseRequestOutOperationResult(
+                                ReturnMessageData(code = 110, message = message),
+                                Option {
+                                  List.empty[ResponseRequestOut]
+                                })
+                            }
+                          )
                         case e @ (_: ResponseServiceDocumentNotFoundException | _: AnalyzerEvaluationException) =>
                           val message = "index(" + indexName + ") DecisionTableResource: " +
                             "Unable to complete the request: " + e.getMessage
@@ -226,7 +239,7 @@ trait DecisionTableResource extends StarChatResource {
                           completeResponse(StatusCodes.NotFound,
                             Option {
                               ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 110, message = message),
+                                ReturnMessageData(code = 111, message = message),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })
@@ -240,7 +253,7 @@ trait DecisionTableResource extends StarChatResource {
                           completeResponse(StatusCodes.RequestTimeout,
                             Option {
                               ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 111, message = message),
+                                ReturnMessageData(code = 112, message = message),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })
@@ -254,7 +267,7 @@ trait DecisionTableResource extends StarChatResource {
                           completeResponse(StatusCodes.BadRequest,
                             Option {
                               ResponseRequestOutOperationResult(
-                                ReturnMessageData(code = 112, message = message),
+                                ReturnMessageData(code = 113, message = message),
                                 Option {
                                   List.empty[ResponseRequestOut]
                                 })

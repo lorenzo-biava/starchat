@@ -23,6 +23,9 @@ case class ResponseServiceException(message: String = "", cause: Throwable = Non
 case class ResponseServiceDocumentNotFoundException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
+case class ResponseServiceNoResponseException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 case class ResponseServiceDTNotLoadedException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
@@ -82,7 +85,6 @@ object ResponseService extends AbstractDataService {
       })
 
     val returnState: Future[ResponseRequestOutOperationResult] = searchResAnalyzers.map( data => {
-      // No states in the return values
       val maxResults: Int = request.maxResults.getOrElse(2)
       val threshold: Double = request.threshold.getOrElse(0.0d)
       val evaluationList = request.state match {
@@ -133,7 +135,7 @@ object ResponseService extends AbstractDataService {
 
       if(analyzersEvalData.isEmpty) {
         throw
-          ResponseServiceDocumentNotFoundException(
+          ResponseServiceNoResponseException(
             "The analyzers evaluation list is empty, threshold could be too high")
       }
 
