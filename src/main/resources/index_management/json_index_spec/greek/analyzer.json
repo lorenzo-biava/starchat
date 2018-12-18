@@ -15,13 +15,48 @@
       "space_punctuation": {
         "type": "pattern",
         "pattern": "[ |.,!?:;()\\[\\]\\{\\}]"
+      },
+      "ngram_2_tokenizer": {
+        "type": "ngram",
+        "min_gram": 2,
+        "max_gram": 2,
+        "token_chars": [
+          "letter",
+          "digit",
+          "whitespace"
+        ]
+      },
+      "ngram_3_tokenizer": {
+        "type": "ngram",
+        "min_gram": 3,
+        "max_gram": 3,
+        "token_chars": [
+          "letter",
+          "digit",
+          "whitespace"
+        ]
+      },
+      "ngram_4_tokenizer": {
+        "type": "ngram",
+        "min_gram": 4,
+        "max_gram": 4,
+        "token_chars": [
+          "letter",
+          "digit",
+          "whitespace"
+        ]
       }
     },
     "char_filter":
     {
       "&_to_and": {
-        "type":       "mapping",
+        "type": "mapping",
         "mappings": [ "&=> and "]
+      },
+      "whitespace_to_null": {
+        "type": "pattern_replace",
+        "pattern": "(\\s)",
+        "replacement": ""
       }
     },
     "filter":
@@ -141,6 +176,42 @@
         "tokenizer":    "standard",
         "char_filter":  [ "html_strip", "&_to_and" ],
         "filter":       [ "lowercase", "greek_stemmer", "jenny_greek_shingle_4"]
+      },
+      "jenny_stemmed_ngram_2_analyzer":
+      {
+        "tokenizer": "ngram_2_tokenizer",
+        "filter": [ "lowercase", "greek_stemmer"],
+        "char_filter":  [ "whitespace_to_null" ]
+      },
+      "jenny_ngram_2_analyzer":
+      {
+        "tokenizer": "ngram_2_tokenizer",
+        "filter": [ "lowercase"],
+        "char_filter":  [ "whitespace_to_null" ]
+      },
+      "jenny_stemmed_ngram_3_analyzer":
+      {
+        "tokenizer": "ngram_3_tokenizer",
+        "filter": [ "lowercase", "greek_stemmer"],
+        "char_filter":  [ "whitespace_to_null" ]
+      },
+      "jenny_ngram_3_analyzer":
+      {
+        "tokenizer": "ngram_3_tokenizer",
+        "filter": [ "lowercase"],
+        "char_filter":  [ "whitespace_to_null" ]
+      },
+      "jenny_stemmed_ngram_4_analyzer":
+      {
+        "tokenizer": "ngram_4_tokenizer",
+        "filter": [ "lowercase", "greek_stemmer"],
+        "char_filter":  [ "whitespace_to_null" ]
+      },
+      "jenny_ngram_4_analyzer":
+      {
+        "tokenizer": "ngram_4_tokenizer",
+        "filter": [ "lowercase"],
+        "char_filter":  [ "whitespace_to_null" ]
       },
       "jenny_delimited_double": {
         "tokenizer":"whitespace",
