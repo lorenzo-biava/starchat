@@ -104,7 +104,7 @@ object DtReloadService extends AbstractDataService {
       .query(boolQueryBuilder)
       .size(maxItems.getOrElse(100L).toInt)
       .version(true)
-      .sort("state_refresh_ts", SortOrder.DESC)
+      .sort("state_refresh_ts", SortOrder.ASC)
 
     val searchReq = new SearchRequest(Index.indexName(elasticClient.indexName, elasticClient.systemRefreshDtIndexSuffix))
       .source(sourceReq)
