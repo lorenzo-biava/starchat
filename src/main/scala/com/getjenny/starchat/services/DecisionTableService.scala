@@ -140,6 +140,14 @@ object DecisionTableService extends AbstractDataService {
     val tokenizerResponse = termService.esTokenizer(indexName, tokenizerRequest)
     val queryTokens = tokenizerResponse.tokens.map(_.token)
 
+    val searchAlgorithm = documentSearch.searchAlgorithm.getOrElse(SearchAlgorithm.DEFAULT)
+    val sliding = searchAlgorithm match {
+      case SearchAlgorithm.STEM_NGRAM2 | SearchAlgorithm.NGRAM2 => 2
+      case SearchAlgorithm.STEM_NGRAM3 | SearchAlgorithm.NGRAM3 => 3
+      case SearchAlgorithm.STEM_NGRAM4 | SearchAlgorithm.NGRAM4 => 4
+      case _ => 2
+    }
+
     val dtDocuments = searchResponse.getHits.getHits.toList.map {
       item: SearchHit =>
         val state : String = item.getId
@@ -163,7 +171,7 @@ object DecisionTableService extends AbstractDataService {
           case None => ""
         }
 
-        val queriesAndNgrams : List[(String, List[String])] = source.get("queries") match {
+      val queriesAndNgrams : List[(String, List[String])] = source.get("queries") match {
           case Some(t) =>
             val offsetsAndNgrams = item.getInnerHits.get("queries").getHits.toList.map(innerHit => {
               (innerHit.getNestedIdentity.getOffset,
@@ -171,7 +179,10 @@ object DecisionTableService extends AbstractDataService {
             })
             val queryArray = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
               .map(q_e => q_e.get("query"))
-            offsetsAndNgrams.map(e => (queryArray(e._1), e._2))
+            offsetsAndNgrams.map{ case(e) =>
+              val qNgrams = queryArray(e._1).toLowerCase().replaceAll("\\s", "").sliding(sliding).toList
+              (queryArray(e._1), qNgrams)
+            }
           case None => List.empty[(String, List[String])]
         }
 
