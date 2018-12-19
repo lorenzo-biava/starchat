@@ -261,7 +261,7 @@ object DecisionTableService extends AbstractDataService {
             queriesScoreMode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Max)
           ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100)),
           responseToDtDocumentDefault)
-      case SearchAlgorithm.SHINGLES2 | SearchAlgorithm.DEFAULT => /** default case */
+      case SearchAlgorithm.SHINGLES2 =>
         (QueryBuilders.nestedQuery(
           "queries",
           QueryBuilders.boolQuery()
@@ -320,7 +320,7 @@ object DecisionTableService extends AbstractDataService {
         ).ignoreUnmapped(true)
           .innerHit(new InnerHitBuilder().addScriptField("terms", script).setSize(100)),
           responseToDtDocumentNGrams(indexName, "ngram2", documentSearch))
-      case SearchAlgorithm.STEM_NGRAM2 =>
+      case SearchAlgorithm.STEM_NGRAM2 | SearchAlgorithm.DEFAULT =>
         val scriptBody = "return doc['queries.query.stemmed_ngram_2'].values.values ;"
         val script: Script = new Script(scriptBody)
         (QueryBuilders.nestedQuery(
