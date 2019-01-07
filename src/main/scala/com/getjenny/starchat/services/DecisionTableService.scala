@@ -174,14 +174,13 @@ object DecisionTableService extends AbstractDataService {
       val queriesAndNgrams : List[(String, List[String])] = source.get("queries") match {
           case Some(t) =>
             val offsetsAndNgrams = item.getInnerHits.get("queries").getHits.toList.map(innerHit => {
-              (innerHit.getNestedIdentity.getOffset,
-                innerHit.field("terms").getValues.asInstanceOf[java.util.ArrayList[String]].asScala.toList)
+              innerHit.getNestedIdentity.getOffset
             })
             val queryArray = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
               .map(q_e => q_e.get("query"))
             offsetsAndNgrams.map{ case(e) =>
-              val qNgrams = queryArray(e._1).toLowerCase().replaceAll("\\s", "").sliding(sliding).toList
-              (queryArray(e._1), qNgrams)
+              val qNgrams = queryArray(e).toLowerCase().replaceAll("\\s", "").sliding(sliding).toList
+              (queryArray(e), qNgrams)
             }
           case None => List.empty[(String, List[String])]
         }
