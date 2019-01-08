@@ -87,16 +87,16 @@ object ResponseService extends AbstractDataService {
     val returnState: Future[ResponseRequestOutOperationResult] = searchResAnalyzers.map( data => {
       val maxResults: Int = request.maxResults.getOrElse(2)
       val threshold: Double = request.threshold.getOrElse(0.0d)
-      val evaluationList = request.state match {
+      val (evaluationList, reqState) = request.state match {
         case Some(state) =>
-          List((state,
+          (List((state,
             AnalyzerService.analyzersMap(indexName).analyzerMap.get(state) match {
               case Some(v) => v
               case _ =>
                 throw ResponseServiceDocumentNotFoundException("Requested state not found: state(" + state + ")")
-            }))
+            })), true)
         case _ =>
-          AnalyzerService.analyzersMap(indexName).analyzerMap.toList
+          (AnalyzerService.analyzersMap(indexName).analyzerMap.toList, false)
       }
 
       val analyzersEvalData: Map[String, Result] = evaluationList
@@ -123,7 +123,8 @@ object ResponseService extends AbstractDataService {
           case _ =>
             val message = "ResponseService: analyzer is None (" + stateName + ")"
             log.debug(message)
-            Result(score = threshold, data = data)
+            val score = if(reqState) threshold else 0.0
+            Result(score = score, data = data)
         }
         val stateId = stateName
         (stateId, analyzerEvaluation)
