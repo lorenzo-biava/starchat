@@ -61,7 +61,7 @@ trait DecisionTableResource extends StarChatResource {
             storeUploadedFile("csv", tempDestination) {
               case (_, file) =>
                 val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker(callTimeout = 60.seconds)
-                onCompleteWithBreaker(breaker)(decisionTableService.indexCSVFileIntoDecisionTable(indexName, file)) {
+                onCompleteWithBreaker(breaker)(decisionTableService.indexCSVFileIntoDecisionTable(indexName, file, 0)) {
                   case Success(t) =>
                     file.delete()
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {

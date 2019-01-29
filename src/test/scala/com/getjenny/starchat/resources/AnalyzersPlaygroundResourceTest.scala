@@ -60,6 +60,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
@@ -74,7 +75,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           data = Option{AnalyzersData()}
         )
 
-      Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[AnalyzerEvaluateResponse]
         response.build should be (true)
@@ -93,7 +94,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           data = Option{AnalyzersData()}
         )
 
-      Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[AnalyzerEvaluateResponse]
         response.build should be (true)
@@ -114,7 +115,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           }
         )
 
-      Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[AnalyzerEvaluateResponse]
         response.build should be (true)
@@ -135,7 +136,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           }
         )
 
-      Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[AnalyzerEvaluateResponse]
         response.build should be (true)
@@ -156,7 +157,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           }
         )
 
-      Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[AnalyzerEvaluateResponse]
         response.build should be (true)
@@ -177,7 +178,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           }
         )
 
-      Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[AnalyzerEvaluateResponse]
         response.build should be (true)
@@ -200,7 +201,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           }
         )
 
-      Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[AnalyzerEvaluateResponse]
         response.build should be (true)
@@ -231,7 +232,7 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
           }
         )
 
-      Post(s"/index_getjenny_english_0/analyzers_playground", evaluateRequest) ~>
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~>
         addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[AnalyzerEvaluateResponse]

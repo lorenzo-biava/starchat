@@ -33,10 +33,9 @@ object FileToDocuments extends JsonSupport {
     val header = fileEntries.head.zipWithIndex.toMap
     fileEntries.tail.map(entry => {
       if (entry.length =/= header.length) {
-        val message = "file row is not consistent  Row(" + entry.toString + ")"
+        val message = "file row is not consistent entry(" + entry.length + ") != header(" + header.length + ") Row(" + entry.toString + ")"
         throw new Exception(message)
       } else {
-
         val queriesCsvString = entry(header("queries"))
         val actionInputCsvString = entry(header("actionInput"))
         val stateDataCsvString = entry(header("stateData"))
@@ -92,7 +91,7 @@ object FileToDocuments extends JsonSupport {
     val header = fileEntries.head.zipWithIndex.toMap
     fileEntries.tail.map(entry => {
       if (entry.length =/= header.length) {
-        val message = "file row is not consistent  Row(" + entry.toString + ")"
+        val message = "file row is not consistent (" + entry.length + "!=" + header.length + ") Row(" + entry.toString + ")"
         throw new Exception(message)
       } else {
         //type,term,associatedTerms,score

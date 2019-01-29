@@ -5,7 +5,7 @@ name := "StarChat"
 
 organization := "com.getjenny"
 
-crossScalaVersions := Seq("2.12.6")
+crossScalaVersions := Seq("2.12.8")
 
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
   Resolver.bintrayRepo("hseeberger", "maven"))
@@ -17,8 +17,8 @@ resolvers +=
   "Sonatype OSS Releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 
 libraryDependencies ++= {
-  val AkkaHttpVersion	= "10.1.5"
-  val AkkaVersion	= "2.5.18"
+  val AkkaHttpVersion	= "10.1.7"
+  val AkkaVersion	= "2.5.20"
   val BreezeVersion	= "0.13.2"
   val ESClientVersion	= "6.5.4"
   val LogbackVersion	= "1.2.3"

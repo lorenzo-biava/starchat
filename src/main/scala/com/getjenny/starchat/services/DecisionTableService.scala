@@ -843,11 +843,10 @@ object DecisionTableService extends AbstractDataService {
     SearchDTDocumentsResults(total = total, maxScore = maxScore, hits = filteredDoc)
   }
 
-
   def indexCSVFileIntoDecisionTable(indexName: String, file: File, skipLines: Int = 1, separator: Char = ','):
   Future[IndexDocumentListResult] = Future {
-    val documents: IndexedSeq[DTDocument] = FileToDocuments.getDTDocumentsFromCSV(log = log,
-      file = file, skipLines = skipLines, separator = separator)
+    val documents: IndexedSeq[DTDocument] = FileToDocuments.getDTDocumentsFromCSV(log = log, file = file,
+      skipLines = skipLines, separator = separator)
 
     val indexDocumentListResult = documents.map(dtDocument => {
       create(indexName, dtDocument, 0)

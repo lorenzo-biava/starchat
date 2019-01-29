@@ -25,10 +25,12 @@ object CronCleanDeadNodesService {
   class CleanDeadNodesTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
       case `tickMessage` =>
-        val cleanedNodes = clusterNodesService.cleanDeadNodes
-        if (cleanedNodes.deleted > 0) {
-          log.debug("Cleaned " + cleanedNodes.deleted + " nodes: " + cleanedNodes.message)
-        }
+        if(clusterNodesService.elasticClient.existsIndices(List(clusterNodesService.indexName))) {
+          val cleanedNodes = clusterNodesService.cleanDeadNodes
+          if (cleanedNodes.deleted > 0) {
+            log.debug("Cleaned " + cleanedNodes.deleted + " nodes: " + cleanedNodes.message)
+          }
+        } else log.debug("index does not exists: " + clusterNodesService.indexName)
       case _ =>
         log.error("Unknown error cleaning cluster nodes tables")
     }

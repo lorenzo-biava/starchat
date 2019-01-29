@@ -25,7 +25,9 @@ object CronNodeAliveSignalService {
   class NodeAliveSignalTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
       case `tickMessage` =>
-        clusterNodesService.alive()
+        if(clusterNodesService.elasticClient.existsIndices(List(clusterNodesService.indexName))) {
+          clusterNodesService.alive()
+        } else log.debug("index does not exists: " + clusterNodesService.indexName)
       case _ =>
         log.error("Unknown error communicating that node is alive")
     }

@@ -31,7 +31,7 @@ object NodeDtLoadingStatusService extends AbstractDataService {
   private[this] val clusterNodesService: ClusterNodesService.type = ClusterNodesService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  private[this] val indexName = Index.indexName(elasticClient.indexName, elasticClient.systemDtNodesStatusIndexSuffix)
+  val indexName = Index.indexName(elasticClient.indexName, elasticClient.systemDtNodesStatusIndexSuffix)
 
   private[this] def calcUuid(uuid: String = ""): String = if (uuid === "") clusterNodesService.uuid else uuid
   private[this] def calcId(dtIndexName: String, uuid: String): String = dtIndexName + "." + calcUuid(uuid)

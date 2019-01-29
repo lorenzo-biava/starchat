@@ -60,6 +60,7 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
           "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + Index.indexMatchRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
@@ -78,7 +79,7 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
             HttpEntity(ContentTypes.`text/plain(UTF-8)`, input_data),
             Map("filename" -> "data.csv")))
 
-      Post(s"/index_getjenny_english_0/decisiontable_upload_csv", multipartForm) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_getjenny_english_0/decisiontable/upload_csv", multipartForm) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
       }
     }

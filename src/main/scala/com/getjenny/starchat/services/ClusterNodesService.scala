@@ -35,7 +35,7 @@ object ClusterNodesService extends AbstractDataService {
   override val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val uuid: String = randomUUID.toString
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  private[this] val indexName = Index.indexName(elasticClient.indexName, elasticClient.systemClusterNodesIndexSuffix)
+  val indexName = Index.indexName(elasticClient.indexName, elasticClient.systemClusterNodesIndexSuffix)
 
   def alive(refresh: Int = 0): ClusterNode = {
     val client: RestHighLevelClient = elasticClient.httpClient
