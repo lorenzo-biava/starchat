@@ -4,7 +4,7 @@ package com.getjenny.starchat.entities
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-case class KBDocumentUpdate(conversation: Option[String] = None,
+case class QADocumentUpdate(conversation: Option[String] = None,
                             indexInConversation: Option[Int] = None,
                             question: Option[String] = None,
                             questionNegative: Option[List[String]] = None,

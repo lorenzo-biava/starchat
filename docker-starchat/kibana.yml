@@ -1,0 +1,21 @@
+version: "3.4"
+services:
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.5.4
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:5601:5601"
+    expose:
+      - "5601"
+    environment:
+      SERVER_NAME: kibana
+      SERVER_HOST: 0.0.0.0
+      ELASTICSEARCH_URL: https://getjenny-es:9200
+    volumes:
+      - ./kibana/data:/usr/share/kibana/data
+      - ./kibana/config:/usr/share/kibana/config
+      - ./kibana/logs:/usr/share/kibana/logs
+    links:
+      - "elasticsearch:getjenny-es"
+ 

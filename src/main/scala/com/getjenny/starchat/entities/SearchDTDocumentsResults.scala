@@ -1,6 +1,6 @@
 package com.getjenny.starchat.entities
 
-import scala.collection.immutable.{List}
+import scala.collection.immutable.List
 
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.

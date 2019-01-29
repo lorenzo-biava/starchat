@@ -59,10 +59,11 @@ object AnalyzerService extends AbstractDataService {
   private[this] val termService: TermService.type = TermService
   private[this] val decisionTableService: DecisionTableService.type = DecisionTableService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
+  private[this] val nodeDtLoadingStatusService: NodeDtLoadingStatusService.type = NodeDtLoadingStatusService
   val dtMaxTables: Long = elasticClient.config.getLong("es.dt_max_tables")
 
   def getAnalyzers(indexName: String): mutable.LinkedHashMap[String, DecisionTableRuntimeItem] = {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
       .query(QueryBuilders.matchAllQuery)
       .fetchSource(Array("state", "execution_order", "max_state_counter",
@@ -223,6 +224,9 @@ object AnalyzerService extends AbstractDataService {
     } else {
       AnalyzerService.analyzersMap.putIfAbsent(indexName, activeAnalyzers)
     }
+
+    nodeDtLoadingStatusService.update(dtNodeStatus =
+      NodeDtLoadingStatus(index = indexName, timestamp = activeAnalyzers.lastReloadingTimestamp))
 
     if (propagate) {
       Try(dtReloadService.setDTReloadTimestamp(indexName, refresh = 1)) match {

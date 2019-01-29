@@ -6,21 +6,14 @@ import com.getjenny.starchat.services.esclient.ElasticClient
 import com.getjenny.starchat.utils.Index
 import org.elasticsearch.action.bulk.{BulkRequest, BulkResponse}
 import org.elasticsearch.action.delete.DeleteRequest
-import org.elasticsearch.action.search.{SearchRequest, SearchResponse}
 import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
-import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.reindex.DeleteByQueryRequest
 import org.elasticsearch.rest.RestStatus
-import org.elasticsearch.search.SearchHit
-import org.elasticsearch.search.builder.SearchSourceBuilder
 import scalaz.Scalaz._
-import org.elasticsearch.client.RequestOptions
-import org.elasticsearch.index.reindex.BulkByScrollResponse
 
 import scala.collection.immutable.List
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
-import org.elasticsearch.index.reindex.DeleteByQueryRequest
+import scala.concurrent.{ExecutionContext, Future}
 
 case class DeleteDataServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -36,7 +29,7 @@ trait AbstractDataService {
     * @return a DeleteDocumentsResult with the status of the delete operation
     */
   def deleteAll(indexName: String): Future[DeleteDocumentsSummaryResult] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val request: DeleteByQueryRequest =
       new DeleteByQueryRequest(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -56,7 +49,7 @@ trait AbstractDataService {
     * @return DeleteDocumentListResult with the result of term delete operations
     */
   def delete(indexName: String, ids: List[String], refresh: Int): Future[DeleteDocumentsResult] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val bulkReq : BulkRequest = new BulkRequest()
 

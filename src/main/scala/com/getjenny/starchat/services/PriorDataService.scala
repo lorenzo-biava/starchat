@@ -1,6 +1,6 @@
 package com.getjenny.starchat.services
 
-import com.getjenny.starchat.services.esclient.{QuestionAnswerElasticClient, PriorDataElasticClient}
+import com.getjenny.starchat.services.esclient.{PriorDataElasticClient, QuestionAnswerElasticClient}
 
 /**
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.

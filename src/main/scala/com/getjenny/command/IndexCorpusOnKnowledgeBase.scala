@@ -26,7 +26,7 @@ import scala.io.Source
 object IndexCorpusOnKnowledgeBase extends JsonSupport {
   private[this] case class Params(
                              host: String = "http://localhost:8888",
-                             indexName: String = "index_english_0",
+                             indexName: String = "index_getjenny_english_0",
                              path: String = "/knowledgebase",
                              inputfile: Option[String] = None: Option[String],
                              base64: Boolean = false,
@@ -74,7 +74,7 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
       val document_string = convItems(entry)
       val id: String = document_string.sha256
 
-      val kb_document: KBDocument = KBDocument(
+      val kb_document: QADocument = QADocument(
         id = id,
         conversation = "corpora",
         indexInConversation = Option { -1 },

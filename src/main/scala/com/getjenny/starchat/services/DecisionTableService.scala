@@ -390,7 +390,7 @@ object DecisionTableService extends AbstractDataService {
   }
 
   def search(indexName: String, documentSearch: DTDocumentSearch): Future[SearchDTDocumentsResults] = {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
       .version(true)
@@ -527,7 +527,7 @@ object DecisionTableService extends AbstractDataService {
     builder.field("evaluation_class", evaluationClass)
     builder.endObject()
 
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val indexReq = new IndexRequest()
       .index(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -618,7 +618,7 @@ object DecisionTableService extends AbstractDataService {
 
     builder.endObject()
 
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val updateReq = new UpdateRequest()
       .index(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -646,7 +646,7 @@ object DecisionTableService extends AbstractDataService {
   }
 
   def getDTDocuments(indexName: String): Future[SearchDTDocumentsResults] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
       .query(QueryBuilders.matchAllQuery)
@@ -741,7 +741,7 @@ object DecisionTableService extends AbstractDataService {
   }
 
   def read(indexName: String, ids: List[String]): Future[SearchDTDocumentsResults] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val multiGetReq = new MultiGetRequest()
 

@@ -8,8 +8,8 @@ import akka.actor.{Actor, Props}
 import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
@@ -62,7 +62,7 @@ object CronReloadDTService  {
     }
   }
 
-  def scheduleReloadAnalyzers(): Unit = {
+  def scheduleAction: Unit = {
     if (systemIndexManagementService.elasticClient.dtReloadCheckFrequency > 0) {
       val reloadDecisionTableActorRef =
         SCActorSystem.system.actorOf(Props(new ReloadAnalyzersTickActor))

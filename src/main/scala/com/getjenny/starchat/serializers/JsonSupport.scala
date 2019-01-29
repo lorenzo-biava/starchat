@@ -6,14 +6,13 @@ package com.getjenny.starchat.serializers
 
 import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import com.getjenny.analyzer.expressions.AnalyzersData
 import com.getjenny.starchat.entities._
-import spray.json._
-import akka.http.scaladsl.unmarshalling.Unmarshaller
-
 import scalaz.Scalaz._
+import spray.json._
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   private[this] val start: ByteString = ByteString.empty
@@ -49,13 +48,13 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val responseRequestOutputFormat = jsonFormat13(ResponseRequestOut)
   implicit val dtDocumentFormat = jsonFormat13(DTDocument)
   implicit val dtDocumentUpdateFormat = jsonFormat12(DTDocumentUpdate)
-  implicit val kbDocumentFormat = jsonFormat14(KBDocument)
-  implicit val kbDocumentUpdateFormat = jsonFormat13(KBDocumentUpdate)
-  implicit val searchKBDocumentFormat = jsonFormat2(SearchKBDocument)
+  implicit val kbDocumentFormat = jsonFormat14(QADocument)
+  implicit val kbDocumentUpdateFormat = jsonFormat13(QADocumentUpdate)
+  implicit val searchKBDocumentFormat = jsonFormat2(SearchQADocument)
   implicit val searchDTDocumentFormat = jsonFormat2(SearchDTDocument)
-  implicit val searchKBResultsFormat = jsonFormat3(SearchKBDocumentsResults)
+  implicit val searchKBResultsFormat = jsonFormat3(SearchQADocumentsResults)
   implicit val searchDTResultsFormat = jsonFormat3(SearchDTDocumentsResults)
-  implicit val kbDocumentSearchFormat = jsonFormat16(KBDocumentSearch)
+  implicit val kbDocumentSearchFormat = jsonFormat16(QADocumentSearch)
   implicit val dtDocumentSearchFormat = jsonFormat9(DTDocumentSearch)
   implicit val indexDocumentResultFormat = jsonFormat5(IndexDocumentResult)
   implicit val updateDocumentResultFormat = jsonFormat5(UpdateDocumentResult)
@@ -92,6 +91,10 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val spellcheckTermsResponseFormat = jsonFormat1(SpellcheckTermsResponse)
   implicit val spellcheckTermsRequestFormat = jsonFormat4(SpellcheckTermsRequest)
   implicit val responseRequestOutOperationResultFormat = jsonFormat2(ResponseRequestOutOperationResult)
+  implicit val clusterNodeFormat = jsonFormat3(ClusterNode)
+  implicit val clusterNodesFormat = jsonFormat2(ClusterNodes)
+  implicit val clusterLoadingDtStatusFormat = jsonFormat5(ClusterLoadingDtStatus)
+  implicit val nodeDtLoadingStatusFormat = jsonFormat3(NodeDtLoadingStatus)
 
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
     def write(obj: Permissions.Value): JsValue = JsString(obj.toString)

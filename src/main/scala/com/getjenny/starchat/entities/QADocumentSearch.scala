@@ -4,7 +4,7 @@ package com.getjenny.starchat.entities
   * Created by Angelo Leto <angelo@getjenny.com> on 01/07/16.
   */
 
-case class KBDocumentSearch(from: Option[Int],
+case class QADocumentSearch(from: Option[Int],
                             size: Option[Int],
                             minScore: Option[Float],
                             question: Option[String],

@@ -1,7 +1,7 @@
 package com.getjenny.starchat.services.auth
 
-import com.typesafe.config.{Config, ConfigFactory}
 import com.getjenny.starchat.services._
+import com.typesafe.config.{Config, ConfigFactory}
 
 object StarChatAuthenticator {
   val config: Config = ConfigFactory.load()

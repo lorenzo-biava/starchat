@@ -13,7 +13,8 @@ import scala.concurrent.ExecutionContext
 trait RestInterface extends KnowledgeBaseResource with DecisionTableResource with RootAPIResource
   with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
   with TermResource with TokenizersResource with AnalyzersPlaygroundResource with TermsExtractionResource
-  with SpellcheckResource with ConversationLogsResource with PriorDataResource with UserResource {
+  with SpellcheckResource with ConversationLogsResource with PriorDataResource with UserResource
+  with NodeDtLoadingStatusResource with ClusterNodesResource {
 
   implicit def executionContext: ExecutionContext
 
@@ -26,8 +27,13 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
   lazy val analyzerService = AnalyzerService
   lazy val userService = UserService
   lazy val spellcheckService = SpellcheckService
+  lazy val clusterNodesServices = ClusterNodesService
+  lazy val nodeDtLoadingStatusService = NodeDtLoadingStatusService
   lazy val cronReloadDTService = CronReloadDTService
   lazy val cronCleanDTService = CronCleanDTService
+  lazy val cronCleanDeadNodesService = CronCleanDeadNodesService
+  lazy val cronNodeAliveSignalService = CronNodeAliveSignalService
+  lazy val cronCleanDtLoadingRecordsService = CronCleanDtLoadingRecordsService
   lazy val systemService = DtReloadService
   lazy val knowledgeBaseService = KnowledgeBaseService
   lazy val conversationLogsService = ConversationLogsService
@@ -85,5 +91,7 @@ trait RestInterface extends KnowledgeBaseResource with DecisionTableResource wit
     LoggingEntities.logRequestAndResult(putUserRoutes) ~
     LoggingEntities.logRequestAndResult(getUserRoutes) ~
     LoggingEntities.logRequestAndResult(delUserRoutes) ~
-    LoggingEntities.logRequestAndResult(genUserRoutes)
+    LoggingEntities.logRequestAndResult(genUserRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(clusterNodesRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(nodeDtLoadingStatusRoutes)
 }

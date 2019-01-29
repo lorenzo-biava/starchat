@@ -21,7 +21,7 @@ object SpellcheckService extends AbstractDataService {
   override val elasticClient = KnowledgeBaseElasticClient
 
   def termsSuggester(indexName: String, request: SpellcheckTermsRequest) : Future[SpellcheckTermsResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val suggestionBuilder: TermSuggestionBuilder = new TermSuggestionBuilder("question.base")
     suggestionBuilder.maxEdits(request.maxEdit)

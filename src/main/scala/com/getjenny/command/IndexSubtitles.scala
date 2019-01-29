@@ -23,7 +23,7 @@ object IndexSubtitles extends JsonSupport {
 
   private[this] case class Params(
                                    host: String = "http://localhost:8888",
-                                   indexName: String = "index_english_0",
+                                   indexName: String = "index_getjenny_english_common_0",
                                    path: String = "/prior_data",
                                    inputfile: String = "subtitles.csv",
                                    separator: Char = '\t',
@@ -57,7 +57,7 @@ object IndexSubtitles extends JsonSupport {
 
     val docs = lines.map{ entry =>
       val fields = entry.split("\t")
-      val doc = KBDocument(
+      val doc = QADocument(
         id = fields(0),
         conversation = fields(1),
         indexInConversation = Some(fields(2).toInt),

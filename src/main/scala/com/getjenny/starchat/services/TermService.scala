@@ -186,7 +186,7 @@ object TermService extends AbstractDataService {
     * @return list of indexing responses
     */
   def indexTerm(indexName: String, terms: Terms, refresh: Int) : IndexDocumentListResult = {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val bulkReq = new BulkRequest()
 
@@ -261,7 +261,7 @@ object TermService extends AbstractDataService {
   def termsById(indexName: String,
                 termsRequest: DocsIds) : Terms = {
     val documents: List[Term] = if(termsRequest.ids.nonEmpty) {
-      val client: RestHighLevelClient = elasticClient.client
+      val client: RestHighLevelClient = elasticClient.httpClient
 
       val multiGetReq = new MultiGetRequest()
 
@@ -386,7 +386,7 @@ object TermService extends AbstractDataService {
     * @return result of the update operations
     */
   private[this] def updateTerm(indexName: String, terms: Terms, refresh: Int) : UpdateDocumentListResult = {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val bulkReq : BulkRequest = new BulkRequest()
 
@@ -502,7 +502,7 @@ object TermService extends AbstractDataService {
     */
   def search[T: StringOrSearchTerm](indexName: String, query: T,
                                     analyzer: String = "space_punctuation"): TermsResults = {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val term_field_name = if (TokenizersDescription.analyzers_map.contains(analyzer))
       "term." + analyzer
@@ -665,7 +665,7 @@ object TermService extends AbstractDataService {
         throw TermServiceException("esTokenizer: analyzer not found or not supported: (" + query.tokenizer + ")")
     }
 
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val analyzerReq = new AnalyzeRequest()
       .index(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -722,7 +722,7 @@ object TermService extends AbstractDataService {
     * @return an iterator for Items
     */
   def allDocuments(indexName: String, keepAlive: Long = 60000): Iterator[Term] = {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
       .query(QueryBuilders.matchAllQuery)

@@ -18,6 +18,7 @@ import scalaz.Scalaz._
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
+
 trait DecisionTableResource extends StarChatResource {
 
   private[this] val decisionTableService: DecisionTableService.type = DecisionTableService

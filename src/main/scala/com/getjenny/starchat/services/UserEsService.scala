@@ -62,7 +62,7 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val indexReq = new IndexRequest()
       .index(indexName)
@@ -121,7 +121,7 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val updateReq = new UpdateRequest()
       .index(indexName)
@@ -152,7 +152,7 @@ class UserEsService extends AbstractUserService {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val deleteReq = new DeleteRequest()
       .index(indexName)
@@ -181,7 +181,7 @@ class UserEsService extends AbstractUserService {
       adminUser
     } else {
 
-      val client: RestHighLevelClient = elasticClient.client
+      val client: RestHighLevelClient = elasticClient.httpClient
 
       val getReq = new GetRequest()
         .index(indexName)

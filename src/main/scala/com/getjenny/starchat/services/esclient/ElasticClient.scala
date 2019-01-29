@@ -90,9 +90,9 @@ trait ElasticClient {
     }
   }
 
-  private[this] var esClient : RestHighLevelClient = open()
+  private[this] var esHttpClient : RestHighLevelClient = openHttp()
 
-  def open(): RestHighLevelClient = {
+  def openHttp(): RestHighLevelClient = {
     val client: RestHighLevelClient = new RestHighLevelClient(
       buildClient(hostProto)
     )
@@ -102,7 +102,7 @@ trait ElasticClient {
   def refresh(indexName: String): RefreshIndexResult = {
     val refreshReq = new RefreshRequest(indexName)
     val refreshRes: RefreshResponse =
-      esClient.indices().refresh(refreshReq, RequestOptions.DEFAULT)
+      esHttpClient.indices().refresh(refreshReq, RequestOptions.DEFAULT)
 
     val failedShards: List[FailedShard] = refreshRes.getShardFailures.map(item => {
       val failedShardItem = FailedShard(indexName = item.index,
@@ -123,11 +123,15 @@ trait ElasticClient {
     refreshIndexResult
   }
 
-  def client: RestHighLevelClient = {
-    this.esClient
+  def httpClient: RestHighLevelClient = {
+    this.esHttpClient
   }
 
-  def close(client: RestHighLevelClient): Unit = {
+  def sqlClient: RestHighLevelClient = {
+    this.esHttpClient
+  }
+
+  def closeHttp(client: RestHighLevelClient): Unit = {
     client.close()
   }
 
@@ -144,7 +148,12 @@ trait ElasticClient {
   val priorDataIndexSuffix: String = config.getString("es.prior_data_index_suffix")
   val sysRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
   val systemRefreshDtIndexSuffix: String = config.getString("es.system_refresh_dt_index_suffix")
+
+  val systemClusterNodesIndexSuffix: String = "cluster_nodes"
+  val systemDtNodesStatusIndexSuffix: String = "decision_table_node_status"
+
   val termIndexSuffix: String = config.getString("es.term_index_suffix")
+  val feedbackIndexSuffix: String = config.getString("es.feedback_index_suffix")
   val userIndexSuffix: String = config.getString("es.user_index_suffix")
 
   val enableDeleteIndex: Boolean = config.getBoolean("es.enable_delete_application_index")

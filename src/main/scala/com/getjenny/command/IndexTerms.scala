@@ -21,7 +21,7 @@ object IndexTerms extends JsonSupport {
 
   private[this] case class Params(
     host: String = "http://localhost:8888",
-    index_name: String = "index_english_0",
+    index_name: String = "index_getjenny_english_0",
     path: String = "/term/index",
     method: String = "POST",
     inputfile: String = "vectors.txt",

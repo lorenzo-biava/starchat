@@ -1,7 +1,6 @@
 package com.getjenny.starchat.services.auth
 
 import com.getjenny.starchat.services._
-
 import scalaz.Scalaz._
 
 case class AuthenticatorClassNotFoundException(message: String = "", cause: Throwable = None.orNull)

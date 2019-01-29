@@ -132,7 +132,7 @@ trait PriorDataResource extends StarChatResource {
               authenticator.hasPermissions(user, indexName, Permissions.stream)) {
               extractRequest { _ =>
                 val entryIterator = questionAnswerService.allDocuments(indexName)
-                val entries: Source[KBDocument, NotUsed] =
+                val entries: Source[QADocument, NotUsed] =
                   Source.fromIterator(() => entryIterator)
                 complete(entries)
               }
@@ -153,7 +153,7 @@ trait PriorDataResource extends StarChatResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
                 parameters("refresh".as[Int] ? 0) { refresh =>
-                  entity(as[KBDocument]) { document =>
+                  entity(as[QADocument]) { document =>
                     val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(questionAnswerService.create(indexName, document, refresh)) {
                       case Success(t) =>
@@ -258,7 +258,7 @@ trait PriorDataResource extends StarChatResource {
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, indexName, Permissions.write)) {
                   parameters("refresh".as[Int] ? 0) { refresh =>
-                    entity(as[KBDocumentUpdate]) { update =>
+                    entity(as[QADocumentUpdate]) { update =>
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                       onCompleteWithBreaker(breaker)(questionAnswerService.updateFuture(indexName, id, update, refresh)) {
                         case Success(t) =>
@@ -290,7 +290,7 @@ trait PriorDataResource extends StarChatResource {
             extractRequest { request =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
-                entity(as[KBDocumentSearch]) { docsearch =>
+                entity(as[QADocumentSearch]) { docsearch =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(questionAnswerService.search(indexName, docsearch)) {
                     case Success(t) =>

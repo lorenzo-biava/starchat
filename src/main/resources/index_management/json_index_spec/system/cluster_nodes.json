@@ -1,6 +1,6 @@
 {
   "mappings": {
-    "refresh_decisiontable": {
+    "cluster_nodes": {
       "properties": {
         "timestamp": {
           "type": "date",

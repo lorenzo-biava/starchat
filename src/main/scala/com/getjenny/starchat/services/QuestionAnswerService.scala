@@ -49,7 +49,7 @@ trait QuestionAnswerService extends AbstractDataService {
   var cacheStealTimeMillis: Int
 
   private[this] def calcDictSize(indexName: String): DictSize = {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val questionAgg = AggregationBuilders.cardinality("question_term_count").field("question.base")
     val answerAgg = AggregationBuilders.cardinality("answer_term_count").field("answer.base")
@@ -122,7 +122,7 @@ trait QuestionAnswerService extends AbstractDataService {
   }
 
   private[this] def calcTotalTerms(indexName: String): TotalTerms = {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val questionAgg = AggregationBuilders.sum("question_term_count").field("question.base_length")
     val answerAgg = AggregationBuilders.sum("answer_term_count").field("answer.base_length")
@@ -186,7 +186,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
   def calcTermCount(indexName: String,
                     field: TermCountFields.Value = TermCountFields.question, term: String): TermCount = {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val script: Script = new Script("_score")
 
@@ -307,8 +307,8 @@ trait QuestionAnswerService extends AbstractDataService {
     countersCacheParameters
   }
 
-  def search(indexName: String, documentSearch: KBDocumentSearch): Future[Option[SearchKBDocumentsResults]] = {
-    val client: RestHighLevelClient = elasticClient.client
+  def search(indexName: String, documentSearch: QADocumentSearch): Future[Option[SearchQADocumentsResults]] = {
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
       .from(documentSearch.from.getOrElse(0))
@@ -416,124 +416,124 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val searchResp: SearchResponse = client.search(searchReq, RequestOptions.DEFAULT)
 
-    val documents : Option[List[SearchKBDocument]] = Option { searchResp.getHits.getHits.toList.map { item =>
+    val documents : Option[List[SearchQADocument]] = Option {
+      searchResp.getHits.getHits.toList.map { item =>
+        // val fields : Map[String, GetField] = item.getFields.toMap
+        val id : String = item.getId
 
-      // val fields : Map[String, GetField] = item.getFields.toMap
-      val id : String = item.getId
+        // val score : Float = fields.get("_score").asInstanceOf[Float]
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-      // val score : Float = fields.get("_score").asInstanceOf[Float]
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
-
-      val conversation : String = source.get("conversation") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
-      val indexInConversation : Option[Int] = source.get("index_in_conversation") match {
-        case Some(t) => Option { t.asInstanceOf[Int] }
-        case None => None : Option[Int]
-      }
-
-      val question : String = source.get("question") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
-      val questionNegative : Option[List[String]] = source.get("question_negative") match {
-        case Some(t) =>
-          val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-            .asScala.map(_.asScala.get("query")).filter(_.nonEmpty).map(_.get).toList
-          Option { res }
-        case None => None: Option[List[String]]
-      }
-
-      val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
-        case Some(t) => Option {
-          t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
-            .map(pair =>
-              (pair.getOrDefault("term", "").asInstanceOf[String],
-                pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
-            .toList
+        val conversation : String = source.get("conversation") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
         }
-        case None => None : Option[List[(String, Double)]]
-      }
 
-      val answer : String = source.get("answer") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
-      val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
-        case Some(t) => Option {
-          t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
-            .map(pair =>
-              (pair.getOrDefault("term", "").asInstanceOf[String],
-                pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
-            .toList
+        val indexInConversation : Option[Int] = source.get("index_in_conversation") match {
+          case Some(t) => Option { t.asInstanceOf[Int] }
+          case None => None : Option[Int]
         }
-        case None => None : Option[List[(String, Double)]]
+
+        val question : String = source.get("question") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val questionNegative : Option[List[String]] = source.get("question_negative") match {
+          case Some(t) =>
+            val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+              .asScala.map(_.asScala.get("query")).filter(_.nonEmpty).map(_.get).toList
+            Option { res }
+          case None => None: Option[List[String]]
+        }
+
+        val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
+          case Some(t) => Option {
+            t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
+              .map(pair =>
+                (pair.getOrDefault("term", "").asInstanceOf[String],
+                  pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
+              .toList
+          }
+          case None => None : Option[List[(String, Double)]]
+        }
+
+        val answer : String = source.get("answer") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
+          case Some(t) => Option {
+            t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
+              .map(pair =>
+                (pair.getOrDefault("term", "").asInstanceOf[String],
+                  pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
+              .toList
+          }
+          case None => None : Option[List[(String, Double)]]
+        }
+
+        val verified : Boolean = source.get("verified") match {
+          case Some(t) => t.asInstanceOf[Boolean]
+          case None => false
+        }
+
+        val topics : Option[String] = source.get("topics") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => None : Option[String]
+        }
+
+        val dclass : Option[String] = source.get("dclass") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => None : Option[String]
+        }
+
+        val doctype : String = source.get("doctype") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => doctypes.normal
+        }
+
+        val state : Option[String] = source.get("state") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => None : Option[String]
+        }
+
+        val status : Int = source.get("status") match {
+          case Some(t) => t.asInstanceOf[Int]
+          case None => 0
+        }
+
+        val document : QADocument = QADocument(id = id, conversation = conversation,
+          indexInConversation = indexInConversation, question = question,
+          questionNegative = questionNegative,
+          questionScoredTerms = questionScoredTerms,
+          answer = answer,
+          answerScoredTerms = answerScoredTerms,
+          verified = verified,
+          topics = topics,
+          dclass = dclass,
+          doctype = doctype,
+          state = state,
+          status = status)
+
+        val searchDocument : SearchQADocument = SearchQADocument(score = item.getScore, document = document)
+        searchDocument
       }
-
-      val verified : Boolean = source.get("verified") match {
-        case Some(t) => t.asInstanceOf[Boolean]
-        case None => false
-      }
-
-      val topics : Option[String] = source.get("topics") match {
-        case Some(t) => Option { t.asInstanceOf[String] }
-        case None => None : Option[String]
-      }
-
-      val dclass : Option[String] = source.get("dclass") match {
-        case Some(t) => Option { t.asInstanceOf[String] }
-        case None => None : Option[String]
-      }
-
-      val doctype : String = source.get("doctype") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => doctypes.normal
-      }
-
-      val state : Option[String] = source.get("state") match {
-        case Some(t) => Option { t.asInstanceOf[String] }
-        case None => None : Option[String]
-      }
-
-      val status : Int = source.get("status") match {
-        case Some(t) => t.asInstanceOf[Int]
-        case None => 0
-      }
-
-      val document : KBDocument = KBDocument(id = id, conversation = conversation,
-        indexInConversation = indexInConversation, question = question,
-        questionNegative = questionNegative,
-        questionScoredTerms = questionScoredTerms,
-        answer = answer,
-        answerScoredTerms = answerScoredTerms,
-        verified = verified,
-        topics = topics,
-        dclass = dclass,
-        doctype = doctype,
-        state = state,
-        status = status)
-
-      val searchDocument : SearchKBDocument = SearchKBDocument(score = item.getScore, document = document)
-      searchDocument
     }
-    }
 
-    val filteredDoc : List[SearchKBDocument] = documents.getOrElse(List[SearchKBDocument]())
+    val filteredDoc : List[SearchQADocument] = documents.getOrElse(List[SearchQADocument]())
 
     val maxScore : Float = searchResp.getHits.getMaxScore
     val total : Int = filteredDoc.length
-    val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, maxScore = maxScore,
+    val searchResults : SearchQADocumentsResults = SearchQADocumentsResults(total = total, maxScore = maxScore,
       hits = filteredDoc)
 
-    val searchResultsOption : Future[Option[SearchKBDocumentsResults]] = Future { Option { searchResults } }
+    val searchResultsOption : Future[Option[SearchQADocumentsResults]] = Future { Option { searchResults } }
     searchResultsOption
   }
 
-  def create(indexName: String, document: KBDocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(indexName: String, document: QADocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     builder.field("id", document.id)
@@ -601,7 +601,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
     builder.endObject()
 
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val indexReq = new IndexRequest()
       .index(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -628,7 +628,7 @@ trait QuestionAnswerService extends AbstractDataService {
     Option {doc_result}
   }
 
-  def update(indexName: String, id: String, document: KBDocumentUpdate, refresh: Int): UpdateDocumentResult = {
+  def update(indexName: String, id: String, document: QADocumentUpdate, refresh: Int): UpdateDocumentResult = {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.conversation match {
@@ -715,7 +715,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
     builder.endObject()
 
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val updateReq = new UpdateRequest()
       .index(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -742,8 +742,8 @@ trait QuestionAnswerService extends AbstractDataService {
     docResult
   }
 
-  def read(indexName: String, ids: List[String]): Option[SearchKBDocumentsResults] = {
-    val client: RestHighLevelClient = elasticClient.client
+  def read(indexName: String, ids: List[String]): Option[SearchQADocumentsResults] = {
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val multigetReq = new MultiGetRequest()
     ids.foreach{id =>
@@ -754,7 +754,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val response: MultiGetResponse = client.mget(multigetReq, RequestOptions.DEFAULT)
 
-    val documents : Option[List[SearchKBDocument]] = Option { response.getResponses
+    val documents : Option[List[SearchQADocument]] = Option { response.getResponses
       .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map { e =>
 
       val item: GetResponse = e.getResponse
@@ -844,7 +844,7 @@ trait QuestionAnswerService extends AbstractDataService {
         case None => 0
       }
 
-      val document : KBDocument = KBDocument(id = id, conversation = conversation,
+      val document : QADocument = QADocument(id = id, conversation = conversation,
         indexInConversation = indexInConversation,
         question = question,
         questionNegative = questionNegative,
@@ -858,33 +858,33 @@ trait QuestionAnswerService extends AbstractDataService {
         state = state,
         status = status)
 
-      val searchDocument : SearchKBDocument = SearchKBDocument(score = .0f, document = document)
+      val searchDocument : SearchQADocument = SearchQADocument(score = .0f, document = document)
       searchDocument
     }
     }
 
-    val filteredDoc : List[SearchKBDocument] = documents.getOrElse(List[SearchKBDocument]())
+    val filteredDoc : List[SearchQADocument] = documents.getOrElse(List[SearchQADocument]())
 
     val maxScore : Float = .0f
     val total : Int = filteredDoc.length
-    val searchResults : SearchKBDocumentsResults = SearchKBDocumentsResults(total = total, maxScore = maxScore,
+    val searchResults : SearchQADocumentsResults = SearchQADocumentsResults(total = total, maxScore = maxScore,
       hits = filteredDoc)
 
-    val searchResultsOption : Option[SearchKBDocumentsResults] = Option { searchResults }
+    val searchResultsOption : Option[SearchQADocumentsResults] = Option { searchResults }
     searchResultsOption
   }
 
-  def readFuture(indexName: String, ids: List[String]): Future[Option[SearchKBDocumentsResults]] = Future {
+  def readFuture(indexName: String, ids: List[String]): Future[Option[SearchQADocumentsResults]] = Future {
     read(indexName, ids)
   }
 
-  def updateFuture(indexName: String, id: String, document: KBDocumentUpdate, refresh: Int):
+  def updateFuture(indexName: String, id: String, document: QADocumentUpdate, refresh: Int):
   Future[UpdateDocumentResult] = Future {
     update(indexName, id, document, refresh)
   }
 
-  def allDocuments(indexName: String, keepAlive: Long = 60000, size: Int = 100): Iterator[KBDocument] = {
-    val client: RestHighLevelClient = elasticClient.client
+  def allDocuments(indexName: String, keepAlive: Long = 60000, size: Int = 100): Iterator[QADocument] = {
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
       .query(QueryBuilders.matchAllQuery)
@@ -900,103 +900,103 @@ trait QuestionAnswerService extends AbstractDataService {
     val iterator = Iterator.continually{
       val documents = scrollResp.getHits.getHits.toList.map { e =>
 
-          val id : String = e.getId
-          val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
+        val id : String = e.getId
+        val source : Map[String, Any] = e.getSourceAsMap.asScala.toMap
 
-          val conversation : String = source.get("conversation") match {
-            case Some(t) => t.asInstanceOf[String]
-            case None => ""
-          }
+        val conversation : String = source.get("conversation") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-          val indexInConversation : Option[Int] = source.get("index_in_conversation") match {
-            case Some(t) => Option { t.asInstanceOf[Int] }
-            case None => None : Option[Int]
-          }
+        val indexInConversation : Option[Int] = source.get("index_in_conversation") match {
+          case Some(t) => Option { t.asInstanceOf[Int] }
+          case None => None : Option[Int]
+        }
 
-          val question : String = source.get("question") match {
-            case Some(t) => t.asInstanceOf[String]
-            case None => ""
-          }
+        val question : String = source.get("question") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-          val questionNegative : Option[List[String]] = source.get("question_negative") match {
-            case Some(t) =>
-              val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-                .asScala.map(_.getOrDefault("query", None.orNull)).filter(_ =/= None.orNull).toList
-              Option { res }
-            case None => None: Option[List[String]]
-          }
+        val questionNegative : Option[List[String]] = source.get("question_negative") match {
+          case Some(t) =>
+            val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+              .asScala.map(_.getOrDefault("query", None.orNull)).filter(_ =/= None.orNull).toList
+            Option { res }
+          case None => None: Option[List[String]]
+        }
 
-          val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
-            case Some(t) =>
-              Option {
-                t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-                  .asScala.map(_.asScala.toMap)
-                  .map(term => (term.getOrElse("term", "").asInstanceOf[String],
-                    term.getOrElse("score", 0.0).asInstanceOf[Double])).filter { case (term, _) => term =/= "" }.toList
-              }
-            case None => None : Option[List[(String, Double)]]
-          }
+        val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
+          case Some(t) =>
+            Option {
+              t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map(_.asScala.toMap)
+                .map(term => (term.getOrElse("term", "").asInstanceOf[String],
+                  term.getOrElse("score", 0.0).asInstanceOf[Double])).filter { case (term, _) => term =/= "" }.toList
+            }
+          case None => None : Option[List[(String, Double)]]
+        }
 
-          val answer : String = source.get("answer") match {
-            case Some(t) => t.asInstanceOf[String]
-            case None => ""
-          }
+        val answer : String = source.get("answer") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-          val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
-            case Some(t) =>
-              Option {
-                t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-                  .asScala.map(_.asScala.toMap)
-                  .map(term => (term.getOrElse("term", "").asInstanceOf[String],
-                    term.getOrElse("score", 0.0).asInstanceOf[Double]))
-                  .filter{case(term,_) => term =/= ""}.toList
-              }
-            case None => None : Option[List[(String, Double)]]
-          }
+        val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
+          case Some(t) =>
+            Option {
+              t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map(_.asScala.toMap)
+                .map(term => (term.getOrElse("term", "").asInstanceOf[String],
+                  term.getOrElse("score", 0.0).asInstanceOf[Double]))
+                .filter{case(term,_) => term =/= ""}.toList
+            }
+          case None => None : Option[List[(String, Double)]]
+        }
 
-          val verified : Boolean = source.get("verified") match {
-            case Some(t) => t.asInstanceOf[Boolean]
-            case None => false
-          }
+        val verified : Boolean = source.get("verified") match {
+          case Some(t) => t.asInstanceOf[Boolean]
+          case None => false
+        }
 
-          val topics : Option[String] = source.get("topics") match {
-            case Some(t) => Option { t.asInstanceOf[String] }
-            case None => None : Option[String]
-          }
+        val topics : Option[String] = source.get("topics") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => None : Option[String]
+        }
 
-          val dclass : Option[String] = source.get("dclass") match {
-            case Some(t) => Option { t.asInstanceOf[String] }
-            case None => None : Option[String]
-          }
+        val dclass : Option[String] = source.get("dclass") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => None : Option[String]
+        }
 
-          val doctype : String = source.get("doctype") match {
-            case Some(t) => t.asInstanceOf[String]
-            case None => doctypes.normal
-          }
+        val doctype : String = source.get("doctype") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => doctypes.normal
+        }
 
-          val state : Option[String] = source.get("state") match {
-            case Some(t) => Option { t.asInstanceOf[String] }
-            case None => None : Option[String]
-          }
+        val state : Option[String] = source.get("state") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => None : Option[String]
+        }
 
-          val status : Int = source.get("status") match {
-            case Some(t) => t.asInstanceOf[Int]
-            case None => 0
-          }
+        val status : Int = source.get("status") match {
+          case Some(t) => t.asInstanceOf[Int]
+          case None => 0
+        }
 
-          KBDocument(id = id, conversation = conversation,
-            indexInConversation = indexInConversation,
-            question = question,
-            questionNegative = questionNegative,
-            questionScoredTerms = questionScoredTerms,
-            answer = answer,
-            answerScoredTerms = answerScoredTerms,
-            verified = verified,
-            topics = topics,
-            dclass = dclass,
-            doctype = doctype,
-            state = state,
-            status = status)
+        QADocument(id = id, conversation = conversation,
+          indexInConversation = indexInConversation,
+          question = question,
+          questionNegative = questionNegative,
+          questionScoredTerms = questionScoredTerms,
+          answer = answer,
+          answerScoredTerms = answerScoredTerms,
+          verified = verified,
+          topics = topics,
+          dclass = dclass,
+          doctype = doctype,
+          state = state,
+          status = status)
       }
 
       scrollResp = client.search(searchReq, RequestOptions.DEFAULT)
@@ -1026,17 +1026,17 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val ids: List[String] = List(extractionRequest.id)
     val q = this.read(indexName, ids)
-    val hits = q.getOrElse(SearchKBDocumentsResults())
+    val hits = q.getOrElse(SearchQADocumentsResults())
     hits.hits.map { hit =>
-        val extractionReqQ = extractionReq(text = hit.document.question, er = extractionRequest)
-        val extractionReqA = extractionReq(text = hit.document.answer, er = extractionRequest)
-        val (_, termsQ) = manausTermsExtractionService
-          .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
-        val (_, termsA) = manausTermsExtractionService
-          .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
-        val scoredTermsUpdateReq = KBDocumentUpdate(questionScoredTerms = Some(termsQ.toList),
-          answerScoredTerms = Some(termsA.toList))
-        update(indexName = indexName, id = hit.document.id, document = scoredTermsUpdateReq, refresh = 0)
+      val extractionReqQ = extractionReq(text = hit.document.question, er = extractionRequest)
+      val extractionReqA = extractionReq(text = hit.document.answer, er = extractionRequest)
+      val (_, termsQ) = manausTermsExtractionService
+        .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
+      val (_, termsA) = manausTermsExtractionService
+        .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
+      val scoredTermsUpdateReq = QADocumentUpdate(questionScoredTerms = Some(termsQ.toList),
+        answerScoredTerms = Some(termsA.toList))
+      update(indexName = indexName, id = hit.document.id, document = scoredTermsUpdateReq, refresh = 0)
     }
   }
 
@@ -1050,15 +1050,15 @@ trait QuestionAnswerService extends AbstractDataService {
                          extractionRequest: UpdateQATermsRequest,
                          keepAlive: Long = 3600000): Iterator[UpdateDocumentResult] = {
     allDocuments(indexName = indexName, keepAlive = keepAlive).map { item =>
-        val extractionReqQ = extractionReq(text = item.question, er = extractionRequest)
-        val extractionReqA = extractionReq(text = item.answer, er = extractionRequest)
-        val (_, termsQ) = manausTermsExtractionService
-          .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
-        val (_, termsA) = manausTermsExtractionService
-          .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
-        val scoredTermsUpdateReq = KBDocumentUpdate(questionScoredTerms = Some(termsQ.toList),
-          answerScoredTerms = Some(termsA.toList))
-        update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
+      val extractionReqQ = extractionReq(text = item.question, er = extractionRequest)
+      val extractionReqA = extractionReq(text = item.answer, er = extractionRequest)
+      val (_, termsQ) = manausTermsExtractionService
+        .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
+      val (_, termsA) = manausTermsExtractionService
+        .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
+      val scoredTermsUpdateReq = QADocumentUpdate(questionScoredTerms = Some(termsQ.toList),
+        answerScoredTerms = Some(termsA.toList))
+      update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
     }
   }
 }

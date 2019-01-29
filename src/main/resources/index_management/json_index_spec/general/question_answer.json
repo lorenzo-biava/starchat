@@ -365,6 +365,12 @@
           "type": "integer",
           "store": true,
           "null_value": 0
+        },
+        "timestamp": {
+          "type": "date",
+          "format": "epoch_millis",
+          "store": true,
+          "index": true
         }
       }
     }

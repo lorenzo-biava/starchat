@@ -54,12 +54,15 @@ object IndexManagementService extends AbstractDataService {
       indexSuffix = elasticClient.kbIndexSuffix),
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/term.json",
       updatePath = "/index_management/json_index_spec/general/update/term.json",
-      indexSuffix = elasticClient.termIndexSuffix)
+      indexSuffix = elasticClient.termIndexSuffix),
+    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/feedback.json",
+      updatePath = "/index_management/json_index_spec/general/update/feedback.json",
+      indexSuffix = elasticClient.feedbackIndexSuffix)
   )
 
   def create(indexName: String,
              indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     // extract language from index name
     val (_, language, _)= indexName match {
@@ -113,7 +116,7 @@ object IndexManagementService extends AbstractDataService {
 
   def remove(indexName: String,
              indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     if (! elasticClient.enableDeleteIndex) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -143,7 +146,7 @@ object IndexManagementService extends AbstractDataService {
 
   def check(indexName: String,
             indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -169,7 +172,7 @@ object IndexManagementService extends AbstractDataService {
 
   def openClose(indexName: String, indexSuffix: Option[String] = None,
                 operation: String): Future[List[OpenCloseIndex]] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
     schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t === item.indexSuffix
@@ -195,7 +198,7 @@ object IndexManagementService extends AbstractDataService {
 
   def updateSettings(indexName: String,
                      indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val (_, language, _) = Index.patternsFromIndex(indexName: String)
 
@@ -232,7 +235,7 @@ object IndexManagementService extends AbstractDataService {
 
   def updateMappings(indexName: String,
                      indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {

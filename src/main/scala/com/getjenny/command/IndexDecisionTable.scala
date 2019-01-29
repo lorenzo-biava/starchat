@@ -24,7 +24,7 @@ object IndexDecisionTable extends JsonSupport {
 
   private[this] case class Params(
                              host: String = "http://localhost:8888",
-                             indexName: String = "index_english_0",
+                             indexName: String = "index_getjenny_english_0",
                              path: String = "/decisiontable",
                              inputfile: String = "decision_table.csv",
                              separator: Char = ',',

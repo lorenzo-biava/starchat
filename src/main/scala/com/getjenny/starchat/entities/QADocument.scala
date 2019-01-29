@@ -14,7 +14,7 @@ object doctypes {
                                                     conversation to any state of the decision tree */
 }
 
-case class KBDocument(id: String, /* unique id of the document */
+case class QADocument(id: String, /* unique id of the document */
                       conversation: String, /* ID of the conversation (multiple q&a may be inside a conversation) */
                       indexInConversation: Option[Int] = None, /* the index of the document in the conversation flow */
                       question: String, /* usually what the user of the chat says */

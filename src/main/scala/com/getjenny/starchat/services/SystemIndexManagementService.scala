@@ -47,11 +47,17 @@ object SystemIndexManagementService extends AbstractDataService {
       indexSuffix = elasticClient.userIndexSuffix),
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/system/refresh_decisiontable.json",
       updatePath = "/index_management/json_index_spec/system/update/refresh_decisiontable.json",
-      indexSuffix = elasticClient.systemRefreshDtIndexSuffix)
+      indexSuffix = elasticClient.systemRefreshDtIndexSuffix),
+    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/system/cluster_nodes.json",
+      updatePath = "/index_management/json_index_spec/system/update/cluster_nodes.json",
+      indexSuffix = elasticClient.systemClusterNodesIndexSuffix),
+    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/system/decision_table_node_status.json",
+      updatePath = "/index_management/json_index_spec/system/update/decision_table_node_status.json",
+      indexSuffix = elasticClient.systemDtNodesStatusIndexSuffix)
   )
 
   def create(indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -88,7 +94,7 @@ object SystemIndexManagementService extends AbstractDataService {
   }
 
   def remove(indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     if (! elasticClient.enableDeleteSystemIndex) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -117,7 +123,7 @@ object SystemIndexManagementService extends AbstractDataService {
   }
 
   def check(indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -141,7 +147,7 @@ object SystemIndexManagementService extends AbstractDataService {
   }
 
   def update(indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
-    val client: RestHighLevelClient = elasticClient.client
+    val client: RestHighLevelClient = elasticClient.httpClient
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -196,7 +202,7 @@ object SystemIndexManagementService extends AbstractDataService {
 
   def indices: Future[List[String]] = Future {
     val clusterHealthReq = new ClusterHealthRequest()
-    val clusterHealthRes = elasticClient.client.cluster.health(clusterHealthReq, RequestOptions.DEFAULT)
+    val clusterHealthRes = elasticClient.httpClient.cluster.health(clusterHealthReq, RequestOptions.DEFAULT)
     clusterHealthRes.getIndices.asScala.map{ case(k, _) => k }.toList
   }
 

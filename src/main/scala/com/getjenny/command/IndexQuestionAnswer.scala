@@ -10,8 +10,8 @@ import java.util.Base64
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.stream.ActorMaterializer
 import breeze.io.CSVReader
 import com.getjenny.starchat.entities._
@@ -21,17 +21,17 @@ import scopt.OptionParser
 
 import scala.collection.immutable
 import scala.collection.immutable.{List, Map}
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.Try
 
 case class IndexKnowledgeBaseException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
-object IndexKnowledgeBase extends JsonSupport {
+object IndexQuestionAnswer extends JsonSupport {
   private[this] case class Params(
                                    host: String = "http://localhost:8888",
-                                   indexName: String = "index_english_0",
+                                   indexName: String = "index_getjenny_english_0",
                                    path: String = "/knowledgebase",
                                    questionsPath: Option[String] = None: Option[String],
                                    answersPath: Option[String] = None: Option[String],
@@ -138,7 +138,7 @@ object IndexKnowledgeBase extends JsonSupport {
     conversationItems.foreach(entry => {
       val id: String = entry.toString().sha256
 
-      val kbDocument: KBDocument = KBDocument(
+      val kbDocument: QADocument = QADocument(
         id = id,
         conversation = entry("conversation_id"),
         indexInConversation =  Option { entry("position").toInt },
