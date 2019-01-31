@@ -28,7 +28,7 @@ case class NodeDtLoadingStatusServiceException(message: String = "", cause: Thro
 object NodeDtLoadingStatusService extends AbstractDataService {
   val DT_NODES_STATUS_TIMESTAMP_DEFAULT : Long = -1
   override val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
-  private[this] val clusterNodesService: ClusterNodesService.type = ClusterNodesService
+  val clusterNodesService: ClusterNodesService.type = ClusterNodesService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   val indexName = Index.indexName(elasticClient.indexName, elasticClient.systemDtNodesStatusIndexSuffix)
@@ -57,7 +57,8 @@ object NodeDtLoadingStatusService extends AbstractDataService {
 
     val response: UpdateResponse = client.update(updateReq, RequestOptions.DEFAULT)
 
-    log.debug("set update dt (" + dtNodeStatus.index + ") on node(" + dtNodeStatus.uuid + ") " + response.status())
+    log.debug("set update dt (" + dtNodeStatus.index + ") on node(" + uuid + ") timestamp(" + timestamp + ") " +
+      response.status())
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refresh(indexName)
@@ -97,7 +98,7 @@ object NodeDtLoadingStatusService extends AbstractDataService {
 
       val index : String = source.get("index") match {
         case Some(t) => t.asInstanceOf[String]
-        case _ => throw NodeDtLoadingStatusServiceException("Failed to get index for the index: " + dtIndexName)
+        case _ => throw NodeDtLoadingStatusServiceException("Failed to get index name: " + dtIndexName)
       }
 
       val timestamp : Long = source.get("timestamp") match {
@@ -114,7 +115,6 @@ object NodeDtLoadingStatusService extends AbstractDataService {
     val indexPushTimestamp = dtReloadService.getDTReloadTimestamp(index) // push timestamp for the index
     val nodeDtLoadingStatus = // update operations for the index
       dtUpdateStatusByIndex(dtIndexName = index, minTs = indexPushTimestamp.timestamp).map(_.uuid).toSet
-
     val updatedSet = aliveNodes & nodeDtLoadingStatus
     val updateCompleted = updatedSet == aliveNodes
 

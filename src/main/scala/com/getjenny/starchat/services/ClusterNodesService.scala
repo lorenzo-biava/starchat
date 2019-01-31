@@ -63,7 +63,7 @@ object ClusterNodesService extends AbstractDataService {
       }
     }
 
-    ClusterNode(uuid = uuid, alive = false, timestamp = timestamp)
+    ClusterNode(uuid = uuid, alive = true, timestamp = timestamp)
   }
 
   def isAlive(uuid: String) : ClusterNode = {
@@ -78,22 +78,22 @@ object ClusterNodesService extends AbstractDataService {
     val response: GetResponse = client.get(getReq, RequestOptions.DEFAULT)
 
     val timestamp = if(! response.isExists || response.isSourceEmpty) {
-      log.info("cluster node is field is empty or does not exists")
+      log.debug("cluster node is field is empty or does not exists")
       CLUSTER_NODE_ALIVE_TIMESTAMP_DEFAULT
     } else {
       val source : Map[String, Any] = response.getSource.asScala.toMap
-      val loadedTs : Long = source.get(elasticClient.systemClusterNodesIndexSuffix) match {
+      val aliveTs : Long = source.get("timestamp") match {
         case Some(t) => t.asInstanceOf[Long]
         case None =>
           CLUSTER_NODE_ALIVE_TIMESTAMP_DEFAULT
       }
-      log.info("dt reload timestamp is: " + loadedTs)
-      loadedTs
+      log.debug("UUID(" + uuid + ") last time was seen alive: " + aliveTs)
+      aliveTs
     }
 
     val aliveTimeCheck = timestamp > CLUSTER_NODE_ALIVE_TIMESTAMP_DEFAULT &&
       currTimestamp - timestamp <= elasticClient.clusterNodeAliveMaxInterval * 1000
-    ClusterNode(uuid = indexName, alive = aliveTimeCheck, timestamp = timestamp)
+    ClusterNode(uuid = uuid, alive = aliveTimeCheck, timestamp = timestamp)
   }
 
   def cleanDeadNodes: DeleteDocumentsSummaryResult = {

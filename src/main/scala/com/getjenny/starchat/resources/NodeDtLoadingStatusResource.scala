@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.Route
 import akka.pattern.CircuitBreaker
 import com.getjenny.starchat.entities.{NodeDtLoadingStatus, Permissions, ReturnMessageData}
 import com.getjenny.starchat.routing.{StarChatCircuitBreaker, StarChatResource}
-import com.getjenny.starchat.services.{ClusterNodesService, NodeDtLoadingStatusService}
+import com.getjenny.starchat.services.NodeDtLoadingStatusService
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -34,7 +34,8 @@ trait NodeDtLoadingStatusResource extends StarChatResource {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                   case Failure(e) =>
-                    log.error("DtUpdate(" + indexName + ") route=nodeDtLoadingStatusRoutes method=" + method +" : " + e.getMessage)
+                    log.error("DtUpdate(" + indexName + ") route=nodeDtLoadingStatusRoutes method=" +
+                      method + " : " + e.getMessage)
                     completeResponse(StatusCodes.BadRequest,
                       Option {
                         ReturnMessageData(code = 100, message = e.getMessage)
@@ -45,8 +46,8 @@ trait NodeDtLoadingStatusResource extends StarChatResource {
           }
         }
       } ~
-        put {
-          path(Segment) { uuid: String =>
+        pathEnd {
+          post {
             authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
@@ -60,7 +61,9 @@ trait NodeDtLoadingStatusResource extends StarChatResource {
                       case Success(_) =>
                         completeResponse(StatusCodes.OK)
                       case Failure(e) =>
-                        log.error("DtUpdate(" + uuid + ") route=nodeDtLoadingStatusRoutes method=" + method + " : " + e.getMessage)
+                        log.error("DtUpdate(" + document.uuid +
+                          ", " + document.index +
+                          ") route=nodeDtLoadingStatusRoutes method=" + method + " : " + e.getMessage)
                         completeResponse(StatusCodes.BadRequest,
                           Option {
                             ReturnMessageData(code = 101, message = e.getMessage)
@@ -70,32 +73,31 @@ trait NodeDtLoadingStatusResource extends StarChatResource {
                 }
               }
             }
-          }
-        } ~
-        delete {
-          path(Segment) { uuid: String =>
-            authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, "admin", Permissions.read)) {
-                extractMethod { method =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(Future {
-                    nodeDtLoadingStatusService.cleanDeadNodesRecords
-                  }) {
-                    case Success(t) =>
-                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                    case Failure(e) =>
-                      log.error("DtUpdate(" + uuid + ") route=nodeDtLoadingStatusRoutes method=" + method + " : " + e.getMessage)
-                      completeResponse(StatusCodes.BadRequest,
-                        Option {
-                          ReturnMessageData(code = 102, message = e.getMessage)
-                        })
+          } ~
+            delete {
+              authenticateBasicAsync(realm = authRealm,
+                authenticator = authenticator.authenticator) { user =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, "admin", Permissions.read)) {
+                  extractMethod { method =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(Future {
+                      nodeDtLoadingStatusService.cleanDeadNodesRecords
+                    }) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                      case Failure(e) =>
+                        log.error("DtUpdate(" + nodeDtLoadingStatusService.clusterNodesService.uuid +
+                          ") route=nodeDtLoadingStatusRoutes method=" + method + " : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 102, message = e.getMessage)
+                          })
+                    }
                   }
                 }
               }
             }
-          }
         }
     }
   }

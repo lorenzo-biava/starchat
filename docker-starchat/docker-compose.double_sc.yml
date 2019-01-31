@@ -2,7 +2,7 @@ version: "3.2"
 services:
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.0
     restart: unless-stopped
     command: elasticsearch
     ports:
@@ -16,6 +16,7 @@ services:
       - ./elasticsearch/config:/usr/share/elasticsearch/config
       - ./elasticsearch/logs:/usr/share/elasticsearch/logs
     environment:
+      - MAX_LOCKED_MEMORY=unlimited
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
 
   starchat:
@@ -32,7 +33,7 @@ services:
   starchat2:
     image: java:8
     restart: unless-stopped
-    command: ["/starchat/scripts/utils/wait-for-it.sh", "getjenny-es", "9200", "10", "/starchat/bin/starchat"]
+    command: ["/starchat/scripts/utils/wait-for-it.sh", "https://getjenny-es", "9200", "10", "/starchat/bin/starchat"]
     volumes:
       - ./starchat2:/starchat
     ports:

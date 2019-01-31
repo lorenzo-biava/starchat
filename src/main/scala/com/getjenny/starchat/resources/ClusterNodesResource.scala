@@ -20,24 +20,26 @@ trait ClusterNodesResource extends StarChatResource {
 
   def clusterNodesRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix(routeName) {
-      get {
-        authenticateBasicAsync(realm = authRealm,
-          authenticator = authenticator.authenticator) { user =>
-          authorizeAsync(_ =>
-            authenticator.hasPermissions(user, "admin", Permissions.read)) {
-            extractMethod { method =>
-              val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(Future {
-                clusterNodesService.aliveNodes
-              }) {
-                case Success(_) =>
-                  completeResponse(StatusCodes.OK)
-                case Failure(e) =>
-                  log.error("Node route=clusterNodesRoutes method=" + method + " : " + e.getMessage)
-                  completeResponse(StatusCodes.BadRequest,
-                    Option {
-                      ReturnMessageData(code = 100, message = e.getMessage)
-                    })
+      pathEnd {
+        get {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.read)) {
+              extractMethod { method =>
+                val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(Future {
+                  clusterNodesService.aliveNodes
+                }) {
+                  case Success(t) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                  case Failure(e) =>
+                    log.error("Node route=clusterNodesRoutes method=" + method + " : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 100, message = e.getMessage)
+                      })
+                }
               }
             }
           }
@@ -71,50 +73,45 @@ trait ClusterNodesResource extends StarChatResource {
           }
         } ~
           post {
-            path(Segment) { uuid: String =>
-              authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { user =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, "admin", Permissions.read)) {
-                  extractMethod { method =>
-                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(Future {
-                      clusterNodesService.alive()
-                    }) {
-                      case Success(t) =>
-                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                      case Failure(e) =>
-                        log.error("Node(" + uuid + ") route=clusterNodesRoutes method=" + method + " : " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 101, message = e.getMessage)
-                          })
-                    }
+            authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, "admin", Permissions.read)) {
+                extractMethod { method =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(Future {
+                    clusterNodesService.alive()
+                  }) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                    case Failure(e) =>
+                      log.error("Node(" + clusterNodesService.uuid + ") route=clusterNodesRoutes method=" + method + " : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 101, message = e.getMessage)
+                        })
                   }
                 }
               }
             }
           } ~
           delete {
-            path(Segment) { uuid: String =>
-              authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { user =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, "admin", Permissions.read)) {
-                  extractMethod { method =>
-                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(Future {
-                      clusterNodesService.cleanDeadNodes
-                    }) {
-                      case Success(t) =>
-                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
-                      case Failure(e) =>
-                        log.error("Node(" + uuid + ") route=clusterNodesRoutes method=" + method + " : " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 102, message = e.getMessage)
-                          })
-                    }
+            authenticateBasicAsync(realm = authRealm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, "admin", Permissions.read)) {
+                extractMethod { method =>
+                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(Future {
+                    clusterNodesService.cleanDeadNodes
+                  }) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                    case Failure(e) =>
+                      log.error("Node(" + clusterNodesService.uuid + ") route=clusterNodesRoutes method=" + method + " : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 102, message = e.getMessage)
+                        })
                   }
                 }
               }

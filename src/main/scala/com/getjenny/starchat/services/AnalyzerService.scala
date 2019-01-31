@@ -218,18 +218,16 @@ object AnalyzerService extends AbstractDataService {
 
     val dtAnalyzerLoad = DTAnalyzerLoad(numOfEntries=analyzerMap.size)
     val activeAnalyzers: ActiveAnalyzers = ActiveAnalyzers(analyzerMap = analyzerMap,
-      lastEvaluationTimestamp = 0, lastReloadingTimestamp = 0)
+      lastEvaluationTimestamp = 0, lastReloadingTimestamp = System.currentTimeMillis)
     if (AnalyzerService.analyzersMap.contains(indexName)) {
       AnalyzerService.analyzersMap.replace(indexName, activeAnalyzers)
     } else {
       AnalyzerService.analyzersMap.putIfAbsent(indexName, activeAnalyzers)
     }
 
-    nodeDtLoadingStatusService.update(dtNodeStatus =
-      NodeDtLoadingStatus(index = indexName, timestamp = activeAnalyzers.lastReloadingTimestamp))
-
+    val nodeDtLoadingTimestamp = System.currentTimeMillis()
     if (propagate) {
-      Try(dtReloadService.setDTReloadTimestamp(indexName, refresh = 1)) match {
+      Try(dtReloadService.setDTReloadTimestamp(indexName, nodeDtLoadingTimestamp, refresh = 1)) match {
         case Success(reloadTsFuture) =>
           reloadTsFuture.onComplete{
             case Success(dtReloadTimestamp) =>
@@ -248,6 +246,10 @@ object AnalyzerService extends AbstractDataService {
           throw AnalyzerServiceException(message)
       }
     }
+
+    log.debug("updating: " + nodeDtLoadingStatusService.clusterNodesService.uuid + " : " + nodeDtLoadingTimestamp)
+    nodeDtLoadingStatusService.update(dtNodeStatus =
+      NodeDtLoadingStatus(index = indexName, timestamp = nodeDtLoadingTimestamp))
 
     dtAnalyzerLoad
   }
