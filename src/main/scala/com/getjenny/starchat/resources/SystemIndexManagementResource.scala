@@ -51,33 +51,35 @@ trait SystemIndexManagementResource extends StarChatResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.write)) {
-              operation match {
-                case "refresh" =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(systemIndexManagementService.refresh()) {
-                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        IndexManagementResponse(message = e.getMessage)
+              parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                operation match {
+                  case "refresh" =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(systemIndexManagementService.refresh(indexSuffix)) {
+                      case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
                       })
-                  }
-                case "create" =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(systemIndexManagementService.create()) {
-                    case Success(t) => completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        IndexManagementResponse(message = e.getMessage)
+                      case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          IndexManagementResponse(message = e.getMessage)
+                        })
+                    }
+                  case "create" =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(systemIndexManagementService.create(indexSuffix)) {
+                      case Success(t) => completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
+                        t
                       })
-                  }
-                case _ => completeResponse(StatusCodes.BadRequest,
-                  Option {
-                    IndexManagementResponse(message = "index(system) Operation not supported: " + operation)
-                  })
+                      case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          IndexManagementResponse(message = e.getMessage)
+                        })
+                    }
+                  case _ => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = "index(system) Operation not supported: " + operation)
+                    })
+                }
               }
             }
           }
@@ -107,15 +109,17 @@ trait SystemIndexManagementResource extends StarChatResource {
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, "admin", Permissions.write)) {
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(systemIndexManagementService.remove()) {
-                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        IndexManagementResponse(message = e.getMessage)
+                  parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(systemIndexManagementService.remove(indexSuffix)) {
+                      case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
                       })
+                      case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          IndexManagementResponse(message = e.getMessage)
+                        })
+                    }
                   }
                 }
               }

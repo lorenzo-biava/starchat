@@ -95,11 +95,13 @@ object DecisionTableService extends AbstractDataService {
         }
 
         val actionInput : Map[String,String] = source.get("action_input") match {
+          case Some(null) => Map[String, String]()
           case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
           case None => Map[String, String]()
         }
 
         val stateData : Map[String,String] = source.get("state_data") match {
+          case Some(null) => Map[String, String]()
           case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
           case None => Map[String, String]()
         }
@@ -171,14 +173,14 @@ object DecisionTableService extends AbstractDataService {
           case None => ""
         }
 
-      val queriesAndNgrams : List[(String, List[String])] = source.get("queries") match {
+        val queriesAndNgrams : List[(String, List[String])] = source.get("queries") match {
           case Some(t) =>
             val offsetsAndNgrams = item.getInnerHits.get("queries").getHits.toList.map(innerHit => {
               innerHit.getNestedIdentity.getOffset
             })
             val queryArray = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
               .map(q_e => q_e.get("query"))
-            offsetsAndNgrams.map{ case(e) =>
+            offsetsAndNgrams.map{ case e =>
               val qNgrams = queryArray(e).toLowerCase().replaceAll("\\s", "").sliding(sliding).toList
               (queryArray(e), qNgrams)
             }
@@ -200,11 +202,13 @@ object DecisionTableService extends AbstractDataService {
         }
 
         val actionInput : Map[String,String] = source.get("action_input") match {
+          case Some(null) => Map[String, String]()
           case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
           case None => Map[String, String]()
         }
 
         val stateData : Map[String,String] = source.get("state_data") match {
+          case Some(null) => Map[String, String]()
           case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
           case None => Map[String, String]()
         }
@@ -573,7 +577,6 @@ object DecisionTableService extends AbstractDataService {
     }
     document.queries match {
       case Some(t) =>
-
         val array = builder.startArray("queries")
         t.foreach(q => {
           array.startObject().field("query", q).endObject()
@@ -591,9 +594,13 @@ object DecisionTableService extends AbstractDataService {
     }
     document.actionInput match {
       case Some(t) =>
-        val actionInputBuilder : XContentBuilder = builder.startObject("action_input")
-        for ((k,v) <- t) actionInputBuilder.field(k,v)
-        actionInputBuilder.endObject()
+        if(t.nonEmpty) {
+          val actionInputBuilder : XContentBuilder = builder.startObject("action_input")
+          for ((k,v) <- t) actionInputBuilder.field(k,v)
+          actionInputBuilder.endObject()
+        } else {
+          builder.nullField("action_input")
+        }
       case None => ;
     }
     document.stateData match {
@@ -699,11 +706,13 @@ object DecisionTableService extends AbstractDataService {
       }
 
       val actionInput : Map[String,String] = source.get("action_input") match {
+        case Some(null) => Map[String, String]()
         case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
-        case None => Map[String,String]()
+        case None => Map[String, String]()
       }
 
       val stateData : Map[String,String] = source.get("state_data") match {
+        case Some(null) => Map[String, String]()
         case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
         case None => Map[String,String]()
       }
@@ -799,11 +808,13 @@ object DecisionTableService extends AbstractDataService {
         }
 
         val actionInput: Map[String, String] = source.get("action_input") match {
-          case Some(t) => t.asInstanceOf[java.util.HashMap[String, String]].asScala.toMap
+          case Some(null) => Map[String, String]()
+          case Some(t) => t.asInstanceOf[java.util.HashMap[String,String]].asScala.toMap
           case None => Map[String, String]()
         }
 
         val stateData: Map[String, String] = source.get("state_data") match {
+          case Some(null) => Map[String, String]()
           case Some(t) => t.asInstanceOf[java.util.HashMap[String, String]].asScala.toMap
           case None => Map[String, String]()
         }
