@@ -112,7 +112,7 @@ object NodeDtLoadingStatusService extends AbstractDataService {
 
   def loadingStatus(index: String) : ClusterLoadingDtStatus = {
     val aliveNodes = clusterNodesService.aliveNodes.nodes.map(_.uuid).toSet // all alive nodes
-    val indexPushTimestamp = dtReloadService.getDTReloadTimestamp(index) // push timestamp for the index
+    val indexPushTimestamp = dtReloadService.dTReloadTimestamp(index) // push timestamp for the index
     val nodeDtLoadingStatus = // update operations for the index
       dtUpdateStatusByIndex(dtIndexName = index, minTs = indexPushTimestamp.timestamp).map(_.uuid).toSet
     val updatedSet = aliveNodes & nodeDtLoadingStatus

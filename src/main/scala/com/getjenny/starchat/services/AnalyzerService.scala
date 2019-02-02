@@ -227,7 +227,7 @@ object AnalyzerService extends AbstractDataService {
 
     val nodeDtLoadingTimestamp = System.currentTimeMillis()
     if (propagate) {
-      Try(dtReloadService.setDTReloadTimestamp(indexName, nodeDtLoadingTimestamp, refresh = 1)) match {
+      Try(dtReloadService.updateDTReloadTimestamp(indexName, nodeDtLoadingTimestamp, refresh = 1)) match {
         case Success(reloadTsFuture) =>
           reloadTsFuture.onComplete{
             case Success(dtReloadTimestamp) =>

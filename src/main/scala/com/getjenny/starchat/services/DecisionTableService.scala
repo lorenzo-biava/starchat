@@ -40,7 +40,7 @@ case class DecisionTableServiceException(message: String = "", cause: Throwable 
   */
 object DecisionTableService extends AbstractDataService {
   override val elasticClient: DecisionTableElasticClient.type = DecisionTableElasticClient
-  private val termService: TermService.type = TermService
+  private[this] val termService: TermService.type = TermService
   private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
   private[this] val queriesScoreMode: Map[String, ScoreMode] =
@@ -180,7 +180,7 @@ object DecisionTableService extends AbstractDataService {
             })
             val queryArray = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
               .map(q_e => q_e.get("query"))
-            offsetsAndNgrams.map{ case e =>
+            offsetsAndNgrams.map{ case e  =>
               val qNgrams = queryArray(e).toLowerCase().replaceAll("\\s", "").sliding(sliding).toList
               (queryArray(e), qNgrams)
             }

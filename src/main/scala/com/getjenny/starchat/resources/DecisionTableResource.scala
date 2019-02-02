@@ -93,7 +93,7 @@ trait DecisionTableResource extends StarChatResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.write)) {
               val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(dtReloadService.setDTReloadTimestamp(indexName, refresh = 1)) {
+              onCompleteWithBreaker(breaker)(dtReloadService.updateDTReloadTimestamp(indexName, refresh = 1)) {
                 case Success(t) =>
                   completeResponse(StatusCodes.Accepted, StatusCodes.BadRequest, Option {
                     t
