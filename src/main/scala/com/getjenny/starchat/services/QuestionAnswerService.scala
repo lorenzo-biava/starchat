@@ -101,7 +101,7 @@ trait QuestionAnswerService extends AbstractDataService {
         } else {
           val result = calcDictSize(indexName = indexName)
           if (dictSizeCache.size >= dictSizeCacheMaxSize) {
-            dictSizeCache -= dictSizeCache.head._1
+            dictSizeCache.head match { case (oldestTerm, (_, _)) => dictSizeCache -= oldestTerm}
           }
           dictSizeCache.remove(key)
           dictSizeCache.update(key, (Time.timestampMillis, result))
@@ -110,7 +110,7 @@ trait QuestionAnswerService extends AbstractDataService {
       case _ =>
         val result = calcDictSize(indexName = indexName)
         if (dictSizeCache.size >= dictSizeCacheMaxSize) {
-          dictSizeCache -= dictSizeCache.head._1
+          dictSizeCache.head match { case (oldestTerm, (_, _)) => dictSizeCache -= oldestTerm}
         }
         dictSizeCache.update(key, (Time.timestampMillis, result))
         result

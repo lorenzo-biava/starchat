@@ -23,7 +23,10 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.io.Source
 
-object IndexCorpusOnKnowledgeBase extends JsonSupport {
+case class IndexCorpusOnQuestionAnswerException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
+object IndexCorpusOnQuestionAnswer extends JsonSupport {
   private[this] case class Params(
                              host: String = "http://localhost:8888",
                              indexName: String = "index_getjenny_english_0",
@@ -48,7 +51,13 @@ object IndexCorpusOnKnowledgeBase extends JsonSupport {
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     val baseUrl = params.host + "/" + params.indexName + params.path
-    val lines = Source.fromFile(name=params.inputfile.get).getLines.toList
+
+    val inputFile = params.inputfile match {
+      case Some(path) => path
+      case _ => throw IndexCorpusOnQuestionAnswerException("inputfile cannot be empty")
+    }
+
+    val lines = Source.fromFile(name=inputFile).getLines.toList
 
     val convItems: String => String = if (params.base64) {
       decodeBase64

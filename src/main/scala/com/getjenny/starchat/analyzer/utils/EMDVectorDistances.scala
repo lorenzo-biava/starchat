@@ -52,11 +52,12 @@ object EMDVectorDistances {
       val weightedWords2 = words2.map{case(term, (numOfWords, vector)) => (term, (numOfWords / words2.size, vector))}
 
       val workFromVtoU = weightedWords1.map { case (term1, (weight1, vector1)) =>
-        val min_term = weightedWords2.map({ case (term2, (weight2, vector2)) =>
+        weightedWords2.map({ case (term2, (weight2, vector2)) =>
           val distance: Double = dist_f(vector1, vector2)
           (term1, term2, weight1, weight2, vector1, vector2, distance, weight1 * distance)
-        }).minBy{case (_, _, _, _, _, _, distance, _) => distance}
-        min_term._8
+        }).minBy{case (_, _, _, _, _, _, distance, _) => distance} match {
+          case (_, _, _, _, _, _, _, minWeightedDist) => minWeightedDist
+        }
       }.map(x => math.abs(x)).sum
 
       val workFromUtoV = weightedWords2.map { case (term1, (weight1, vector1)) =>

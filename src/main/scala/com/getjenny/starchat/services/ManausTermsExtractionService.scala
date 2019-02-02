@@ -306,7 +306,7 @@ object ManausTermsExtractionService extends AbstractDataService {
           case Some(t) => (token.token, t.vector)
           case _ => (token.token, None)
         }
-    }.filter{case (_, vecs) => vecs.nonEmpty}.map { case (_, vecs) => vecs.get}.toVector
+    }.filter{case (_, vectors) => vectors.nonEmpty}.map { case (_, vecs) => vecs.get}.toVector
     val termsInSentence = sentenceVectors.length
 
     val indexedTokenizationRes = tokenizationRes.tokens.zipWithIndex
