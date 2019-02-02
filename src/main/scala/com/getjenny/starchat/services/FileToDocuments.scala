@@ -98,7 +98,10 @@ object FileToDocuments extends JsonSupport {
     lazy val fileEntries = CSVReader.read(input=fileReader, separator=separator,
       quote = '"', skipLines=skipLines)
 
-    val header = fileEntries.head.zipWithIndex.toMap
+    val header = fileEntries.headOption match {
+      case Some(t) => t.zipWithIndex.toMap
+      case _ => throw FileToDocumentsException("empty or malformed file: " + file.getPath)
+    }
     fileEntries.tail.map(entry => {
       if (entry.length =/= header.length) {
         val message = "file row is not consistent (" + entry.length + "!=" + header.length + ") Row(" + entry.toString + ")"
