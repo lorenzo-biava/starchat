@@ -16,6 +16,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 object LoggingEntities {
   val config: Config = ConfigFactory.load()
 
+  val remoteAddressReqUriReqRes = "remoteAddress(%1$s) ReqUri(%2$s) ReqMethodRes(%3$s:%4$s)"
+
   def address(remoteAddress: RemoteAddress): String = remoteAddress.toIP match {
     case Some(addr) => addr.ip.getHostAddress
     case _ => "unknown ip"
@@ -24,8 +26,8 @@ object LoggingEntities {
   def requestMethodAndResponseStatusReduced(remoteAddress: RemoteAddress)
                                            (req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" +
-        req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
+      Some(LogEntry(
+        remoteAddressReqUriReqRes.format(address(remoteAddress), req.uri, req.method.name, res.status),
         Logging.InfoLevel))
     case RouteResult.Rejected(rejections) => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
       ") Rejected: " + rejections.mkString(", "), Logging.DebugLevel))
@@ -36,8 +38,8 @@ object LoggingEntities {
   def requestMethodAndResponseStatus(remoteAddress: RemoteAddress)
                                     (req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" + req.uri + ")" +
-        " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
+      Some(LogEntry(
+        remoteAddressReqUriReqRes.format(address(remoteAddress), req.uri, req.method.name, res.status) +
         " ReqEntity(" + req.entity.httpEntity + ") ResEntity(" + res.entity + ") "
         , Logging.InfoLevel))
     case RouteResult.Rejected(rejections) => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
@@ -49,8 +51,8 @@ object LoggingEntities {
   def requestMethodAndResponseStatusB64(remoteAddress: RemoteAddress)
                                        (req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" + req.uri + ")" +
-        " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
+      Some(LogEntry(
+        remoteAddressReqUriReqRes.format(address(remoteAddress), req.uri, req.method.name, res.status) +
         " ReqEntity(" + req.entity + ")" +
         " ReqB64Entity(" + Base64.getEncoder.encodeToString(req.entity.toString.getBytes) + ")" +
         " ResEntity(" + res.entity + ")" +

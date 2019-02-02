@@ -9,7 +9,7 @@ import scala.language.postfixOps
 trait CronService {
   implicit def executionContext: ExecutionContext =
     SCActorSystem.system.dispatchers.lookup("starchat.blocking-dispatcher")
-  
+
   protected[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
   protected[this] val analyzerService: AnalyzerService.type = AnalyzerService
   protected[this] val dtReloadService: DtReloadService.type = DtReloadService
