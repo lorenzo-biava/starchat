@@ -164,7 +164,7 @@ trait QuestionAnswerService extends AbstractDataService {
         } else {
           val result = calcTotalTerms(indexName = indexName)
           if (totalTermsCache.size >= totalTermsCacheMaxSize) {
-            totalTermsCache -= totalTermsCache.head._1
+            totalTermsCache.head match { case (oldestTerm, (_, _)) => totalTermsCache -= oldestTerm}
           }
           totalTermsCache.remove(key)
           totalTermsCache.update(key, (Time.timestampMillis, result))
@@ -173,7 +173,7 @@ trait QuestionAnswerService extends AbstractDataService {
       case _ =>
         val result = calcTotalTerms(indexName = indexName)
         if (totalTermsCache.size >= totalTermsCacheMaxSize) {
-          totalTermsCache -= totalTermsCache.head._1
+          totalTermsCache.head match { case (oldestTerm, (_, _)) => totalTermsCache -= oldestTerm}
         }
         totalTermsCache.update(key, (Time.timestampMillis, result))
         result
@@ -235,7 +235,7 @@ trait QuestionAnswerService extends AbstractDataService {
         } else {
           val result = calcTermCount(indexName = indexName, field = field, term = term)
           if (countTermCache.size > countTermCacheMaxSize) {
-            countTermCache -= countTermCache.head._1
+            countTermCache.head match { case (oldestTerm, (_, _)) => countTermCache -= oldestTerm}
           }
           countTermCache.remove(key)
           countTermCache.update(key, (Time.timestampMillis, result))
@@ -244,7 +244,7 @@ trait QuestionAnswerService extends AbstractDataService {
       case _ =>
         val result = calcTermCount(indexName = indexName, field = field, term = term)
         if (countTermCache.size > countTermCacheMaxSize) {
-          countTermCache -= countTermCache.head._1
+          countTermCache.head match { case (oldestTerm, (_, _)) => countTermCache -= oldestTerm}
         }
         countTermCache.update(key, (Time.timestampMillis, result))
         result

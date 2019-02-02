@@ -9,7 +9,9 @@ import scala.collection.immutable.{List, Map}
 object TokenToVector {
   def tokensToVector(tokens: List[String], tokenIndex: Map[String, Int]): SparseVector[Double]= {
     val (index, data) = tokens.groupBy(identity).mapValues(_.map(_ => 1).sum)
-      .map{ case (k, v) => (tokenIndex.getOrElse(k, 0), v.toDouble) }.toArray.sortBy(_._1).unzip
+      .map{ case (k, v) =>
+        (tokenIndex.getOrElse(k, 0), v.toDouble)
+      }.toArray.sortBy{case (valueIdx, _) => valueIdx}.unzip
     new SparseVector(index = index, data = data, length = tokenIndex.length)
   }
 

@@ -34,7 +34,7 @@ object Index {
     * @param indexName the full index name
     * @return a tuple with the two component of the index (org, language, arbitrary)
     */
-  def patternsFromIndex(indexName: String): (String, String, String) = {
+  def patternsFromIndexName(indexName: String): (String, String, String) = {
     val (organization, language, arbitrary) = indexName match {
       case indexExtractFieldsRegexDelimited(orgPattern, languagePattern, arbitraryPattern) =>
         (orgPattern, languagePattern, arbitraryPattern)
@@ -61,7 +61,7 @@ object Index {
     */
   def getCommonIndexName(indexName: String, useDefaultOrg: Boolean = true): String = {
     val arbitraryPattern =  TermService.commonIndexArbitraryPattern
-    val (organization, language, _) = patternsFromIndex(indexName)
+    val (organization, language, _) = patternsFromIndexName(indexName)
     val org = useDefaultOrg match {
       case true =>
         TermService.defaultOrg

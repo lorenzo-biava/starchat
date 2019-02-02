@@ -200,7 +200,7 @@ object IndexManagementService extends AbstractDataService {
                      indexSuffix: Option[String] = None) : Future[IndexManagementResponse] = Future {
     val client: RestHighLevelClient = elasticClient.httpClient
 
-    val (_, language, _) = Index.patternsFromIndex(indexName: String)
+    val (_, language, _) = Index.patternsFromIndexName(indexName: String)
 
     val analyzerJsonPath: String = analyzerFiles(language).updatePath
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}

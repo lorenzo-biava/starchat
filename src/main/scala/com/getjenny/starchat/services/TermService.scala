@@ -145,7 +145,7 @@ object TermService extends AbstractDataService {
     */
   def indexDefaultSynonyms(indexName: String,
                            refresh: Int = 0) : Future[UpdateDocumentListResult] = {
-    val (_, language, _) = Index.patternsFromIndex(indexName)
+    val (_, language, _) = Index.patternsFromIndexName(indexName)
     val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.csv"
     val synonymsResource: URL = getClass.getResource(synonymsPath)
     val synFile = new File(synonymsResource.toString.replaceFirst("file:", ""))
@@ -473,7 +473,7 @@ object TermService extends AbstractDataService {
 
     retrievedTerms
       .keys.flatMap(a => retrievedTerms.keys.map(b => (a, b)))
-      .filter(e => e._1 =/= e._2).map { case(t1, t2) =>
+      .filter{case(t1,t2) => t1 =/= t2}.map { case(t1, t2) =>
       val v1 = retrievedTerms(t1).vector.getOrElse(TextToVectorsTools.emptyVec())
       val v2 = retrievedTerms(t2).vector.getOrElse(TextToVectorsTools.emptyVec())
       TermsDistanceRes(
