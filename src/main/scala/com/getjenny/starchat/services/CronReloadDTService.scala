@@ -5,26 +5,18 @@ package com.getjenny.starchat.services
   */
 
 import akka.actor.{Actor, Props}
-import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
-object CronReloadDTService  {
-  implicit def executionContext: ExecutionContext =
-    SCActorSystem.system.dispatchers.lookup("starchat.blocking-dispatcher")
-  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  private[this] val analyzerService: AnalyzerService.type = AnalyzerService
-  private[this] val dtReloadService: DtReloadService.type = DtReloadService
-  private[this] val systemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
-  private[this] var updateTimestamp: Long = -1
-
-  private[this] val tickMessage: String = "tick"
+object CronReloadDTService extends CronService {
 
   class ReloadAnalyzersTickActor extends Actor {
+    protected[this] var updateTimestamp: Long = -1
+
     def receive: PartialFunction[Any, Unit] = {
       case `tickMessage` =>
         val startUpdateTimestamp: Long = System.currentTimeMillis

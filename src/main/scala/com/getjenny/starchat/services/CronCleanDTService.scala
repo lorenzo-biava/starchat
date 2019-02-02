@@ -5,21 +5,12 @@ package com.getjenny.starchat.services
   */
 
 import akka.actor.{Actor, Props}
-import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.starchat.SCActorSystem
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object CronCleanDTService {
-  implicit val executionContext: ExecutionContext =
-    SCActorSystem.system.dispatchers.lookup("starchat.blocking-dispatcher")
-
-  private[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
-  private[this] val analyzerService: AnalyzerService.type = AnalyzerService
-
-  val tickMessage = "tick"
+object CronCleanDTService extends CronService {
 
   class CleanDecisionTablesTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
