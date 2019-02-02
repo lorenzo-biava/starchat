@@ -116,7 +116,7 @@ object NodeDtLoadingStatusService extends AbstractDataService {
     val nodeDtLoadingStatus = // update operations for the index
       dtUpdateStatusByIndex(dtIndexName = index, minTs = indexPushTimestamp.timestamp).map(_.uuid).toSet
     val updatedSet = aliveNodes & nodeDtLoadingStatus
-    val updateCompleted = updatedSet == aliveNodes
+    val updateCompleted = updatedSet === aliveNodes
 
     ClusterLoadingDtStatus(index = index,
       totalAliveNodes = aliveNodes.length,

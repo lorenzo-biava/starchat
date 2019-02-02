@@ -5,7 +5,7 @@ package com.getjenny.starchat.entities
   */
 
 
-object doctypes {
+object Doctypes {
   val normal: String = "normal" /* normal document, can be returned to the user as response */
   val canned: String = "canned" /* canned document, indexed but retrieved only under particular circumstances*/
   val hidden: String = "hidden" /* hidden document, these are indexed but must not be retrieved,
@@ -25,7 +25,7 @@ case class QADocument(id: String, /* unique id of the document */
                       verified: Boolean = false, /* was the conversation verified by an operator? */
                       topics: Option[String] = None, /* list of topics */
                       dclass: Option[String] = None, /* document classes e.g. group0 group1 etc.*/
-                      doctype: String = doctypes.normal, /* document type */
+                      doctype: String = Doctypes.normal, /* document type */
                       state: Option[String] = None, /* eventual link to any of the state machine states */
                       status: Int = 0 /* tell whether the document is locked for editing or not, useful for
                                               a GUI to avoid concurrent modifications, 0 means no operations pending */

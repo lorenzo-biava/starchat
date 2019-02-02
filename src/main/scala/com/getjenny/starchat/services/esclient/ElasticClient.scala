@@ -42,7 +42,7 @@ trait ElasticClient {
     hostMap.map{ case(k,v) => new HttpHost(InetAddress.getByName(k), v, hostProto) }.toList
 
 
-  object allHostsValid extends HostnameVerifier {
+  object AllHostsValid extends HostnameVerifier {
     def verify(hostname: String, session: SSLSession) = true
   }
 
@@ -50,7 +50,7 @@ trait ElasticClient {
     override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
       val httpBuilder = httpClientBuilder.setSSLContext(sslContext)
       if(disableHostValidation)
-        httpBuilder.setSSLHostnameVerifier(allHostsValid)
+        httpBuilder.setSSLHostnameVerifier(AllHostsValid)
       httpBuilder
     }
   }

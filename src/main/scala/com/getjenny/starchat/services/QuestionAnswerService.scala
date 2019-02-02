@@ -491,7 +491,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
         val doctype : String = source.get("doctype") match {
           case Some(t) => t.asInstanceOf[String]
-          case None => doctypes.normal
+          case None => Doctypes.normal
         }
 
         val state : Option[String] = source.get("state") match {
@@ -831,7 +831,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
       val doctype : String = source.get("doctype") match {
         case Some(t) => t.asInstanceOf[String]
-        case None => doctypes.normal
+        case None => Doctypes.normal
       }
 
       val state : Option[String] = source.get("state") match {
@@ -971,7 +971,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
         val doctype : String = source.get("doctype") match {
           case Some(t) => t.asInstanceOf[String]
-          case None => doctypes.normal
+          case None => Doctypes.normal
         }
 
         val state : Option[String] = source.get("state") match {

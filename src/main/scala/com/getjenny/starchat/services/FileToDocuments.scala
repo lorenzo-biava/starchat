@@ -26,7 +26,12 @@ object FileToDocuments extends JsonSupport {
     implicit val materializer: ActorMaterializer = ActorMaterializer()
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    val fileReader = new FileReader(file)
+    val fileReader = if(file.isAbsolute) {
+      new FileReader(file)
+    } else {
+      throw FileToDocumentsException("file path must be absolute: " + file.getPath)
+    }
+
     lazy val fileEntries = CSVReader.read(input=fileReader, separator=separator,
       quote = '"', skipLines=skipLines)
 
@@ -84,7 +89,12 @@ object FileToDocuments extends JsonSupport {
     implicit val materializer: ActorMaterializer = ActorMaterializer()
     implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    val fileReader = new FileReader(file)
+    val fileReader = if(file.isAbsolute) {
+      new FileReader(file)
+    } else {
+      throw FileToDocumentsException("file path must be absolute: " + file.getPath)
+    }
+
     lazy val fileEntries = CSVReader.read(input=fileReader, separator=separator,
       quote = '"', skipLines=skipLines)
 
@@ -92,7 +102,7 @@ object FileToDocuments extends JsonSupport {
     fileEntries.tail.map(entry => {
       if (entry.length =/= header.length) {
         val message = "file row is not consistent (" + entry.length + "!=" + header.length + ") Row(" + entry.toString + ")"
-        throw new Exception(message)
+        throw FileToDocumentsException(message)
       } else {
         //type,term,associatedTerms,score
         val termType = entry(header("type"))

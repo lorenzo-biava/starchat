@@ -256,3 +256,4 @@ class UserEsService extends AbstractUserService {
     RandomNumbers.string(16)
   }
 }
+

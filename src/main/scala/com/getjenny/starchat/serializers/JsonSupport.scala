@@ -24,7 +24,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       .withFramingRendererFlow(Flow[ByteString].intersperse(start, sep, end).asJava)
       .withParallelMarshalling(parallelism = 8, unordered = true)
 
-  implicit val SearchAlgorithmUnmarshalling:
+  implicit val searchAlgorithmUnmarshalling:
     Unmarshaller[String, SearchAlgorithm.Value] =
     Unmarshaller.strict[String, SearchAlgorithm.Value] { enumValue =>
       SearchAlgorithm.value(enumValue)

@@ -25,7 +25,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.Try
 
-case class IndexKnowledgeBaseException(message: String = "", cause: Throwable = None.orNull)
+case class IndexQuestionAnswerException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 object IndexQuestionAnswer extends JsonSupport {
@@ -52,7 +52,7 @@ object IndexQuestionAnswer extends JsonSupport {
   List[Map[String, String]] = {
     val questionsPath = params.questionsPath match {
       case Some(path) => path
-      case _ => throw IndexKnowledgeBaseException("questions path canno be empty")
+      case _ => throw IndexQuestionAnswerException("questions path cannot be empty")
     }
     val questionsInputStream: Reader =
       new InputStreamReader(new FileInputStream(questionsPath), "UTF-8")
@@ -61,31 +61,41 @@ object IndexQuestionAnswer extends JsonSupport {
 
     val questionsMap = questionsEntries.zipWithIndex.map { case (entry, index) =>
       if (entry.size < 2) {
-        println("Error [questions] with line: " + index)
+        println("Error [questions] line number: " + index)
         (index, false, "", "")
       } else {
         val entry0: String = entry(0)
         val entry1: String = entry(1)
         (index, true, entry0, transform(entry1))
       }
-    }.filter(_._2).map(x => (x._3, x._4)).toMap
+    }.filter{case(_, lineCheck, _, _) => lineCheck}.map { case(_, _, id, text) => (id, text)}.toMap
 
-    val answersInputStream: Reader = new InputStreamReader(new FileInputStream(params.answersPath.get), "UTF-8")
+    val answersPath = params.answersPath match {
+      case Some(path) => path
+      case _ => throw IndexQuestionAnswerException("answers path cannot be empty")
+    }
+
+    val answersInputStream: Reader = new InputStreamReader(new FileInputStream(answersPath), "UTF-8")
     lazy val answersEntries = CSVReader.read(input = answersInputStream, separator = params.separator,
       quote = '"', skipLines = 0)
 
     val answerMap = answersEntries.zipWithIndex.map{ case(entry, index) =>
       if (entry.size < 2) {
-        println("Error [answers] with line: " + index)
+        println("Error [answers] line number: " + index)
         (index, false, "", "")
       } else {
         val entry0: String = entry(0)
         val entry1: String = entry(1)
         (index, true, entry0, transform(entry1))
       }
-    }.filter(_._2).map(x => (x._3, x._4)).toMap
+    }.filter{case(_, lineCheck, _, _) => lineCheck}.map { case(_, _, id, text) => (id, text)}.toMap
 
-    val fileAssoc = new File(params.associationsPath.get)
+    val associationsPath = params.associationsPath match {
+      case Some(path) => path
+      case _ => throw IndexQuestionAnswerException("associations path cannot be empty")
+    }
+
+    val fileAssoc = new File(associationsPath)
     val fileReaderAssoc = new FileReader(fileAssoc)
     lazy val associationEntries = CSVReader.read(input = fileReaderAssoc, separator = params.separator,
       quote = '"', skipLines = 1)
@@ -149,7 +159,7 @@ object IndexQuestionAnswer extends JsonSupport {
         answerScoredTerms = None: Option[List[(String, Double)]],
         topics = None: Option[String],
         dclass = None: Option[String],
-        doctype = doctypes.normal,
+        doctype = Doctypes.normal,
         state = None: Option[String],
       )
 
@@ -165,7 +175,7 @@ object IndexQuestionAnswer extends JsonSupport {
       result.status match {
         case StatusCodes.Created | StatusCodes.OK => println("indexed: " + kbDocument.id +
           " conv(" + kbDocument.conversation + ")" +
-          " position(" + kbDocument.indexInConversation.get + ")" +
+          " position(" + kbDocument.indexInConversation.getOrElse("unknown") + ")" +
           " q_id(" + entry("question_id") + ")" +
           " a_id(" + entry("answer_id") + ")")
         case _ =>
