@@ -14,7 +14,10 @@ object MeanVectorDistances {
   def distanceCosine(textTerms1: TextTerms, textTerms2: TextTerms): Double = {
     val text1V = TextToVectorsTools.meanOfTermsVectors(textTerms1)
     val text2V = TextToVectorsTools.meanOfTermsVectors(textTerms2)
-    val distance = VectorUtils.cosineDist(text1V._1, text2V._1)
-    (1 - distance) * (text1V._2 * text2V._2)
+    (text1V, text2V) match {
+      case ((vector1, mean1), (vector2, mean2)) =>
+        val distance = VectorUtils.cosineDist(vector1, vector2)
+        (1 - distance) * (mean1 * mean2)
+    }
   }
 }
