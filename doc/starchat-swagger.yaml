@@ -613,8 +613,6 @@ paths:
           description: 'invalid input, object invalid, bad request'
         '401':
           description: authorization denied or authentication failed
-        '404':
-          description: document missing
       requestBody:
         content:
           application/json:
@@ -876,7 +874,7 @@ paths:
           description: 'invalid input, object invalid, bad request'
         '401':
           description: authorization denied or authentication failed
-        '404':
+        '202':
           description: an explicitly rewuested state was not found
       requestBody:
         content:
