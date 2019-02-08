@@ -1046,48 +1046,6 @@ paths:
           description: 'invalid input, object invalid, bad request'
         '401':
           description: authorization denied or authentication failed
-    get:
-      tags:
-        - customer
-      summary: get one or more entries from the DecisionTable
-      operationId: get_decisiontable
-      description: get documents from the DecisionTable. The index must exists and the customer has read permissions on it.
-      parameters:
-        - in: path
-          name: index_name
-          description: name of the index
-          required: true
-          schema:
-            type: string
-        - name: id
-          in: query
-          description: IDs of the items to fetch, required if dump is not specified
-          required: false
-          explode: true
-          schema:
-            type: array
-            items:
-              type: string
-        - name: dump
-          in: query
-          description: dump the whole decision table, required if id is not specified
-          required: false
-          explode: true
-          schema:
-            type: array
-            items:
-              type: string              
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SearchDTDocumentsResults'
-        '400':
-          description: 'invalid input, object invalid, bad request'
-        '401':
-          description: authorization denied or authentication failed
   '/<index_name>/decisiontable/search':
     post:
       tags:

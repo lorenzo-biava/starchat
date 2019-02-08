@@ -237,7 +237,7 @@ trait DecisionTableResource extends StarChatResource {
                           val message = "index(" + indexName + ") DecisionTableResource: " +
                             "Unable to complete the request: " + e.getMessage
                           log.error(message = message)
-                          completeResponse(StatusCodes.NotFound,
+                          completeResponse(StatusCodes.Accepted,
                             Option {
                               ResponseRequestOutOperationResult(
                                 ReturnMessageData(code = 111, message = message),
