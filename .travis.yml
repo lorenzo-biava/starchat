@@ -8,7 +8,7 @@ sudo: required
 services:
   - docker
 script:
-  - sudo echo -n "${SELF_SIGNED_CACERT}" | sudo tee /usr/local/share/ca-certificates/ca.crt 1> /dev/null
+  - sudo sudo cp ${HOME}/docker-starchat/certs/getjennyca.crt /usr/local/share/ca-certificates/
   - sudo update-ca-certificates
   - mkdir -p ${HOME}/.sbt/1.2 && echo echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USERNAME}\", \"${SONATYPE_PASSWORD}\")" > ${HOME}/.sbt/1.2/sonatype.sbt
   - sbt ++$TRAVIS_SCALA_VERSION dockerComposeUp
