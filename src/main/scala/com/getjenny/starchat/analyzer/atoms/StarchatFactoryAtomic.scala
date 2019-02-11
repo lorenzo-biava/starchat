@@ -4,7 +4,7 @@ package com.getjenny.starchat.analyzer.atoms
   * Created by mal on 20/02/2017.
   */
 
-import com.getjenny.analyzer.atoms._
+import com.getjenny.analyzer.atoms.{DoubleNumberVariableAtomic, _}
 import com.getjenny.analyzer.interfaces._
 
 class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAtomic, Map[String, String]] {
@@ -35,7 +35,8 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     "checkMonth",
     "checkHour",
     "checkMinute",
-    "double"
+    "doubleNumberVariable",
+    "toDouble"
   )
 
   override def get(name: String, argument: List[String], restrictedArgs: Map[String, String]):
@@ -63,7 +64,8 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     case "checkMonth" => new CheckMonthAtomic(argument, restrictedArgs)
     case "checkHour" => new CheckHourAtomic(argument, restrictedArgs)
     case "checkMinute" => new CheckMinuteAtomic(argument, restrictedArgs)
-    case "double" => new DoubleNumberAtomic(argument, restrictedArgs)
+    case "doubleNumberVariable" => new DoubleNumberVariableAtomic(argument, restrictedArgs)
+    case "toDouble" => new ToDoubleNumberAtomic(argument, restrictedArgs)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }
