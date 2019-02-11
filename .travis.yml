@@ -1,20 +1,17 @@
-dist: xenial
-
 language: scala
 scala:
    - 2.12.8
-
+jdk:
+   - oraclejdk8
 sudo: required
 
 services:
   - docker
 script:
-  - sudo cp ${HOME}/build/GetJenny/starchat/docker-starchat/certs/getjennyca.crt /usr/local/share/ca-certificates/
-  - sudo update-ca-certificates
   - mkdir -p ${HOME}/.sbt/1.2 && echo echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USERNAME}\", \"${SONATYPE_PASSWORD}\")" > ${HOME}/.sbt/1.2/sonatype.sbt
   - sbt ++$TRAVIS_SCALA_VERSION dockerComposeUp
   - nc -z 0.0.0.0 9200 && echo "OK PORT(9200)" || echo "FAILED PORT(9200)"
-  - curl --cacert /usr/local/share/ca-certificates/getjennyca.crt -v -k https://0.0.0.0:9200 && echo "OK PORT(9200)" || echo "FAILED PORT(9200)"
+  - curl -v -k https://0.0.0.0:9200 && echo "OK PORT(9200)" || echo "FAILED PORT(9200)"
   - sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport codacyCoverage
   - sbt ++$TRAVIS_SCALA_VERSION dockerComposeStop
 notifications:
