@@ -5,6 +5,11 @@ jdk:
    - oraclejdk8
 sudo: required
 
+addons:
+  apt:
+    packages:
+      - libssl1.0.0
+
 services:
   - docker
 script:
