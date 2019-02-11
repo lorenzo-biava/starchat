@@ -8,7 +8,8 @@ sudo: required
 services:
   - docker
 script:
-  - sudo echo ${SELF_SIGNED_CACERT} > /usr/local/share/ca-certificates/ca.crt && update-ca-certificates
+  - sudo echo ${SELF_SIGNED_CACERT} | sudo tee /usr/local/share/ca-certificates/ca.crt 1> /dev/null
+  - sudo update-ca-certificates
   - mkdir -p ${HOME}/.sbt/1.2 && echo echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USERNAME}\", \"${SONATYPE_PASSWORD}\")" > ${HOME}/.sbt/1.2/sonatype.sbt
   - sbt ++$TRAVIS_SCALA_VERSION dockerComposeUp
   - nc -z 0.0.0.0 9200 && echo "OK PORT(9200)" || echo "FAILED PORT(9200)"
