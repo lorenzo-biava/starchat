@@ -1,16 +1,15 @@
 dist: xenial
-
-language: scala
-scala:
-   - 2.12.8
-jdk:
-   - oraclejdk9
-sudo: required
-
 addons:
   apt:
     packages:
       - libssl1.0.0
+
+sudo: required
+
+language: scala
+
+scala:
+   - 2.12.8
 
 services:
   - docker
