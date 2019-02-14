@@ -4,12 +4,12 @@ package com.getjenny.starchat.analyzer.atoms
   * Created by mal on 20/02/2017.
   */
 
-import com.getjenny.analyzer.atoms.{DoubleNumberVariableAtomic, _}
+import com.getjenny.analyzer.atoms.{CheckTimestampVariableAtomic, DoubleNumberVariableAtomic, _}
 import com.getjenny.analyzer.interfaces._
 
 class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAtomic, Map[String, String]] {
 
-  override val operations = Set(
+  override val operations: Set[String] = Set(
     "keyword",
     "regex",
     "search",
@@ -36,7 +36,10 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     "checkHour",
     "checkMinute",
     "doubleNumberVariable",
-    "toDouble"
+    "toDouble",
+    "checkTimestampVariable",
+    "isServiceOpen",
+    "setServiceOpening"
   )
 
   override def get(name: String, argument: List[String], restrictedArgs: Map[String, String]):
@@ -66,6 +69,9 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     case "checkMinute" => new CheckMinuteAtomic(argument, restrictedArgs)
     case "doubleNumberVariable" => new DoubleNumberVariableAtomic(argument, restrictedArgs)
     case "toDouble" => new ToDoubleNumberAtomic(argument, restrictedArgs)
+    case "checkTimestampVariable" => new CheckTimestampVariableAtomic(argument, restrictedArgs)
+    case "isServiceOpen" => new IsServiceOpenAtomic(argument, restrictedArgs)
+    case "setServiceOpening" => new SetServiceOpeningAtomic(argument, restrictedArgs)
     case _ => throw ExceptionAtomic("Atom \'" + name + "\' not found")
   }
 }
