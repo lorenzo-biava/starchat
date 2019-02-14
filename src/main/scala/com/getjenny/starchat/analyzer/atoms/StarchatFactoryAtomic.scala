@@ -4,7 +4,7 @@ package com.getjenny.starchat.analyzer.atoms
   * Created by mal on 20/02/2017.
   */
 
-import com.getjenny.analyzer.atoms.{CheckTimestampVariableAtomic, DoubleNumberVariableAtomic, _}
+import com.getjenny.analyzer.atoms._
 import com.getjenny.analyzer.interfaces._
 
 class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAtomic, Map[String, String]] {
