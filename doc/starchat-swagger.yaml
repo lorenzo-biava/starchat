@@ -1962,7 +1962,7 @@ paths:
           content:
             application/json: 
               schema:
-                $ref: '#/components/schemas/KBDocument'
+                $ref: '#/components/schemas/QADocument'
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
@@ -1995,7 +1995,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/KBDocument'
+              $ref: '#/components/schemas/QADocument'
         description: QA document request             
       responses:
         '200':
@@ -2046,7 +2046,7 @@ paths:
           content:
             application/json: 
               schema:
-                $ref: '#/components/schemas/SearchKBDocumentsResults'
+                $ref: '#/components/schemas/SearchQADocumentsResults'
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
@@ -2144,7 +2144,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/KBDocumentUpdate'
+              $ref: '#/components/schemas/QADocumentUpdate'
         description: QA entry to create
   '/<index_name>/<qa_route>/search':          
     post:
@@ -2195,7 +2195,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/KBDocumentSearch'
+              $ref: '#/components/schemas/QADocumentSearch'
         description: QA document search entity       
   '/<index_name>/updateTerms/<qa_route>':          
     put:
@@ -2563,7 +2563,7 @@ components:
           example: 10
         created:
           type: boolean
-          description: wether the document was created or not
+          description: whether the document was created or not
           example: true
     IndexDocumentListResult:
       type: object
@@ -2732,7 +2732,7 @@ components:
           example: 'keyword("password")'
         build:
           type: boolean
-          description: wether the analyzer was well formed and successfully compiled
+          description: whether the analyzer was well formed and successfully compiled
           example: true
         executionOrder:
           type: number
@@ -2802,7 +2802,7 @@ components:
           example: 13
         created:
           type: boolean
-          description: wether the document was created or just updated
+          description: whether the document was created or just updated
           example: false
     UpdateDocumentListResult:
       type: object
@@ -3001,7 +3001,7 @@ components:
           example: 2
         found: 
           type: boolean
-          description: wether the document was found or not 
+          description: whether the document was found or not 
           example: true
     DeleteDocumentsResult:
       type: object
@@ -3153,7 +3153,7 @@ components:
           example: "535096c7-5e8c-4570-8861-979d03f28774"
         alive:
           type: boolean
-          description: wether or not the node is alive (registered a periodic alive timestamp)
+          description: whether or not the node is alive (registered a periodic alive timestamp)
           example: true
         timestamp:
           type: number
@@ -3342,7 +3342,7 @@ components:
                   description: the result dictionary, the key is language ISO 639-1 code
                   additionalProperties:
                     type: boolean
-                    description: wether the language is supported or not
+                    description: whether the language is supported or not
                   example: {'en': true}
     LanguageGuesserRequestOut:
       type: object
@@ -3367,7 +3367,7 @@ components:
           example: MEDIUM
         enoughText:
           type: boolean
-          description: wether the model had enough text for the guess
+          description: whether the model had enough text for the guess
           example: false
     TokenizerQueryRequest:
       type: object
@@ -4066,7 +4066,74 @@ components:
         - canned
         - hidden
         - decisiontable
-    KBDocument:
+    escalated:
+      type: string
+      description: >-
+        an enumerated value which indicates whether the conversation was escalated to a human, completed by StarChat
+        values:
+        - transferred -> can be returned to the user as response
+        - completed -> a conversation carried on completely by StarChat. This value is not reliable, because the customer could leave the chat or stop typing.
+        - unspecified -> usually in the middle of a conversation this value is not set, it is known at the end of the conversation or when the user requests to escalate.
+      example: transferred
+      enum:
+        - transferred
+        - completed
+        - unspecified
+    answered:
+      type: string
+      description: >-
+        an enumerated value which indicates whether or not StarChat provided an answer for the question.
+        values:
+        - answered -> the answer was provided
+        - unanswered -> Question for which no answer was provided ii.e. StarChat returns empty list or 404 or the agent didn’t answer
+        - unspecified -> when the information is not applicable
+      example: answered
+      enum:
+        - answered
+        - unanswered
+        - unspecified
+    triggered:
+      type: string
+      description: >-
+        an enumerated value which indicates whether the state was triggered via actions (e.g. via buttons, or input validation).
+        values:
+        - button -> the answer was triggered by a button
+        - action -> the answer was triggered by an action
+        - unspecified -> usually this information is not applicable except in the other two cases mentioned before.
+      example: button
+      enum:
+        - button
+        - action
+        - unspecified
+    followup:
+      type: string
+      description: >-
+        an enumerated value which depends on the time of day and status of customer service during which happened a followup
+        values:
+        - followup -> follow up
+        - followupByTime -> follow up dependant on the time of the day
+        - unspecified -> not applicable
+      example: followupByTime
+      enum:
+        - button
+        - action
+        - unspecified
+    agent:
+      type: string
+      description: >-
+        tell if the answer was provided by a human agent or by chatbot (StarChat), this is an enumerated field with the following values
+        values:
+        - humanReply -> Answer provided by an agent (currently  information available only  from Giosg)
+        - humanPicked -> When an agent chooses and answer suggestion provided by smartLayer
+        - starChat: when -> the answer was provided by StarChat
+        - unspecified -> when the information is unset/not applicable
+      example: humanReply
+      enum:
+        - humanReply
+        - humanPicked
+        - starChat
+        - unspecified
+    QADocument:
       type: object
       required:
         - id
@@ -4134,7 +4201,7 @@ components:
             example: {"term": "reset", "score": 0.2121}        
         verified:
           type: boolean
-          description: wether the conversation was verified by an operator or not
+          description: whether the conversation was verified by an operator or not
           default: false
           example: true
         topics:
@@ -4162,7 +4229,51 @@ components:
           description: >- 
             tell whether the document is locked for editing or not, useful for a GUI to avoid concurrent modifications, 0 means no operations pending
           example: 0
-    KBDocumentUpdate:
+        escalated:
+          type: string
+          default: unspecified
+          example: completed
+          $ref: '#/components/schemas/escalated'
+        answered:
+          type: string
+          default: unspecified
+          example: answered
+          $ref: '#/components/schemas/answered'
+        triggered:
+          type: string
+          default: unspecified
+          example: button
+          $ref: '#/components/schemas/triggered'
+        followup:
+          type: string
+          default: unspecified
+          example: followup
+          $ref: '#/components/schemas/followup'
+        feedback:
+          type: string
+          description: A feedback provided by the user
+          example: Thanks I solved my problem,  you were very helpful
+        feedbackScore:
+          type: number
+          format: double
+          description: a field to store the score provided by the user
+          example: 4.0
+        algorithmScore:
+          type: number
+          format: double
+          description: a field to store the score calculated by an algorithm i.e. a sentiment analysis tool (for future use)
+          example: 2.0
+        start:
+          type: boolean
+          description: event determined when a start state is loaded
+          example: true
+          default: false
+        timestamp:
+          type: number
+          format: long
+          description: record insertion timestamp
+          example: 1549283768918
+    QADocumentUpdate:
       type: object
       properties:
         conversation:
@@ -4218,7 +4329,7 @@ components:
             example: {"term": "reset", "score": 0.2121}        
         verified:
           type: boolean
-          description: wether the conversation was verified by an operator or not
+          description: whether the conversation was verified by an operator or not
           default: false
           example: true
         topics:
@@ -4246,7 +4357,51 @@ components:
           description: >- 
             tell whether the document is locked for editing or not, useful for a GUI to avoid concurrent modifications, 0 means no operations pending
           example: 0
-    SearchKBDocument:
+        escalated:
+          type: string
+          default: unspecified
+          example: completed
+          $ref: '#/components/schemas/escalated'
+        answered:
+          type: string
+          default: unspecified
+          example: answered
+          $ref: '#/components/schemas/answered'
+        triggered:
+          type: string
+          default: unspecified
+          example: button
+          $ref: '#/components/schemas/triggered'
+        followup:
+          type: string
+          default: unspecified
+          example: followup
+          $ref: '#/components/schemas/followup'
+        feedback:
+          type: string
+          description: A feedback provided by the user
+          example: Thanks I solved my problem,  you were very helpful
+        feedbackScore:
+          type: number
+          format: double
+          description: a field to store the score provided by the user
+          example: 4.0
+        algorithmScore:
+          type: number
+          format: double
+          description: a field to store the score calculated by an algorithm i.e. a sentiment analysis tool (for future use)
+          example: 2.0
+        start:
+          type: boolean
+          description: event determined when a start state is loaded
+          example: true
+          default: false
+        timestamp:
+          type: number
+          format: long
+          description: record insertion timestamp
+          example: 1549283768918
+    SearchQADocument:
       type: object
       required:
         - score
@@ -4258,8 +4413,8 @@ components:
           description: search score
           example: 0.0
         document:
-          $ref: '#/components/schemas/KBDocument'
-    SearchKBDocumentsResults:
+          $ref: '#/components/schemas/QADocument'
+    SearchQADocumentsResults:
       type: object  
       required:
         - total
@@ -4280,8 +4435,8 @@ components:
         hits: 
           type: array
           items:
-            $ref: '#/components/schemas/SearchKBDocument'
-    KBDocumentSearch:
+            $ref: '#/components/schemas/SearchQADocument'
+    QADocumentSearch:
       type: object
       properties:
         from:
@@ -4352,6 +4507,50 @@ components:
           format: integer
           description: search documents with a specific state
           example: 0
+        escalated:
+          type: string
+          default: unspecified
+          example: completed
+          $ref: '#/components/schemas/escalated'
+        answered:
+          type: string
+          default: unspecified
+          example: answered
+          $ref: '#/components/schemas/answered'
+        triggered:
+          type: string
+          default: unspecified
+          example: button
+          $ref: '#/components/schemas/triggered'
+        followup:
+          type: string
+          default: unspecified
+          example: followup
+          $ref: '#/components/schemas/followup'
+        feedback:
+          type: string
+          description: A feedback provided by the user
+          example: Thanks I solved my problem,  you were very helpful
+        feedbackScore:
+          type: number
+          format: double
+          description: a field to store the score provided by the user
+          example: 4.0
+        algorithmScore:
+          type: number
+          format: double
+          description: a field to store the score calculated by an algorithm i.e. a sentiment analysis tool (for future use)
+          example: 2.0
+        start:
+          type: boolean
+          description: event determined when a start state is loaded
+          example: true
+          default: false
+        timestamp:
+          type: number
+          format: long
+          description: record insertion timestamp
+          example: 1549283768918
         random:
           type: boolean
           description: add some random sampled document in the returned document list

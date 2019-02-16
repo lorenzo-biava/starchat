@@ -54,10 +54,7 @@ object IndexManagementService extends AbstractDataService {
       indexSuffix = elasticClient.kbIndexSuffix),
     JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/term.json",
       updatePath = "/index_management/json_index_spec/general/update/term.json",
-      indexSuffix = elasticClient.termIndexSuffix),
-    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/general/feedback.json",
-      updatePath = "/index_management/json_index_spec/general/update/feedback.json",
-      indexSuffix = elasticClient.feedbackIndexSuffix)
+      indexSuffix = elasticClient.termIndexSuffix)
   )
 
   def create(indexName: String,
