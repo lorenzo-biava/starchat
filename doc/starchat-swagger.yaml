@@ -2169,17 +2169,7 @@ paths:
             enum:
               - conversation_logs
               - knowledgebase
-              - prior_data            
-        - in: path
-          name: id
-          description: document id to update
-          required: true
-          schema:
-            type: string
-            enum:
-              - conversation_logs
-              - knowledgebase
-              - prior_data            
+              - prior_data
       responses:
         '200':
           description: item updated
