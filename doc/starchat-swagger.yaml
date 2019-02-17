@@ -2056,7 +2056,9 @@ paths:
         - customer
       summary: delete one or more entries from the QA table
       operationId: delete_qa_route
-      description: delete documents from the QA table. The index must exists and the customer has write permissions on it. If no id is specified all documents will be deleted.
+      description: >-
+        delete documents from the QA table. The index must exists and the customer has write permissions on it.
+        If no ids are specified all documents will be deleted.
       parameters:
         - in: path
           name: index_name
@@ -2073,17 +2075,13 @@ paths:
             enum:
               - conversation_logs
               - knowledgebase
-              - prior_data            
-        - name: id
-          in: query
-          description: >- 
-            IDs of the items to delete
-          required: true
-          explode: true
-          schema:
-            type: array
-            items:
-              type: string
+              - prior_data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocsIds'
+        description: list of documents id to delete
       responses:
         '200':
           description: success
@@ -2150,9 +2148,11 @@ paths:
     post:
       tags:
         - customer
-      summary: update a document in the QA table
-      operationId: put_qa_route
-      description: update a document in the QA table. The index must exists and the customer has read permissions on it.
+      summary: search (or count) documents on the QA table
+      operationId: post_qa_route
+      description: >-
+        Search documents in the QA table. The index must exists and the customer has read permissions on it.
+        To just count the matching documents set the size parameter to 0, no documents will be returned.
       parameters:
         - in: path
           name: index_name
@@ -2186,7 +2186,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateDocumentResult'
+                $ref: '#/components/schemas/SearchQADocumentsResults'
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
@@ -2765,7 +2765,12 @@ components:
     SearchDTDocumentsResults:
       type: object
       properties:
-        total:
+        totalHits:
+          type: number
+          format: long
+          description: the number of documents matching the query
+          example: 101121
+        hitsCount:
           type: number
           format: integer
           description: the number of entries
@@ -4055,11 +4060,9 @@ components:
     doctypes:
       type: string
       description: >-
-        document type
-        normal -> can be returned to the user as response
-        canned -> canned document, indexed but retrieved only under particular circumstances 
-        hidden -> hidden document, these are indexed but must not be retrieved, use this type for data used just to improve statistic for data retrieval
-        decisiontable -> does not contains conversation data, used to redirect the conversation to any state of the decision tree
+        document type: (normal -> can be returned to the user as response ; canned -> canned document, indexed but retrieved only under particular circumstances
+        hidden -> hidden document, these are indexed but must not be retrieved, use this type for data used just to improve statistic for data retrieval ;
+        decisiontable -> does not contains conversation data, used to redirect the conversation to any state of the decision tree)
       example: normal
       enum:
         - normal
@@ -4069,11 +4072,10 @@ components:
     escalated:
       type: string
       description: >-
-        an enumerated value which indicates whether the conversation was escalated to a human, completed by StarChat
-        values:
-        - transferred -> can be returned to the user as response
-        - completed -> a conversation carried on completely by StarChat. This value is not reliable, because the customer could leave the chat or stop typing.
-        - unspecified -> usually in the middle of a conversation this value is not set, it is known at the end of the conversation or when the user requests to escalate.
+        an enumerated value which indicates whether the conversation was escalated to a human, completed by StarChat, values:
+        (transferred -> can be returned to the user as response ;
+        completed -> a conversation carried on completely by StarChat. This value is not reliable, because the customer could leave the chat or stop typing. ;
+        unspecified -> usually in the middle of a conversation this value is not set, it is known at the end of the conversation or when the user requests to escalate.)
       example: transferred
       enum:
         - transferred
@@ -4083,10 +4085,9 @@ components:
       type: string
       description: >-
         an enumerated value which indicates whether or not StarChat provided an answer for the question.
-        values:
-        - answered -> the answer was provided
-        - unanswered -> Question for which no answer was provided ii.e. StarChat returns empty list or 404 or the agent didn’t answer
-        - unspecified -> when the information is not applicable
+        Values: (answered -> the answer was provided ;
+        unanswered -> Question for which no answer was provided ii.e. StarChat returns empty list or 404 or the agent didn’t answer ;
+        unspecified -> when the information is not applicable)
       example: answered
       enum:
         - answered
@@ -4096,10 +4097,8 @@ components:
       type: string
       description: >-
         an enumerated value which indicates whether the state was triggered via actions (e.g. via buttons, or input validation).
-        values:
-        - button -> the answer was triggered by a button
-        - action -> the answer was triggered by an action
-        - unspecified -> usually this information is not applicable except in the other two cases mentioned before.
+        Values: (button -> the answer was triggered by a button ; action -> the answer was triggered by an action ;
+        unspecified -> usually this information is not applicable except in the other two cases mentioned before.)
       example: button
       enum:
         - button
@@ -4109,24 +4108,20 @@ components:
       type: string
       description: >-
         an enumerated value which depends on the time of day and status of customer service during which happened a followup
-        values:
-        - followup -> follow up
-        - followupByTime -> follow up dependant on the time of the day
-        - unspecified -> not applicable
+        values: (followup -> follow up ; followupByTime -> follow up dependant on the time of the day ; unspecified -> not applicable)
       example: followupByTime
       enum:
-        - button
-        - action
+        - followup
+        - followupByTime
         - unspecified
     agent:
       type: string
       description: >-
         tell if the answer was provided by a human agent or by chatbot (StarChat), this is an enumerated field with the following values
-        values:
-        - humanReply -> Answer provided by an agent (currently  information available only  from Giosg)
-        - humanPicked -> When an agent chooses and answer suggestion provided by smartLayer
-        - starChat: when -> the answer was provided by StarChat
-        - unspecified -> when the information is unset/not applicable
+        Values: (humanReply -> Answer provided by an agent (currently  information available only  from Giosg) ;
+        humanPicked -> When an agent chooses and answer suggestion provided by smartLayer ;
+        starChat: when -> the answer was provided by StarChat ;
+        unspecified -> when the information is unset/not applicable)
       example: humanReply
       enum:
         - humanReply
@@ -4456,6 +4451,14 @@ components:
           format: float
           description: a threshold which exclude the results with a too low score 
           default: 0
+        sortByConvIdIdx:
+          type: boolean
+          description: >-
+            whether to sort the documents by ConversationID and index in conversation or if sort by score.
+            Note that the score is greater than 0 only for text queries, fields matching will have no
+            contribution to scoring i.e. fields matching only queries will return 0 score for all the documents.
+          example: true
+          default: false
         question:
           type: string
           description: a text to be matched with the question field
@@ -4508,49 +4511,68 @@ components:
           description: search documents with a specific state
           example: 0
         escalated:
-          type: string
-          default: unspecified
-          example: completed
-          $ref: '#/components/schemas/escalated'
+          type: array
+          description: values to match (search documents with at least one value)
+          items:
+            $ref: '#/components/schemas/escalated'
+          example: [ "completed" ]
         answered:
-          type: string
-          default: unspecified
-          example: answered
-          $ref: '#/components/schemas/answered'
+          type: array
+          description: values to match (search documents with at least one value)
+          items:
+            $ref: '#/components/schemas/answered'
+          example: [ "answered" ]
         triggered:
-          type: string
-          default: unspecified
-          example: button
-          $ref: '#/components/schemas/triggered'
+          type: array
+          description: values to match (search documents with at least one value)
+          items:
+            $ref: '#/components/schemas/triggered'
+          example: [ "button" ]
         followup:
-          type: string
-          default: unspecified
-          example: followup
+          type: array
+          description: values to match (search documents with at least one value)
+          items:
           $ref: '#/components/schemas/followup'
+          example: [ "followup" ]
         feedback:
           type: string
           description: A feedback provided by the user
           example: Thanks I solved my problem,  you were very helpful
-        feedbackScore:
+        feedbackScoreGte:
           type: number
           format: double
-          description: a field to store the score provided by the user
+          description: min score value, if not specified -> no lower bound
+          example: 1.0
+        feedbackScoreLte:
+          type: number
+          format: double
+          description: max score value, if not specified -> no upper bound
+          example: 5.0
+        algorithmScoreGte:
+          type: number
+          format: double
+          description: min score value, if not specified -> no lower bound
           example: 4.0
-        algorithmScore:
+        algorithmScoreLte:
           type: number
           format: double
-          description: a field to store the score calculated by an algorithm i.e. a sentiment analysis tool (for future use)
-          example: 2.0
+          description: max score value, if not specified -> no upper bound
+          example: 5.0
         start:
           type: boolean
           description: event determined when a start state is loaded
           example: true
           default: false
-        timestamp:
+        timestampGte:
           type: number
           format: long
-          description: record insertion timestamp
-          example: 1549283768918
+          description: record insertion timestamp, if not specified no lower bound
+          example: 1549283700000
+        timestampLte:
+          type: number
+          format: long
+          description: record insertion timestamp, if not specified no upper bound
+          example: 1549283900000
         random:
           type: boolean
           description: add some random sampled document in the returned document list

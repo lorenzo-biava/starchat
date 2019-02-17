@@ -7,6 +7,8 @@ package com.getjenny.starchat.entities
 case class QADocumentSearch(from: Option[Int],
                             size: Option[Int],
                             minScore: Option[Float],
+                            sortByConvIdIdx: Option[Boolean],
+                            random: Option[Boolean],
                             question: Option[String],
                             questionScoredTerms: Option[String],
                             indexInConversation: Option[Int],
@@ -18,6 +20,5 @@ case class QADocumentSearch(from: Option[Int],
                             topics: Option[String],
                             dclass: Option[String],
                             state: Option[String],
-                            status: Option[Int],
-                            random: Option[Boolean]
+                            status: Option[Int]
                            )

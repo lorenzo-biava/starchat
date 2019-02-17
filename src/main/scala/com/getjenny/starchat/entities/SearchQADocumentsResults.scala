@@ -8,6 +8,7 @@ import scala.collection.immutable.List
 
 case class SearchQADocument(score: Float, document: QADocument)
 
-case class SearchQADocumentsResults(total: Int = 0,
+case class SearchQADocumentsResults(totalHits: Long = 0,
+                                    hitsCount: Long = 0,
                                     maxScore: Float = 0.0f,
                                     hits: List[SearchQADocument] = List.empty[SearchQADocument])

@@ -27,6 +27,7 @@ case class QADocument(id: String, /* unique id of the document */
                       dclass: Option[String] = None, /* document classes e.g. group0 group1 etc.*/
                       doctype: String = Doctypes.normal, /* document type */
                       state: Option[String] = None, /* eventual link to any of the state machine states */
+                      timestamp: Option[Long] = None, /* indexing timestamp */
                       status: Int = 0 /* tell whether the document is locked for editing or not, useful for
                                               a GUI to avoid concurrent modifications, 0 means no operations pending */
                    )
