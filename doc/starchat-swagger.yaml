@@ -1,11 +1,11 @@
 openapi: 3.0.0
 servers:
-  - url: 'https://virtserver.swaggerhub.com/angleto/StarChat/v5.0'
+  - url: 'https://virtserver.swaggerhub.com/angleto/StarChat/v5.1'
 info:
   description: An Open Source, scalable conversational engine for B2B applications. You can find
     out more about StarChat at [starchat.ai](http://starchat.ai) or on
     [github GetJenny/starchat](https://github.com/GetJenny/starchat).
-  version: "v5.0"
+  version: "v5.1"
   title: StarChat APIs
   contact:
     email: angelo@getjenny.com
