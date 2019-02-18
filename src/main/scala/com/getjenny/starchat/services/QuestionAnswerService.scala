@@ -8,7 +8,6 @@ import akka.event.{Logging, LoggingAdapter}
 import com.getjenny.analyzer.util.{RandomNumbers, Time}
 import com.getjenny.starchat.SCActorSystem
 import com.getjenny.starchat.entities._
-import com.getjenny.starchat.services.DtReloadService.elasticClient
 import com.getjenny.starchat.services.esclient.QuestionAnswerElasticClient
 import com.getjenny.starchat.utils.Index
 import org.apache.lucene.search.join._
@@ -28,10 +27,9 @@ import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
 import org.elasticsearch.search.aggregations.metrics.sum.Sum
 import org.elasticsearch.search.builder.SearchSourceBuilder
-import org.elasticsearch.search.sort.{SortBuilder, SortOrder}
+import org.elasticsearch.search.sort.{FieldSortBuilder, ScoreSortBuilder, SortOrder}
 import scalaz.Scalaz._
-import org.elasticsearch.search.sort.ScoreSortBuilder
-import org.elasticsearch.search.sort.FieldSortBuilder
+
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.collection.mutable

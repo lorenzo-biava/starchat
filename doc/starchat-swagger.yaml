@@ -2149,7 +2149,7 @@ paths:
       tags:
         - customer
       summary: search (or count) documents on the QA table
-      operationId: post_qa_route
+      operationId: post_qa_route_search
       description: >-
         Search documents in the QA table. The index must exists and the customer has read permissions on it.
         To just count the matching documents set the size parameter to 0, no documents will be returned.
@@ -2186,7 +2186,49 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/QADocumentSearch'
-        description: QA document search entity       
+        description: QA document search entity
+  '/<index_name>/<qa_route>/conversations':
+    post:
+      tags:
+        - customer
+      summary: retrieve conversations on the QA table
+      operationId: post_qa_route_conversations
+      description: >-
+        given a list of conversation IDs retrieve the conversations from a QA table
+      parameters:
+        - in: path
+          name: index_name
+          description: name of the index
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: qa_route
+          description: question anser route
+          required: true
+          schema:
+            type: string
+            enum:
+              - conversation_logs
+              - knowledgebase
+              - prior_data
+      responses:
+        '200':
+          description: item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversations'
+        '400':
+          description: 'invalid input, object invalid, bad request'
+        '401':
+          description: authorization denied or authentication failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocsIds'
+        description: The list of conversation IDs
   '/<index_name>/updateTerms/<qa_route>':          
     put:
       tags:
@@ -2755,12 +2797,7 @@ components:
     SearchDTDocumentsResults:
       type: object
       properties:
-        totalHits:
-          type: number
-          format: long
-          description: the number of documents matching the query
-          example: 101121
-        hitsCount:
+        total:
           type: number
           format: integer
           description: the number of entries
@@ -4399,19 +4436,57 @@ components:
           example: 0.0
         document:
           $ref: '#/components/schemas/QADocument'
-    SearchQADocumentsResults:
-      type: object  
+    Conversation:
+      type: object
+      required:
+        - count
+        - docs
+      properties:
+        count:
+          type: number
+          format: integer
+          description: number of documents in the conversation
+          default: 0
+          example: 1
+        docs:
+          type: array
+          items:
+            $ref: '#/components/schemas/QADocument'
+    Conversations:
+      type: object
       required:
         - total
-        - maxScore
-        - hits
+        - conversations
       properties:
         total:
           type: number
           format: integer
-          description: number of documents returned
+          description: number of conversations returned
           default: 0
           example: 1
+        conversations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+    SearchQADocumentsResults:
+      type: object  
+      required:
+        - totalHits
+        - hitsCount
+        - maxScore
+        - hits
+      properties:
+        totalHits:
+          type: number
+          format: long
+          description: the number of documents matching the query
+          example: 101121
+        hitsCount:
+          type: number
+          format: integer
+          description: number of documents returned
+          default: 0
+          example: 10
         maxScore:
           type: number
           format: float
