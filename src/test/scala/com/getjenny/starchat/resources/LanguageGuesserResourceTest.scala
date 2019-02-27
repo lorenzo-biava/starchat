@@ -62,16 +62,13 @@ implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds
     }
   }
 
-  val languages = List(
-    ("en", "guess the language of this sentence"),
-    ("fi", "arvaa tämän lauseen kieli"),
-    ("sv", "gissa språket i denna mening"),
-    ("et", "vist selle lause keelt"),
-    ("no", "gjett språket i denne setningen"),
-    ("it", "indovina la lingua di questa frase"),
-    ("ar", "تخمين لغة هذه الجملة"),
-    ("ru", "угадать язык этого предложения")
-  )
+
+  val input_file = getClass.getResourceAsStream("/test_data/language_guesser_test_parameters.csv")
+  val input_data = scala.io.Source.fromInputStream(input_file, "UTF-8").getLines
+  val languages: List[(String, String)] = input_data.toList.tail.map(line => {
+    val split = line.split(",")
+    (split(0), split(1))
+  })
 
   for((language, sentence) <- languages) {
     it should {
@@ -112,7 +109,6 @@ implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds
     }
   }
 
-  // delete indeces
   it should {
     "return an HTTP code 200 when deleting an index" in {
       Delete(s"/index_getjenny_english_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
