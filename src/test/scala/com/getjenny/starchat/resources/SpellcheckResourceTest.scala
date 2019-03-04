@@ -104,12 +104,15 @@ class SpellcheckResourceTest extends WordSpec with Matchers with ScalatestRouteT
       Post(s"/index_getjenny_english_0/spellcheck/terms", spellcheckRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[SpellcheckTermsResponse]
-        val token = response.tokens.find(_.text == "misplelled")
-        token.isDefined should be (true)
-        token.get.options.head.text should be ("mispelled")
+        response.tokens.map(_.text) should contain only ("is", "this", "text", "misplelled")
+        response.tokens.find(_.text === "misplelled").headOption.getOrElse(fail).options match {
+          case SpellcheckTokenSuggestions(_, _, text) :: Nil => text should be ("mispelled")
+          case _ => fail("Spellcheck didn't correct misplelled")
+        }
       }
     }
   }
+
   it should {
     val spellcheckRequest: SpellcheckTermsRequest = SpellcheckTermsRequest(
       text = "is this text misplelled",
@@ -172,7 +175,10 @@ class SpellcheckResourceTest extends WordSpec with Matchers with ScalatestRouteT
         status shouldEqual StatusCodes.OK
         val response = responseAs[DeleteDocumentsResult]
         response.data.size should be (1)
-        response.data.head.id should be ("0")
+        response.data.headOption match {
+          case Some(result) => result.id should be ("0")
+          case None => fail
+        }
       }
     }
   }
