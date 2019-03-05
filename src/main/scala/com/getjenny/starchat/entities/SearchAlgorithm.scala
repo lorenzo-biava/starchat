@@ -20,6 +20,7 @@ object SearchAlgorithm extends Enumeration {
   STEM_NGRAM3,
   NGRAM4,
   STEM_NGRAM4,
-  DEFAULT = Value
+  AUTO,
+  DEFAULT = AUTO
   def value(algorithm: String) = values.find(_.toString === algorithm).getOrElse(DEFAULT)
 }

@@ -26,7 +26,7 @@ trait DecisionTableResource extends StarChatResource {
   private[this] val responseService: ResponseService.type = ResponseService
   private[this] val dtReloadService: DtReloadService.type = DtReloadService
 
-  def decisionTableRoutesAll: Route = handleExceptions(routesExceptionHandler) {
+  def decisionTableRoutesAllRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix(indexRegex ~ Slash ~ "decisiontable" ~ Slash ~ "all") { indexName =>
       pathEnd {
         delete {

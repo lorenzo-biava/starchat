@@ -80,11 +80,13 @@ paths:
         - in: query
           name: indexSuffix
           description: >-
-            the index suffix, if not specified the istance related indices will be updated. The suffixes can be specified in the configuration file, by default they can be -> logs_data, prior_data, question_answer, state, term
+            the index suffix, if not specified the instance related indices will be updated.
+            The suffixes can be specified in the configuration file,
+            by default they can be -> logs_data, prior_data, question_answer, state, term
           example: state
           required: false
           schema:
-            type: string          
+            type: string
       responses:
         '201':
           description: index successfully created
@@ -151,7 +153,7 @@ paths:
           example: state
           required: false
           schema:
-            type: string            
+            type: string
       responses:
         '200':
           description: request successfully processed
@@ -162,7 +164,7 @@ paths:
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed          
+          description: authorization denied or authentication failed
   '/{index_name}/index_management/open':
     post:
       tags:
@@ -176,7 +178,7 @@ paths:
           description: "the name of the index: it must have the following format index_<organization>_<language>_<arbitrary suffix> e.g. index_getjenny_italian_usecase0"
           required: true
           schema:
-            type: string      
+            type: string
         - in: query
           name: indexSuffix
           description: the index suffix, if not specified all the instance related tables will be open
@@ -194,7 +196,7 @@ paths:
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed          
+          description: authorization denied or authentication failed
   '/{index_name}/index_management/close':
     post:
       tags:
@@ -208,7 +210,7 @@ paths:
           description: "the name of the index: it must have the following format index_<organization>_<language>_<arbitrary suffix> e.g. index_getjenny_italian_usecase0"
           required: true
           schema:
-            type: string      
+            type: string
         - in: query
           name: indexSuffix
           description: the index suffix, if not specified all the instance related tables will be closed
@@ -240,14 +242,14 @@ paths:
           description: "the name of the index: it must have the following format index_<organization>_<language>_<arbitrary suffix> e.g. index_getjenny_italian_usecase0"
           required: true
           schema:
-            type: string      
+            type: string
         - in: query
           name: indexSuffix
           description: the index suffix, if not specified all the instance related tables will be refreshed
           example: action
           required: false
           schema:
-            type: string      
+            type: string
       responses:
         '200':
           description: index successfully refreshed
@@ -259,7 +261,7 @@ paths:
           description: 'invalid input, object invalid, bad request'
         '401':
           description: authorization denied or authentication failed
-  '/{index_name}/index_management/mappings':          
+  '/{index_name}/index_management/mappings':
     put:
       tags:
         - admin
@@ -272,14 +274,14 @@ paths:
           description: "the name of the index: it must have the following format index_<organization>_<language>_<arbitrary suffix> e.g. index_getjenny_italian_usecase0"
           required: true
           schema:
-            type: string      
+            type: string
         - in: query
           name: indexSuffix
           description: the index suffix, if not specified all the instance related tables will be updated
           example: action
           required: false
           schema:
-            type: string            
+            type: string
       responses:
         '200':
           description: request successfully processed
@@ -291,7 +293,7 @@ paths:
           description: 'invalid input, object invalid, bad request'
         '401':
           description: authorization denied or authentication failed
-  '/{index_name}/index_management/settings':          
+  '/{index_name}/index_management/settings':
     put:
       tags:
         - admin
@@ -304,7 +306,7 @@ paths:
           description: "the name of the index: it must have the following format index_<organization>_<language>_<arbitrary suffix> e.g. index_getjenny_italian_usecase0"
           required: true
           schema:
-            type: string      
+            type: string
         - in: query
           name: indexSuffix
           description: the index suffix, if not specified all the instance related tables will be updated
@@ -371,7 +373,7 @@ paths:
           description: 'invalid input, object invalid, bad request'
         '401':
           description: authorization denied or authentication failed
-  '/system_index_management/mappings':          
+  '/system_index_management/mappings':
     put:
       tags:
         - admin
@@ -400,7 +402,7 @@ paths:
           description: 'invalid input, object invalid, bad request'
         '401':
           description: authorization denied or authentication failed
-  '/system_index_management/settings':          
+  '/system_index_management/settings':
     put:
       tags:
         - admin
@@ -515,7 +517,7 @@ paths:
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed          
+          description: authorization denied or authentication failed
   '/system_index_management/close':
     post:
       tags:
@@ -544,7 +546,7 @@ paths:
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed          
+          description: authorization denied or authentication failed
   '/system_indices':
     get:
       tags:
@@ -646,14 +648,14 @@ paths:
             schema:
               $ref: '#/components/schemas/UserId'
         description: user id
-  '/user/delete':        
+  '/user/delete':
     post:
       tags:
         - admin
       summary: delete system user
       operationId: delete_system_user
       description: |
-        delete a system user 
+        delete a system user
       responses:
         '200':
           description: the document was deleted
@@ -698,7 +700,7 @@ paths:
               $ref: '#/components/schemas/UserUpdate'
         description: >-
           User data, at least the id and a clear text password and permissions should be
-          specified          
+          specified
   '/cluster_node':
     get:
       tags:
@@ -779,10 +781,29 @@ paths:
         '401':
           description: authorization denied or authentication failed
   '/node_dt_update':
+    get:
+      tags:
+        - admin
+      summary: retrieve the dt loading status of a node
+      operationId: get_cluster_node
+      description: >-
+        calculate if all the decision tables of the cluster were loaded by the node,
+        can be used as an Healt Check on start-up before the registration of a new node on the load balancer
+      responses:
+        '200':
+          description: request succesfully processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeLoadingAllDtStatus'
+        '400':
+          description: 'invalid input, object invalid, bad request'
+        '401':
+          description: authorization denied or authentication failed
     post:
       tags:
         - admin
-      summary: set informations about the decision table update operations performed by a node cluster
+      summary: set informations about the decision table update operations performed by a cluster node
       operationId: post_cluster_node
       description: set the alive timestamp for the node (automatically done when triggering a decision table reloading)
       responses:
@@ -842,7 +863,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClusterLoadingDtStatus'
+                $ref: '#/components/schemas/ClusterLoadingDtStatusIndex'
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
@@ -881,7 +902,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResponseRequestIn'
-        description: DecisionTable entry to create          
+        description: DecisionTable entry to create
   '/<index_name>/decisiontable':
     post:
       tags:
@@ -942,7 +963,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DTDocumentUpdate'
-        description: DecisionTable entry to create        
+        description: DecisionTable entry to create
     get:
       tags:
         - customer
@@ -973,7 +994,7 @@ paths:
           schema:
             type: array
             items:
-              type: string              
+              type: string
       responses:
         '200':
           description: success
@@ -1000,7 +1021,7 @@ paths:
             type: string
         - name: id
           in: query
-          description: >- 
+          description: >-
             IDs of the items to delete
           required: true
           explode: true
@@ -1018,7 +1039,7 @@ paths:
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed   
+          description: authorization denied or authentication failed
   '/<index_name>/decisiontable/all':
     delete:
       tags:
@@ -1100,7 +1121,7 @@ paths:
                 csv:
                   type: string
                   format: binary
-        description: The file to upload. 
+        description: The file to upload.
       responses:
         '200':
           description: success
@@ -1158,7 +1179,6 @@ paths:
           schema:
             type: string
         - in: query
-          type: boolean
           name: propagate
           description: trigger the update propagation setting the update timestamp
           schema:
@@ -1167,12 +1187,10 @@ paths:
             default: true
         - in: query
           name: incremental
-          type: 
-          description: execute an incremental update insteand of compiling all the analyzers
+          description: execute an incremental update insteand of compiling all the analyzers, default is true
           schema:
             type: boolean
           required: false
-          default: true
       responses:
         '200':
           description: request successfully executed
@@ -1238,7 +1256,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SpellcheckTermsRequest'
-        description: Spellcheck request          
+        description: Spellcheck request
   '/<index_name>/language_guesser':
     post:
       tags:
@@ -1269,7 +1287,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LanguageGuesserRequestIn'
-        description: Language guesser request           
+        description: Language guesser request
   '/<index_name>/language_guesser/<language>':
     get:
       tags:
@@ -1289,7 +1307,7 @@ paths:
           description: language to be checked (an ISO 639-1 code)
           required: true
           schema:
-            type: string            
+            type: string
       responses:
         '200':
           description: request successfully executed
@@ -1331,7 +1349,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TokenizerQueryRequest'
-        description: Tokenizer request           
+        description: Tokenizer request
     get:
       tags:
         - customer
@@ -1362,7 +1380,7 @@ paths:
         - customer
       summary: get all terms as http stream
       operationId: get_stream_term
-      description: get all the terms from a terms table 
+      description: get all the terms from a terms table
       parameters:
         - in: path
           name: index_name
@@ -1374,7 +1392,7 @@ paths:
         '200':
           description: request successfully executed
           content:
-            application/json: 
+            application/json:
               schema:
                 $ref: '#/components/schemas/Term'
         '400':
@@ -1399,13 +1417,13 @@ paths:
         '200':
           description: request successfully executed
           content:
-            application/json: 
+            application/json:
               schema:
                 $ref: '#/components/schemas/IndexDocumentListResult'
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed        
+          description: authorization denied or authentication failed
       requestBody:
         content:
           application/json:
@@ -1430,7 +1448,7 @@ paths:
         '200':
           description: request successfully executed
           content:
-            application/json: 
+            application/json:
               schema:
                 $ref: '#/components/schemas/ListTermsDistanceRes'
         '400':
@@ -1443,7 +1461,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DocsIds'
             example: {'ids': ['hello', 'hi']}
-        description: Documents to compare          
+        description: Documents to compare
   '/<index_name>/term/index_default_synonyms':
     post:
       tags:
@@ -1462,9 +1480,9 @@ paths:
         '200':
           description: request successfully executed
           content:
-            application/json: 
+            application/json:
               schema:
-                $ref: '#/components/schemas/UpdateDocumentListResult'
+                $ref: '#/components/schemas/UpdateDocumentsResult'
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
@@ -1492,14 +1510,14 @@ paths:
                 csv:
                   type: string
                   format: binary
-        description: The file to upload. 
+        description: The file to upload.
       responses:
         '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateDocumentListResult'
+                $ref: '#/components/schemas/UpdateDocumentsResult'
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
@@ -1578,7 +1596,7 @@ paths:
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed          
+          description: authorization denied or authentication failed
   '/<index_name>/term':
     put:
       tags:
@@ -1605,7 +1623,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateDocumentListResult'
+                $ref: '#/components/schemas/UpdateDocumentsResult'
               example: {
                 "data": [
                   {
@@ -1620,7 +1638,7 @@ paths:
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed          
+          description: authorization denied or authentication failed
   '/<index_name>/term/term':
     post:
       tags:
@@ -1788,7 +1806,48 @@ paths:
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed          
+          description: authorization denied or authentication failed
+  '/<index_name>/analytics/<qa_route>':
+    post:
+      tags:
+        - customer
+      operationId: post_analytics_qa_route
+      summary: "aggregated analytics on QA"
+      description: "calculates analytics for the question/answers table"
+      parameters:
+        - in: path
+          name: index_name
+          description: name of the index
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: qa_route
+          description: question anser route
+          required: true
+          schema:
+            type: string
+            enum:
+              - conversation_logs
+              - knowledgebase
+              - prior_data
+      requestBody:
+        description: analytics request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QAAggregatedAnalyticsRequest'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QAAggregatedAnalytics'
+        '400':
+          description: 'invalid input, object invalid, bad request'
+        '401':
+          description: authorization denied or authentication failed
   '/<index_name>/term_count/<qa_route>':
     get:
       tags:
@@ -1815,8 +1874,7 @@ paths:
               - prior_data
         - in: query
           name: field
-          description: the fields to consider in counting
-          default: 'all'
+          description: the fields to consider in counting, default is 'all'
           example: 'question'
           schema:
             $ref: '#/components/schemas/TermCountFields'
@@ -1829,8 +1887,7 @@ paths:
             type: string
         - in: query
           name: stale
-          description: set a cache time limit (interval in millis), if the value is older it is recalculated
-          default: 0
+          description: set a cache time limit (interval in millis), if the value is older it is recalculated, default is 0
           example: 10
           schema:
             type: number
@@ -1845,7 +1902,7 @@ paths:
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
-          description: authorization denied or authentication failed             
+          description: authorization denied or authentication failed
   '/<index_name>/dict_size/<qa_route>':
     get:
       tags:
@@ -1872,8 +1929,7 @@ paths:
               - prior_data
         - in: query
           name: stale
-          description: set a cache time limit (interval in millis), if the value is older it is recalculated
-          default: 0
+          description: set a cache time limit (interval in millis), if the value is older it is recalculated, default is 0
           example: 10
           schema:
             type: number
@@ -1916,7 +1972,6 @@ paths:
         - in: query
           name: stale
           description: set a cache time limit (interval in millis), if the value is older it is recalculated
-          default: 0
           example: 10
           schema:
             type: number
@@ -1938,7 +1993,7 @@ paths:
         - customer
       summary: get all QA documents
       operationId: get_stream_qa_route
-      description: get all QuestionAnswer entries as http stream 
+      description: get all QuestionAnswer entries as http stream
       parameters:
         - in: path
           name: index_name
@@ -1960,7 +2015,7 @@ paths:
         '200':
           description: request successfully executed
           content:
-            application/json: 
+            application/json:
               schema:
                 $ref: '#/components/schemas/QADocument'
         '400':
@@ -1973,7 +2028,7 @@ paths:
         - customer
       summary: insert QA documents
       operationId: post_qa_route
-      description: insert a QA document 
+      description: insert a QA document
       parameters:
         - in: path
           name: index_name
@@ -1991,17 +2046,24 @@ paths:
               - conversation_logs
               - knowledgebase
               - prior_data
+        - in: query
+          name: refresh
+          description: when set to 1 StarChat force an index refresh
+          required: false
+          schema:
+            type: number
+            format: integer
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/QADocument'
-        description: QA document request             
+        description: QA document request
       responses:
         '200':
           description: request successfully executed
           content:
-            application/json: 
+            application/json:
               schema:
                 $ref: '#/components/schemas/IndexDocumentResult'
         '400':
@@ -2013,7 +2075,7 @@ paths:
         - customer
       summary: get QA documents
       operationId: get_qa_route
-      description: retrieve QA documents 
+      description: retrieve QA documents
       parameters:
         - in: path
           name: index_name
@@ -2044,7 +2106,7 @@ paths:
         '200':
           description: request successfully executed
           content:
-            application/json: 
+            application/json:
               schema:
                 $ref: '#/components/schemas/SearchQADocumentsResults'
         '400':
@@ -2093,13 +2155,12 @@ paths:
           description: 'invalid input, object invalid, bad request'
         '401':
           description: authorization denied or authentication failed
-  '/<index_name>/<qa_route>/<id>':          
     put:
       tags:
         - customer
-      summary: update a document in the QA table
+      summary: bulk update documents in the QA table
       operationId: put_qa_route
-      description: update a document in the QA table. The index must exists and the customer has write permissions on it.
+      description: bulk update of document in the QA table. The index must exists and the customer has write permissions on it.
       parameters:
         - in: path
           name: index_name
@@ -2116,24 +2177,14 @@ paths:
             enum:
               - conversation_logs
               - knowledgebase
-              - prior_data            
-        - in: path
-          name: id
-          description: document id to update
-          required: true
-          schema:
-            type: string
-            enum:
-              - conversation_logs
-              - knowledgebase
-              - prior_data            
+              - prior_data
       responses:
         '200':
           description: item updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UpdateDocumentResult'
+                $ref: '#/components/schemas/UpdateDocumentsResult'
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
@@ -2144,7 +2195,7 @@ paths:
             schema:
               $ref: '#/components/schemas/QADocumentUpdate'
         description: QA entry to create
-  '/<index_name>/<qa_route>/search':          
+  '/<index_name>/<qa_route>/search':
     post:
       tags:
         - customer
@@ -2229,7 +2280,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DocsIds'
         description: The list of conversation IDs
-  '/<index_name>/updateTerms/<qa_route>':          
+  '/<index_name>/updateTerms/<qa_route>':
     put:
       tags:
         - customer
@@ -2252,7 +2303,7 @@ paths:
             enum:
               - conversation_logs
               - knowledgebase
-              - prior_data            
+              - prior_data
       responses:
         '200':
           description: item updated
@@ -2292,7 +2343,7 @@ paths:
             enum:
               - conversation_logs
               - knowledgebase
-              - prior_data            
+              - prior_data
       responses:
         '200':
           description: item updated
@@ -2333,7 +2384,7 @@ paths:
             enum:
               - conversation_logs
               - knowledgebase
-              - prior_data            
+              - prior_data
       responses:
         '200':
           description: item updated
@@ -2371,7 +2422,7 @@ paths:
             enum:
               - conversation_logs
               - knowledgebase
-              - prior_data            
+              - prior_data
       responses:
         '200':
           description: item updated
@@ -2388,7 +2439,7 @@ paths:
     post:
       tags:
         - admin
-      summary: set terms stats cache parameters 
+      summary: set terms stats cache parameters
       operationId: post_cache_qa_route
       description: set parameters for terms stats
       parameters:
@@ -2407,7 +2458,7 @@ paths:
             enum:
               - conversation_logs
               - knowledgebase
-              - prior_data            
+              - prior_data
       responses:
         '200':
           description: item updated
@@ -2424,7 +2475,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CountersCacheParameters'
-        description: cache parameters        
+        description: cache parameters
 components:
   schemas:
     AnalyzerEvaluateRequest:
@@ -2440,10 +2491,10 @@ components:
         query:
           type: string
           description: the query for the evaluation
-          example: 'test of the analyzers' 
+          example: 'test of the analyzers'
         data:
           $ref: '#/components/schemas/AnalyzersData'
-        evaluationClass: 
+        evaluationClass:
           type: string
           description: an avaluation class, used to filter analyzers during evaluation
           example: "default"
@@ -2465,10 +2516,10 @@ components:
           type: number
           format: double
           description: the evaluation score
-          example: 0.75 
+          example: 0.75
         data:
           $ref: '#/components/schemas/AnalyzersData'
-        buildMessage: 
+        buildMessage:
           type: string
           description: a message with information about the analyzer building process
           example: "success"
@@ -2518,7 +2569,7 @@ components:
           type: number
           format: integer
           description: status of the shard
-          example: 0          
+          example: 0
     RefreshIndexResult:
       type: object
       properties:
@@ -2544,7 +2595,7 @@ components:
         failed_shards:
           type: array
           items:
-            $ref: '#/components/schemas/FailedShards'          
+            $ref: '#/components/schemas/FailedShards'
     RefreshIndexResults:
       type: object
       properties:
@@ -2579,7 +2630,7 @@ components:
         index:
           type: string
           description: name of the index
-          example: index_getjenny_italian_usecase0.state        
+          example: index_getjenny_italian_usecase0.state
         dtype:
           type: string
           description: name of the data table
@@ -2621,7 +2672,7 @@ components:
         - successValue
         - failureValue
       properties:
-        state: 
+        state:
           type: string
           description: a unique name of the state
           example: forgot_password
@@ -2629,7 +2680,7 @@ components:
           type: number
           format: integer
           description: specify an order of evaluation for analyzers the lower is the number earlier is the evaluation of the state
-          example: 0        
+          example: 0
         maxStateCount:
           type: number
           format: integer
@@ -2647,7 +2698,7 @@ components:
            - I forgot my password
            - my password is wrong
            - don't remember the password
-        bubble: 
+        bubble:
           type: string
           description: content, if any, to be shown to the user. It may contain variables like %email% or %link%.
           example: Hello %name%, how can I help you?
@@ -2689,7 +2740,7 @@ components:
       required:
         - state
       properties:
-        state: 
+        state:
           type: string
           description: a unique name of the state
           example: forgot_password
@@ -2697,7 +2748,7 @@ components:
           type: number
           format: integer
           description: specify an order of evaluation for analyzers the lower is the number earlier is the evaluation of the state
-          example: 0        
+          example: 0
         maxStateCount:
           type: number
           format: integer
@@ -2715,7 +2766,7 @@ components:
            - I forgot my password
            - my password is wrong
            - don't remember the password
-        bubble: 
+        bubble:
           type: string
           description: content, if any, to be shown to the user. It may contain variables like %email% or %link%.
           example: Hello %name%, how can I help you?
@@ -2783,7 +2834,7 @@ components:
           description: dictionary with analyzers, the key is the state name
           additionalProperties:
             $ref: '#/components/schemas/DTAnalyzerItem'
-          objectExample: {"state_name_0": $ref:'#/components/schemas/DTAnalyzerItem'}
+      example: {"analyzerMap": {"state_name_0": $ref:'#/components/schemas/DTAnalyzerItem'}}
     SearchDTDocument:
       type: object
       properties:
@@ -2817,7 +2868,7 @@ components:
       properties:
         index:
           type: string
-          description: the index name 
+          description: the index name
           example: index_getjenny_english_usecase0
         dtype:
           type: string
@@ -2836,7 +2887,7 @@ components:
           type: boolean
           description: whether the document was created or just updated
           example: false
-    UpdateDocumentListResult:
+    UpdateDocumentsResult:
       type: object
       properties:
         data:
@@ -2853,7 +2904,7 @@ components:
           example: "Hello, I would like to reset my password, is it possible?"
         img:
           type: string
-          description: a base64 picture, currently not supported by the analyzers          
+          description: a base64 picture, currently not supported by the analyzers
           example: "aGVsbG8K"
     ResponseRequestIn:
       type: object
@@ -2881,7 +2932,7 @@ components:
           example: "welcome_state"
         data:
           type:  object
-          description: the variables passed to StarChat, they may be used by the analyzers and to complete the templates. 
+          description: the variables passed to StarChat, they may be used by the analyzers and to complete the templates.
           additionalProperties:
             type: string
           example: {"name": "Donald Duck", "job": "idle"}
@@ -2894,7 +2945,7 @@ components:
           type: string
           description: the evaluation class, enable the evaluation only on the analyzer with a specific class
           example: "default"
-          default: "default"        
+          default: "default"
         maxResults:
           type: number
           format: integer
@@ -2966,7 +3017,7 @@ components:
           description: the variables passed to StarChat plus the variable eventually extracted by the analyzers
           additionalProperties:
             type: string
-          example: {"name": "Donald Duck", "job": "idle"}      
+          example: {"name": "Donald Duck", "job": "idle"}
         bubble:
           type: string
           description: the message to display
@@ -2995,7 +3046,7 @@ components:
           type: string
           description: an action or a state name for the client to set the next state in case the evaluated function fail
           example: "dont_understand"
-        score: 
+        score:
           type: number
           format: double
           description: the score for the state
@@ -3031,9 +3082,9 @@ components:
           format: integer
           description: document version
           example: 2
-        found: 
+        found:
           type: boolean
-          description: whether the document was found or not 
+          description: whether the document was found or not
           example: true
     DeleteDocumentsResult:
       type: object
@@ -3066,7 +3117,7 @@ components:
           type: number
           format: integer
           description: how many results to be returned
-          example: 10       
+          example: 10
         executionOrder:
           type: number
           format: integer
@@ -3082,7 +3133,7 @@ components:
           format: double
           description: apply a score boost for exact matching items (only for queries field)
           example: 1000.0
-        state: 
+        state:
           type: string
           description: "a state name"
           example: "renew_insurance"
@@ -3104,7 +3155,7 @@ components:
         - read
         - write
         - stream
-      example: admin          
+      example: admin
     User:
       required:
         - id
@@ -3144,7 +3195,7 @@ components:
         id:
           type: string
           description: user id
-          example: user123      
+          example: user123
         password:
           type: string
           description: a salted sha512 password
@@ -3229,7 +3280,28 @@ components:
           format: long
           description: update decisiontable timestamp
           example: 1549283768918
-    ClusterLoadingDtStatus:
+    NodeLoadingAllDtStatus:
+      type: object
+      required:
+        - totalIndexes
+        - updatedIndexes
+        - indexes
+      properties:
+        totalIndexes:
+          type: number
+          format: long
+          description: total number of decision tables
+          example: 102
+        updatedIndexes:
+          type: number
+          format: long
+          description: total number of up to date decision tables on the node
+          example: 101
+        indexes:
+          type: object
+          description: map of nodes with the update status, true means up to date
+          example: {"index_getjenny_english_0": true, "index_getjenny_english_1": true, "index_getjenny_english_2": false}
+    ClusterLoadingDtStatusIndex:
       type: object
       required:
         - index
@@ -3274,19 +3346,19 @@ components:
           type: number
           format: integer
           default: 3
-          description: >- 
+          description: >-
             the number of minimal prefix characters that must match in order be a candidate suggestion
         minDocFreq:
           type: number
           format: integer
           default: 1
-          description: >- 
+          description: >-
             the minimal occurrence in knowledgebase corpus of each suggested token
         maxEdit:
           type: number
           format: integer
           default: 2
-          description: >- 
+          description: >-
             the max edit distance between the suggested token and the original token
     SpellcheckTokenSuggestions:
       type: object
@@ -3294,7 +3366,7 @@ components:
         - score
         - freq
         - text
-      properties:    
+      properties:
         score:
           type: number
           format: double
@@ -3330,7 +3402,7 @@ components:
           type: number
           format: integer
           description: the potentially mispelled word
-          example: 5        
+          example: 5
         options:
           type: array
           items:
@@ -3362,12 +3434,12 @@ components:
         supportedLanguages:
           type: object
           required:
-            - supported_languages          
+            - supported_languages
           properties:
             supported_languages:
               type: object
               required:
-                - languages                        
+                - languages
               properties:
                 languages:
                   type: object
@@ -3492,7 +3564,7 @@ components:
             format: double
             description: "similar term, the key is the synonym"
           example: {'hi': 0.6}
-        antonyms: 
+        antonyms:
           type: object
           description: a set of antonynonyms with score
           additionalProperies:
@@ -3548,7 +3620,7 @@ components:
             format: double
             description: "similar term, the key is the synonym"
           example: {'hi': 0.6}
-        antonyms: 
+        antonyms:
           type: object
           description: a set of antonynonyms with score
           additionalProperies:
@@ -3625,18 +3697,18 @@ components:
       properties:
         text:
           type: string
-          description: the original text 
-          example: "this is a sample sentence"        
+          description: the original text
+          example: "this is a sample sentence"
         textTermsN:
           type: number
           format: integer
           description: the number of terms in the sentence
-          example:  5      
+          example:  5
         termsFoundN:
           type: number
           format: integer
           description: number of terms found in the terms table
-          example: 5      
+          example: 5
         terms:
           $ref: '#/components/schemas/Terms'
     TermsDistanceRes:
@@ -3659,18 +3731,18 @@ components:
           example: 'hi'
         vector1:
           type: array
-          description: vectorial representation of the first term 
+          description: vectorial representation of the first term
           items:
             type: number
             format: double
-          example: [0.0, -1.0,  2.0, 1.2, 3.0]        
+          example: [0.0, -1.0,  2.0, 1.2, 3.0]
         vector2:
           type: array
-          description: vectorial representation of the second term 
+          description: vectorial representation of the second term
           items:
             type: number
             format: double
-          example: [-1.0, -2.0,  -0.3, 1.2, 3.0]        
+          example: [-1.0, -2.0,  -0.3, 1.2, 3.0]
         cosDistance:
           type: number
           format: double
@@ -3707,32 +3779,32 @@ components:
         tokenizer:
           type: string
           description: "the tokenizer to use (see TokenizersSet data structure for the available tokenizers)"
-          example: "space_punctuation"
-          default: "space_punctuation"          
+          example: space_punctuation
+          default: space_punctuation
         commonOrSpecificSearchPrior:
           type: string
           description: extract prior statistics from the common tables or index specific tables
           enum:
             - COMMON
             - IDXSPECIFIC
-          example: "COMMON"
-          default: "COMMON"
+          example: IDXSPECIFIC
+          default: COMMON
         commonOrSpecificSearchObserved:
           type: string
           description: extract observed statistics from the common tables or index specific tables
           enum:
             - COMMON
             - IDXSPECIFIC
-          example: "COMMON"
-          default: "COMMON"
+          example: IDXSPECIFIC
+          default: COMMON
         observedDataSource:
           type: string
           description: extract observed statistics from knowledge base or the conversation log table
           enum:
             - KNOWLEDGEBASE
             - CONV_LOGS
-          example: "KNOWLEDGEBASE"
-          default: "KNOWLEDGEBASE"        
+          example: CONV_LOGS
+          default: KNOWLEDGEBASE
         fieldsPrior:
           type: string
           description: fields to be used for the prior statistics
@@ -3740,17 +3812,17 @@ components:
             - question
             - answer
             - all
-          example: "all"
-          default: "all"        
-        fieldsObserved: 
+          example: question
+          default: all
+        fieldsObserved:
           type: string
           description: fields to be used for the observed statistics
           enum:
             - question
             - answer
             - all
-          example: "all"
-          default: "all"        
+          example: question
+          default: all
         minWordsPerSentence:
           type: number
           format: integer
@@ -3786,7 +3858,7 @@ components:
           description: the minimum amount of information for the sentence in bits
           example: 16
           default: 16
-        minKeywordInfo: 
+        minKeywordInfo:
           type: number
           format: integer
           description: the minimum amount of information per keywords in bits
@@ -3822,15 +3894,15 @@ components:
           format: double
           description: discard candidates if the terms distance is below the threshold
           default: 0.0
-          example: 0.3        
+          example: 0.3
         distanceFunction:
           type: string
           enum:
             - EMDCOSINE
             - SUMCOSINE
             - MEANCOSINE
-          default: "EMDCOSINE"
-          example: "SUMCOSINE"
+          default: EMDCOSINE
+          example: SUMCOSINE
           description: the function to measure distance between sentences
         commonOrSpecificSearchPrior:
           type: string
@@ -3838,32 +3910,32 @@ components:
           enum:
             - COMMON
             - IDXSPECIFIC
-          example: "IDXSPECIFIC"
-          default: "COMMON"
+          example: IDXSPECIFIC
+          default: COMMON
         commonOrSpecificSearchObserved:
           type: string
           description: extract observed statistics from the common tables or index specific tables
           enum:
             - COMMON
             - IDXSPECIFIC
-          example: "IDXSPECIFIC"
-          default: "COMMON"
+          example: IDXSPECIFIC
+          default: COMMON
         commonOrSpecificSearchTerms:
           type: string
           description: extract terms from the common tables or index specific tables
           enum:
             - COMMON
             - IDXSPECIFIC
-          example: "IDXSPECIFIC"
-          default: "COMMON"
+          example: IDXSPECIFIC
+          default: COMMON
         observedDataSource:
           type: string
           description: extract observed statistics from knowledge base or the conversation log table
           enum:
             - KNOWLEDGEBASE
             - CONV_LOGS
-          example: "KNOWLEDGEBASE"
-          default: "KNOWLEDGEBASE"        
+          example: CONV_LOGS
+          default: KNOWLEDGEBASE
         fieldsPrior:
           type: string
           description: fields to be used for the prior statistics
@@ -3871,17 +3943,17 @@ components:
             - question
             - answer
             - all
-          example: "all"
-          default: "all"        
-        fieldsObserved: 
+          example: question
+          default: all
+        fieldsObserved:
           type: string
           description: fields to be used for the observed statistics
           enum:
             - question
             - answer
             - all
-          example: "all"
-          default: "all"        
+          example: question
+          default: all
         minWordsPerSentence:
           type: number
           format: integer
@@ -3917,7 +3989,7 @@ components:
           description: the minimum amount of information for the sentence in bits
           example: 16
           default: 16
-        minKeywordInfo: 
+        minKeywordInfo:
           type: number
           format: integer
           description: the minimum amount of information per keywords in bits
@@ -3930,7 +4002,7 @@ components:
           default: false
     TokenFrequencyItem:
       type: object
-      properties:    
+      properties:
         token:
           type: string
           description: term
@@ -3956,7 +4028,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TokenFrequencyItem'
-        priorTotalTerms: 
+        priorTotalTerms:
           type: number
           format: long
           description: total terms in prior table
@@ -3978,7 +4050,7 @@ components:
           type:  string
           example: hello
           description: String the synonym text
-        synonymScore: 
+        synonymScore:
           type: number
           format: double
           example: 0.8
@@ -4026,8 +4098,8 @@ components:
         - question
         - answer
         - all
-      example: "all"
-      default: "all"
+      example: question
+      default: all
     TermCount:
       type: object
       required:
@@ -4039,7 +4111,7 @@ components:
           format: long
           description: number of documents containing the term
           example: 10983
-        count: 
+        count:
           type: number
           format: long
           description: total term occurrence
@@ -4061,7 +4133,7 @@ components:
           type: number
           format: long
           description: total terms in question field
-          example: 12313311        
+          example: 12313311
         total:
           type: number
           format: long
@@ -4084,87 +4156,990 @@ components:
           format: long
           description: total terms in question field
           example: 25313311
-    doctypes:
+    Doctypes:
       type: string
       description: >-
-        document type: (normal -> can be returned to the user as response ; canned -> canned document, indexed but retrieved only under particular circumstances
-        hidden -> hidden document, these are indexed but must not be retrieved, use this type for data used just to improve statistic for data retrieval ;
-        decisiontable -> does not contains conversation data, used to redirect the conversation to any state of the decision tree)
-      example: normal
+        document type:
+          * `NORMAL` -> can be returned to the user as response
+          * `CANNED` -> canned document, indexed but retrieved only under particular circumstances
+          * `HIDDEN` -> hidden document, these are indexed but must not be retrieved, use this type for data used just to improve statistic for data retrieval
+          * `DECISIONTABLE` -> does not contains conversation data, used to redirect the conversation to any state of the decision tree
+      example: NORMAL
       enum:
-        - normal
-        - canned
-        - hidden
-        - decisiontable
-    escalated:
+        - NORMAL
+        - CANNED
+        - HIDDEN
+        - DECISIONTABLE
+    Escalated:
       type: string
       description: >-
-        an enumerated value which indicates whether the conversation was escalated to a human, completed by StarChat, values:
-        (transferred -> can be returned to the user as response ;
-        completed -> a conversation carried on completely by StarChat. This value is not reliable, because the customer could leave the chat or stop typing. ;
-        unspecified -> usually in the middle of a conversation this value is not set, it is known at the end of the conversation or when the user requests to escalate.)
-      example: transferred
+        an enumerated value which indicates whether the conversation was escalated to a human, those conversations
+        without a document containing the transferred value are assumed completed entirely by StarChat.
+        Values:
+          * `TRANSFERRED` -> can be returned to the user as response
+          * `UNSPECIFIED` -> usually in the middle of a conversation this value is not set, it is known at the end of the conversation or when the user requests to escalate
+      example: TRANSFERRED
       enum:
-        - transferred
-        - completed
-        - unspecified
-    answered:
+        - TRANSFERRED
+        - UNSPECIFIED
+    Answered:
       type: string
       description: >-
         an enumerated value which indicates whether or not StarChat provided an answer for the question.
-        Values: (answered -> the answer was provided ;
-        unanswered -> Question for which no answer was provided ii.e. StarChat returns empty list or 404 or the agent didn’t answer ;
-        unspecified -> when the information is not applicable)
+        Values:
+          * `ANSWERED` -> the answer was provided
+          * `UNANSWERED` -> Question for which no answer was provided ii.e. StarChat returns empty list or 404 or the agent didn’t answer
+          * `UNSPECIFIED` -> when the information is not applicable
       example: answered
       enum:
-        - answered
-        - unanswered
-        - unspecified
-    triggered:
+        - ANSWERED
+        - UNANSWERED
+        - UNSPECIFIED
+    Triggered:
       type: string
       description: >-
         an enumerated value which indicates whether the state was triggered via actions (e.g. via buttons, or input validation).
-        Values: (button -> the answer was triggered by a button ; action -> the answer was triggered by an action ;
-        unspecified -> usually this information is not applicable except in the other two cases mentioned before.)
+        Values:
+          * `BUTTON` -> the answer was triggered by a button ; ACTION -> the answer was triggered by an action
+          * `UNSPECIFIED` -> usually this information is not applicable except in the other two cases mentioned before.
       example: button
       enum:
-        - button
-        - action
-        - unspecified
-    followup:
+        - BUTTON
+        - ACTION
+        - UNSPECIFIED
+    Followup:
       type: string
       description: >-
         an enumerated value which depends on the time of day and status of customer service during which happened a followup
-        values: (followup -> follow up ; followupByTime -> follow up dependant on the time of the day ; unspecified -> not applicable)
+        values:
+          * `FOLLOWUP` -> follow up
+          * `FOLLOWUP_BY_TIME` -> follow up dependant on the time of the day
+          * `UNSPECIFIED` -> not applicable
       example: followupByTime
       enum:
-        - followup
-        - followupByTime
-        - unspecified
-    agent:
+        - FOLLOWUP
+        - FOLLOWUP_BY_TIME
+        - UNSPECIFIED
+    Agent:
       type: string
       description: >-
         tell if the answer was provided by a human agent or by chatbot (StarChat), this is an enumerated field with the following values
-        Values: (humanReply -> Answer provided by an agent (currently  information available only  from Giosg) ;
-        humanPicked -> When an agent chooses and answer suggestion provided by smartLayer ;
-        starChat: when -> the answer was provided by StarChat ;
-        unspecified -> when the information is unset/not applicable)
-      example: humanReply
+        Values:
+          * `HUMAN_REPLY` -> Answer provided by an agent, must be used when the conversation has been escalated
+                  and the platform (a human is carrying on the conversation) and is not possible to discriminate
+                  between HUMAN_PICKED and HUMAN_REPLY
+          * `HUMAN_PICKED` -> When an agent chooses and answer suggestion provided by smartLayer
+          * `STARCHAT` -> the answer was provided by StarChat
+          * `UNSPECIFIED` -> when the information is unset/not applicable
+      example: HUMAN_REPLY
       enum:
-        - humanReply
-        - humanPicked
-        - starChat
-        - unspecified
+        - HUMAN_REPLY
+        - HUMAN_PICKED
+        - STARCHAT
+        - UNSPECIFIED
+    QAAggregationsTypes:
+      type: string
+      description: >-
+        type of statistical aggregated data generated from a QA data type. Values:
+          * `totalConversations` -> the total number of conversations (transferred and non-transferred)
+          * `avgFeedbackConvScore` -> the average score for the conversations (transferred and non-transferred)
+          * `avgFeedbackAnswerScore` -> the average score for all the Answers (transferred and non-transferred)
+          * `avgAlgorithmConvScore` -> the average score for the conversations (transferred and non-transferred), the scores are provided by an algorithm
+          * `avgAlgorithmAnswerScore` -> the average score for all the Answers (transferred and non-transferred), the scores are provided by an algorithm
+          * `scoreHistogram` -> the distribution of scores, an histogram (transferred and non-transferred)
+          * `scoreHistogramNonTransferred` -> the distribution of scores for the non-transferred conversations, an histogram
+          * `scoreHistogramTransferred` -> the distribution of scores for the transferred conversations, an histogram
+          * `conversationsHistogram` -> time range histogram of the number of conversations on a time range (transferred and non-transferred)
+          * `conversationsNonTransferredHistogram` -> time range histogram of the number of conversations on a time range (non-transferred only)
+          * `conversationsTransferredHistogram` -> time range histogram of the number of conversations on a time range (transferred only)
+          * `avgFeedbackNonTransferredConvScoreOverTime` -> average score for the conversations (non-transferred only) on each time interval
+          * `avgFeedbackTransferredConvScoreOverTime` -> average score for the conversations (transferred only) on each time interval
+          * `avgAlgorithmNonTransferredConvScoreOverTime` -> average score for the conversations (non-transferred only) on each time interval, the scores are provided by an algorithm
+          * `avgAlgorithmTransferredConvScoreOverTime` -> average score for the conversations (transferred only) on each time interval, the scores are provided by an algorithm
+          * `avgFeedbackNonTransferredAnswerScoreOverTime` -> average score for the answers (non-transferred only) on each time interval
+          * `avgFeedbackTransferredAnswerScoreOverTime` -> average score for the answers (transferred only) on each time interval
+          * `avgAlgorithmNonTransferredAnswerScoreOverTime` -> average score for the answers (non-transferred only) on each time interval, the scores are provided by an algorithm
+          * `avgAlgorithmTransferredAnswerScoreOverTime` -> average score for the answers (transferred only) on each time interval, the scores are provided by an algorithm
+          * `avgFeedbackConvScoreOverTime` -> average score for the conversations (transferred and non-transferred) on each time interval
+          * `avgAlgorithmAnswerScoreOverTime` -> average score for the answers (transferred and transferred) on each time interval
+          * `avgFeedbackAnswerScoreOverTime` -> average score for the answers (transferred and non-transferred) on each time interval, the scores are provided by an algorithm
+          * `avgAlgorithmConvScoreOverTime` -> average score for the answers (transferred and transferred) on each time interval, the scores are provided by an algorithm
+      example: totalConversations
+      enum:
+        - totalConversations
+        - avgFeedbackConvScore
+        - avgFeedbackAnswerScore
+        - avgAlgorithmConvScore
+        - avgAlgorithmAnswerScore
+        - scoreHistogram
+        - scoreHistogramNonTransferred
+        - scoreHistogramTransferred
+        - conversationsHistogram
+        - conversationsNonTransferredHistogram
+        - conversationsTransferredHistogram
+        - avgFeedbackNonTransferredConvScoreOverTime
+        - avgFeedbackTransferredConvScoreOverTime
+        - avgAlgorithmNonTransferredConvScoreOverTime
+        - avgAlgorithmTransferredConvScoreOverTime
+        - avgFeedbackNonTransferredAnswerScoreOverTime
+        - avgFeedbackTransferredAnswerScoreOverTime
+        - avgAlgorithmNonTransferredAnswerScoreOverTime
+        - avgAlgorithmTransferredAnswerScoreOverTime
+        - avgFeedbackConvScoreOverTime
+        - avgAlgorithmAnswerScoreOverTime
+        - avgFeedbackAnswerScoreOverTime
+        - avgAlgorithmConvScoreOverTime
+    TimeInterval:
+      type: string
+      description: >-
+        a time interval description. It can be specified using a number followed by a time unit description <n><unit>
+        for instance : 1m, y, 1h, 50s (multiple not supported for weeks, months, quarters and year).
+        Valid time units are:
+          * `ms`-> milliseconds, multiple supported
+          * `m` -> minutes, multiple supported
+          * `h` -> hours, multiple supported
+          * `d` -> days, multiple supported
+          * `w` -> weeks, multiple not supported, supported value 1w
+          * `M` -> months, multiple not supported, supported value 1M
+          * `q` -> quarters, multiple not supported, supported value 1q
+          * `y` -> years, multiple not supported, supported value 1y
+      example: 1M
+      enum:
+        - ms
+        - m
+        - h
+        - d
+        - w
+        - M
+        - q
+        - y
+    QAAggregatedAnalytics:
+      type: object
+      requested:
+        - totalDocuments
+      properties:
+        totalDocuments:
+          type: number
+          format: long
+          description: the number of document selected by the query
+          example: 135884
+        totalConversations:
+          type: number
+          format: long
+          description: the number of conversations selected by the query
+          example: 19716
+        avgFeedbackConvScore:
+          type: number
+          description: the average conversations score
+          format: double
+          example: 3.0
+        avgAlgorithmConvScore:
+          type: number
+          description: the average conversations score (algorithms score)
+          format: double
+          example: 4.0
+        avgAlgorithmAnswerScore:
+          type: number
+          description: the average answers score
+          format: double
+          example: 3.4
+        avgFeedbackAnswerScore:
+          type: number
+          description: the average answers score (algorithms score)
+          format: double
+          example: 3.7
+        scoreHistogram:
+          type: array
+          description: >-
+            the distribution of scores, an histogram (transferred and non-transferred)
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: double
+                description: a score value (bucket)
+              docCount:
+                type: number
+                format: long
+                description: how many score falls in the bucket
+            example: [{"key": 0.0, "docCount": 13213}, {"key": 1.0, "docCount": 213}, {"key": 4.0, "docCount": 1013}]
+        scoreHistogramNonTransferred:
+          type: array
+          description: >-
+            the distribution of scores for the non-transferred conversations, an histogram
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: double
+                description: a score value (bucket)
+              docCount:
+                type: number
+                format: long
+                description: how many score falls in the bucket
+            example: [{"key": 0.0, "docCount": 13213}, {"key": 1.0, "docCount": 213}, {"key": 4.0, "docCount": 1013}]
+        scoreHistogramTransferred:
+          type: array
+          description: >-
+            the distribution of scores for the transferred conversations, an histogram
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: double
+                description: a score value (bucket)
+              docCount:
+                type: number
+                format: long
+                description: how many score falls in the bucket
+            example: [{"key": 0.0, "docCount": 13213}, {"key": 1.0, "docCount": 213}, {"key": 4.0, "docCount": 1013}]
+        conversationsHistogram:
+          type: array
+          description: >-
+            time range histogram of the number of conversations on a time range (transferred and non-transferred)
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+          example: [{"key": 1550534400000, "keyAsString": "2019-02-19 : 00:00:00", "docCount": 1213},
+             {"key": 1550534500000, "keyAsString": "2019-02-19 : 01:00:00", "docCount": 113},
+             {"key": 1550534600000, "keyAsString": "2019-02-19 : 02:00:00", "docCount": 1},
+             {"key": 1550534700000, "keyAsString": "2019-02-19 : 03:00:00", "docCount": 5331}]
+        conversationsNonTransferredHistogram:
+          type: array
+          description: >-
+            time range histogram of the number of conversations on a time range (non-transferred only)
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+          example: [{"key": 1550534400000, "keyAsString": "2019-02-19 : 00:00:00", "docCount": 213},
+             {"key": 1550534500000, "keyAsString": "2019-02-19 : 01:00:00", "docCount": 4113},
+             {"key": 1550534600000, "keyAsString": "2019-02-19 : 02:00:00", "docCount": 51},
+             {"key": 1550534700000, "keyAsString": "2019-02-19 : 03:00:00", "docCount": 331}]
+        conversationsTransferredHistogram:
+          type: array
+          description: >-
+            time range histogram of the number of conversations on a time range (transferred only)
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+          example: [{"key": 1550534400000, "keyAsString": "2019-02-19 : 00:00:00", "docCount": 3},
+             {"key": 1550534500000, "keyAsString": "2019-02-19 : 01:00:00", "docCount": 43},
+             {"key": 1550534600000, "keyAsString": "2019-02-19 : 02:00:00", "docCount": 351},
+             {"key": 1550534700000, "keyAsString": "2019-02-19 : 03:00:00", "docCount": 5331}]
+        avgFeedbackNonTransferredConvScoreOverTime:
+          type: array
+          description: >-
+            average score for the conversations (non-transferred only) on each time interval
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgFeedbackTransferredConvScoreOverTime:
+          type: array
+          description: >-
+            average score for the conversations (transferred only) on each time interval
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgAlgorithmNonTransferredConvScoreOverTime:
+          type: array
+          description: >-
+            average score for the conversations (non-transferred only) on each time interval, the scores are provided by an algorithm
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgAlgorithmTransferredConvScoreOverTime:
+          type: array
+          description: >-
+            average score for the conversations (transferred only) on each time interval, the scores are provided by an algorithm
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgFeedbackNonTransferredAnswerScoreOverTime:
+          type: array
+          description: >-
+            average score for the answers (non-transferred only) on each time interval
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgFeedbackTransferredAnswerScoreOverTime:
+          type: array
+          description: >-
+            average score for the answers (transferred only) on each time interval
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgAlgorithmNonTransferredAnswerScoreOverTime:
+          type: array
+          description: >-
+            average score for the answers (non-transferred only) on each time interval, the scores are provided by an algorithm
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgAlgorithmTransferredAnswerScoreOverTime:
+          type: array
+          description: >-
+            average score for the answers (transferred only) on each time interval, the scores are provided by an algorithm
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgFeedbackConvScoreOverTime:
+          type: array
+          description: >-
+            average score for the conversations (transferred and non-transferred) on each time interval
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgAlgorithmAnswerScoreOverTime:
+          type: array
+          description: >-
+            average score for the answers (transferred and transferred) on each time interval
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgFeedbackAnswerScoreOverTime:
+          type: array
+          description: >-
+            average score for the answers (transferred and non-transferred) on each time interval, the scores are provided by an algorithm
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  string representation of the bucket, format is 'YYYY-MM-dd : HH:mm:ss'
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+        avgAlgorithmConvScoreOverTime:
+          type: array
+          description: >-
+            average score for the answers (transferred and transferred) on each time interval, the scores are provided by an algorithm
+            Only the buckets with more than one document will be returned.
+          items:
+            type: object
+            properties:
+              key:
+                type: number
+                format: long
+                description: a timestamp in milliseconds (bucket)
+              keyAsString:
+                type: string
+                description: >-
+                  "string representation of the bucket, format is '<YYYY>-<MM>-<dd> : <HH>:<mm>:<ss>'"
+              docCount:
+                type: number
+                format: long
+                description: how many conversations falls in the bucket
+              avgScore:
+                type: number
+                format: double
+                description: the average score in bucket
+          example: [{"keyAsString" : "2019-02-19 : 08:00:00", "key" : 1550563200000, "docCount" : 1, "avgScore" : 0.0},
+             {"keyAsString" : "2019-02-19 : 12:00:00", "key" : 1550577600000, "docCount" : 110168, "avgScore" : 1.0},
+             {"keyAsString" : "2019-02-19 : 13:00:00", "key" : 1550581200000, "docCount" : 25705, "avgScore" : 5.83544057576347E-4},
+             {"keyAsString" : "2019-02-19 : 14:00:00", "key" : 1550584800000, "docCount" : 7, "avgScore" : 12.0}]
+    QAAggregatedAnalyticsRequest:
+      type: object
+      properties:
+        interval:
+          $ref: '#/components/schemas/TimeInterval'
+        minDocInBuckets:
+          type: number
+          format: long
+          description: >-
+            the min number of documents in a bucket, when greater than zero the empty buckets will not be returned.
+            When zero, the empty buckets will be returned but only those between the first non empty bucket and the last.
+          example: 0
+          default: 1
+        timestampGte:
+          type: number
+          format: long
+          description: filter by records insertion timestamp, if not specified no lower bound
+          example: 1549283700000
+        timestampLte:
+          type: number
+          format: long
+          description: filter by records insertion timestamp, if not specified no upper bound
+          example: 1549283900000
+        aggregations:
+          type: array
+          description: list of aggregation which are to be returned, the returned object will use the aggregation type as a key in the returned object
+          items:
+            $ref: '#/components/schemas/QAAggregationsTypes'
+          example: ['totalConversations', 'avgFeedbackConvScore', 'scoreHistogram', 'avgAlgorithmConvScoreOverTime']
+          default: []
+        timeZone:
+          type: string
+          description: an ISO 8601 UTC offset, used for the time based histograms in addition to the EPOC timestamp in millis.
+          example: "-08:00"
+          default: "+00:00"
+    QADocumentCore:
+      type: object
+      properties:
+        question:
+          type: string
+          description: usually what the user of the chat says
+          example: I forgot my password
+        questionNegative:
+          type: array
+          description: list of sentences different to the main question
+          items:
+            type: string
+          example: I remember my password
+        questionScoredTerms:
+          type: array
+          description: question's terms list with score
+          items:
+            type: object
+            properties:
+              term:
+                type: string
+                description: term
+              score:
+                type: number
+                format: double
+                description: term score
+            example: {"term": "password", "score": 0.2121}
+        answer:
+          type: string
+          description: usually what the operator of the chat says
+          example: I can reset the password for you
+        answerScoredTerms:
+          type: array
+          description: answer's terms list with score
+          items:
+            type: object
+            properties:
+              term:
+                type: string
+                description: term
+              score:
+                type: number
+                format: double
+                description: term score
+            example: {"term": "reset", "score": 0.2121}
+        verified:
+          type: boolean
+          description: whether the conversation was verified by an operator or not
+          default: false
+          example: true
+        topics:
+          type: array
+          description: list of topics
+          items:
+            type: string
+          example: ['password', "reset"]
+        done:
+          type: boolean
+          description: the conversation has marked as done, this field is expected to set for each item of the conversation
+          example: true
+          default: false
+    QADocumentAnnotations:
+      type: object
+      properties:
+        dclass:
+          type: string
+          description: document classes
+          example: "group0 group1"
+        doctype:
+          type: string
+          default: NORMAL
+          example: HIDDEN
+          $ref: '#/components/schemas/Doctypes'
+        state:
+          type: string
+          description: eventual link to any of the state machine states
+          example: "forgot_password"
+        agent:
+          type: string
+          default: STARCHAT
+          example: HUMAN_PICKED
+          $ref: '#/components/schemas/Agent'
+        escalated:
+          type: string
+          default: UNSPECIFIED
+          example: TRANSFERRED
+          $ref: '#/components/schemas/Escalated'
+        answered:
+          type: string
+          default: ANSWERED
+          example: UNANSWERED
+          $ref: '#/components/schemas/Answered'
+        triggered:
+          type: string
+          default: UNSPECIFIED
+          example: BUTTON
+          $ref: '#/components/schemas/Triggered'
+        followup:
+          type: string
+          default: UNSPECIFIED
+          example: FOLLOWUP
+          $ref: '#/components/schemas/Followup'
+        feedbackConv:
+          type: string
+          description: A feedback provided by the user to the conversation
+          example: Thanks I solved my problem,  you were very helpful
+        feedbackConvScore:
+          type: number
+          format: double
+          description: >-
+            a field to store the score provided by the user to the conversation.
+            Since the default value is 0.0 (no feedback, to indicate extremely negative feedback a value greater then
+             0.0 must be chosen)
+          example: 4.0
+          default: 0.0
+        algorithmConvScore:
+          type: number
+          format: double
+          description: >-
+            a field to store the score calculated by an algorithm related to the conversation i.e. a sentiment
+            analysis tool (for future use).
+            Since the default value is 0.0 (no feedback, to indicate extremely negative feedback a value greater then
+              0.0 must be chosen)
+          example: 2.0
+          default: 0.0
+        feedbackAnswerScore:
+          type: number
+          format: double
+          description: >-
+            a field to store the score provided by the user for the answer.
+            Since the default value is 0.0 (no feedback, to indicate extremely negative feedback a value greater then
+              0.0 must be chosen)
+          example: 4.0
+          default: 0.0
+        algorithmAnswerScore:
+          type: number
+          format: double
+          description: >-
+            a field to store the score calculated by an algorithm related to the answer i.e. a sentiment
+            analysis tool (for future use).
+            Since the default value is 0.0 (no feedback, to indicate extremely negative feedback a value greater then
+              0.0 must be chosen)
+          example: 2.0
+          default: 0.0
+        start:
+          type: boolean
+          description: event determined when a start state is loaded
+          example: true
+          default: false
+    QADocumentAnnotationsSearch:
+      type: object
+      properties:
+        doctype:
+          type: array
+          description: search for a specific doctypes
+          items:
+            $ref: '#/components/schemas/Doctypes'
+          example: [ "NORMAL" ]
+        dclass:
+          type: string
+          description: search for a document class
+          example: "group0"
+        state:
+          type: string
+          description: search for documents associated to a state
+          example: "check_policy_expiration"
+        agent:
+          type: string
+          default: UNSPECIFIED
+          example: HUMAN_PICKED
+          $ref: '#/components/schemas/Agent'
+        escalated:
+          type: array
+          description: values to match (search documents with at least one value)
+          items:
+            $ref: '#/components/schemas/Escalated'
+          example: [ "TRANSFERRED" ]
+        answered:
+          type: array
+          description: values to match (search documents with at least one value)
+          items:
+            $ref: '#/components/schemas/Answered'
+          example: [ "ANSWERED" ]
+        triggered:
+          type: array
+          description: values to match (search documents with at least one value)
+          items:
+            $ref: '#/components/schemas/Triggered'
+          example: [ "BUTTON" ]
+        followup:
+          type: array
+          description: values to match (search documents with at least one value)
+          items:
+          $ref: '#/components/schemas/Followup'
+          example: [ "FOLLOWUP" ]
+        feedbackConv:
+          type: string
+          description: A feedback provided by the user to the conversation
+          example: Thanks I solved my problem, you were very helpful
+        feedbackScoreConvGte:
+          type: number
+          format: double
+          description: >-
+            min score value, if not specified -> no lower bound (conversation).
+            Since the documents without a feedback will have a score equal to 0.0, so use
+            a value greater than 0.0 to filter only the documents with a feedback.
+          example: 1.0
+        feedbackScoreConvLte:
+          type: number
+          format: double
+          description: max score value, if not specified -> no upper bound (conversation)
+          example: 5.0
+        algorithmScoreConvGte:
+          type: number
+          format: double
+          description: >-
+            min score value, if not specified -> no lower bound (conversation)
+            Since the documents without a feedback will have a score equal to 0.0, so use
+            a value greater than 0.0 to filter only the documents with a feedback.
+          example: 4.0
+        algorithmScoreConvLte:
+          type: number
+          format: double
+          description: max score value, if not specified -> no upper bound (conversation)
+          example: 5.0
+        feedbackScoreAnswerGte:
+          type: number
+          format: double
+          description: >-
+            min score value, if not specified -> no lower bound (answer)
+            Since the documents without a feedback will have a score equal to 0.0, so use
+            a value greater than 0.0 to filter only the documents with a feedback.
+          example: 1.0
+        feedbackScoreAnswerLte:
+          type: number
+          format: double
+          description: >-
+            max score value, if not specified -> no upper bound (answer)
+            Since the documents without a feedback will have a score equal to 0.0, so use
+            a value greater than 0.0 to filter only the documents with a feedback.
+          example: 5.0
+        algorithmScoreAnswerGte:
+          type: number
+          format: double
+          description: min score value, if not specified -> no lower bound (answer)
+          example: 4.0
+        algorithmScoreAnswerLte:
+          type: number
+          format: double
+          description: >-
+            max score value, if not specified -> no upper bound (answer)
+            Since the documents without a feedback will have a score equal to 0.0, so use
+            a value greater than 0.0 to filter only the documents with a feedback.
+          example: 5.0
+        start:
+          type: boolean
+          description: event determined when a start state is loaded
+          example: true
+    QADocumentCoreSearch:
+      type: object
+      properties:
+        question:
+          type: string
+          description: a text to be matched with the question field
+          example: >-
+            when should I renew my insurance?
+        questionScoredTerms:
+          type: string
+          description: a string of terms matched with the question scored terms field
+          example: "when renew insurance"
+        answer:
+          type: string
+          description: a text to be matched with the answer field
+          example: >-
+            please give me your policy number, I will check when your policy expires.
+        answerScoredTerms:
+          type: string
+          description: a string of terms matched with the answr scored terms field
+          example: "policy number expires"
+        verified:
+          type: boolean
+          description: search for verified/unverified documents
+          example: true
+        topics:
+          type: string
+          description: search for specific topics
+          example: "policy renew"
+        done:
+          type: boolean
+          description: the conversation has marked as done, this field is expected to set for each item of the conversation
+          example: true
     QADocument:
       type: object
       required:
         - id
         - conversation
-        - question
-        - answer
-        - verified
-        - doctype
-        - status
+        - indexInConversation
+        - coreData
       properties:
         id:
           type: string
@@ -4179,125 +5154,33 @@ components:
           format: integer
           description: the index of the document in the conversation flow
           example: 10
-        question:
-          type: string
-          description: usually what the user of the chat says
-          example: I forgot my password
-        questionNegative:
-          type: array
-          description: list of sentences different to the main question
-          items:
-            type: string
-          example: I remember my password
-        questionScoredTerms:
-          type: array
-          description: question's terms list with score 
-          items:
-            type: object
-            properties:
-              term:
-                type: string
-                description: term
-              score:
-                type: number
-                format: double
-                description: term score
-            example: {"term": "password", "score": 0.2121}
-        answer:
-          type: string
-          description: usually what the operator of the chat says
-          example: I can reset the password for you
-        answerScoredTerms:
-          type: array
-          description: answer's terms list with score 
-          items:
-            type: object
-            properties:
-              term:
-                type: string
-                description: term
-              score:
-                type: number
-                format: double
-                description: term score
-            example: {"term": "reset", "score": 0.2121}        
-        verified:
-          type: boolean
-          description: whether the conversation was verified by an operator or not
-          default: false
-          example: true
-        topics:
-          type: array
-          description: list of topics
-          items:
-            type: string
-          example: ['pasword', "reset"]
-        dclass:
-          type: string
-          description: document classes
-          example: "group0 group1"
-        doctype:
-          type: string
-          default: normal
-          example: normal
-          $ref: '#/components/schemas/doctypes'
-        state:
-          type: string
-          description: eventual link to any of the state machine states
-          example: "forgot_password"
+        coreData:
+          type: object
+          $ref: '#/components/schemas/QADocumentCore'
+        annotations:
+          type: object
+          $ref: '#/components/schemas/QADocumentAnnotations'
         status:
           type: number
           format: integer
-          description: >- 
+          description: >-
             tell whether the document is locked for editing or not, useful for a GUI to avoid concurrent modifications, 0 means no operations pending
           example: 0
-        escalated:
-          type: string
-          default: unspecified
-          example: completed
-          $ref: '#/components/schemas/escalated'
-        answered:
-          type: string
-          default: unspecified
-          example: answered
-          $ref: '#/components/schemas/answered'
-        triggered:
-          type: string
-          default: unspecified
-          example: button
-          $ref: '#/components/schemas/triggered'
-        followup:
-          type: string
-          default: unspecified
-          example: followup
-          $ref: '#/components/schemas/followup'
-        feedback:
-          type: string
-          description: A feedback provided by the user
-          example: Thanks I solved my problem,  you were very helpful
-        feedbackScore:
-          type: number
-          format: double
-          description: a field to store the score provided by the user
-          example: 4.0
-        algorithmScore:
-          type: number
-          format: double
-          description: a field to store the score calculated by an algorithm i.e. a sentiment analysis tool (for future use)
-          example: 2.0
-        start:
-          type: boolean
-          description: event determined when a start state is loaded
-          example: true
-          default: false
         timestamp:
           type: number
           format: long
-          description: record insertion timestamp
+          description: record insertion timestamp (if not provided on document creation is automatically calculated)
           example: 1549283768918
     QADocumentUpdate:
       type: object
+      required:
+        - id
       properties:
+        id:
+          type: array
+          items:
+            type: string
+          example: ['id1', 'id2']
         conversation:
           type: string
           description: ID of the conversation (multiple q&a may be inside a conversation)
@@ -4307,117 +5190,18 @@ components:
           format: integer
           description: the index of the document in the conversation flow
           example: 10
-        question:
-          type: string
-          description: usually what the user of the chat says
-          example: I forgot my password
-        questionNegative:
-          type: array
-          description: list of sentences different to the main question
-          items:
-            type: string
-          example: I remember my password
-        questionScoredTerms:
-          type: array
-          description: question's terms list with score 
-          items:
-            type: object
-            properties:
-              term:
-                type: string
-                description: term
-              score:
-                type: number
-                format: double
-                description: term score
-            example: {"term": "password", "score": 0.2121}
-        answer:
-          type: string
-          description: usually what the operator of the chat says
-          example: I can reset the password for you
-        answerScoredTerms:
-          type: array
-          description: answer's terms list with score 
-          items:
-            type: object
-            properties:
-              term:
-                type: string
-                description: term
-              score:
-                type: number
-                format: double
-                description: term score
-            example: {"term": "reset", "score": 0.2121}        
-        verified:
-          type: boolean
-          description: whether the conversation was verified by an operator or not
-          default: false
-          example: true
-        topics:
-          type: array
-          description: list of topics
-          items:
-            type: string
-          example: ['pasword', "reset"]
-        dclass:
-          type: string
-          description: document classes
-          example: "group0 group1"
-        doctype:
-          type: string
-          default: normal
-          example: normal
-          $ref: '#/components/schemas/doctypes'
-        state:
-          type: string
-          description: eventual link to any of the state machine states
-          example: "forgot_password"
+        coreData:
+          type: object
+          $ref: '#/components/schemas/QADocumentCore'
+        annotations:
+          type: object
+          $ref: '#/components/schemas/QADocumentAnnotations'
         status:
           type: number
           format: integer
-          description: >- 
+          description: >-
             tell whether the document is locked for editing or not, useful for a GUI to avoid concurrent modifications, 0 means no operations pending
           example: 0
-        escalated:
-          type: string
-          default: unspecified
-          example: completed
-          $ref: '#/components/schemas/escalated'
-        answered:
-          type: string
-          default: unspecified
-          example: answered
-          $ref: '#/components/schemas/answered'
-        triggered:
-          type: string
-          default: unspecified
-          example: button
-          $ref: '#/components/schemas/triggered'
-        followup:
-          type: string
-          default: unspecified
-          example: followup
-          $ref: '#/components/schemas/followup'
-        feedback:
-          type: string
-          description: A feedback provided by the user
-          example: Thanks I solved my problem,  you were very helpful
-        feedbackScore:
-          type: number
-          format: double
-          description: a field to store the score provided by the user
-          example: 4.0
-        algorithmScore:
-          type: number
-          format: double
-          description: a field to store the score calculated by an algorithm i.e. a sentiment analysis tool (for future use)
-          example: 2.0
-        start:
-          type: boolean
-          description: event determined when a start state is loaded
-          example: true
-          default: false
         timestamp:
           type: number
           format: long
@@ -4469,7 +5253,7 @@ components:
           items:
             $ref: '#/components/schemas/Conversation'
     SearchQADocumentsResults:
-      type: object  
+      type: object
       required:
         - totalHits
         - hitsCount
@@ -4492,7 +5276,7 @@ components:
           format: float
           example: 0.9
           default: 0.0
-        hits: 
+        hits:
           type: array
           items:
             $ref: '#/components/schemas/SearchQADocument'
@@ -4510,11 +5294,11 @@ components:
           format: integer
           description: how many result are to be returned
           example: 10
-          default: 10        
+          default: 10
         minScore:
           type: number
           format: float
-          description: a threshold which exclude the results with a too low score 
+          description: a threshold which exclude the results with a too low score
           default: 0
         sortByConvIdIdx:
           type: boolean
@@ -4524,110 +5308,26 @@ components:
             contribution to scoring i.e. fields matching only queries will return 0 score for all the documents.
           example: true
           default: false
-        question:
+        conversation:
           type: string
-          description: a text to be matched with the question field
-          example: >-
-            when should I renew my insurance?
-        questionScoredTerms:
-          type: string
-          description: a string of terms matched with the question scored terms field
-          example: "when renew insurance"
+          description: search for a specific conversation id
+          example: "conv123"
         indexInConversation:
           type: number
           format: integer
           description: query by index of the sentence in conversation
           example: 10
-        answer:
-          type: string
-          description: a text to be matched with the answer field
-          example: >-
-            please give me your policy number, I will check when your policy expires.
-        answerScoredTerms:
-          type: string
-          description: a string of terms matched with the answr scored terms field
-          example: "policy number expires"
-        verified:
-          type: boolean
-          description: search for verified/unverified documents
-          example: true
-        doctype:
-          description: search for a specific doctype
-          $ref: '#/components/schemas/doctypes'
-        conversation:
-          type: string
-          description: search for a specific conversation id
-          example: "conv123"
-        topics:
-          type: string
-          description: search for specific topics
-          example: "policy renew"
-        dclass:
-          type: string
-          description: search for a document class
-          example: "group0"
-        state:
-          type: string
-          description: search for documents associated to a state
-          example: "check_policy_expiration"
+        coreData:
+          type: object
+          $ref: '#/components/schemas/QADocumentCoreSearch'
+        annotations:
+          type: object
+          $ref: '#/components/schemas/QADocumentAnnotationsSearch'
         status:
           type: number
           format: integer
           description: search documents with a specific state
           example: 0
-        escalated:
-          type: array
-          description: values to match (search documents with at least one value)
-          items:
-            $ref: '#/components/schemas/escalated'
-          example: [ "completed" ]
-        answered:
-          type: array
-          description: values to match (search documents with at least one value)
-          items:
-            $ref: '#/components/schemas/answered'
-          example: [ "answered" ]
-        triggered:
-          type: array
-          description: values to match (search documents with at least one value)
-          items:
-            $ref: '#/components/schemas/triggered'
-          example: [ "button" ]
-        followup:
-          type: array
-          description: values to match (search documents with at least one value)
-          items:
-          $ref: '#/components/schemas/followup'
-          example: [ "followup" ]
-        feedback:
-          type: string
-          description: A feedback provided by the user
-          example: Thanks I solved my problem,  you were very helpful
-        feedbackScoreGte:
-          type: number
-          format: double
-          description: min score value, if not specified -> no lower bound
-          example: 1.0
-        feedbackScoreLte:
-          type: number
-          format: double
-          description: max score value, if not specified -> no upper bound
-          example: 5.0
-        algorithmScoreGte:
-          type: number
-          format: double
-          description: min score value, if not specified -> no lower bound
-          example: 4.0
-        algorithmScoreLte:
-          type: number
-          format: double
-          description: max score value, if not specified -> no upper bound
-          example: 5.0
-        start:
-          type: boolean
-          description: event determined when a start state is loaded
-          example: true
-          default: false
         timestampGte:
           type: number
           format: long
@@ -4653,7 +5353,7 @@ components:
           type: string
           description: "the tokenizer to use (see TokenizersSet data structure for the available tokenizers)"
           example: "space_punctuation"
-          default: "space_punctuation"        
+          default: "space_punctuation"
         commonOrSpecificSearchPrior:
           type: string
           description: extract prior statistics from the common tables or index specific tables
@@ -4677,7 +5377,7 @@ components:
             - KNOWLEDGEBASE
             - CONV_LOGS
           example: "KNOWLEDGEBASE"
-          default: "KNOWLEDGEBASE"        
+          default: "KNOWLEDGEBASE"
         fieldsPrior:
           type: string
           description: fields to be used for the prior statistics
@@ -4686,8 +5386,8 @@ components:
             - answer
             - all
           example: "all"
-          default: "all"        
-        fieldsObserved: 
+          default: "all"
+        fieldsObserved:
           type: string
           description: fields to be used for the observed statistics
           enum:
@@ -4695,7 +5395,7 @@ components:
             - answer
             - all
           example: "all"
-          default: "all"        
+          default: "all"
         minWordsPerSentence:
           type: number
           format: integer
@@ -4741,7 +5441,7 @@ components:
           default: 1000
         totalTermsCacheMaxSize:
           type: number
-          format: integer 
+          format: integer
           description: max cache entries for total terms counting
           example: 1000
           default: 1000
@@ -4767,7 +5467,7 @@ components:
         dictSizeCacheSize:
           type: number
           format: integer
-          description: cache size for index dictionary 
+          description: cache size for index dictionary
           example: 1000
         totalTermsCacheSize:
           type: number
@@ -4795,8 +5495,9 @@ components:
         - STEM_NGRAM3
         - NGRAM4
         - STEM_NGRAM4
+        - AUTO
         - DEFAULT
-      example: NGRAM3          
+      example: NGRAM3
       description: >-
         Algorithm used for search:
           * `SHINGLES2` - word shingle with size 2 (unnormalized)
@@ -4812,4 +5513,5 @@ components:
           * `STEM_NGRAM3` - character stemmed ngram search with size 3 (normalized 0-1)
           * `NGRAM4` - character ngram search with size 4 (normalized 0-1)
           * `STEM_NGRAM4` - character stemmed ngram search with size 4 (normalized 0-1)
-          * `DEFAULT` - NGRAM2
+          * `AUTO` - StarChat choose which algorithm is better considering the query length
+          * `DEFAULT` - AUTO

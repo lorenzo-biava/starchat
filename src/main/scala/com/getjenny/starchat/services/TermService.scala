@@ -144,7 +144,7 @@ object TermService extends AbstractDataService {
     * @return a return message with the number of successfully and failed indexing operations
     */
   def indexDefaultSynonyms(indexName: String,
-                           refresh: Int = 0) : Future[UpdateDocumentListResult] = {
+                           refresh: Int = 0) : Future[UpdateDocumentsResult] = {
     val (_, language, _) = Index.patternsFromIndexName(indexName)
     val synonymsPath: String = "/index_management/json_index_spec/" + language + "/synonyms.csv"
     val synonymsResource: URL = getClass.getResource(synonymsPath)
@@ -161,7 +161,7 @@ object TermService extends AbstractDataService {
     * @return the IndexDocumentListResult with the indexing result
     */
   def indexSynonymsFromCsvFile(indexName: String, file: File, skipLines: Int = 0, separator: Char = ','):
-  Future[UpdateDocumentListResult] = Future {
+  Future[UpdateDocumentsResult] = Future {
     val documents = FileToDocuments.getTermsDocumentsFromCSV(log = log,
       file = file, skipLines = skipLines, separator = separator).toList
     updateTerm(indexName, Terms(terms = documents), 0)
@@ -374,7 +374,7 @@ object TermService extends AbstractDataService {
     * @param refresh whether to call an index update on ElasticSearch or not
     * @return result of the update operations
     */
-  def updateTermFuture(indexName: String, terms: Terms, refresh: Int) : Future[UpdateDocumentListResult] = Future {
+  def updateTermFuture(indexName: String, terms: Terms, refresh: Int) : Future[UpdateDocumentsResult] = Future {
     updateTerm(indexName, terms, refresh)
   }
 
@@ -385,7 +385,7 @@ object TermService extends AbstractDataService {
     * @param refresh whether to call an index update on ElasticSearch or not
     * @return result of the update operations
     */
-  private[this] def updateTerm(indexName: String, terms: Terms, refresh: Int) : UpdateDocumentListResult = {
+  private[this] def updateTerm(indexName: String, terms: Terms, refresh: Int) : UpdateDocumentsResult = {
     val client: RestHighLevelClient = elasticClient.httpClient
 
     val bulkReq : BulkRequest = new BulkRequest()
@@ -458,7 +458,7 @@ object TermService extends AbstractDataService {
         x.status === RestStatus.CREATED)
     }).toList
 
-    UpdateDocumentListResult(listOfDocRes)
+    UpdateDocumentsResult(listOfDocRes)
   }
 
   /** fetch two terms and calculate the distance between them

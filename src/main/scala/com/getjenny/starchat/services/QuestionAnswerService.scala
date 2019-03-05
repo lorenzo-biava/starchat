@@ -17,7 +17,9 @@ import org.elasticsearch.action.search.{SearchRequest, SearchResponse, SearchTyp
 import org.elasticsearch.action.update.{UpdateRequest, UpdateResponse}
 import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.action.bulk.BulkRequestBuilder
 import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.action.bulk.BulkRequest
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.index.query.functionscore._
 import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
@@ -29,6 +31,8 @@ import org.elasticsearch.search.aggregations.metrics.sum.Sum
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.sort.{FieldSortBuilder, ScoreSortBuilder, SortOrder}
 import scalaz.Scalaz._
+import org.elasticsearch.action.bulk.BulkResponse
+import org.elasticsearch.client.RequestOptions
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
@@ -321,10 +325,8 @@ trait QuestionAnswerService extends AbstractDataService {
         sourceReq.sort(new FieldSortBuilder("conversation").order(SortOrder.DESC))
           .sort(new FieldSortBuilder("index_in_conversation").order(SortOrder.DESC))
           .sort(new FieldSortBuilder("timestamp").order(SortOrder.DESC))
-      case _ => ;
+      case _ => sourceReq.sort(new ScoreSortBuilder().order(SortOrder.DESC))
     }
-
-    sourceReq.sort(new ScoreSortBuilder().order(SortOrder.DESC))
 
     val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
       .source(sourceReq)
@@ -333,22 +335,25 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
 
-    documentSearch.doctype match {
+    val coreData = documentSearch.coreData.getOrElse(QADocumentCoreUpdate())
+    val annotations = documentSearch.annotations.getOrElse(QADocumentAnnotationsUpdate())
+
+    annotations.doctype match {
       case Some(doctype) => boolQueryBuilder.filter(QueryBuilders.termQuery("doctype", doctype))
       case _ => ;
     }
 
-    documentSearch.verified match {
+    coreData.verified match {
       case Some(verified) => boolQueryBuilder.filter(QueryBuilders.termQuery("verified", verified))
       case _ => ;
     }
 
-    documentSearch.topics match {
+    coreData.topics match {
       case Some(topics) => boolQueryBuilder.filter(QueryBuilders.termQuery("topics.base", topics))
       case _ => ;
     }
 
-    documentSearch.dclass match {
+    annotations.dclass match {
       case Some(dclass) => boolQueryBuilder.filter(QueryBuilders.termQuery("dclass", dclass))
       case _ => ;
     }
@@ -500,9 +505,9 @@ trait QuestionAnswerService extends AbstractDataService {
           case None => None : Option[String]
         }
 
-        val doctype : String = source.get("doctype") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => Doctypes.normal
+        val doctype : Option[String] = source.get("doctype") match {
+          case Some(t) => Some(t.asInstanceOf[String])
+          case None => Some(Doctypes.NORMAL.toString)
         }
 
         val state : Option[String] = source.get("state") match {
@@ -533,6 +538,24 @@ trait QuestionAnswerService extends AbstractDataService {
           state = state,
           status = status,
           timestamp = timestamp
+        )
+
+        val qaDocument: QADocument = QADocument(
+          id = id,
+          conversation = conversation,
+          indexInConversation = indexInConversation,
+          coreData = Some(QADocumentCore(
+            question = Some(question),
+            questionScoredTerms = questionScoredTerms,
+            questionNegative = questionNegative,
+            answer = Some(answer),
+            answerScoredTerms = answerScoredTerms,
+            topics = topics,
+            verified = verified
+          )),
+          annotations = QADocumentAnnotations(
+            doctype = Doctypes.HIDDEN
+          )
         )
 
         val searchDocument : SearchQADocument = SearchQADocument(score = item.getScore, document = document)
@@ -653,7 +676,7 @@ trait QuestionAnswerService extends AbstractDataService {
     Option {doc_result}
   }
 
-  def update(indexName: String, id: String, document: QADocumentUpdate, refresh: Int): UpdateDocumentResult = {
+  def update(indexName: String, document: QADocumentUpdate, refresh: Int): UpdateDocumentsResult = {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.conversation match {
@@ -742,13 +765,17 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val client: RestHighLevelClient = elasticClient.httpClient
 
-    val updateReq = new UpdateRequest()
-      .index(Index.indexName(indexName, elasticClient.indexSuffix))
-      .`type`(elasticClient.indexMapping)
-      .doc(builder)
-      .id(id)
+    val bulkRequest = new BulkRequest
+    document.id.map { id =>
+      val updateReq = new UpdateRequest()
+        .index(Index.indexName(indexName, elasticClient.indexSuffix))
+        .`type`(elasticClient.indexMapping)
+        .doc(builder)
+        .id(id)
+      bulkRequest.add(updateReq, RequestOptions.DEFAULT)
+    }
 
-    val response: UpdateResponse = client.update(updateReq, RequestOptions.DEFAULT)
+    val bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT)
 
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refresh(Index.indexName(indexName, elasticClient.indexSuffix))
@@ -757,14 +784,16 @@ trait QuestionAnswerService extends AbstractDataService {
       }
     }
 
-    val docResult: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
-      dtype = response.getType,
-      id = response.getId,
-      version = response.getVersion,
-      created = response.status === RestStatus.CREATED
-    )
+    val listOfDocRes: List[UpdateDocumentResult] = bulkResponse.getItems.map(response => {
+      UpdateDocumentResult(index = response.getIndex,
+        dtype = response.getType,
+        id = response.getId,
+        version = response.getVersion,
+        created = response.status === RestStatus.CREATED
+      )
+    }).toList
 
-    docResult
+    UpdateDocumentsResult(data = listOfDocRes)
   }
 
   def read(indexName: String, ids: List[String]): Option[SearchQADocumentsResults] = {
@@ -856,7 +885,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
       val doctype : String = source.get("doctype") match {
         case Some(t) => t.asInstanceOf[String]
-        case None => Doctypes.normal
+        case None => Doctypes.NORMAL
       }
 
       val state : Option[String] = source.get("state") match {
@@ -996,7 +1025,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
         val doctype : String = source.get("doctype") match {
           case Some(t) => t.asInstanceOf[String]
-          case None => Doctypes.normal
+          case None => Doctypes.NORMAL
         }
 
         val state : Option[String] = source.get("state") match {
@@ -1052,16 +1081,22 @@ trait QuestionAnswerService extends AbstractDataService {
     val ids: List[String] = List(extractionRequest.id)
     val q = this.read(indexName, ids)
     val hits = q.getOrElse(SearchQADocumentsResults())
-    hits.hits.map { hit =>
-      val extractionReqQ = extractionReq(text = hit.document.question, er = extractionRequest)
-      val extractionReqA = extractionReq(text = hit.document.answer, er = extractionRequest)
-      val (_, termsQ) = manausTermsExtractionService
-        .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
-      val (_, termsA) = manausTermsExtractionService
-        .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
-      val scoredTermsUpdateReq = QADocumentUpdate(questionScoredTerms = Some(termsQ.toList),
-        answerScoredTerms = Some(termsA.toList))
-      update(indexName = indexName, id = hit.document.id, document = scoredTermsUpdateReq, refresh = 0)
+    hits.hits.filter(_.document.coreData.nonEmpty).map { hit =>
+      hit.document.coreData match {
+        case Some(coreData) =>
+          val extractionReqQ = extractionReq(text = coreData.question.getOrElse(""), er = extractionRequest)
+          val (_, termsQ) = manausTermsExtractionService
+            .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
+          val extractionReqA = extractionReq(text = coreData.answer.getOrElse(""), er = extractionRequest)
+          val (_, termsA) = manausTermsExtractionService
+            .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
+          val scoredTermsUpdateReq = QADocumentUpdate(questionScoredTerms = Some(termsQ.toList),
+            answerScoredTerms = Some(termsA.toList))
+          update(indexName = indexName, id = hit.document.id, document = scoredTermsUpdateReq, refresh = 0)
+        case _ =>
+          UpdateDocumentResult(index = indexName, dtype = elasticClient.indexSuffix,
+            id = hit.document.id, version = -1, created = false)
+      }
     }
   }
 
@@ -1074,16 +1109,22 @@ trait QuestionAnswerService extends AbstractDataService {
   def updateAllTextTerms(indexName: String,
                          extractionRequest: UpdateQATermsRequest,
                          keepAlive: Long = 3600000): Iterator[UpdateDocumentResult] = {
-    allDocuments(indexName = indexName, keepAlive = keepAlive).map { item =>
-      val extractionReqQ = extractionReq(text = item.question, er = extractionRequest)
-      val extractionReqA = extractionReq(text = item.answer, er = extractionRequest)
-      val (_, termsQ) = manausTermsExtractionService
-        .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
-      val (_, termsA) = manausTermsExtractionService
-        .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
-      val scoredTermsUpdateReq = QADocumentUpdate(questionScoredTerms = Some(termsQ.toList),
-        answerScoredTerms = Some(termsA.toList))
-      update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
+    allDocuments(indexName = indexName, keepAlive = keepAlive).filter(_.coreData.nonEmpty).map { item =>
+      item.coreData match {
+        case Some(coreData) =>
+          val extractionReqQ = extractionReq(text = coreData.question.getOrElse(""), er = extractionRequest)
+          val extractionReqA = extractionReq(text = coreData.answer.getOrElse(""), er = extractionRequest)
+          val (_, termsQ) = manausTermsExtractionService
+            .textTerms(indexName = indexName ,extractionRequest = extractionReqQ)
+          val (_, termsA) = manausTermsExtractionService
+            .textTerms(indexName = indexName ,extractionRequest = extractionReqA)
+          val scoredTermsUpdateReq = QADocumentUpdate(questionScoredTerms = Some(termsQ.toList),
+            answerScoredTerms = Some(termsA.toList))
+          update(indexName = indexName, id = item.id, document = scoredTermsUpdateReq, refresh = 0)
+        case _ =>
+          UpdateDocumentResult(index = indexName, dtype = elasticClient.indexSuffix,
+            id = item.id, version = -1, created = false)
+      }
     }
   }
 }
