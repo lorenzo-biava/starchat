@@ -56,16 +56,16 @@ object Followup extends Enumeration {
 }
 
 
-case class QADocumentCore(
-                           question: Option[String] = None , /* usually what the user of the chat says */
-                           questionNegative: Option[List[String]] = None, /* list of sentences different to the main question */
-                           questionScoredTerms: Option[List[(String, Double)]] = None, /* terms list in form {"term": "<term>", "score": 0.2121} */
-                           answer: Option[String] = None, /* usually what the operator of the chat says */
-                           answerScoredTerms: Option[List[(String, Double)]] = None, /* terms list in form {"term": "<term>", "score": 0.2121} */
-                           topics: Option[String] = None, /* list of topics */
-                           verified: Option[Boolean] = Some{false}, /* was the conversation verified by an operator? */
-                           done: Option[Boolean] = Some{false} /* mark the conversation as done, this field is expected to set once for each conversation */
-                         )
+  case class QADocumentCore(
+                             question: Option[String] = None , /* usually what the user of the chat says */
+                             questionNegative: Option[List[String]] = None, /* list of sentences different to the main question */
+                             questionScoredTerms: Option[List[(String, Double)]] = None, /* terms list in form {"term": "<term>", "score": 0.2121} */
+                             answer: Option[String] = None, /* usually what the operator of the chat says */
+                             answerScoredTerms: Option[List[(String, Double)]] = None, /* terms list in form {"term": "<term>", "score": 0.2121} */
+                             topics: Option[String] = None, /* list of topics */
+                             verified: Option[Boolean] = Some{false}, /* was the conversation verified by an operator? */
+                             done: Option[Boolean] = Some{false} /* mark the conversation as done, this field is expected to set once for each conversation */
+                           )
 
 case class QADocumentAnnotations(
                                   dclass: Option[String] = None, /* document classes e.g. group0 group1 etc.*/
