@@ -797,8 +797,7 @@ trait QuestionAnswerService extends AbstractDataService {
           case _ => ;
         }
         coreData.answer match {
-          case Some(t) =>
-            builder.field("answer", t)
+          case Some(t) => builder.field("answer", t)
           case _ => ;
         }
         coreData.answerScoredTerms match {
@@ -812,19 +811,16 @@ trait QuestionAnswerService extends AbstractDataService {
           case _ => ;
         }
         coreData.topics match {
-          case Some(t) =>
-            builder.field("topics", t)
+          case Some(t) => builder.field("topics", t)
           case _ => ;
         }
         coreData.verified match {
-          case Some(t) =>
-            builder.field("verified", t)
+          case Some(t) => builder.field("verified", t)
           case _ => builder.field("verified", false)
 
         }
         coreData.done match {
-          case Some(t) =>
-            builder.field("done", t)
+          case Some(t) => builder.field("done", t)
           case _ => builder.field("done", false)
         }
       case _ => QADocumentCore()
@@ -833,14 +829,12 @@ trait QuestionAnswerService extends AbstractDataService {
 
     // begin annotations
     document.annotations.dclass match {
-      case Some(t) =>
-        builder.field("dclass", t)
+      case Some(t) => builder.field("dclass", t)
       case _ => ;
     }
     builder.field("doctype", document.annotations.doctype)
     document.annotations.state match {
-      case Some(t) =>
-        builder.field("state", t)
+      case Some(t) => builder.field("state", t)
       case _ => ;
     }
     builder.field("agent", document.annotations.agent)
@@ -849,28 +843,23 @@ trait QuestionAnswerService extends AbstractDataService {
     builder.field("triggered", document.annotations.triggered)
     builder.field("followup", document.annotations.followup)
     document.annotations.feedbackConv match {
-      case Some(t) =>
-        builder.field("feedbackConv", t)
+      case Some(t) => builder.field("feedbackConv", t)
       case _ => ;
     }
     document.annotations.feedbackConvScore match {
-      case Some(t) =>
-        builder.field("feedbackConvScore", t)
+      case Some(t) => builder.field("feedbackConvScore", t)
       case _ => ;
     }
     document.annotations.algorithmConvScore match {
-      case Some(t) =>
-        builder.field("algorithmConvScore", t)
+      case Some(t) => builder.field("algorithmConvScore", t)
       case _ => ;
     }
     document.annotations.feedbackAnswerScore match {
-      case Some(t) =>
-        builder.field("feedbackAnswerScore", t)
+      case Some(t) => builder.field("feedbackAnswerScore", t)
       case _ => ;
     }
     document.annotations.algorithmAnswerScore match {
-      case Some(t) =>
-        builder.field("algorithmAnswerScore", t)
+      case Some(t) => builder.field("algorithmAnswerScore", t)
       case _ => ;
     }
     builder.field("start", document.annotations.start)
@@ -910,85 +899,122 @@ trait QuestionAnswerService extends AbstractDataService {
 
     document.conversation match {
       case Some(t) => builder.field("conversation", t)
-      case None => ;
-    }
-
-    document.question match {
-      case Some(t) => builder.field("question", t)
-      case None => ;
-    }
-
-    document.questionNegative match {
-      case Some(t) =>
-        val array = builder.startArray("question_negative")
-        t.foreach(q => {
-          array.startObject().field("query", q).endObject()
-        })
-        array.endArray()
-      case None => ;
-    }
-
-    document.questionScoredTerms match {
-      case Some(t) =>
-        val array = builder.startArray("question_scored_terms")
-        t.foreach{case(term, score) =>
-          array.startObject().field("term", term)
-            .field("score", score).endObject()
-        }
-        array.endArray()
-      case None => ;
+      case _ => ;
     }
 
     document.indexInConversation match {
-      case Some(t) => builder.field("index_in_conversation", t)
-      case None => ;
-    }
-
-    document.answer match {
-      case Some(t) => builder.field("answer", t)
-      case None => ;
-    }
-
-    document.answerScoredTerms match {
-      case Some(t) =>
-        val array = builder.startArray("answer_scored_terms")
-        t.foreach{
-          case(term, score) =>
-            array.startObject().field("term", term).field("score", score).endObject()
-        }
-        array.endArray()
-      case None => ;
-    }
-
-    document.verified match {
-      case Some(t) => builder.field("verified", t)
-      case None => ;
-    }
-
-    document.topics match {
-      case Some(t) => builder.field("topics", t)
-      case None => ;
-    }
-
-    document.dclass match {
-      case Some(t) => builder.field("dclass", t)
-      case None => ;
-    }
-
-    document.doctype match {
-      case Some(t) => builder.field("doctype", t)
-      case None => ;
-    }
-
-    document.state match {
-      case Some(t) => builder.field("state", t)
-      case None => ;
+      case Some(t) => builder.field("indexInConversation", t)
+      case _ => ;
     }
 
     document.status match {
       case Some(t) => builder.field("status", t)
-      case None => ;
+      case _ => ;
     }
+
+    document.timestamp match {
+      case Some(t) => builder.field("timestamp", t)
+      case _ => ;
+    }
+
+    // begin core data
+    document.coreData match {
+      case Some(coreData) =>
+        coreData.question match {
+          case Some(t) => builder.field("question", t)
+          case _ => ;
+        }
+        coreData.questionNegative match {
+          case Some(t) =>
+            val array = builder.startArray("question_negative")
+            t.foreach(q => {
+              array.startObject().field("query", q).endObject()
+            })
+            array.endArray()
+          case _ => ;
+        }
+        coreData.questionScoredTerms match {
+          case Some(t) =>
+            val array = builder.startArray("question_scored_terms")
+            t.foreach{case(term, score) =>
+              array.startObject().field("term", term)
+                .field("score", score).endObject()
+            }
+            array.endArray()
+          case _ => ;
+        }
+        coreData.answer match {
+          case Some(t) => builder.field("answer", t)
+          case _ => ;
+        }
+        coreData.answerScoredTerms match {
+          case Some(t) =>
+            val array = builder.startArray("answer_scored_terms")
+            t.foreach{case(term, score) =>
+              array.startObject().field("term", term)
+                .field("score", score).endObject()
+            }
+            array.endArray()
+          case _ => ;
+        }
+        coreData.topics match {
+          case Some(t) => builder.field("topics", t)
+          case _ => ;
+        }
+        coreData.verified match {
+          case Some(t) => builder.field("verified", t)
+          case _ => ;
+        }
+        coreData.done match {
+          case Some(t) => builder.field("done", t)
+          case _ => ;
+        }
+      case _ => QADocumentCore()
+    }
+    // end core data
+
+    // begin annotations
+    document.annotations match {
+      case Some(annotations) =>
+        annotations.dclass match {
+          case Some(t) => builder.field("dclass", t)
+          case _ => ;
+        }
+        builder.field("doctype", annotations.doctype)
+        annotations.state match {
+          case Some(t) =>
+            builder.field("state", t)
+          case _ => ;
+        }
+        builder.field("agent", annotations.agent)
+        builder.field("escalated", annotations.escalated)
+        builder.field("answered", annotations.answered)
+        builder.field("triggered", annotations.triggered)
+        builder.field("followup", annotations.followup)
+        annotations.feedbackConv match {
+          case Some(t) => builder.field("feedbackConv", t)
+          case _ => ;
+        }
+        annotations.feedbackConvScore match {
+          case Some(t) => builder.field("feedbackConvScore", t)
+          case _ => ;
+        }
+        annotations.algorithmConvScore match {
+          case Some(t) => builder.field("algorithmConvScore", t)
+          case _ => ;
+        }
+        annotations.feedbackAnswerScore match {
+          case Some(t) => builder.field("feedbackAnswerScore", t)
+          case _ => ;
+        }
+        annotations.algorithmAnswerScore match {
+          case Some(t) => builder.field("algorithmAnswerScore", t)
+          case _ => ;
+        }
+        builder.field("start", annotations.start)
+      case _ => ;
+    }
+    // end annotations
 
     builder.endObject()
 
