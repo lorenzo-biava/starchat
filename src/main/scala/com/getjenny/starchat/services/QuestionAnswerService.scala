@@ -760,64 +760,8 @@ trait QuestionAnswerService extends AbstractDataService {
 
     builder.field("id", document.id)
     builder.field("conversation", document.conversation)
-
-    document.indexInConversation match {
-      case Some(t) => builder.field("index_in_conversation", t)
-      case None => ;
-    }
-
-    builder.field("question", document.question)
-
-    document.questionNegative match {
-      case Some(t) =>
-        val array = builder.startArray("question_negative")
-        t.foreach(q => {
-          array.startObject().field("query", q).endObject()
-        })
-        array.endArray()
-      case None => ;
-    }
-
-    document.questionScoredTerms match {
-      case Some(t) =>
-        val array = builder.startArray("question_scored_terms")
-        t.foreach{case(term, score) =>
-          array.startObject().field("term", term)
-            .field("score", score).endObject()
-        }
-        array.endArray()
-      case None => ;
-    }
-
-    builder.field("answer", document.answer)
-
-    document.answerScoredTerms match {
-      case Some(t) =>
-        val array = builder.startArray("answer_scored_terms")
-        t.foreach{case(term, score) =>
-          array.startObject().field("term", term)
-            .field("score", score).endObject()
-        }
-        array.endArray()
-      case None => ;
-    }
-
-    builder.field("verified", document.verified)
-
-    document.topics match {
-      case Some(t) => builder.field("topics", t)
-      case None => ;
-    }
-    builder.field("doctype", document.doctype)
-
-    document.dclass match {
-      case Some(t) => builder.field("dclass", t)
-      case None => ;
-    }
-    document.state match {
-      case Some(t) => builder.field("state", t)
-      case None => ;
-    }
+    builder.field("index_in_conversation", document.indexInConversation)
+    builder.field("status", document.status)
 
     document.timestamp match {
       case Some(t) => builder.field("timestamp", t)
@@ -825,7 +769,112 @@ trait QuestionAnswerService extends AbstractDataService {
         builder.field("timestamp", Time.timestampMillis)
     }
 
-    builder.field("status", document.status)
+    // begin core data
+    document.coreData match {
+      case Some(coreData) =>
+        coreData.question match {
+          case Some(t) =>
+            builder.field("question", t)
+          case _ => ;
+        }
+        coreData.questionNegative match {
+          case Some(t) =>
+            val array = builder.startArray("question_negative")
+            t.foreach(q => {
+              array.startObject().field("query", q).endObject()
+            })
+            array.endArray()
+          case _ => ;
+        }
+        coreData.questionScoredTerms match {
+          case Some(t) =>
+            val array = builder.startArray("question_scored_terms")
+            t.foreach{case(term, score) =>
+              array.startObject().field("term", term)
+                .field("score", score).endObject()
+            }
+            array.endArray()
+          case _ => ;
+        }
+        coreData.answer match {
+          case Some(t) =>
+            builder.field("answer", t)
+          case _ => ;
+        }
+        coreData.answerScoredTerms match {
+          case Some(t) =>
+            val array = builder.startArray("answer_scored_terms")
+            t.foreach{case(term, score) =>
+              array.startObject().field("term", term)
+                .field("score", score).endObject()
+            }
+            array.endArray()
+          case _ => ;
+        }
+        coreData.topics match {
+          case Some(t) =>
+            builder.field("topics", t)
+          case _ => ;
+        }
+        coreData.verified match {
+          case Some(t) =>
+            builder.field("verified", t)
+          case _ => builder.field("verified", false)
+
+        }
+        coreData.done match {
+          case Some(t) =>
+            builder.field("done", t)
+          case _ => builder.field("done", false)
+        }
+      case _ => QADocumentCore()
+    }
+    // end core data
+
+    // begin annotations
+    document.annotations.dclass match {
+      case Some(t) =>
+        builder.field("dclass", t)
+      case _ => ;
+    }
+    builder.field("doctype", document.annotations.doctype)
+    document.annotations.state match {
+      case Some(t) =>
+        builder.field("state", t)
+      case _ => ;
+    }
+    builder.field("agent", document.annotations.agent)
+    builder.field("escalated", document.annotations.escalated)
+    builder.field("answered", document.annotations.answered)
+    builder.field("triggered", document.annotations.triggered)
+    builder.field("followup", document.annotations.followup)
+    document.annotations.feedbackConv match {
+      case Some(t) =>
+        builder.field("feedbackConv", t)
+      case _ => ;
+    }
+    document.annotations.feedbackConvScore match {
+      case Some(t) =>
+        builder.field("feedbackConvScore", t)
+      case _ => ;
+    }
+    document.annotations.algorithmConvScore match {
+      case Some(t) =>
+        builder.field("algorithmConvScore", t)
+      case _ => ;
+    }
+    document.annotations.feedbackAnswerScore match {
+      case Some(t) =>
+        builder.field("feedbackAnswerScore", t)
+      case _ => ;
+    }
+    document.annotations.algorithmAnswerScore match {
+      case Some(t) =>
+        builder.field("algorithmAnswerScore", t)
+      case _ => ;
+    }
+    builder.field("start", document.annotations.start)
+    // end annotations
 
     builder.endObject()
 
