@@ -11,15 +11,14 @@ import com.getjenny.starchat.entities.{Doctypes, _}
 import com.getjenny.starchat.services.esclient.QuestionAnswerElasticClient
 import com.getjenny.starchat.utils.Index
 import org.apache.lucene.search.join._
+import org.elasticsearch.action.bulk.BulkRequest
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequest, MultiGetResponse}
 import org.elasticsearch.action.index.{IndexRequest, IndexResponse}
 import org.elasticsearch.action.search.{SearchRequest, SearchResponse, SearchType}
-import org.elasticsearch.action.update.{UpdateRequest, UpdateResponse}
+import org.elasticsearch.action.update.UpdateRequest
 import org.elasticsearch.client.{RequestOptions, RestHighLevelClient}
 import org.elasticsearch.common.unit.TimeValue
-import org.elasticsearch.action.bulk.BulkRequestBuilder
 import org.elasticsearch.common.xcontent.XContentBuilder
-import org.elasticsearch.action.bulk.BulkRequest
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.index.query.functionscore._
 import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
@@ -31,14 +30,11 @@ import org.elasticsearch.search.aggregations.metrics.sum.Sum
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.sort.{FieldSortBuilder, ScoreSortBuilder, SortOrder}
 import scalaz.Scalaz._
-import org.elasticsearch.action.bulk.BulkResponse
-import org.elasticsearch.client.RequestOptions
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.collection.mutable
 import scala.concurrent.Future
-import scalaz.Scalaz._
 
 case class QuestionAnswerServiceException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
@@ -313,6 +309,199 @@ trait QuestionAnswerService extends AbstractDataService {
     countersCacheParameters
   }
 
+  def documentFromMap(indexName: String, id: String, source : Map[String, Any]): QADocument = {
+    val conversation : String = source.get("conversation") match {
+      case Some(t) => t.asInstanceOf[String]
+      case _ => throw QuestionAnswerServiceException("Missing conversation ID for " +
+        "index:docId(" + indexName + ":"  + id + ")")
+    }
+
+    val indexInConversation : Int = source.get("index_in_conversation") match {
+      case Some(t) => t.asInstanceOf[Int]
+      case _ => throw QuestionAnswerServiceException("Missing index in conversation for " +
+        "index:docId(" + indexName + ":"  + id + ")")
+    }
+
+    val status : Int = source.get("status") match {
+      case Some(t) => t.asInstanceOf[Int]
+      case _ => 0
+    }
+
+    val timestamp : Option[Long] = source.get("timestamp") match {
+      case Some(t) => Option { t.asInstanceOf[Long] }
+      case _ => None : Option[Long]
+    }
+
+    // begin core data
+    val question : Option[String] = source.get("question") match {
+      case Some(t) => Some(t.asInstanceOf[String])
+      case _ => None
+    }
+
+    val questionNegative : Option[List[String]] = source.get("question_negative") match {
+      case Some(t) =>
+        val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+          .asScala.map(_.asScala.get("query")).filter(_.nonEmpty).map(_.get).toList
+        Option { res }
+      case _ => None: Option[List[String]]
+    }
+
+    val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
+      case Some(t) => Option {
+        t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
+          .map(pair =>
+            (pair.getOrDefault("term", "").asInstanceOf[String],
+              pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
+          .toList
+      }
+      case _ => None : Option[List[(String, Double)]]
+    }
+
+    val answer : Option[String] = source.get("answer") match {
+      case Some(t) => Some(t.asInstanceOf[String])
+      case _ => None
+    }
+
+    val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
+      case Some(t) => Option {
+        t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
+          .map(pair =>
+            (pair.getOrDefault("term", "").asInstanceOf[String],
+              pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
+          .toList
+      }
+      case _ => None : Option[List[(String, Double)]]
+    }
+
+    val topics : Option[String] = source.get("topics") match {
+      case Some(t) => Option { t.asInstanceOf[String] }
+      case _ => None : Option[String]
+    }
+
+    val verified : Option[Boolean] = source.get("verified") match {
+      case Some(t) => Some(t.asInstanceOf[Boolean])
+      case _ => Some(false)
+    }
+
+    val done : Option[Boolean] = source.get("done") match {
+      case Some(t) => Some(t.asInstanceOf[Boolean])
+      case _ => Some(false)
+    }
+
+    val coreDataOut: Option[QADocumentCore] = Some {
+      QADocumentCore(
+        question = question,
+        questionNegative = questionNegative,
+        questionScoredTerms = questionScoredTerms,
+        answer = answer,
+        answerScoredTerms = answerScoredTerms,
+        topics = topics,
+        verified = verified,
+        done = done
+      )
+    }
+    // begin core data
+
+    // begin annotations
+    val dclass : Option[String] = source.get("dclass") match {
+      case Some(t) => Option { t.asInstanceOf[String] }
+      case _ => None : Option[String]
+    }
+
+    val doctype : Doctypes.Value = source.get("doctype") match {
+      case Some(t) => Doctypes.value(t.asInstanceOf[String])
+      case _ => Doctypes.NORMAL
+    }
+
+    val state : Option[String] = source.get("state") match {
+      case Some(t) => Option { t.asInstanceOf[String] }
+      case _ => None : Option[String]
+    }
+
+    val agent : Agent.Value = source.get("agent") match {
+      case Some(t) => Agent.value(t.asInstanceOf[String])
+      case _ => Agent.STARCHAT
+    }
+
+    val escalated : Escalated.Value = source.get("escalated") match {
+      case Some(t) => Escalated.value(t.asInstanceOf[String])
+      case _ => Escalated.UNSPECIFIED
+    }
+
+    val answered : Answered.Value = source.get("answered") match {
+      case Some(t) => Answered.value(t.asInstanceOf[String])
+      case _ => Answered.ANSWERED
+    }
+
+    val triggered : Triggered.Value = source.get("triggered") match {
+      case Some(t) => Triggered.value(t.asInstanceOf[String])
+      case _ => Triggered.UNSPECIFIED
+    }
+
+    val followup : Followup.Value = source.get("followup") match {
+      case Some(t) => Followup.value(t.asInstanceOf[String])
+      case _ => Followup.UNSPECIFIED
+    }
+
+    val feedbackConv : Option[String] = source.get("feedbackConv") match {
+      case Some(t) => Option { t.asInstanceOf[String] }
+      case _ => None : Option[String]
+    }
+
+    val feedbackConvScore : Option[Double] = source.get("feedbackConvScore") match {
+      case Some(t) => Option { t.asInstanceOf[Double] }
+      case _ => None : Option[Double]
+    }
+
+    val algorithmConvScore : Option[Double] = source.get("algorithmConvScore") match {
+      case Some(t) => Option { t.asInstanceOf[Double] }
+      case _ => None : Option[Double]
+    }
+
+    val feedbackAnswerScore : Option[Double] = source.get("feedbackAnswerScore") match {
+      case Some(t) => Option { t.asInstanceOf[Double] }
+      case _ => None : Option[Double]
+    }
+
+    val algorithmAnswerScore : Option[Double] = source.get("algorithmAnswerScore") match {
+      case Some(t) => Option { t.asInstanceOf[Double] }
+      case _ => None : Option[Double]
+    }
+
+    val start : Boolean = source.get("start") match {
+      case Some(t) => t.asInstanceOf[Boolean]
+      case _ => false
+    }
+
+    val annotationsOut: QADocumentAnnotations = QADocumentAnnotations(
+      dclass = dclass,
+      doctype = doctype,
+      state = state,
+      agent = agent,
+      escalated = escalated,
+      answered = answered,
+      triggered = triggered,
+      followup = followup,
+      feedbackConv = feedbackConv,
+      feedbackConvScore = feedbackConvScore,
+      algorithmConvScore = algorithmConvScore,
+      feedbackAnswerScore = feedbackAnswerScore,
+      algorithmAnswerScore = algorithmAnswerScore,
+      start = start
+    )
+    // end annotations
+
+    QADocument(
+      id = id,
+      conversation = conversation,
+      indexInConversation = indexInConversation,
+      status = status,
+      coreData = coreDataOut,
+      annotations = annotationsOut,
+      timestamp = timestamp
+    )
+  }
+
   def search(indexName: String, documentSearch: QADocumentSearch): Future[Option[SearchQADocumentsResults]] = {
     val client: RestHighLevelClient = elasticClient.httpClient
 
@@ -542,202 +731,11 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val documents : Option[List[SearchQADocument]] = Option {
       searchResp.getHits.getHits.toList.map { item =>
-        // val fields : Map[String, GetField] = item.getFields.toMap
         val id : String = item.getId
 
-        // val score : Float = fields.get("_score").asInstanceOf[Float]
         val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-        val conversation : String = source.get("conversation") match {
-          case Some(t) => t.asInstanceOf[String]
-          case _ => throw QuestionAnswerServiceException("Missing conversation ID for " +
-            "index:docId(" + indexName + ":"  + id + ")")
-        }
-
-        val indexInConversation : Int = source.get("index_in_conversation") match {
-          case Some(t) => t.asInstanceOf[Int]
-          case _ => throw QuestionAnswerServiceException("Missing index in conversation for " +
-            "index:docId(" + indexName + ":"  + id + ")")
-        }
-
-        val status : Int = source.get("status") match {
-          case Some(t) => t.asInstanceOf[Int]
-          case _ => 0
-        }
-
-        val timestamp : Option[Long] = source.get("timestamp") match {
-          case Some(t) => Option { t.asInstanceOf[Long] }
-          case _ => None : Option[Long]
-        }
-
-        // begin core data
-        val question : Option[String] = source.get("question") match {
-          case Some(t) => Some(t.asInstanceOf[String])
-          case _ => None
-        }
-
-        val questionNegative : Option[List[String]] = source.get("question_negative") match {
-          case Some(t) =>
-            val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-              .asScala.map(_.asScala.get("query")).filter(_.nonEmpty).map(_.get).toList
-            Option { res }
-          case _ => None: Option[List[String]]
-        }
-
-        val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
-          case Some(t) => Option {
-            t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
-              .map(pair =>
-                (pair.getOrDefault("term", "").asInstanceOf[String],
-                  pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
-              .toList
-          }
-          case _ => None : Option[List[(String, Double)]]
-        }
-
-        val answer : Option[String] = source.get("answer") match {
-          case Some(t) => Some(t.asInstanceOf[String])
-          case _ => None
-        }
-
-        val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
-          case Some(t) => Option {
-            t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]].asScala
-              .map(pair =>
-                (pair.getOrDefault("term", "").asInstanceOf[String],
-                  pair.getOrDefault("score", 0.0).asInstanceOf[Double]))
-              .toList
-          }
-          case _ => None : Option[List[(String, Double)]]
-        }
-
-        val topics : Option[String] = source.get("topics") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val verified : Option[Boolean] = source.get("verified") match {
-          case Some(t) => Some(t.asInstanceOf[Boolean])
-          case _ => Some(false)
-        }
-
-        val done : Option[Boolean] = source.get("done") match {
-          case Some(t) => Some(t.asInstanceOf[Boolean])
-          case _ => Some(false)
-        }
-
-        val coreDataOut: Option[QADocumentCore] = Some {
-          QADocumentCore(
-            question = question,
-            questionNegative = questionNegative,
-            questionScoredTerms = questionScoredTerms,
-            answer = answer,
-            answerScoredTerms = answerScoredTerms,
-            topics = topics,
-            verified = verified,
-            done = done
-          )
-        }
-        // begin core data
-
-        // begin annotations
-        val dclass : Option[String] = source.get("dclass") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val doctype : Doctypes.Value = source.get("doctype") match {
-          case Some(t) => Doctypes.value(t.asInstanceOf[String])
-          case _ => Doctypes.NORMAL
-        }
-
-        val state : Option[String] = source.get("state") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val agent : Agent.Value = source.get("agent") match {
-          case Some(t) => Agent.value(t.asInstanceOf[String])
-          case _ => Agent.STARCHAT
-        }
-
-        val escalated : Escalated.Value = source.get("escalated") match {
-          case Some(t) => Escalated.value(t.asInstanceOf[String])
-          case _ => Escalated.UNSPECIFIED
-        }
-
-        val answered : Answered.Value = source.get("answered") match {
-          case Some(t) => Answered.value(t.asInstanceOf[String])
-          case _ => Answered.ANSWERED
-        }
-
-        val triggered : Triggered.Value = source.get("triggered") match {
-          case Some(t) => Triggered.value(t.asInstanceOf[String])
-          case _ => Triggered.UNSPECIFIED
-        }
-
-        val followup : Followup.Value = source.get("followup") match {
-          case Some(t) => Followup.value(t.asInstanceOf[String])
-          case _ => Followup.UNSPECIFIED
-        }
-
-        val feedbackConv : Option[String] = source.get("feedbackConv") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val feedbackConvScore : Option[Double] = source.get("feedbackConvScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val algorithmConvScore : Option[Double] = source.get("algorithmConvScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val feedbackAnswerScore : Option[Double] = source.get("feedbackAnswerScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val algorithmAnswerScore : Option[Double] = source.get("algorithmAnswerScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val start : Boolean = source.get("start") match {
-          case Some(t) => t.asInstanceOf[Boolean]
-          case _ => false
-        }
-
-        val annotationsOut: QADocumentAnnotations = QADocumentAnnotations(
-          dclass = dclass,
-          doctype = doctype,
-          state = state,
-          agent = agent,
-          escalated = escalated,
-          answered = answered,
-          triggered = triggered,
-          followup = followup,
-          feedbackConv = feedbackConv,
-          feedbackConvScore = feedbackConvScore,
-          algorithmConvScore = algorithmConvScore,
-          feedbackAnswerScore = feedbackAnswerScore,
-          algorithmAnswerScore = algorithmAnswerScore,
-          start = start
-        )
-        // end annotations
-
-        val document : QADocument = QADocument(
-          id = id,
-          conversation = conversation,
-          indexInConversation = indexInConversation,
-          status = status,
-          coreData = coreDataOut,
-          annotations = annotationsOut,
-          timestamp = timestamp
-        )
+        val document = documentFromMap(indexName, id, source)
 
         val searchDocument : SearchQADocument = SearchQADocument(score = item.getScore, document = document)
         searchDocument
@@ -1072,198 +1070,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
         val source : Map[String, Any] = item.getSource.asScala.toMap
 
-        val conversation : String = source.get("conversation") match {
-          case Some(t) => t.asInstanceOf[String]
-          case _ => throw QuestionAnswerServiceException("Missing conversation ID for " +
-            "index:docId(" + indexName + ":"  + id + ")")
-        }
-
-        val indexInConversation : Int = source.get("index_in_conversation") match {
-          case Some(t) => t.asInstanceOf[Int]
-          case _ => throw QuestionAnswerServiceException("Missing index in conversation for " +
-            "index:docId(" + indexName + ":"  + id + ")")
-        }
-
-        val status : Int = source.get("status") match {
-          case Some(t) => t.asInstanceOf[Int]
-          case _ => 0
-        }
-
-        val timestamp : Option[Long] = source.get("timestamp") match {
-          case Some(t) => Some(t.asInstanceOf[Long])
-          case _ => None
-        }
-
-        // begin core data
-        val question : Option[String] = source.get("question") match {
-          case Some(t) => Some(t.asInstanceOf[String])
-          case _ => None
-        }
-
-        val questionNegative : Option[List[String]] = source.get("question_negative") match {
-          case Some(t) =>
-            val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-              .asScala.map(_.getOrDefault("query", None.orNull)).filter(_ =/= None.orNull).toList
-            Option { res }
-          case _ => None: Option[List[String]]
-        }
-
-        val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
-          case Some(t) =>
-            Option {
-              t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-                .asScala.map(_.asScala.toMap)
-                .map(term => (term.getOrElse("term", "").asInstanceOf[String],
-                  term.getOrElse("score", 0.0).asInstanceOf[Double])).filter { case (term, _) => term =/= "" }.toList
-            }
-          case _ => None : Option[List[(String, Double)]]
-        }
-
-        val answer : Option[String] = source.get("answer") match {
-          case Some(t) => Some(t.asInstanceOf[String])
-          case _ => None
-        }
-
-        val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
-          case Some(t) =>
-            Option {
-              t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-                .asScala.map(_.asScala.toMap)
-                .map(term => (term.getOrElse("term", "").asInstanceOf[String],
-                  term.getOrElse("score", 0.0).asInstanceOf[Double]))
-                .filter{case(term,_) => term =/= ""}.toList
-            }
-          case _ => None : Option[List[(String, Double)]]
-        }
-
-        val topics : Option[String] = source.get("topics") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val verified : Option[Boolean] = source.get("verified") match {
-          case Some(t) => Some(t.asInstanceOf[Boolean])
-          case _ => Some(false)
-        }
-
-        val done : Option[Boolean] = source.get("done") match {
-          case Some(t) => Some(t.asInstanceOf[Boolean])
-          case _ => Some(false)
-        }
-
-        val coreData: Option[QADocumentCore] = Some {
-          QADocumentCore(
-            question = question,
-            questionNegative = questionNegative,
-            questionScoredTerms = questionScoredTerms,
-            answer = answer,
-            answerScoredTerms = answerScoredTerms,
-            topics = topics,
-            verified = verified,
-            done = done
-          )
-        }
-        // end core data
-
-        // begin annotations
-        val dclass : Option[String] = source.get("dclass") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val doctype : Doctypes.Value = source.get("doctype") match {
-          case Some(t) => Doctypes.value(t.asInstanceOf[String])
-          case _ => Doctypes.NORMAL
-        }
-
-        val state : Option[String] = source.get("state") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val agent : Agent.Value = source.get("agent") match {
-          case Some(t) => Agent.value(t.asInstanceOf[String])
-          case _ => Agent.STARCHAT
-        }
-
-        val escalated : Escalated.Value = source.get("escalated") match {
-          case Some(t) => Escalated.value(t.asInstanceOf[String])
-          case _ => Escalated.UNSPECIFIED
-        }
-
-        val answered : Answered.Value = source.get("answered") match {
-          case Some(t) => Answered.value(t.asInstanceOf[String])
-          case _ => Answered.ANSWERED
-        }
-
-        val triggered : Triggered.Value = source.get("triggered") match {
-          case Some(t) => Triggered.value(t.asInstanceOf[String])
-          case _ => Triggered.UNSPECIFIED
-        }
-
-        val followup : Followup.Value = source.get("followup") match {
-          case Some(t) => Followup.value(t.asInstanceOf[String])
-          case _ => Followup.UNSPECIFIED
-        }
-
-        val feedbackConv : Option[String] = source.get("feedbackConv") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val feedbackConvScore : Option[Double] = source.get("feedbackConvScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val algorithmConvScore : Option[Double] = source.get("algorithmConvScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val feedbackAnswerScore : Option[Double] = source.get("feedbackAnswerScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val algorithmAnswerScore : Option[Double] = source.get("algorithmAnswerScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val start : Boolean = source.get("start") match {
-          case Some(t) => t.asInstanceOf[Boolean]
-          case _ => false
-        }
-
-        val annotations: QADocumentAnnotations = QADocumentAnnotations(
-          dclass = dclass,
-          doctype = doctype,
-          state = state,
-          agent = agent,
-          escalated = escalated,
-          answered = answered,
-          triggered = triggered,
-          followup = followup,
-          feedbackConv = feedbackConv,
-          feedbackConvScore = feedbackConvScore,
-          algorithmConvScore = algorithmConvScore,
-          feedbackAnswerScore = feedbackAnswerScore,
-          algorithmAnswerScore = algorithmAnswerScore,
-          start = start
-        )
-        // end annotations
-
-
-        val document : QADocument = QADocument(
-          id = id,
-          conversation = conversation,
-          indexInConversation = indexInConversation,
-          status = status,
-          coreData = coreData,
-          annotations = annotations,
-          timestamp = timestamp
-        )
+        val document = documentFromMap(indexName, id, source)
 
         SearchQADocument(score = .0f, document = document)
       }
@@ -1305,203 +1112,11 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val iterator = Iterator.continually{
       val documents = scrollResp.getHits.getHits.toList.map { item =>
-
-        ///
         val id : String = item.getId
 
         val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-        val conversation : String = source.get("conversation") match {
-          case Some(t) => t.asInstanceOf[String]
-          case _ => throw QuestionAnswerServiceException("Missing conversation ID for " +
-            "index:docId(" + indexName + ":"  + id + ")")
-        }
-
-        val indexInConversation : Int = source.get("index_in_conversation") match {
-          case Some(t) => t.asInstanceOf[Int]
-          case _ => throw QuestionAnswerServiceException("Missing index in conversation for " +
-            "index:docId(" + indexName + ":"  + id + ")")
-        }
-
-        val status : Int = source.get("status") match {
-          case Some(t) => t.asInstanceOf[Int]
-          case _ => 0
-        }
-
-        val timestamp : Option[Long] = source.get("timestamp") match {
-          case Some(t) => Some(t.asInstanceOf[Long])
-          case _ => None
-        }
-
-        // begin core data
-        val question : Option[String] = source.get("question") match {
-          case Some(t) => Some(t.asInstanceOf[String])
-          case _ => None
-        }
-
-        val questionNegative : Option[List[String]] = source.get("question_negative") match {
-          case Some(t) =>
-            val res = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-              .asScala.map(_.getOrDefault("query", None.orNull)).filter(_ =/= None.orNull).toList
-            Option { res }
-          case _ => None: Option[List[String]]
-        }
-
-        val questionScoredTerms: Option[List[(String, Double)]] = source.get("question_scored_terms") match {
-          case Some(t) =>
-            Option {
-              t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-                .asScala.map(_.asScala.toMap)
-                .map(term => (term.getOrElse("term", "").asInstanceOf[String],
-                  term.getOrElse("score", 0.0).asInstanceOf[Double])).filter { case (term, _) => term =/= "" }.toList
-            }
-          case _ => None : Option[List[(String, Double)]]
-        }
-
-        val answer : Option[String] = source.get("answer") match {
-          case Some(t) => Some(t.asInstanceOf[String])
-          case _ => None
-        }
-
-        val answerScoredTerms: Option[List[(String, Double)]] = source.get("answer_scored_terms") match {
-          case Some(t) =>
-            Option {
-              t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-                .asScala.map(_.asScala.toMap)
-                .map(term => (term.getOrElse("term", "").asInstanceOf[String],
-                  term.getOrElse("score", 0.0).asInstanceOf[Double]))
-                .filter{case(term,_) => term =/= ""}.toList
-            }
-          case _ => None : Option[List[(String, Double)]]
-        }
-
-        val topics : Option[String] = source.get("topics") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val verified : Option[Boolean] = source.get("verified") match {
-          case Some(t) => Some(t.asInstanceOf[Boolean])
-          case _ => Some(false)
-        }
-
-        val done : Option[Boolean] = source.get("done") match {
-          case Some(t) => Some(t.asInstanceOf[Boolean])
-          case _ => Some(false)
-        }
-
-        val coreData: Option[QADocumentCore] = Some {
-          QADocumentCore(
-            question = question,
-            questionNegative = questionNegative,
-            questionScoredTerms = questionScoredTerms,
-            answer = answer,
-            answerScoredTerms = answerScoredTerms,
-            topics = topics,
-            verified = verified,
-            done = done
-          )
-        }
-        // end core data
-
-        // begin annotations
-        val dclass : Option[String] = source.get("dclass") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val doctype : Doctypes.Value = source.get("doctype") match {
-          case Some(t) => Doctypes.value(t.asInstanceOf[String])
-          case _ => Doctypes.NORMAL
-        }
-
-        val state : Option[String] = source.get("state") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val agent : Agent.Value = source.get("agent") match {
-          case Some(t) => Agent.value(t.asInstanceOf[String])
-          case _ => Agent.STARCHAT
-        }
-
-        val escalated : Escalated.Value = source.get("escalated") match {
-          case Some(t) => Escalated.value(t.asInstanceOf[String])
-          case _ => Escalated.UNSPECIFIED
-        }
-
-        val answered : Answered.Value = source.get("answered") match {
-          case Some(t) => Answered.value(t.asInstanceOf[String])
-          case _ => Answered.ANSWERED
-        }
-
-        val triggered : Triggered.Value = source.get("triggered") match {
-          case Some(t) => Triggered.value(t.asInstanceOf[String])
-          case _ => Triggered.UNSPECIFIED
-        }
-
-        val followup : Followup.Value = source.get("followup") match {
-          case Some(t) => Followup.value(t.asInstanceOf[String])
-          case _ => Followup.UNSPECIFIED
-        }
-
-        val feedbackConv : Option[String] = source.get("feedbackConv") match {
-          case Some(t) => Option { t.asInstanceOf[String] }
-          case _ => None : Option[String]
-        }
-
-        val feedbackConvScore : Option[Double] = source.get("feedbackConvScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val algorithmConvScore : Option[Double] = source.get("algorithmConvScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val feedbackAnswerScore : Option[Double] = source.get("feedbackAnswerScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val algorithmAnswerScore : Option[Double] = source.get("algorithmAnswerScore") match {
-          case Some(t) => Option { t.asInstanceOf[Double] }
-          case _ => None : Option[Double]
-        }
-
-        val start : Boolean = source.get("start") match {
-          case Some(t) => t.asInstanceOf[Boolean]
-          case _ => false
-        }
-
-        val annotations: QADocumentAnnotations = QADocumentAnnotations(
-          dclass = dclass,
-          doctype = doctype,
-          state = state,
-          agent = agent,
-          escalated = escalated,
-          answered = answered,
-          triggered = triggered,
-          followup = followup,
-          feedbackConv = feedbackConv,
-          feedbackConvScore = feedbackConvScore,
-          algorithmConvScore = algorithmConvScore,
-          feedbackAnswerScore = feedbackAnswerScore,
-          algorithmAnswerScore = algorithmAnswerScore,
-          start = start
-        )
-        // end annotations
-
-        QADocument(
-          id = id,
-          conversation = conversation,
-          indexInConversation = indexInConversation,
-          status = status,
-          coreData = coreData,
-          annotations = annotations,
-          timestamp = timestamp
-        )
+        documentFromMap(indexName, id, source)
       }
 
       scrollResp = client.search(searchReq, RequestOptions.DEFAULT)
