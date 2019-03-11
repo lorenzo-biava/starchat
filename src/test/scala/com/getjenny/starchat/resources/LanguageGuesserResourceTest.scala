@@ -62,15 +62,20 @@ implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds
     }
   }
 
+  val languageIterator: Iterator[(String, String)] = {
+    val input_file = getClass.getResourceAsStream("/test_data/language_guesser_test_parameters.csv")
+    val input_data = scala.io.Source.fromInputStream(input_file, "UTF-8").getLines
+    input_data.next() //skip column names
+    new Iterator[(String, String)] {
+      override def hasNext: Boolean = input_data.hasNext
+      override def next(): (String, String) = {
+        val line = input_data.next().split(",")
+        (line(0), line(1))
+      }
+    }
+  }
 
-  val input_file = getClass.getResourceAsStream("/test_data/language_guesser_test_parameters.csv")
-  val input_data = scala.io.Source.fromInputStream(input_file, "UTF-8").getLines
-  val languages: List[(String, String)] = input_data.toList.tail.map(line => {
-    val split = line.split(",")
-    (split(0), split(1))
-  })
-
-  for((language, sentence) <- languages) {
+  for((language, sentence) <- languageIterator) {
     it should {
       s"return an HTTP code 200 when checking if '$language' is supported" in {
         Get(s"/index_getjenny_english_0/language_guesser/$language") ~> addCredentials(testUserCredentials) ~> routes ~> check {
