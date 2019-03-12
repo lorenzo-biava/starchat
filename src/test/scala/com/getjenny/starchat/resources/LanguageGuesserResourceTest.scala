@@ -81,7 +81,7 @@ implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds
         Get(s"/index_getjenny_english_0/language_guesser/$language") ~> addCredentials(testUserCredentials) ~> routes ~> check {
           status shouldEqual StatusCodes.OK
           val response = responseAs[LanguageGuesserInformations]
-          response.supportedLanguages should (contain key ("languages") and contain value (Map(language -> true)))
+          response.supportedLanguages should (contain key "languages" and contain value Map(language -> true))
         }
       }
     }
