@@ -215,15 +215,15 @@ trait KnowledgeBaseResource extends StarChatResource {
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, indexName, Permissions.write)) {
-                parameters("id".as[String].*, "refresh".as[Int] ? 0) { (ids, refresh) =>
+                parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[DocsIds]) { request_data =>
                     if (request_data.ids.nonEmpty) {
                       val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, ids.toList, refresh)) {
+                      onCompleteWithBreaker(breaker)(questionAnswerService.delete(indexName, request_data.ids, refresh)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>
-                          log.error("index(" + indexName + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
+                          log.error("index(" + indexName + ") route=" + routeName + " method=DELETE : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
                               ReturnMessageData(code = 104, message = e.getMessage)
@@ -235,7 +235,7 @@ trait KnowledgeBaseResource extends StarChatResource {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                         case Failure(e) =>
-                          log.error("index(" + indexName + ") route=decisionTableRoutes method=DELETE : " + e.getMessage)
+                          log.error("index(" + indexName + ") route=" + routeName + " method=DELETE : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
                               ReturnMessageData(code = 105, message = e.getMessage)

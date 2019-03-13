@@ -27,6 +27,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
 import org.elasticsearch.search.aggregations.metrics.sum.Sum
 import org.elasticsearch.search.builder.SearchSourceBuilder
+import org.elasticsearch.search.sort.{FieldSortBuilder, ScoreSortBuilder, SortOrder}
 import scalaz.Scalaz._
 
 import scala.collection.JavaConverters._
@@ -315,6 +316,16 @@ trait QuestionAnswerService extends AbstractDataService {
       .size(documentSearch.size.getOrElse(10))
       .minScore(documentSearch.minScore.getOrElse(Option{elasticClient.queryMinThreshold}.getOrElse(0.0f)))
 
+    documentSearch.sortByConvIdIdx match {
+      case Some(true) =>
+        sourceReq.sort(new FieldSortBuilder("conversation").order(SortOrder.DESC))
+          .sort(new FieldSortBuilder("index_in_conversation").order(SortOrder.DESC))
+          .sort(new FieldSortBuilder("timestamp").order(SortOrder.DESC))
+      case _ => ;
+    }
+
+    sourceReq.sort(new ScoreSortBuilder().order(SortOrder.DESC))
+
     val searchReq = new SearchRequest(Index.indexName(indexName, elasticClient.indexSuffix))
       .source(sourceReq)
       .types(elasticClient.indexMapping)
@@ -499,6 +510,11 @@ trait QuestionAnswerService extends AbstractDataService {
           case None => None : Option[String]
         }
 
+        val timestamp : Option[Long] = source.get("timestamp") match {
+          case Some(t) => Option { t.asInstanceOf[Long] }
+          case None => None : Option[Long]
+        }
+
         val status : Int = source.get("status") match {
           case Some(t) => t.asInstanceOf[Int]
           case None => 0
@@ -515,7 +531,9 @@ trait QuestionAnswerService extends AbstractDataService {
           dclass = dclass,
           doctype = doctype,
           state = state,
-          status = status)
+          status = status,
+          timestamp = timestamp
+        )
 
         val searchDocument : SearchQADocument = SearchQADocument(score = item.getScore, document = document)
         searchDocument
@@ -525,9 +543,10 @@ trait QuestionAnswerService extends AbstractDataService {
     val filteredDoc : List[SearchQADocument] = documents.getOrElse(List[SearchQADocument]())
 
     val maxScore : Float = searchResp.getHits.getMaxScore
+    val totalHits = searchResp.getHits.totalHits
     val total : Int = filteredDoc.length
-    val searchResults : SearchQADocumentsResults = SearchQADocumentsResults(total = total, maxScore = maxScore,
-      hits = filteredDoc)
+    val searchResults : SearchQADocumentsResults = SearchQADocumentsResults(totalHits = totalHits,
+      hitsCount = total, maxScore = maxScore, hits = filteredDoc)
 
     val searchResultsOption : Future[Option[SearchQADocumentsResults]] = Future { Option { searchResults } }
     searchResultsOption
@@ -595,6 +614,12 @@ trait QuestionAnswerService extends AbstractDataService {
     document.state match {
       case Some(t) => builder.field("state", t)
       case None => ;
+    }
+
+    document.timestamp match {
+      case Some(t) => builder.field("timestamp", t)
+      case None =>
+        builder.field("timestamp", Time.timestampMillis)
     }
 
     builder.field("status", document.status)
@@ -867,7 +892,7 @@ trait QuestionAnswerService extends AbstractDataService {
 
     val maxScore : Float = .0f
     val total : Int = filteredDoc.length
-    val searchResults : SearchQADocumentsResults = SearchQADocumentsResults(total = total, maxScore = maxScore,
+    val searchResults : SearchQADocumentsResults = SearchQADocumentsResults(hitsCount = total, maxScore = maxScore,
       hits = filteredDoc)
 
     val searchResultsOption : Option[SearchQADocumentsResults] = Option { searchResults }
