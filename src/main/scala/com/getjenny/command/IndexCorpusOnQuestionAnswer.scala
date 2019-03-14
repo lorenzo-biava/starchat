@@ -91,9 +91,11 @@ object IndexCorpusOnQuestionAnswer extends JsonSupport {
           question = Some(documentString),
           answer = Some(documentString)
         )),
-        annotations = QADocumentAnnotations(
-          doctype = Doctypes.HIDDEN
-        )
+        annotations = Some {
+          QADocumentAnnotations(
+            doctype = Some(Doctypes.HIDDEN)
+          )
+        }
       )
 
       val entityFuture = Marshal(qaDocument).to[MessageEntity]

@@ -5133,7 +5133,6 @@ components:
         - id
         - conversation
         - indexInConversation
-        - coreData
       properties:
         id:
           type: string

@@ -21,7 +21,7 @@ case class DeleteDataServiceException(message: String = "", cause: Throwable = N
 trait AbstractDataService {
   implicit def executionContext: ExecutionContext = SCActorSystem.system.dispatchers.lookup("starchat.dispatcher")
 
-  val elasticClient: ElasticClient
+  protected[this] val elasticClient: ElasticClient
 
   /** delete all the terms in a table
     *

@@ -10,11 +10,14 @@ import com.getjenny.starchat.services._
 
 import scala.concurrent.ExecutionContext
 
-trait RestInterface extends KnowledgeBaseResource with DecisionTableResource with RootAPIResource
-  with SystemIndexManagementResource with IndexManagementResource with LanguageGuesserResource
-  with TermResource with TokenizersResource with AnalyzersPlaygroundResource with TermsExtractionResource
-  with SpellcheckResource with ConversationLogsResource with PriorDataResource with UserResource
-  with NodeDtLoadingStatusResource with ClusterNodesResource {
+trait RestInterface extends RootAPIResource
+  with SystemIndexManagementResource with IndexManagementResource
+  with LanguageGuesserResource
+  with TermResource with TokenizersResource
+  with DecisionTableResource with AnalyzersPlaygroundResource with TermsExtractionResource
+  with SpellcheckResource
+  with KnowledgeBaseResource with ConversationLogsResource with PriorDataResource
+  with UserResource with NodeDtLoadingStatusResource with ClusterNodesResource {
 
   implicit def executionContext: ExecutionContext
 

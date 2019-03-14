@@ -322,9 +322,9 @@ trait QuestionAnswerService extends AbstractDataService {
         "index:docId(" + indexName + ":"  + id + ")")
     }
 
-    val status : Int = source.get("status") match {
-      case Some(t) => t.asInstanceOf[Int]
-      case _ => 0
+    val status : Option[Int] = source.get("status") match {
+      case Some(t) => Some(t.asInstanceOf[Int])
+      case _ => Some(0)
     }
 
     val timestamp : Option[Long] = source.get("timestamp") match {
@@ -408,9 +408,9 @@ trait QuestionAnswerService extends AbstractDataService {
       case _ => None : Option[String]
     }
 
-    val doctype : Doctypes.Value = source.get("doctype") match {
-      case Some(t) => Doctypes.value(t.asInstanceOf[String])
-      case _ => Doctypes.NORMAL
+    val doctype : Option[Doctypes.Value] = source.get("doctype") match {
+      case Some(t) => Some{Doctypes.value(t.asInstanceOf[String])}
+      case _ => Some{Doctypes.NORMAL}
     }
 
     val state : Option[String] = source.get("state") match {
@@ -418,29 +418,29 @@ trait QuestionAnswerService extends AbstractDataService {
       case _ => None : Option[String]
     }
 
-    val agent : Agent.Value = source.get("agent") match {
-      case Some(t) => Agent.value(t.asInstanceOf[String])
-      case _ => Agent.STARCHAT
+    val agent : Option[Agent.Value] = source.get("agent") match {
+      case Some(t) => Some(Agent.value(t.asInstanceOf[String]))
+      case _ => Some(Agent.STARCHAT)
     }
 
-    val escalated : Escalated.Value = source.get("escalated") match {
-      case Some(t) => Escalated.value(t.asInstanceOf[String])
-      case _ => Escalated.UNSPECIFIED
+    val escalated : Option[Escalated.Value] = source.get("escalated") match {
+      case Some(t) => Some(Escalated.value(t.asInstanceOf[String]))
+      case _ => Some(Escalated.UNSPECIFIED)
     }
 
-    val answered : Answered.Value = source.get("answered") match {
-      case Some(t) => Answered.value(t.asInstanceOf[String])
-      case _ => Answered.ANSWERED
+    val answered : Option[Answered.Value] = source.get("answered") match {
+      case Some(t) => Some(Answered.value(t.asInstanceOf[String]))
+      case _ => Some(Answered.ANSWERED)
     }
 
-    val triggered : Triggered.Value = source.get("triggered") match {
-      case Some(t) => Triggered.value(t.asInstanceOf[String])
-      case _ => Triggered.UNSPECIFIED
+    val triggered : Option[Triggered.Value] = source.get("triggered") match {
+      case Some(t) => Some(Triggered.value(t.asInstanceOf[String]))
+      case _ => Some(Triggered.UNSPECIFIED)
     }
 
-    val followup : Followup.Value = source.get("followup") match {
-      case Some(t) => Followup.value(t.asInstanceOf[String])
-      case _ => Followup.UNSPECIFIED
+    val followup : Option[Followup.Value] = source.get("followup") match {
+      case Some(t) => Some(Followup.value(t.asInstanceOf[String]))
+      case _ => Some(Followup.UNSPECIFIED)
     }
 
     val feedbackConv : Option[String] = source.get("feedbackConv") match {
@@ -468,27 +468,29 @@ trait QuestionAnswerService extends AbstractDataService {
       case _ => None : Option[Double]
     }
 
-    val start : Boolean = source.get("start") match {
-      case Some(t) => t.asInstanceOf[Boolean]
-      case _ => false
+    val start : Option[Boolean] = source.get("start") match {
+      case Some(t) => Some(t.asInstanceOf[Boolean])
+      case _ => Some(false)
     }
 
-    val annotationsOut: QADocumentAnnotations = QADocumentAnnotations(
-      dclass = dclass,
-      doctype = doctype,
-      state = state,
-      agent = agent,
-      escalated = escalated,
-      answered = answered,
-      triggered = triggered,
-      followup = followup,
-      feedbackConv = feedbackConv,
-      feedbackConvScore = feedbackConvScore,
-      algorithmConvScore = algorithmConvScore,
-      feedbackAnswerScore = feedbackAnswerScore,
-      algorithmAnswerScore = algorithmAnswerScore,
-      start = start
-    )
+    val annotationsOut: Option[QADocumentAnnotations] = Some {
+      QADocumentAnnotations(
+        dclass = dclass,
+        doctype = doctype,
+        state = state,
+        agent = agent,
+        escalated = escalated,
+        answered = answered,
+        triggered = triggered,
+        followup = followup,
+        feedbackConv = feedbackConv,
+        feedbackConvScore = feedbackConvScore,
+        algorithmConvScore = algorithmConvScore,
+        feedbackAnswerScore = feedbackAnswerScore,
+        algorithmAnswerScore = algorithmAnswerScore,
+        start = start
+      )
+    }
     // end annotations
 
     QADocument(
@@ -755,12 +757,16 @@ trait QuestionAnswerService extends AbstractDataService {
   }
 
   def create(indexName: String, document: QADocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
-    val builder : XContentBuilder = jsonBuilder().startObject()
+    val builder: XContentBuilder = jsonBuilder().startObject()
 
     builder.field("id", document.id)
     builder.field("conversation", document.conversation)
     builder.field("index_in_conversation", document.indexInConversation)
-    builder.field("status", document.status)
+
+    document.status match {
+      case Some(t) => builder.field("status", t)
+      case _ => ;
+    }
 
     document.timestamp match {
       case Some(t) => builder.field("timestamp", t)
@@ -787,7 +793,7 @@ trait QuestionAnswerService extends AbstractDataService {
         coreData.questionScoredTerms match {
           case Some(t) =>
             val array = builder.startArray("question_scored_terms")
-            t.foreach{case(term, score) =>
+            t.foreach { case (term, score) =>
               array.startObject().field("term", term)
                 .field("score", score).endObject()
             }
@@ -801,7 +807,7 @@ trait QuestionAnswerService extends AbstractDataService {
         coreData.answerScoredTerms match {
           case Some(t) =>
             val array = builder.startArray("answer_scored_terms")
-            t.foreach{case(term, score) =>
+            t.foreach { case (term, score) =>
               array.startObject().field("term", term)
                 .field("score", score).endObject()
             }
@@ -826,41 +832,66 @@ trait QuestionAnswerService extends AbstractDataService {
     // end core data
 
     // begin annotations
-    document.annotations.dclass match {
-      case Some(t) => builder.field("dclass", t)
-      case _ => ;
+    document.annotations match {
+      case Some(annotations) =>
+        annotations.dclass match {
+          case Some(t) => builder.field("dclass", t)
+          case _ => ;
+        }
+        annotations.doctype match {
+          case Some(t) => builder.field("doctype", t.toString)
+          case _ => ;
+        }
+        annotations.state match {
+          case Some(t) => builder.field("state", t)
+          case _ => ;
+        }
+        annotations.agent match {
+          case Some(t) => builder.field("agent", t.toString)
+          case _ => ;
+        }
+        annotations.escalated match {
+          case Some(t) => builder.field("escalated", t.toString)
+          case _ => ;
+        }
+        annotations.answered match {
+          case Some(t) => builder.field("answered", t.toString)
+          case _ => ;
+        }
+        annotations.triggered match {
+          case Some(t) => builder.field("triggered", t.toString)
+          case _ => ;
+        }
+        annotations.followup match {
+          case Some(t) => builder.field("followup", t)
+          case _ => ;
+        }
+        annotations.feedbackConv match {
+          case Some(t) => builder.field("feedbackConv", t)
+          case _ => ;
+        }
+        annotations.feedbackConvScore match {
+          case Some(t) => builder.field("feedbackConvScore", t)
+          case _ => ;
+        }
+        annotations.algorithmConvScore match {
+          case Some(t) => builder.field("algorithmConvScore", t)
+          case _ => ;
+        }
+        annotations.feedbackAnswerScore match {
+          case Some(t) => builder.field("feedbackAnswerScore", t)
+          case _ => ;
+        }
+        annotations.algorithmAnswerScore match {
+          case Some(t) => builder.field("algorithmAnswerScore", t)
+          case _ => ;
+        }
+        annotations.start match {
+          case Some(t) => builder.field("start", t)
+          case _ => ;
+        }
+      case _ => QADocumentAnnotations()
     }
-    builder.field("doctype", document.annotations.doctype)
-    document.annotations.state match {
-      case Some(t) => builder.field("state", t)
-      case _ => ;
-    }
-    builder.field("agent", document.annotations.agent)
-    builder.field("escalated", document.annotations.escalated)
-    builder.field("answered", document.annotations.answered)
-    builder.field("triggered", document.annotations.triggered)
-    builder.field("followup", document.annotations.followup)
-    document.annotations.feedbackConv match {
-      case Some(t) => builder.field("feedbackConv", t)
-      case _ => ;
-    }
-    document.annotations.feedbackConvScore match {
-      case Some(t) => builder.field("feedbackConvScore", t)
-      case _ => ;
-    }
-    document.annotations.algorithmConvScore match {
-      case Some(t) => builder.field("algorithmConvScore", t)
-      case _ => ;
-    }
-    document.annotations.feedbackAnswerScore match {
-      case Some(t) => builder.field("feedbackAnswerScore", t)
-      case _ => ;
-    }
-    document.annotations.algorithmAnswerScore match {
-      case Some(t) => builder.field("algorithmAnswerScore", t)
-      case _ => ;
-    }
-    builder.field("start", document.annotations.start)
     // end annotations
 
     builder.endObject()
@@ -984,10 +1015,10 @@ trait QuestionAnswerService extends AbstractDataService {
             builder.field("state", t)
           case _ => ;
         }
-        builder.field("agent", annotations.agent)
-        builder.field("escalated", annotations.escalated)
-        builder.field("answered", annotations.answered)
-        builder.field("triggered", annotations.triggered)
+        builder.field("agent", annotations.agent.toString)
+        builder.field("escalated", annotations.escalated.toString)
+        builder.field("answered", annotations.answered.toString)
+        builder.field("triggered", annotations.triggered.toString)
         builder.field("followup", annotations.followup)
         annotations.feedbackConv match {
           case Some(t) => builder.field("feedbackConv", t)
@@ -1053,16 +1084,15 @@ trait QuestionAnswerService extends AbstractDataService {
     val client: RestHighLevelClient = elasticClient.httpClient
 
     val multigetReq = new MultiGetRequest()
-    ids.foreach{id =>
+    ids.foreach{ id =>
       multigetReq.add(
         new MultiGetRequest.Item(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, id)
       )
     }
 
-    val response: MultiGetResponse = client.mget(multigetReq, RequestOptions.DEFAULT)
-
-    val documents : Option[List[SearchQADocument]] = Option {
-      response.getResponses.toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map { e =>
+    val documents : Option[List[SearchQADocument]] = Some {
+      client.mget(multigetReq, RequestOptions.DEFAULT).getResponses.toList
+        .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map { e =>
 
         val item: GetResponse = e.getResponse
 

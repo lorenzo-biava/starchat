@@ -156,9 +156,11 @@ object IndexQuestionAnswer extends JsonSupport {
           question = Some(entry("question")),
           answer = Some(entry("answer"))
         )),
-        annotations = QADocumentAnnotations(
-          doctype = Doctypes.NORMAL
-        )
+        annotations = Some{
+          QADocumentAnnotations(
+            doctype = Some(Doctypes.NORMAL)
+          )
+        }
       )
 
       val entity_future = Marshal(qaDocument).to[MessageEntity]
