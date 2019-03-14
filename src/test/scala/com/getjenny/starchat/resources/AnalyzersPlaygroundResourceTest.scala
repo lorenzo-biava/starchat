@@ -243,6 +243,84 @@ class AnalyzersPlaygroundResourceTest extends WordSpec with Matchers with Scalat
   }
 
   it should {
+    "return an HTTP code 200 when checking if the traversed states has the state in the position from the first" in {
+      val evaluateRequest: AnalyzerEvaluateRequest =
+        AnalyzerEvaluateRequest(
+          query = "",
+          analyzer =
+            """hasTravStateInPosition("two","2")""",
+          data = Option{
+            AnalyzersData(traversedStates = Vector("one", "two", "three", "four", "five"))
+          }
+        )
+      val evaluateRequest2: AnalyzerEvaluateRequest =
+        AnalyzerEvaluateRequest(
+          query = "",
+          analyzer =
+            """hasTravStateInPosition("one", "0")""",
+          data = Option{
+            AnalyzersData(traversedStates = Vector("one", "two", "three", "four", "five"))
+          }
+        )
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~>
+        addCredentials(testUserCredentials) ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val response = responseAs[AnalyzerEvaluateResponse]
+        response.build should be (true)
+        response.buildMessage should be ("success")
+        response.value should be (1)
+      }
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest2) ~>
+        addCredentials(testUserCredentials) ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val response = responseAs[AnalyzerEvaluateResponse]
+        response.build should be (true)
+        response.buildMessage should be ("success")
+        response.value should be (0)
+      }
+    }
+  }
+
+  it should {
+    "return an HTTP code 200 when checking if the traversed states has the state in the position from the last" in {
+      val evaluateRequest: AnalyzerEvaluateRequest =
+        AnalyzerEvaluateRequest(
+          query = "",
+          analyzer =
+            """hasTravStateInPositionRev("four","2")""",
+          data = Option {
+            AnalyzersData(traversedStates = Vector("one", "two", "three", "four", "five"))
+          }
+        )
+      val evaluateRequest2: AnalyzerEvaluateRequest =
+        AnalyzerEvaluateRequest(
+          query = "",
+          analyzer =
+            """hasTravStateInPositionRev("one", "1")""",
+          data = Option {
+            AnalyzersData(traversedStates = Vector("one", "two", "three", "four", "five"))
+          }
+        )
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest) ~>
+        addCredentials(testUserCredentials) ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val response = responseAs[AnalyzerEvaluateResponse]
+        response.build should be(true)
+        response.buildMessage should be("success")
+        response.value should be(1)
+      }
+      Post(s"/index_getjenny_english_0/analyzer/playground", evaluateRequest2) ~>
+        addCredentials(testUserCredentials) ~> routes ~> check {
+        status shouldEqual StatusCodes.OK
+        val response = responseAs[AnalyzerEvaluateResponse]
+        response.build should be(true)
+        response.buildMessage should be("success")
+        response.value should be(0)
+      }
+    }
+  }
+
+  it should {
     "return an HTTP code 200 when deleting an index" in {
       Delete(s"/index_getjenny_english_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
