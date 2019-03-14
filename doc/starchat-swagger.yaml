@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.2
 servers:
   - url: 'https://virtserver.swaggerhub.com/angleto/StarChat/v5.1'
 info:
@@ -2800,6 +2800,19 @@ components:
           format: integer
           description: number of analyzers in memory
           example: 134
+    DtReloadTimestamp:
+      type: object
+      required:
+        - indexName
+        - timestamp
+      properties:
+        indexName:
+          type: string
+          example: index_getjenny_english_0
+        timestamp:
+          type: number
+          format: long
+          example: 1549283768918
     DTAnalyzerItem:
       type: object
       properties:
@@ -2899,7 +2912,7 @@ components:
         img:
           type: string
           description: a base64 picture, currently not supported by the analyzers
-          example: "aGVsbG8K"
+          example: "aGVsbG8K="
     ResponseRequestIn:
       type: object
       required:

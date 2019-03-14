@@ -41,6 +41,25 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       case _ => throw DeserializationException("SearchAlgorithm string expected")
     }
   }
+
+  implicit val qAAggregationsTypesUnmarshalling:
+    Unmarshaller[String, QAAggregationsTypes.Value] =
+    Unmarshaller.strict[String, QAAggregationsTypes.Value] { enumValue =>
+      QAAggregationsTypes.value(enumValue)
+    }
+
+  implicit object QAAggregationsTypesFormat extends JsonFormat[QAAggregationsTypes.Value] {
+    def write(obj: QAAggregationsTypes.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): QAAggregationsTypes.Value = json match {
+      case JsString(str) =>
+        QAAggregationsTypes.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("QAAggregationsTypesFormat string is invalid")
+        }
+      case _ => throw DeserializationException("QAAggregationsTypesFormat string expected")
+    }
+  }
+
   ////////////////////////////
   implicit val doctypesUnmarshalling:
     Unmarshaller[String, Doctypes.Value] =
