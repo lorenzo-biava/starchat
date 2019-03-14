@@ -11,7 +11,7 @@ case class ResponseRequestInUserInput(text: Option[String], img: Option[String])
 case class ResponseRequestIn(conversationId: String,
                              traversedStates: Option[Vector[String]],
                              userInput: Option[ResponseRequestInUserInput],
-                             state: Option[String],
+                             state: Option[List[String]],
                              data: Option[Map[String, String]],
                              threshold: Option[Double],
                              evaluationClass: Option[String],

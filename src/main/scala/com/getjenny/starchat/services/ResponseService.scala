@@ -87,13 +87,18 @@ object ResponseService extends AbstractDataService {
       val maxResults: Int = request.maxResults.getOrElse(2)
       val threshold: Double = request.threshold.getOrElse(0.0d)
       val (evaluationList, reqState) = request.state match {
-        case Some(state) =>
-          (List((state,
-            AnalyzerService.analyzersMap(indexName).analyzerMap.get(state) match {
-              case Some(v) => v
-              case _ =>
-                throw ResponseServiceDocumentNotFoundException("Requested state not found: state(" + state + ")")
-            })), true)
+        case Some(states) =>
+          (
+            states.map { state =>
+              (state,
+                AnalyzerService.analyzersMap(indexName).analyzerMap.get(state) match {
+                  case Some(v) => v
+                  case _ =>
+                    throw ResponseServiceDocumentNotFoundException("Requested state not found: state(" + state + ")")
+                }
+              )
+            }, true
+          )
         case _ =>
           (AnalyzerService.analyzersMap(indexName).analyzerMap.toList, false)
       }
@@ -140,55 +145,55 @@ object ResponseService extends AbstractDataService {
       }
 
       decisionTableService.read(indexName, analyzersEvalData.keys.toList).map { docResults =>
-          val dtDocumentsList = docResults.hits.par.map { item =>
-              val doc: DTDocument = item.document
-              val state = doc.state
-              val evaluationRes: Result = analyzersEvalData(state)
-              val maxStateCount: Int = doc.maxStateCount
-              val analyzer: String = doc.analyzer
-              var bubble: String = doc.bubble
-              var actionInput: Map[String, String] = doc.actionInput
-              val stateData: Map[String, String] = doc.stateData
+        val dtDocumentsList = docResults.hits.par.map { item =>
+          val doc: DTDocument = item.document
+          val state = doc.state
+          val evaluationRes: Result = analyzersEvalData(state)
+          val maxStateCount: Int = doc.maxStateCount
+          val analyzer: String = doc.analyzer
+          var bubble: String = doc.bubble
+          var actionInput: Map[String, String] = doc.actionInput
+          val stateData: Map[String, String] = doc.stateData
 
-              for ((key, value) <- data.extractedVariables) {
-                bubble = bubble.replaceAll("%" + key + "%", value)
-                actionInput = doc.actionInput map { case (ki, vi) =>
-                  val newValue: String = vi.replaceAll("%" + key + "%", value)
-                  (ki, newValue)
-                }
-              }
+          for ((key, value) <- data.extractedVariables) {
+            bubble = bubble.replaceAll("%" + key + "%", value)
+            actionInput = doc.actionInput map { case (ki, vi) =>
+              val newValue: String = vi.replaceAll("%" + key + "%", value)
+              (ki, newValue)
+            }
+          }
 
-              for ((key, value) <- evaluationRes.data.extractedVariables) {
-                bubble = bubble.replaceAll("%" + key + "%", value)
-                actionInput = doc.actionInput map { case (ki, vi) =>
-                  val newValue: String = vi.replaceAll("%" + key + "%", value)
-                  (ki, newValue)
-                }
-              }
+          for ((key, value) <- evaluationRes.data.extractedVariables) {
+            bubble = bubble.replaceAll("%" + key + "%", value)
+            actionInput = doc.actionInput map { case (ki, vi) =>
+              val newValue: String = vi.replaceAll("%" + key + "%", value)
+              (ki, newValue)
+            }
+          }
 
-              val cleanedData =
-                data.extractedVariables ++
-                  evaluationRes.data.extractedVariables
-                    .filter { case (key, _) => !(key matches "\\A__temp__.*") }
+          val cleanedData =
+            data.extractedVariables ++
+              evaluationRes.data.extractedVariables
+                .filter { case (key, _) => !(key matches "\\A__temp__.*") }
 
-              val traversedStatesUpdated: Vector[String] = traversedStates ++ Vector(state)
-              val responseItem: ResponseRequestOut = ResponseRequestOut(conversationId = conversationId,
-                state = state,
-                maxStateCount = maxStateCount,
-                traversedStates = traversedStatesUpdated,
-                analyzer = analyzer,
-                bubble = bubble,
-                action = doc.action,
-                data = cleanedData,
-                actionInput = actionInput,
-                stateData = stateData,
-                successValue = doc.successValue,
-                failureValue = doc.failureValue,
-                score = evaluationRes.score)
-              responseItem
-          }.toList.sortWith(_.score > _.score)
-          ResponseRequestOutOperationResult(ReturnMessageData(200, ""),
-            Option {dtDocumentsList})
+          val traversedStatesUpdated: Vector[String] = traversedStates ++ Vector(state)
+          val responseItem: ResponseRequestOut = ResponseRequestOut(conversationId = conversationId,
+            state = state,
+            maxStateCount = maxStateCount,
+            traversedStates = traversedStatesUpdated,
+            analyzer = analyzer,
+            bubble = bubble,
+            action = doc.action,
+            data = cleanedData,
+            actionInput = actionInput,
+            stateData = stateData,
+            successValue = doc.successValue,
+            failureValue = doc.failureValue,
+            score = evaluationRes.score)
+          responseItem
+        }.toList.sortWith(_.score > _.score)
+        ResponseRequestOutOperationResult(ReturnMessageData(200, ""),
+          Option {dtDocumentsList})
       }
 
     }).flatten.map(x => x)

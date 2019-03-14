@@ -14,7 +14,7 @@ curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
 	"bubble": "What seems to be the problem exactly?",
 	"action": "show_buttons",
 	"actionInput": {"Forgot Password": "forgot_password", "Account locked": "account_locked", "Payment problem": "payment_problem", "Specify your problem": "specify_problem", "I want to call an operator": "call_operator", "None of the above": "start"},
-    "state_data": {},
+    "stateData": {},
 	"successValue": "eval(show_buttons)",
 	"failureValue": "dont_understand"
 }'

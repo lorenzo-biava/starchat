@@ -148,22 +148,20 @@ object IndexQuestionAnswer extends JsonSupport {
     conversationItems.foreach(entry => {
       val id: String = entry.toString().sha256
 
-      val kbDocument: QADocument = QADocument(
+      val qaDocument: QADocument = QADocument(
         id = id,
         conversation = entry("conversation_id"),
-        indexInConversation =  Option { entry("position").toInt },
-        question = entry("question"),
-        questionNegative = None: Option[List[String]],
-        questionScoredTerms = None: Option[List[(String, Double)]],
-        answer = entry("answer"),
-        answerScoredTerms = None: Option[List[(String, Double)]],
-        topics = None: Option[String],
-        dclass = None: Option[String],
-        doctype = Doctypes.normal,
-        state = None: Option[String],
+        indexInConversation = entry("position").toInt,
+        coreData = Some(QADocumentCore(
+          question = Some(entry("question")),
+          answer = Some(entry("answer"))
+        )),
+        annotations = QADocumentAnnotations(
+          doctype = Doctypes.NORMAL
+        )
       )
 
-      val entity_future = Marshal(kbDocument).to[MessageEntity]
+      val entity_future = Marshal(qaDocument).to[MessageEntity]
       val entity = Await.result(entity_future, 10.second)
       val responseFuture: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(
@@ -173,9 +171,9 @@ object IndexQuestionAnswer extends JsonSupport {
           entity = entity))
       val result = Await.result(responseFuture, timeout)
       result.status match {
-        case StatusCodes.Created | StatusCodes.OK => println("indexed: " + kbDocument.id +
-          " conv(" + kbDocument.conversation + ")" +
-          " position(" + kbDocument.indexInConversation.getOrElse("unknown") + ")" +
+        case StatusCodes.Created | StatusCodes.OK => println("indexed: " + qaDocument.id +
+          " conv(" + qaDocument.conversation + ")" +
+          " position(" + qaDocument.indexInConversation + ")" +
           " q_id(" + entry("question_id") + ")" +
           " a_id(" + entry("answer_id") + ")")
         case _ =>

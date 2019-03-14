@@ -4,9 +4,9 @@ PORT=${1:-8888}
 INDEX_NAME=${2:-index_getjenny_english_0}
 curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
   -H "Content-Type: application/json" -X POST http://localhost:${PORT}/${INDEX_NAME}/knowledgebase -d '{
-	"id": "0",
-	"conversation": "id:1000",
-	"indexInConversation": 1,
+	"id": "bla145",
+	"conversation": "conv:1015",
+	"indexInConversation": 0,
 	"question": "thank you, bye",
         "questionNegative": ["ok, I will not talk with you anymore", "thank you anyway"],
 	"answer": "you are welcome! you very welcome!",
@@ -42,8 +42,8 @@ curl -v -H "Authorization: Basic $(echo -n 'test_user:p4ssw0rd' | base64)" \
 	],
 	"verified": true,
 	"topics": "t1 t2",
-	"doctype": "normal",
+	"doctype": "abnormal",
 	"state": "",
-	"status": 0
+	"status": 14
 }'
 

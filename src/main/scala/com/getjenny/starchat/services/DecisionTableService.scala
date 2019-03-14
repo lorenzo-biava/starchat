@@ -142,7 +142,7 @@ object DecisionTableService extends AbstractDataService {
     val tokenizerResponse = termService.esTokenizer(indexName, tokenizerRequest)
     val queryTokens = tokenizerResponse.tokens.map(_.token)
 
-    val searchAlgorithm = documentSearch.searchAlgorithm.getOrElse(SearchAlgorithm.DEFAULT)
+    val searchAlgorithm = documentSearch.searchAlgorithm.getOrElse(SearchAlgorithm.NGRAM2)
     val sliding = searchAlgorithm match {
       case SearchAlgorithm.STEM_NGRAM2 | SearchAlgorithm.NGRAM2 => 2
       case SearchAlgorithm.STEM_NGRAM3 | SearchAlgorithm.NGRAM3 => 3
@@ -180,7 +180,7 @@ object DecisionTableService extends AbstractDataService {
             })
             val queryArray = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]].asScala.toList
               .map(q_e => q_e.get("query"))
-            offsetsAndNgrams.map{ case e  =>
+            offsetsAndNgrams.map{ e  =>
               val qNgrams = queryArray(e).toLowerCase().replaceAll("\\s", "").sliding(sliding).toList
               (queryArray(e), qNgrams)
             }
@@ -263,6 +263,22 @@ object DecisionTableService extends AbstractDataService {
                                          ): (QueryBuilder, SearchResponse => Option[List[SearchDTDocument]]) = {
     val searchAlgorithm = documentSearch.searchAlgorithm.getOrElse(SearchAlgorithm.DEFAULT)
     searchAlgorithm match {
+      case SearchAlgorithm.AUTO | SearchAlgorithm.DEFAULT =>
+        val esAnalyzerName = if(documentSearch.queries.getOrElse("").length <= 6) {
+          "queries.query.shingles_2"
+        } else {
+          "queries.query.shingles_3"
+        }
+        (QueryBuilders.nestedQuery(
+          "queries",
+          QueryBuilders.boolQuery()
+            .must(QueryBuilders.matchQuery(esAnalyzerName, value))
+            .should(QueryBuilders.matchPhraseQuery("queries.query.raw", value)
+            .boost(1 + (minScore * boostExactMatchFactor))
+          ),
+          queriesScoreMode.getOrElse(elasticClient.queriesScoreMode, ScoreMode.Max)
+        ).ignoreUnmapped(true).innerHit(new InnerHitBuilder().setSize(100)),
+          responseToDtDocumentDefault)
       case SearchAlgorithm.STEM_BOOST_EXACT =>
         (
           QueryBuilders.nestedQuery(
@@ -334,7 +350,7 @@ object DecisionTableService extends AbstractDataService {
         ).ignoreUnmapped(true)
           .innerHit(new InnerHitBuilder().addScriptField("terms", script).setSize(100)),
           responseToDtDocumentNGrams(indexName, "ngram2", documentSearch))
-      case SearchAlgorithm.STEM_NGRAM2 | SearchAlgorithm.DEFAULT =>
+      case SearchAlgorithm.STEM_NGRAM2 =>
         val scriptBody = "return doc['queries.query.stemmed_ngram_2'].values.values ;"
         val script: Script = new Script(scriptBody)
         (QueryBuilders.nestedQuery(

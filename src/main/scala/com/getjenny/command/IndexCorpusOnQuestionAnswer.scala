@@ -28,16 +28,16 @@ case class IndexCorpusOnQuestionAnswerException(message: String = "", cause: Thr
 
 object IndexCorpusOnQuestionAnswer extends JsonSupport {
   private[this] case class Params(
-                             host: String = "http://localhost:8888",
-                             indexName: String = "index_getjenny_english_0",
-                             path: String = "/knowledgebase",
-                             inputfile: Option[String] = None: Option[String],
-                             base64: Boolean = false,
-                             separator: Char = ',',
-                             skiplines: Int = 0,
-                             timeout: Int = 60,
-                             headerKv: Seq[String] = Seq.empty[String]
-                           )
+                                   host: String = "http://localhost:8888",
+                                   indexName: String = "index_getjenny_english_0",
+                                   path: String = "/knowledgebase",
+                                   inputfile: Option[String] = None: Option[String],
+                                   base64: Boolean = false,
+                                   separator: Char = ',',
+                                   skiplines: Int = 0,
+                                   timeout: Int = 60,
+                                   headerKv: Seq[String] = Seq.empty[String]
+                                 )
 
   private[this] def decodeBase64(in: String): String = {
     val decodedBytes = Base64.getDecoder.decode(in)
@@ -80,25 +80,23 @@ object IndexCorpusOnQuestionAnswer extends JsonSupport {
     val timeout = Duration(params.timeout, "s")
 
     lines.foreach(entry => {
-      val document_string = convItems(entry)
-      val id: String = document_string.sha256
+      val documentString = convItems(entry)
+      val id: String = documentString.sha256
 
-      val kb_document: QADocument = QADocument(
+      val qaDocument: QADocument = QADocument(
         id = id,
         conversation = "corpora",
-        indexInConversation = Option { -1 },
-        question = document_string,
-        questionNegative = None: Option[List[String]],
-        questionScoredTerms = None: Option[List[(String, Double)]],
-        answer = document_string,
-        answerScoredTerms = None: Option[List[(String, Double)]],
-        topics = None: Option[String],
-        dclass = None: Option[String],
-        doctype = Doctypes.hidden,
-        state = None: Option[String],
+        indexInConversation = -1,
+        coreData = Some(QADocumentCore(
+          question = Some(documentString),
+          answer = Some(documentString)
+        )),
+        annotations = QADocumentAnnotations(
+          doctype = Doctypes.HIDDEN
+        )
       )
 
-      val entityFuture = Marshal(kb_document).to[MessageEntity]
+      val entityFuture = Marshal(qaDocument).to[MessageEntity]
       val entity = Await.result(entityFuture, 10.second)
       val responseFuture: Future[HttpResponse] =
         Http().singleRequest(HttpRequest(
@@ -108,8 +106,8 @@ object IndexCorpusOnQuestionAnswer extends JsonSupport {
           entity = entity))
       val result = Await.result(responseFuture, timeout)
       result.status match {
-        case StatusCodes.Created | StatusCodes.OK => println("indexed: " + kb_document.id +
-          " text(" + kb_document.question + ")")
+        case StatusCodes.Created | StatusCodes.OK => println("indexed: " + qaDocument.id +
+          " text(" + documentString + ")")
         case _ =>
           println("failed indexing entry(" + entry + ") Message(" + result.toString() + ")")
       }

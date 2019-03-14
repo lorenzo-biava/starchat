@@ -60,9 +60,16 @@ object IndexSubtitles extends JsonSupport {
       val doc = QADocument(
         id = fields(0),
         conversation = fields(1),
-        indexInConversation = Some(fields(2).toInt),
-        question = fields(3),
-        answer = ""
+        indexInConversation = fields(2).toInt,
+        coreData = Some {
+          QADocumentCore(
+            question = Some { fields(3) }
+          )
+        },
+        annotations = QADocumentAnnotations(
+          answered = Answered.UNSPECIFIED,
+          agent = Agent.UNSPECIFIED
+        )
       )
       doc
     }

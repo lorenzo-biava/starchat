@@ -41,6 +41,115 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       case _ => throw DeserializationException("SearchAlgorithm string expected")
     }
   }
+  ////////////////////////////
+  implicit val doctypesUnmarshalling:
+    Unmarshaller[String, Doctypes.Value] =
+    Unmarshaller.strict[String, Doctypes.Value] { enumValue =>
+      Doctypes.value(enumValue)
+    }
+
+  implicit object DoctypesFormat extends JsonFormat[Doctypes.Value] {
+    def write(obj: Doctypes.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): Doctypes.Value = json match {
+      case JsString(str) =>
+        Doctypes.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("Doctypes string is invalid")
+        }
+      case _ => throw DeserializationException("Doctypes string expected")
+    }
+  }
+
+  implicit val agentUnmarshalling:
+    Unmarshaller[String, Agent.Value] =
+    Unmarshaller.strict[String, Agent.Value] { enumValue =>
+      Agent.value(enumValue)
+    }
+
+  implicit object AgentFormat extends JsonFormat[Agent.Value] {
+    def write(obj: Agent.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): Agent.Value = json match {
+      case JsString(str) =>
+        Agent.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("Agent string is invalid")
+        }
+      case _ => throw DeserializationException("Agent string expected")
+    }
+  }
+
+
+  implicit val escalatedUnmarshalling:
+    Unmarshaller[String, Escalated.Value] =
+    Unmarshaller.strict[String, Escalated.Value] { enumValue =>
+      Escalated.value(enumValue)
+    }
+
+  implicit object EscalatedFormat extends JsonFormat[Escalated.Value] {
+    def write(obj: Escalated.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): Escalated.Value = json match {
+      case JsString(str) =>
+        Escalated.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("Escalated string is invalid")
+        }
+      case _ => throw DeserializationException("Escalated string expected")
+    }
+  }
+
+  implicit val answeredUnmarshalling:
+    Unmarshaller[String, Answered.Value] =
+    Unmarshaller.strict[String, Answered.Value] { enumValue =>
+      Answered.value(enumValue)
+    }
+
+  implicit object AnsweredFormat extends JsonFormat[Answered.Value] {
+    def write(obj: Answered.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): Answered.Value = json match {
+      case JsString(str) =>
+        Answered.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("Answered string is invalid")
+        }
+      case _ => throw DeserializationException("Answered string expected")
+    }
+  }
+
+  implicit val triggeredUnmarshalling:
+    Unmarshaller[String, Triggered.Value] =
+    Unmarshaller.strict[String, Triggered.Value] { enumValue =>
+      Triggered.value(enumValue)
+    }
+
+  implicit object TriggeredFormat extends JsonFormat[Triggered.Value] {
+    def write(obj: Triggered.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): Triggered.Value = json match {
+      case JsString(str) =>
+        Triggered.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("Triggered string is invalid")
+        }
+      case _ => throw DeserializationException("Triggered string expected")
+    }
+  }
+
+  implicit val followupUnmarshalling:
+    Unmarshaller[String, Followup.Value] =
+    Unmarshaller.strict[String, Followup.Value] { enumValue =>
+      Followup.value(enumValue)
+    }
+
+  implicit object FollowupFormat extends JsonFormat[Followup.Value] {
+    def write(obj: Followup.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): Followup.Value = json match {
+      case JsString(str) =>
+        Followup.values.find(_.toString === str) match {
+          case Some(t) => t
+          case _ => throw DeserializationException("Followup string is invalid")
+        }
+      case _ => throw DeserializationException("Followup string expected")
+    }
+  }
 
   implicit val responseMessageDataFormat = jsonFormat2(ReturnMessageData)
   implicit val responseRequestUserInputFormat = jsonFormat2(ResponseRequestInUserInput)
@@ -48,19 +157,23 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val responseRequestOutputFormat = jsonFormat13(ResponseRequestOut)
   implicit val dtDocumentFormat = jsonFormat13(DTDocument)
   implicit val dtDocumentUpdateFormat = jsonFormat12(DTDocumentUpdate)
-  implicit val kbDocumentFormat = jsonFormat15(QADocument)
-  implicit val kbDocumentUpdateFormat = jsonFormat13(QADocumentUpdate)
-  implicit val searchKBDocumentFormat = jsonFormat2(SearchQADocument)
+  implicit val qaDocumentCoreFormat = jsonFormat8(QADocumentCore)
+  implicit val qaDocumentAnnotationsFormat = jsonFormat14(QADocumentAnnotations)
+  implicit val qaDocumentFormat = jsonFormat7(QADocument)
+  implicit val qaDocumentCoreUpdateFormat = jsonFormat8(QADocumentCoreUpdate)
+  implicit val qaDocumentAnnotationsUpdateFormat = jsonFormat14(QADocumentAnnotationsUpdate)
+  implicit val qaDocumentUpdateFormat = jsonFormat7(QADocumentUpdate)
+  implicit val searchQADocumentFormat = jsonFormat2(SearchQADocument)
   implicit val searchDTDocumentFormat = jsonFormat2(SearchDTDocument)
-  implicit val searchKBResultsFormat = jsonFormat4(SearchQADocumentsResults)
+  implicit val searchQAResultsFormat = jsonFormat4(SearchQADocumentsResults)
   implicit val searchDTResultsFormat = jsonFormat3(SearchDTDocumentsResults)
-  implicit val kbDocumentSearchFormat = jsonFormat17(QADocumentSearch)
+  implicit val qaDocumentSearchFormat = jsonFormat12(QADocumentSearch)
   implicit val dtDocumentSearchFormat = jsonFormat9(DTDocumentSearch)
   implicit val indexDocumentResultFormat = jsonFormat5(IndexDocumentResult)
   implicit val updateDocumentResultFormat = jsonFormat5(UpdateDocumentResult)
   implicit val deleteDocumentResultFormat = jsonFormat5(DeleteDocumentResult)
   implicit val indexDocumentResultListFormat = jsonFormat1(IndexDocumentListResult)
-  implicit val updateDocumentResultListFormat = jsonFormat1(UpdateDocumentListResult)
+  implicit val updateDocumentResultListFormat = jsonFormat1(UpdateDocumentsResult)
   implicit val deleteDocumentResultListFormat = jsonFormat1(DeleteDocumentsResult)
   implicit val deleteDocumentsResultFormat = jsonFormat2(DeleteDocumentsSummaryResult)
   implicit val listOfDocumentIdFormat = jsonFormat1(ListOfDocumentId)
@@ -93,8 +206,9 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val responseRequestOutOperationResultFormat = jsonFormat2(ResponseRequestOutOperationResult)
   implicit val clusterNodeFormat = jsonFormat3(ClusterNode)
   implicit val clusterNodesFormat = jsonFormat2(ClusterNodes)
-  implicit val clusterLoadingDtStatusFormat = jsonFormat5(ClusterLoadingDtStatus)
+  implicit val clusterLoadingDtStatusFormat = jsonFormat5(ClusterLoadingDtStatusIndex)
   implicit val nodeDtLoadingStatusFormat = jsonFormat3(NodeDtLoadingStatus)
+  implicit val nodeLoadingAllDtStatusFormat = jsonFormat3(NodeLoadingAllDtStatus)
 
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
     def write(obj: Permissions.Value): JsValue = JsString(obj.toString)
@@ -198,4 +312,6 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val updateQATermsRequestFormat = jsonFormat13(UpdateQATermsRequest)
   implicit val countersCacheParametersFormat = jsonFormat4(CountersCacheParameters)
   implicit val countersCacheSizeFormat = jsonFormat3(CountersCacheSize)
+  implicit val conversationFormat = jsonFormat2(Conversation)
+  implicit val conversationsFormat = jsonFormat2(Conversations)
 }

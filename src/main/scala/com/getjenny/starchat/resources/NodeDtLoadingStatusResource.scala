@@ -45,60 +45,82 @@ trait NodeDtLoadingStatusResource extends StarChatResource {
         }
       }
     } ~
-    pathPrefix(routeName) {
-      pathEnd {
-        post {
-          authenticateBasicAsync(realm = authRealm,
-            authenticator = authenticator.authenticator) { user =>
-            authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.read)) {
-              extractMethod { method =>
-                entity(as[NodeDtLoadingStatus]) { document =>
-                  val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(Future {
-                    nodeDtLoadingStatusService.update(document)
-                  }) {
-                    case Success(_) =>
-                      completeResponse(StatusCodes.OK)
-                    case Failure(e) =>
-                      log.error("DtUpdate(" + document.uuid +
-                        ", " + document.index +
-                        ") route=nodeDtLoadingStatusRoutes method=" + method + " : " + e.getMessage)
-                      completeResponse(StatusCodes.BadRequest,
-                        Option {
-                          ReturnMessageData(code = 101, message = e.getMessage)
-                        })
-                  }
-                }
-              }
-            }
-          }
-        } ~
-          delete {
-            authenticateBasicAsync(realm = authRealm,
-              authenticator = authenticator.authenticator) { user =>
+      pathPrefix(routeName) {
+        pathEnd {
+          get {
+            authenticateBasicAsync(realm = authRealm, authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, "admin", Permissions.read)) {
-                extractMethod { method =>
+                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                parameters("verbose".as[Boolean] ? false) { verbose =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(Future {
-                    nodeDtLoadingStatusService.cleanDeadNodesRecords
-                  }) {
+                    nodeDtLoadingStatusService.nodeLoadingStatusAll(verbose = verbose)
+                  }
+                  ) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
                     case Failure(e) =>
-                      log.error("DtUpdate(" + nodeDtLoadingStatusService.clusterNodesService.uuid +
-                        ") route=nodeDtLoadingStatusRoutes method=" + method + " : " + e.getMessage)
-                      completeResponse(StatusCodes.BadRequest,
-                        Option {
-                          ReturnMessageData(code = 102, message = e.getMessage)
-                        })
+                      log.error("index(all) route=nodeDtLoadingStatusRoutes method=GET : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest, Option {
+                        ReturnMessageData(code = 101, message = e.getMessage)
+                      })
                   }
                 }
               }
             }
-          }
+          } ~
+            post {
+              authenticateBasicAsync(realm = authRealm,
+                authenticator = authenticator.authenticator) { user =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, "admin", Permissions.read)) {
+                  extractMethod { method =>
+                    entity(as[NodeDtLoadingStatus]) { document =>
+                      val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                      onCompleteWithBreaker(breaker)(Future {
+                        nodeDtLoadingStatusService.update(document)
+                      }) {
+                        case Success(_) =>
+                          completeResponse(StatusCodes.OK)
+                        case Failure(e) =>
+                          log.error("DtUpdate(" + document.uuid +
+                            ", " + document.index +
+                            ") route=nodeDtLoadingStatusRoutes method=" + method + " : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest,
+                            Option {
+                              ReturnMessageData(code = 102, message = e.getMessage)
+                            })
+                      }
+                    }
+                  }
+                }
+              }
+            } ~
+            delete {
+              authenticateBasicAsync(realm = authRealm,
+                authenticator = authenticator.authenticator) { user =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, "admin", Permissions.read)) {
+                  extractMethod { method =>
+                    val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(Future {
+                      nodeDtLoadingStatusService.cleanDeadNodesRecords
+                    }) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, t)
+                      case Failure(e) =>
+                        log.error("DtUpdate(" + nodeDtLoadingStatusService.clusterNodesService.uuid +
+                          ") route=nodeDtLoadingStatusRoutes method=" + method + " : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 103, message = e.getMessage)
+                          })
+                    }
+                  }
+                }
+              }
+            }
+        }
       }
-    }
   }
 }
