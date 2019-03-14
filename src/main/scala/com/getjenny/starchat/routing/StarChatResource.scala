@@ -23,19 +23,19 @@ import scala.util.matching.Regex
 
 trait StarChatResource extends Directives with JsonSupport {
   implicit def executionContext: ExecutionContext
-  val defaultHeader: RawHeader = RawHeader("application", "json")
-  val config: Config = ConfigFactory.load()
-  val authRealm: String = config.getString("starchat.auth_realm")
-  val authenticator: AbstractStarChatAuthenticator = StarChatAuthenticator.authenticator
-  val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
+  protected[this] val defaultHeader: RawHeader = RawHeader("application", "json")
+  protected[this] val config: Config = ConfigFactory.load()
+  protected[this] val authRealm: String = config.getString("starchat.auth_realm")
+  protected[this] val authenticator: AbstractStarChatAuthenticator = StarChatAuthenticator.authenticator
+  protected[this] val log: LoggingAdapter = Logging(SCActorSystem.system, this.getClass.getCanonicalName)
 
-  val indexRegex: Regex = Index.indexMatchRegexDelimited
-  val orgNameRegex: Regex = Index.orgNameMatchRegexDelimited
+  protected[this] val indexRegex: Regex = Index.indexMatchRegexDelimited
+  protected[this] val orgNameRegex: Regex = Index.orgNameMatchRegexDelimited
 
-  def tempDestination(fileInfo: FileInfo): File =
+  protected[this] def tempDestination(fileInfo: FileInfo): File =
     File.createTempFile("uploadedFile", ".csv")
 
-  val routesExceptionHandler = ExceptionHandler {
+  protected[this] val routesExceptionHandler = ExceptionHandler {
     case e: IndexNotFoundException =>
       extractUri { uri =>
         log.error("uri(" + uri + ") index error: " + e)
@@ -66,11 +66,11 @@ trait StarChatResource extends Directives with JsonSupport {
       }
   }
 
-  def completeResponse(status_code: StatusCode): Route = {
+  protected[this] def completeResponse(status_code: StatusCode): Route = {
     complete(status_code)
   }
 
-  def completeResponse[A: ToEntityMarshaller](statusCode: StatusCode, data: Option[A]): Route = {
+  protected[this] def completeResponse[A: ToEntityMarshaller](statusCode: StatusCode, data: Option[A]): Route = {
     data match {
       case Some(t) =>
         respondWithDefaultHeader(defaultHeader) {
@@ -81,13 +81,13 @@ trait StarChatResource extends Directives with JsonSupport {
     }
   }
 
-  def completeResponse[A: ToEntityMarshaller](statusCode: StatusCode, data: A): Route = {
+  protected[this] def completeResponse[A: ToEntityMarshaller](statusCode: StatusCode, data: A): Route = {
     respondWithDefaultHeader(defaultHeader) {
       complete(statusCode, data)
     }
   }
 
-  def completeResponse[A: ToEntityMarshaller](statusCodeOk: StatusCode, statusCodeFailed: StatusCode,
+  protected[this] def completeResponse[A: ToEntityMarshaller](statusCodeOk: StatusCode, statusCodeFailed: StatusCode,
                                               data: Option[A]): Route = {
     data match {
       case Some(t) =>
@@ -99,7 +99,7 @@ trait StarChatResource extends Directives with JsonSupport {
     }
   }
 
-  def completeResponse[A: ToEntityMarshaller](statusCodeOk: StatusCode, statusCodeFailed: StatusCode,
+  protected[this] def completeResponse[A: ToEntityMarshaller](statusCodeOk: StatusCode, statusCodeFailed: StatusCode,
                                               data: A): Route = {
     respondWithDefaultHeader(defaultHeader) {
       complete(statusCodeOk, data)

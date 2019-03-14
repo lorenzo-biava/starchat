@@ -69,13 +69,13 @@ object Followup extends Enumeration {
 
 case class QADocumentAnnotations(
                                   dclass: Option[String] = None, /* document classes e.g. group0 group1 etc.*/
-                                  doctype: Doctypes.Value = Doctypes.NORMAL, /* document type */
+                                  doctype: Option[Doctypes.Value] = Some(Doctypes.NORMAL), /* document type */
                                   state: Option[String] = None, /* eventual link to any of the state machine states */
-                                  agent: Agent.Value = Agent.STARCHAT,
-                                  escalated: Escalated.Value = Escalated.UNSPECIFIED,
-                                  answered: Answered.Value = Answered.ANSWERED,
-                                  triggered: Triggered.Value = Triggered.UNSPECIFIED,
-                                  followup: Followup.Value = Followup.UNSPECIFIED,
+                                  agent: Option[Agent.Value] = Some(Agent.STARCHAT),
+                                  escalated: Option[Escalated.Value] = Some(Escalated.UNSPECIFIED),
+                                  answered: Option[Answered.Value] = Some(Answered.ANSWERED),
+                                  triggered: Option[Triggered.Value] = Some(Triggered.UNSPECIFIED),
+                                  followup: Option[Followup.Value] = Some(Followup.UNSPECIFIED),
                                   feedbackConv: Option[String] = None, /* A feedback provided by the user to the conversation */
                                   feedbackConvScore: Option[Double] = Some{0.0}, /* a field to store the score provided by the user to the conversation */
                                   algorithmConvScore: Option[Double] = Some{0.0}, /* a field to store the score calculated by an algorithm related to the conversation i.e. a sentiment
@@ -83,15 +83,15 @@ analysis tool (for future use) */
                                   feedbackAnswerScore: Option[Double] = Some{0.0}, /* description: a field to store the score provided by the user for the answer */
                                   algorithmAnswerScore: Option[Double] = Some{0.0}, /* a field to store the score calculated by an algorithm related to the answer i.e. a sentiment
 analysis tool (for future use) */
-                                  start: Boolean = false, /* event determined when a start state is loaded */
+                                  start: Option[Boolean] = Some(false), /* event determined when a start state is loaded */
                                 )
 
 case class QADocument(id: String, /* unique id of the document */
                       conversation: String, /* ID of the conversation (multiple q&a may be inside a conversation) */
                       indexInConversation: Int = -1, /* the index of the document in the conversation flow */
                       coreData: Option[QADocumentCore] = None, /* core question answer fields */
-                      annotations: QADocumentAnnotations, /* qa and conversation annotations */
-                      status: Int = 0, /* tell whether the document is locked for editing or not, useful for
+                      annotations: Option[QADocumentAnnotations] = Some(QADocumentAnnotations()), /* qa and conversation annotations */
+                      status: Option[Int] = Some(0), /* tell whether the document is locked for editing or not, useful for
                                               a GUI to avoid concurrent modifications, 0 means no operations pending */
                       timestamp: Option[Long] = None /* indexing timestamp, automatically calculated if not provided */
                      )

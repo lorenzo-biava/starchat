@@ -1153,17 +1153,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SearchDTDocumentsResults'
+                $ref: '#/components/schemas/DtReloadTimestamp'
         '400':
           description: 'invalid input, object invalid, bad request'
         '401':
           description: authorization denied or authentication failed
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DTDocumentSearch'
-        description: DecisionTable document with the query parameters
   '/<index_name>/decisiontable/analyzer':
     post:
       tags:
@@ -5139,7 +5133,6 @@ components:
         - id
         - conversation
         - indexInConversation
-        - coreData
       properties:
         id:
           type: string

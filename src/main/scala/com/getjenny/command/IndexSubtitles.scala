@@ -66,10 +66,12 @@ object IndexSubtitles extends JsonSupport {
             question = Some { fields(3) }
           )
         },
-        annotations = QADocumentAnnotations(
-          answered = Answered.UNSPECIFIED,
-          agent = Agent.UNSPECIFIED
-        )
+        annotations = Some{
+          QADocumentAnnotations(
+            answered = Some(Answered.UNSPECIFIED),
+            agent = Some(Agent.UNSPECIFIED)
+          )
+        }
       )
       doc
     }
