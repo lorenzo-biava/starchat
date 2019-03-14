@@ -1086,7 +1086,9 @@ trait QuestionAnswerService extends AbstractDataService {
     val multigetReq = new MultiGetRequest()
     ids.foreach{ id =>
       multigetReq.add(
-        new MultiGetRequest.Item(Index.indexName(indexName, elasticClient.indexSuffix), elasticClient.indexSuffix, id)
+        new MultiGetRequest.Item(Index
+          .indexName(indexName, elasticClient.indexSuffix),
+          elasticClient.indexMapping, id)
       )
     }
 
