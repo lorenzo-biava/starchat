@@ -6,12 +6,12 @@ package com.getjenny.starchat.entities
 
 
 case class QADocumentSearch(
-                             from: Option[Int],
-                             size: Option[Int],
-                             minScore: Option[Float],
-                             sortByConvIdIdx: Option[Boolean],
+                             from: Option[Int] = None,
+                             size: Option[Int] = None,
+                             minScore: Option[Float] = None,
+                             sortByConvIdIdx: Option[Boolean] = None,
 
-                             conversation: Option[String] = None, /* ID of the conversation (multiple q&a may be inside a conversation) */
+                             conversation: Option[List[String]] = None, /* IDs of the conversations (or query) */
                              indexInConversation: Option[Int] = None, /* the index of the document in the conversation flow */
                              coreData: Option[QADocumentCoreUpdate] = None, /* core question answer fields */
                              annotations: Option[QADocumentAnnotationsUpdate] = None, /* qa and conversation annotations */
@@ -20,5 +20,5 @@ case class QADocumentSearch(
 
                              timestampGte: Option[Long] = None, /* min indexing timestamp, None means no lower bound */
                              timestampLte: Option[Long] = None, /* max indexing timestamp, None means no upper bound*/
-                             random: Option[Boolean]
+                             random: Option[Boolean] = None
                            )

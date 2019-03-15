@@ -286,7 +286,7 @@ class QAResource(questionAnswerService: QuestionAnswerService, routeName: String
                 authenticator.hasPermissions(user, indexName, Permissions.read)) {
                 entity(as[QADocumentSearch]) { docsearch =>
                   val breaker: CircuitBreaker = StarChatCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(questionAnswerService.search(indexName, docsearch)) {
+                  onCompleteWithBreaker(breaker)(Future{questionAnswerService.search(indexName, docsearch)}) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                         t
