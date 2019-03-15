@@ -529,9 +529,9 @@ trait QuestionAnswerService extends AbstractDataService {
 
     documentSearch.conversation match {
       case Some(convIds) =>
-        val convQueryBuilder = QueryBuilders.boolQuery()
-        convIds.foreach(cId => convQueryBuilder.should(QueryBuilders.termQuery("conversation", cId)))
-        boolQueryBuilder.must(convQueryBuilder)
+        boolQueryBuilder.must(
+          QueryBuilders.termsQuery("conversation", convIds:_*)
+        ).minimumShouldMatch(1)
       case _ => ;
     }
 
@@ -757,16 +757,26 @@ trait QuestionAnswerService extends AbstractDataService {
     Some(searchResults)
   }
 
-  /*
   def conversations(indexName: String, ids: DocsIds): Conversations = {
     val documentSearch = QADocumentSearch(
       from = Some(0),
       size = Some(10000),
       conversation = Some(ids.ids)
     )
-    search(indexName = indexName, documentSearch = documentSearch)
+    search(indexName = indexName, documentSearch = documentSearch) match {
+      case Some(searchRes) =>
+        val conversations = searchRes.hits.groupBy(_.document.conversation)
+          .map { case(_: String, docs: List[SearchQADocument]) =>
+              Conversation(
+                count = docs.length,
+                docs = docs.map((_: SearchQADocument).document)
+                  .sortBy(document => document.indexInConversation)
+              )
+          }.toList
+        Conversations(total = conversations.length, conversations = conversations)
+      case _ => Conversations()
+    }
   }
-  */
 
   def create(indexName: String, document: QADocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder: XContentBuilder = jsonBuilder().startObject()

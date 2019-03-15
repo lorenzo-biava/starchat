@@ -28,5 +28,7 @@ trait ConversationLogsResource extends StarChatResource {
   def clUpdateTermsRoutes: Route = qaResource.updateTermsRoutes
 
   def clCountersCacheSizeRoutes: Route = qaResource.countersCacheSizeRoutes
+
+  def clQuestionAnswerConversationsRoutes: Route = qaResource.questionAnswerConversationsRoutes
 }
 

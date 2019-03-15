@@ -28,4 +28,6 @@ trait PriorDataResource extends StarChatResource {
   def pdUpdateTermsRoutes: Route = qaResource.updateTermsRoutes
 
   def pdCountersCacheSizeRoutes: Route = qaResource.countersCacheSizeRoutes
+
+  def pdQuestionAnswerConversationsRoutes: Route = qaResource.questionAnswerConversationsRoutes
 }
