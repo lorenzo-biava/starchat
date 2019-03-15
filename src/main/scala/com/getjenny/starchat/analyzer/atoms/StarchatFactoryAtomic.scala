@@ -27,6 +27,8 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     "hasTravState",
     "lastTravStateIs",
     "prevTravStateIs",
+    "hasTravStateInPosition",
+    "hasTravStateInPositionRev",
     "cosDistanceKeywords",
     "distance",
     "checkTimestamp",
@@ -60,6 +62,8 @@ class StarchatFactoryAtomic extends AtomicFactoryTrait[List[String], AbstractAto
     case "hasTravState" => new HasTravStateAtomic(argument, restrictedArgs)
     case "lastTravStateIs" => new LastTravStateIsAtomic(argument, restrictedArgs)
     case "prevTravStateIs" => new PrevTravStateIsAtomic(argument, restrictedArgs)
+    case "hasTravStateInPosition" => new HasTravStateInPositionAtomic(argument, restrictedArgs)
+    case "hasTravStateInPositionRev" => new HasTravStateInPositionRevAtomic(argument, restrictedArgs)
     case "distance" | "cosDistanceKeywords" => new CosineDistanceAnalyzer(argument, restrictedArgs)
     case "checkTimestamp" => new CheckTimestampAtomic(argument, restrictedArgs)
     case "checkDayOfWeek" => new CheckDayOfWeekAtomic(argument, restrictedArgs)
