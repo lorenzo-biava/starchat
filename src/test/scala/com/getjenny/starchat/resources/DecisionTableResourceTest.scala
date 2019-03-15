@@ -332,7 +332,7 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
         traversedStates = None,
         userInput = Some(ResponseRequestInUserInput(text = Some("It doesn't matter what I say here when state is defined"), img = None
         )),
-        state = Some("forgot_password"),
+        state = Some(List("forgot_password")),
         data = Some(Map("name" -> "Donald Duck", "job" -> "idle")),
         threshold = Some(0),
         evaluationClass = None,
@@ -356,7 +356,7 @@ class DecisionTableResourceTest extends WordSpec with Matchers with ScalatestRou
         traversedStates = None,
         userInput = Some(ResponseRequestInUserInput(text = Some("Some"), img = None
         )),
-        state = Some("this_state_does_not_exist"),
+        state = Some(List("this_state_does_not_exist")),
         data = None,
         threshold = Some(0),
         evaluationClass = None,

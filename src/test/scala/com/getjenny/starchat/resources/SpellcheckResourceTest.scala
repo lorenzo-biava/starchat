@@ -66,24 +66,23 @@ class SpellcheckResourceTest extends WordSpec with Matchers with ScalatestRouteT
 
   it should {
     "return an HTTP code 201 when populating knowledge base" in {
-      val knowledgebaseRequest: QADocument = QADocument(
+      val knowledgeBaseRequest: QADocument = QADocument(
         id = "0",
         conversation = "id:1000",
-        indexInConversation = None,
-        question = "is this text mispelled?",
-        questionNegative = None,
-        questionScoredTerms = None,
-        answer = "it might be",
-        answerScoredTerms = None,
-        verified = false,
-        topics = None,
-        dclass = None,
-        doctype = Doctypes.normal,
-        state = None,
-        timestamp = None,
-        status = 0
+        coreData = Some(QADocumentCore(
+          question = Some("is this text mispelled?"),
+          answer = Some("it might be")
+        )),
+        annotations = Some(QADocumentAnnotations(
+          doctype = Some(Doctypes.NORMAL),
+          agent = Some(Agent.STARCHAT),
+          escalated = Some(Escalated.UNSPECIFIED),
+          answered = Some(Answered.UNSPECIFIED),
+          triggered = Some(Triggered.UNSPECIFIED),
+          followup = Some(Followup.UNSPECIFIED)
+        ))
       )
-      Post(s"/index_getjenny_english_0/knowledgebase?refresh=1", knowledgebaseRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
+      Post(s"/index_getjenny_english_0/knowledgebase?refresh=1", knowledgeBaseRequest) ~> addCredentials(testUserCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.Created
         val response = responseAs[IndexDocumentResult]
         response.created should be (true)
