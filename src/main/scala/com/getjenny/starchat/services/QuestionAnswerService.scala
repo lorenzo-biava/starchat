@@ -504,7 +504,7 @@ trait QuestionAnswerService extends AbstractDataService {
     )
   }
 
-  def search(indexName: String, documentSearch: QADocumentSearch): Future[Option[SearchQADocumentsResults]] = {
+  def search(indexName: String, documentSearch: QADocumentSearch): Option[SearchQADocumentsResults] = {
     val client: RestHighLevelClient = elasticClient.httpClient
 
     val sourceReq: SearchSourceBuilder = new SearchSourceBuilder()
@@ -528,8 +528,10 @@ trait QuestionAnswerService extends AbstractDataService {
     val boolQueryBuilder : BoolQueryBuilder = QueryBuilders.boolQuery()
 
     documentSearch.conversation match {
-      case Some(value) =>
-        boolQueryBuilder.must(QueryBuilders.matchQuery("conversation", value))
+      case Some(convIds) =>
+        val convQueryBuilder = QueryBuilders.boolQuery()
+        convIds.foreach(cId => convQueryBuilder.should(QueryBuilders.termQuery("conversation", cId)))
+        boolQueryBuilder.must(convQueryBuilder)
       case _ => ;
     }
 
@@ -752,9 +754,19 @@ trait QuestionAnswerService extends AbstractDataService {
     val searchResults : SearchQADocumentsResults = SearchQADocumentsResults(totalHits = totalHits,
       hitsCount = total, maxScore = maxScore, hits = filteredDoc)
 
-    val searchResultsOption : Future[Option[SearchQADocumentsResults]] = Future { Option { searchResults } }
-    searchResultsOption
+    Some(searchResults)
   }
+
+  /*
+  def conversations(indexName: String, ids: DocsIds): Conversations = {
+    val documentSearch = QADocumentSearch(
+      from = Some(0),
+      size = Some(10000),
+      conversation = Some(ids.ids)
+    )
+    search(indexName = indexName, documentSearch = documentSearch)
+  }
+  */
 
   def create(indexName: String, document: QADocument, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder: XContentBuilder = jsonBuilder().startObject()
@@ -863,7 +875,7 @@ trait QuestionAnswerService extends AbstractDataService {
           case _ => ;
         }
         annotations.followup match {
-          case Some(t) => builder.field("followup", t)
+          case Some(t) => builder.field("followup", t.toString)
           case _ => ;
         }
         annotations.feedbackConv match {
@@ -1019,7 +1031,7 @@ trait QuestionAnswerService extends AbstractDataService {
         builder.field("escalated", annotations.escalated.toString)
         builder.field("answered", annotations.answered.toString)
         builder.field("triggered", annotations.triggered.toString)
-        builder.field("followup", annotations.followup)
+        builder.field("followup", annotations.followup.toString)
         annotations.feedbackConv match {
           case Some(t) => builder.field("feedbackConv", t)
           case _ => ;

@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.2
 servers:
   - url: 'https://virtserver.swaggerhub.com/angleto/StarChat/v5.1'
 info:
@@ -2800,6 +2800,19 @@ components:
           format: integer
           description: number of analyzers in memory
           example: 134
+    DtReloadTimestamp:
+      type: object
+      required:
+        - indexName
+        - timestamp
+      properties:
+        indexName:
+          type: string
+          example: index_getjenny_english_0
+        timestamp:
+          type: number
+          format: long
+          example: 1549283768918
     DTAnalyzerItem:
       type: object
       properties:
@@ -2899,7 +2912,7 @@ components:
         img:
           type: string
           description: a base64 picture, currently not supported by the analyzers
-          example: "aGVsbG8K"
+          example: "aGVsbG8K="
     ResponseRequestIn:
       type: object
       required:
@@ -5286,7 +5299,7 @@ components:
           type: number
           format: integer
           description: how many result are to be returned
-          example: 10
+          example: 10000
           default: 10
         minScore:
           type: number
@@ -5302,9 +5315,11 @@ components:
           example: true
           default: false
         conversation:
-          type: string
-          description: search for a specific conversation id
-          example: "conv123"
+          type: array
+          description: search for a specific conversation ids (or query)
+          items:
+            type: string
+          example: ["conv123"]
         indexInConversation:
           type: number
           format: integer
@@ -5405,23 +5420,23 @@ components:
           type: number
           format: integer
           description: given a big enough sample, min freq beyond what we consider the token a misspell
-          example: 5
+          example: 10
           default: 5
         activePotentialDecay:
           type: number
           format: integer
           description: decay value for the active potential
-          example: 10
+          example: 15
           default: 10
         activePotential:
           type: boolean
           description: enable/disable the calculation of active potential
-          example: true
+          example: false
           default: true
         totalInfo:
           type: boolean
           description: use the total information
-          example: false
+          example: true
           default: false
     CountersCacheParameters:
       type: object
@@ -5430,25 +5445,25 @@ components:
           type: number
           format: integer
           description: max cache entries for dictionary size
-          example: 1000
+          example: 500
           default: 1000
         totalTermsCacheMaxSize:
           type: number
           format: integer
           description: max cache entries for total terms counting
-          example: 1000
+          example: 500
           default: 1000
         countTermCacheMaxSize:
           type: number
           format: integer
           description: max cache entries for index terms counting
-          example: 100000
+          example: 200000
           default: 100000
         cacheStealTimeMillis:
           type: number
           format: integer
           description: max validity time for a cache entry
-          example: 43200000
+          example: 10000000
           default: 43200000
     CountersCacheSize:
       type: object
