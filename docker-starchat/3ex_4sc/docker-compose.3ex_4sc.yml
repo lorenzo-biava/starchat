@@ -1,0 +1,140 @@
+version: '3'
+services:
+
+# ElasticSearch cluster (3 instances):
+# - running on the same network (shared with StarChat instances), unencrypted
+# - also bound to a single host port for debug
+  elasticsearch-0:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.2
+    container_name: elasticsearch-0
+    environment:
+      - cluster.name=demo-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.zen.minimum_master_nodes=2"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata-0:/usr/share/elasticsearch/data
+    # Enabled just for debug
+    ports:
+      - 127.0.0.1:9200:9200
+    networks:
+      - elasticsearch-net
+
+  elasticsearch-1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.2
+    container_name: elasticsearch-1
+    environment:
+      - cluster.name=demo-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.zen.ping.unicast.hosts=elasticsearch-0"
+      - "discovery.zen.minimum_master_nodes=2"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata-1:/usr/share/elasticsearch/data
+    networks:
+      - elasticsearch-net
+
+  elasticsearch-2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.2
+    container_name: elasticsearch-2
+    environment:
+      - cluster.name=demo-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.zen.ping.unicast.hosts=elasticsearch-0"
+      - "discovery.zen.minimum_master_nodes=2"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata-2:/usr/share/elasticsearch/data
+    networks:
+      - elasticsearch-net
+
+# StarChat cluster (4 instances):
+# - running on the same network (used by the load balancer), unencrypted
+# - also bound to incremental host ports for debug
+
+# WARNING: Using locally built Docker image (sbt docker:publishLocal)
+
+  starchat-0:
+    image: getjenny/starchat:5.0.0-beta36-21-g74f01d3
+    container_name: starchat-0
+    command: ["/starchat/scripts/utils/wait-for-it.sh", "http://elasticsearch-0", "9200", "10", "/starchat/bin/starchat"]
+    volumes:
+      - ./starchat/config:/starchat/config
+      - ./starchat/log-0:/starchat/log
+    ports:
+      - 127.0.0.1:8000:8888
+    networks:
+      - application-net
+      - elasticsearch-net
+
+  starchat-1:
+    image: getjenny/starchat:5.0.0-beta36-21-g74f01d3
+    container_name: starchat-1
+    command: ["/starchat/scripts/utils/wait-for-it.sh", "http://elasticsearch-0", "9200", "10", "/starchat/bin/starchat"]
+    volumes:
+      - ./starchat/config:/starchat/config
+      - ./starchat/log-1:/starchat/log
+    ports:
+      - 127.0.0.1:8001:8888
+    networks:
+      - application-net
+      - elasticsearch-net
+
+  starchat-2:
+    image: getjenny/starchat:5.0.0-beta36-21-g74f01d3
+    container_name: starchat-2
+    command: ["/starchat/scripts/utils/wait-for-it.sh", "http://elasticsearch-0", "9200", "10", "/starchat/bin/starchat"]
+    volumes:
+      - ./starchat/config:/starchat/config
+      - ./starchat/log-2:/starchat/log
+    ports:
+      - 127.0.0.1:8002:8888
+    networks:
+      - application-net
+      - elasticsearch-net
+
+  starchat-3:
+    image: getjenny/starchat:5.0.0-beta36-21-g74f01d3
+    container_name: starchat-3
+    command: ["/starchat/scripts/utils/wait-for-it.sh", "http://elasticsearch-0", "9200", "10", "/starchat/bin/starchat"]
+    volumes:
+      - ./starchat/config:/starchat/config
+      - ./starchat/log-3:/starchat/log
+    ports:
+      - 127.0.0.1:8003:8888
+    networks:
+      - application-net
+      - elasticsearch-net
+
+# Load Balancing for exposing only StarChat instances to the Internet, with HTTP connection
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/tls:/etc/nginx/tls
+    ports:
+      - 8443:443
+    networks:
+      - application-net
+
+volumes:
+  esdata-0:
+  esdata-1:
+  esdata-2:
+
+networks:
+  elasticsearch-net:
+  application-net:
